@@ -249,6 +249,11 @@ ifeq ($(DUMP),1)
     CPU_TYPE = sparc
     CPU_CFLAGS_ultrasparc = -mcpu=ultrasparc
   endif
+  ifeq ($(ARCH),arm)
+    CPU_CFLAGS_cortex-a7 = -mthumb
+    CPU_CFLAGS_cortex-a8 = -mthumb
+    CPU_CFLAGS_cortex-a9 = -mthumb
+  endif
   ifeq ($(ARCH),aarch64)
     CPU_TYPE ?= generic
     CPU_CFLAGS_generic = -mcpu=generic
