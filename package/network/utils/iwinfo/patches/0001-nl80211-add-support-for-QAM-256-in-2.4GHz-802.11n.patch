@@ -1,0 +1,71 @@
+From b4fe1f680ba28588c330bcd65156ef7f8423426c Mon Sep 17 00:00:00 2001
+From: Christian Marangi <ansuelsmth@gmail.com>
+Date: Thu, 15 Jun 2023 19:44:53 +0200
+Subject: [PATCH] nl80211: add support for QAM-256 in 2.4GHz 802.11n
+
+Add support for QAM-256 in 2.4GHz 802.11n where VHT rates are set in
+2.4GHz 802.11n mode.
+
+To identify if we are using this non-standard mode, we refer to the
+hostapd conf providing vht_capab config.
+
+Signed-off-by: Christian Marangi <ansuelsmth@gmail.com>
+---
+ iwinfo_nl80211.c | 18 +++++++++++++++---
+ 1 file changed, 15 insertions(+), 3 deletions(-)
+
+--- a/iwinfo_nl80211.c
++++ b/iwinfo_nl80211.c
+@@ -3187,6 +3187,14 @@ static void nl80211_eval_modelist(struct
+ 	{
+ 		m->hw |= IWINFO_80211_B;
+ 		m->hw |= IWINFO_80211_G;
++
++		if (m->nl_vht > 0)
++		{
++			m->ht |= IWINFO_HTMODE_VHT20;
++
++			if (m->nl_ht & (1 << 1))
++				m->ht |= IWINFO_HTMODE_VHT40;
++		}
+ 	}
+ 
+ 	if (m->bands & IWINFO_BAND_5)
+@@ -3321,10 +3329,10 @@ static int nl80211_get_htmode_cb(struct
+ 
+ static int nl80211_get_htmode(const char *ifname, int *buf)
+ {
++	bool he = false, vendor_qam256 = false;
+ 	struct chan_info chn = { 0 };
+ 	char *res, b[2] = { 0 };
+ 	int err;
+-	bool he = false;
+ 
+ 	res = nl80211_phy2ifname(ifname);
+ 	*buf = 0;
+@@ -3340,11 +3348,15 @@ static int nl80211_get_htmode(const char
+ 	else if (nl80211_wpactl_query(res ? res : ifname, "wifi_generation", b, sizeof(b)))
+ 		he = b[0] == '6';
+ 
++	if ((chn.width == NL80211_CHAN_WIDTH_20 || chn.width == NL80211_CHAN_WIDTH_40) &&
++	    nl80211_hostapd_query(res ? res : ifname, "vht_capab", b, sizeof(b)))
++		vendor_qam256 = true;
++
+ 	switch (chn.width) {
+ 	case NL80211_CHAN_WIDTH_20:
+ 		if (he)
+ 			*buf = IWINFO_HTMODE_HE20;
+-		else if (chn.mode == -1)
++		else if (chn.mode == -1 || vendor_qam256)
+ 			*buf = IWINFO_HTMODE_VHT20;
+ 		else
+ 			*buf = IWINFO_HTMODE_HT20;
+@@ -3352,7 +3364,7 @@ static int nl80211_get_htmode(const char
+ 	case NL80211_CHAN_WIDTH_40:
+ 		if (he)
+ 			*buf = IWINFO_HTMODE_HE40;
+-		else if (chn.mode == -1)
++		else if (chn.mode == -1 || vendor_qam256)
+ 			*buf = IWINFO_HTMODE_VHT40;
+ 		else
+ 			*buf = IWINFO_HTMODE_HT40;
