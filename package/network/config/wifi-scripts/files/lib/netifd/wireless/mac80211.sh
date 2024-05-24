@@ -55,7 +55,8 @@ drv_mac80211_init_device_config() {
 		he_spr_sr_control \
 		he_spr_psr_enabled \
 		he_bss_color_enabled \
-		he_twt_required
+		he_twt_required \
+		itxbfen
 	config_add_int \
 		beamformer_antennas \
 		beamformee_antennas \
@@ -143,6 +144,7 @@ mac80211_hostapd_setup_base() {
 		append base_cfg "acs_exclude_dfs=1" "$N"
 
 	json_get_vars noscan ht_coex vendor_vht min_tx_power:0 tx_burst
+	json_get_vars itxbfen
 	json_get_values ht_capab_list ht_capab
 	json_get_values channel_list channels
 
@@ -498,6 +500,7 @@ ${channel:+channel=$channel}
 ${channel_list:+chanlist=$channel_list}
 ${hostapd_noscan:+noscan=1}
 ${tx_burst:+tx_queue_data2_burst=$tx_burst}
+${itxbfen:+ibf_enable=$itxbfen}
 ${multiple_bssid:+mbssid=$multiple_bssid}
 #num_global_macaddr=$num_global_macaddr
 $base_cfg
