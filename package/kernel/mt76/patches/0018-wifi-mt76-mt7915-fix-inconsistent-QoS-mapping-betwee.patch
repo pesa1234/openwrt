@@ -1,0 +1,103 @@
+From aae5bbaf6054b1bd04e31346054ddad42d85d33e Mon Sep 17 00:00:00 2001
+From: Benjamin Lin <benjamin-jw.lin@mediatek.com>
+Date: Thu, 25 Apr 2024 17:17:13 +0800
+Subject: [PATCH 18/21] wifi: mt76: mt7915: fix inconsistent QoS mapping
+ between SW and HW
+
+The mapping from IP DSCP to IEEE 802.11 user priority may be customized.
+Therefore, driver needs to pass the mapping to HW, so that the QoS type of traffic can be mapped in a consistent manner for both SW and HW paths.
+
+Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
+---
+ mt76_connac_mcu.h |  1 +
+ mt7915/main.c     |  5 +++++
+ mt7915/mcu.c      | 37 +++++++++++++++++++++++++++++++++++++
+ mt7915/mt7915.h   |  3 +++
+ 4 files changed, 46 insertions(+)
+
+--- a/mt76_connac_mcu.h
++++ b/mt76_connac_mcu.h
+@@ -1238,6 +1238,7 @@ enum {
+ 	MCU_EXT_CMD_GROUP_PRE_CAL_INFO = 0xab,
+ 	MCU_EXT_CMD_DPD_PRE_CAL_INFO = 0xac,
+ 	MCU_EXT_CMD_PHY_STAT_INFO = 0xad,
++	MCU_EXT_CMD_SET_QOS_MAP = 0xb4,
+ };
+ 
+ enum {
+--- a/mt7915/main.c
++++ b/mt7915/main.c
+@@ -1697,6 +1697,11 @@ mt7915_net_fill_forward_path(struct ieee
+ 
+ 	ctx->dev = NULL;
+ 
++	if (!mvif->qos_map_enabled) {
++		mt7915_mcu_set_qos_map(dev, vif);
++		mvif->qos_map_enabled = true;
++	}
++
+ 	return 0;
+ }
+ #endif
+--- a/mt7915/mcu.c
++++ b/mt7915/mcu.c
+@@ -4212,3 +4212,40 @@ int mt7915_mcu_rf_regval(struct mt7915_d
+ 
+ 	return 0;
+ }
++
++int mt7915_mcu_set_qos_map(struct mt7915_dev *dev, struct ieee80211_vif *vif)
++{
++#define IP_DSCP_NUM	64
++	struct mt7915_vif *mvif = (struct mt7915_vif *)vif->drv_priv;
++	struct {
++		u8 bss_idx;
++		u8 qos_map_enable;
++		u8 __rsv[2];
++		s8 qos_map[IP_DSCP_NUM];
++	} __packed req = {
++		.bss_idx = mvif->mt76.idx,
++		.qos_map_enable = false,
++	};
++	struct cfg80211_qos_map *qos_map;
++
++	rcu_read_lock();
++	qos_map = ieee80211_get_qos_map(vif);
++	if (qos_map) {
++		struct cfg80211_dscp_range *dscp_range = qos_map->up;
++		s8 up;
++
++		req.qos_map_enable = true;
++		for (up = 0; up < IEEE80211_NUM_UPS; ++up) {
++			u8 low = dscp_range[up].low, high = dscp_range[up].high;
++
++			if (low >= IP_DSCP_NUM || high >= IP_DSCP_NUM || low > high)
++				continue;
++
++			memset(req.qos_map + low, up, high - low + 1);
++		}
++	}
++	rcu_read_unlock();
++
++	return mt76_mcu_send_msg(&dev->mt76, MCU_WA_EXT_CMD(SET_QOS_MAP), &req,
++				 sizeof(req), false);
++}
+--- a/mt7915/mt7915.h
++++ b/mt7915/mt7915.h
+@@ -175,6 +175,8 @@ struct mt7915_vif {
+ 
+ 	struct ieee80211_tx_queue_params queue_params[IEEE80211_NUM_ACS];
+ 	struct cfg80211_bitrate_mask bitrate_mask;
++
++	bool qos_map_enabled;
+ };
+ 
+ /* crash-dump */
+@@ -521,6 +523,7 @@ int mt7915_mcu_fw_dbg_ctrl(struct mt7915
+ void mt7915_mcu_rx_event(struct mt7915_dev *dev, struct sk_buff *skb);
+ void mt7915_mcu_exit(struct mt7915_dev *dev);
+ void mt7915_mcu_wmm_pbc_work(struct work_struct *work);
++int mt7915_mcu_set_qos_map(struct mt7915_dev *dev, struct ieee80211_vif *vif);
+ 
+ static inline u16 mt7915_wtbl_size(struct mt7915_dev *dev)
+ {
