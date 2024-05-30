@@ -1,0 +1,33 @@
+From 84a875b2506fb720f902540ba23815e7b6958d92 Mon Sep 17 00:00:00 2001
+From: Michael-CY Lee <michael-cy.lee@mediatek.com>
+Date: Thu, 25 Jan 2024 14:07:23 +0800
+Subject: [PATCH 37/37] mtk: mac80211: fix AP mgmt not encrypted in WDS mode
+ with PMF on
+
+In ieee80211_tx_prepare(), if tx->sta is still NULL after calling
+sta_info_get(), the skb might be mgmt for WDS peer, so sta_info_get_bss()
+if called to find sta from AP_VLAN, and then interface type & 4-addr
+using is checked.
+
+CR-Id: WCNCR00289305
+Signed-off-by: Michael-CY Lee <michael-cy.lee@mediatek.com>
+---
+ net/mac80211/tx.c | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+--- a/net/mac80211/tx.c
++++ b/net/mac80211/tx.c
+@@ -1241,6 +1241,13 @@ ieee80211_tx_prepare(struct ieee80211_su
+ 		if (!tx->sta && !is_multicast_ether_addr(hdr->addr1)) {
+ 			tx->sta = sta_info_get(sdata, hdr->addr1);
+ 			aggr_check = true;
++
++			if (!tx->sta) {
++				tx->sta = sta_info_get_bss(sdata, hdr->addr1);
++				if (!tx->sta || !tx->sta->sdata->wdev.use_4addr ||
++				    tx->sta->sdata->vif.type != NL80211_IFTYPE_AP_VLAN)
++					tx->sta = NULL;
++			}
+ 		}
+ 	}
+ 

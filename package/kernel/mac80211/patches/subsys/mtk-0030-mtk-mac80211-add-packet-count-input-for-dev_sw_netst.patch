@@ -1,0 +1,55 @@
+From 4e785260ea9523efea8deb29f3f7ec7a7dab5128 Mon Sep 17 00:00:00 2001
+From: Yi-Chia Hsieh <yi-chia.hsieh@mediatek.com>
+Date: Tue, 22 Aug 2023 05:02:53 +0800
+Subject: [PATCH 30/37] mtk: mac80211: add packet count input for
+ dev_sw_netstat_rx_add
+
+---
+ backport-include/linux/netdevice.h                   | 12 ++++++++----
+ drivers/net/usb/qmi_wwan.c                           |  2 +-
+ .../net/wireless/quantenna/qtnfmac/pcie/pearl_pcie.c |  2 +-
+ .../net/wireless/quantenna/qtnfmac/pcie/topaz_pcie.c |  2 +-
+ net/mac80211/rx.c                                    |  8 ++++----
+ 5 files changed, 15 insertions(+), 11 deletions(-)
+
+--- a/backport-include/linux/netdevice.h
++++ b/backport-include/linux/netdevice.h
+@@ -124,6 +124,18 @@ static inline void dev_sw_netstats_rx_ad
+ 
+ #endif /* < 5.10 */
+ 
++static inline void dev_sw_netstats_rx_add_pktcnt(struct net_device *dev,
++						 unsigned int packets,
++						 unsigned int len)
++{
++	struct pcpu_sw_netstats *tstats = this_cpu_ptr(dev->tstats);
++
++	u64_stats_update_begin(&tstats->syncp);
++	u64_stats_add(&tstats->rx_bytes, len);
++	u64_stats_add(&tstats->rx_packets, packets);
++	u64_stats_update_end(&tstats->syncp);
++}
++
+ #if LINUX_VERSION_IS_LESS(5,10,0)
+ static inline void dev_sw_netstats_tx_add(struct net_device *dev,
+ 					  unsigned int packets,
+@@ -151,6 +163,19 @@ static inline void dev_sw_netstats_rx_ad
+ }
+ #endif /* < 5.10 */
+ 
++#define dev_sw_netstats_rx_add_pktcnt LINUX_BACKPORT(dev_sw_netstats_rx_add_pktcnt)
++static inline void dev_sw_netstats_rx_add_pktcnt(struct net_device *dev,
++						 unsigned int packets,
++						 unsigned int len)
++{
++	struct pcpu_sw_netstats *tstats = this_cpu_ptr(dev->tstats);
++
++	u64_stats_update_begin(&tstats->syncp);
++	u64_stats_add(&tstats->rx_bytes, len);
++	u64_stats_add(&tstats->rx_packets, packets);
++	u64_stats_update_end(&tstats->syncp);
++}
++
+ #if LINUX_VERSION_IS_LESS(5,11,0)
+ #define dev_sw_netstats_tx_add LINUX_BACKPORT(dev_sw_netstats_tx_add)
+ static inline void dev_sw_netstats_tx_add(struct net_device *dev,
