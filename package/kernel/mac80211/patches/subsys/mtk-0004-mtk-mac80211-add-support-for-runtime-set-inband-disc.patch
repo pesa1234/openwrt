@@ -15,7 +15,7 @@ Signed-off-by: MeiChia Chiu <meichia.chiu@mediatek.com>
 
 --- a/include/net/cfg80211.h
 +++ b/include/net/cfg80211.h
-@@ -1384,6 +1384,7 @@ struct cfg80211_fils_discovery {
+@@ -1383,6 +1383,7 @@ struct cfg80211_fils_discovery {
  	u32 max_interval;
  	size_t tmpl_len;
  	const u8 *tmpl;
