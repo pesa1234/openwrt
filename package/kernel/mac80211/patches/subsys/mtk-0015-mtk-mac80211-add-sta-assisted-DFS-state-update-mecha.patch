@@ -14,7 +14,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
 
 --- a/include/net/cfg80211.h
 +++ b/include/net/cfg80211.h
-@@ -8531,6 +8531,20 @@ void cfg80211_cac_event(struct net_devic
+@@ -8532,6 +8532,20 @@ void cfg80211_cac_event(struct net_devic
  			enum nl80211_radar_event event, gfp_t gfp);
  
  /**
@@ -102,7 +102,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  
  static bool cfg80211_valid_60g_freq(u32 freq)
  {
-@@ -1476,6 +1477,65 @@ bool cfg80211_any_usable_channels(struct
+@@ -1483,6 +1484,65 @@ bool cfg80211_any_usable_channels(struct
  }
  EXPORT_SYMBOL(cfg80211_any_usable_channels);
  

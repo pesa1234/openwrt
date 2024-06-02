@@ -14,7 +14,7 @@ Signed-off-by: Michael-CY Lee <michael-cy.lee@mediatek.com>
 
 --- a/include/net/cfg80211.h
 +++ b/include/net/cfg80211.h
-@@ -8728,6 +8728,31 @@ bool ieee80211_operating_class_to_band(u
+@@ -8729,6 +8729,31 @@ bool ieee80211_operating_class_to_band(u
  				       enum nl80211_band *band);
  
  /**
