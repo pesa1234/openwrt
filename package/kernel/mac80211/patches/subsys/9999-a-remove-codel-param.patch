@@ -26,3 +26,16 @@
  }
  
  int ieee80211_sta_allocate_link(struct sta_info *sta, unsigned int link_id)
+--- a/net/mac80211/tx.c
++++ b/net/mac80211/tx.c
+@@ -1607,8 +1607,8 @@ int ieee80211_txq_setup_flows(struct iee
+ 		fq->memory_limit = 4 << 20; /* 4 Mbytes */
+ 
+ 	codel_params_init(&local->cparams);
+-	local->cparams.interval = MS2TIME(100);
+-	local->cparams.target = MS2TIME(20);
++	local->cparams.interval = MS2TIME(50);
++	local->cparams.target = MS2TIME(5);
+ 	local->cparams.ecn = true;
+ 
+ 	local->cvars = kcalloc(fq->flows_cnt, sizeof(local->cvars[0]),
