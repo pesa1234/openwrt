@@ -83,15 +83,6 @@ Signed-off-by: Sujuan Chen <sujuan.chen@mediatek.com>
  	ctx->dev = NULL;
 --- a/mt7915/mmio.c
 +++ b/mt7915/mmio.c
-@@ -13,7 +13,7 @@
- #include "../trace.h"
- #include "../dma.h"
- 
--static bool wed_enable;
-+static bool wed_enable = true;
- module_param(wed_enable, bool, 0644);
- MODULE_PARM_DESC(wed_enable, "Enable Wireless Ethernet Dispatch support");
- 
 @@ -732,6 +732,7 @@ int mt7915_mmio_wed_init(struct mt7915_d
  
  	*irq = wed->irq;
