@@ -1,0 +1,55 @@
+--- a/net/mac80211/sta_info.c
++++ b/net/mac80211/sta_info.c
+@@ -685,8 +685,8 @@ __sta_info_alloc(struct ieee80211_sub_if
+ 	}
+ 
+ 	sta->cparams.ce_threshold = CODEL_DISABLED_THRESHOLD;
+-	sta->cparams.target = MS2TIME(20);
+-	sta->cparams.interval = MS2TIME(100);
++	sta->cparams.target = MS2TIME(8);
++	sta->cparams.interval = MS2TIME(80);
+ 	sta->cparams.ecn = true;
+ 	sta->cparams.ce_threshold_selector = 0;
+ 	sta->cparams.ce_threshold_mask = 0;
+@@ -2878,23 +2878,18 @@ unsigned long ieee80211_sta_last_active(
+ 
+ static void sta_update_codel_params(struct sta_info *sta, u32 thr)
+ {
+-	if (thr && thr < STA_SLOW_THRESHOLD * sta->local->num_sta) {
+-		sta->cparams.target = MS2TIME(50);
+-		sta->cparams.interval = MS2TIME(300);
+-		sta->cparams.ecn = false;
+-	} else {
+-		sta->cparams.target = MS2TIME(20);
+-		sta->cparams.interval = MS2TIME(100);
+-		sta->cparams.ecn = true;
+-	}
++	sta->cparams.target = MS2TIME(8);
++	sta->cparams.interval = MS2TIME(80);
++	sta->cparams.ecn = true;
+ }
+ 
+ void ieee80211_sta_set_expected_throughput(struct ieee80211_sta *pubsta,
+ 					   u32 thr)
+ {
+ 	struct sta_info *sta = container_of(pubsta, struct sta_info, sta);
+-
++	
+ 	sta_update_codel_params(sta, thr);
++
+ }
+ 
+ int ieee80211_sta_allocate_link(struct sta_info *sta, unsigned int link_id)
+--- a/net/mac80211/tx.c
++++ b/net/mac80211/tx.c
+@@ -1607,8 +1607,8 @@ int ieee80211_txq_setup_flows(struct iee
+ 		fq->memory_limit = 4 << 20; /* 4 Mbytes */
+ 
+ 	codel_params_init(&local->cparams);
+-	local->cparams.interval = MS2TIME(100);
+-	local->cparams.target = MS2TIME(20);
++	local->cparams.interval = MS2TIME(80);
++	local->cparams.target = MS2TIME(8);
+ 	local->cparams.ecn = true;
+ 
+ 	local->cvars = kcalloc(fq->flows_cnt, sizeof(local->cvars[0]),
