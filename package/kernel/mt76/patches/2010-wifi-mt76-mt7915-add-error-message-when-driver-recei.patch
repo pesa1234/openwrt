@@ -11,7 +11,7 @@ Signed-off-by: Peter Chiu <chui-hao.chiu@mediatek.com>
 
 --- a/mt7915/mac.c
 +++ b/mt7915/mac.c
-@@ -1007,6 +1007,12 @@ mt7915_mac_tx_free(struct mt7915_dev *de
+@@ -1006,6 +1006,12 @@ mt7915_mac_tx_free(struct mt7915_dev *de
  			} else {
  				msdu = FIELD_GET(MT_TX_FREE_MSDU_ID, info);
  			}

@@ -10,7 +10,7 @@ Signed-off-by: Peter Chiu <chui-hao.chiu@mediatek.com>
 
 --- a/mt7915/debugfs.c
 +++ b/mt7915/debugfs.c
-@@ -951,7 +951,11 @@ mt7915_fw_debug_wa_set(void *data, u64 v
+@@ -595,7 +595,11 @@ mt7915_fw_debug_wa_set(void *data, u64 v
  	struct mt7915_dev *dev = data;
  	int ret;
  
