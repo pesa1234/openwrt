@@ -1,7 +1,7 @@
-From 1c1e85f2bdb669b230e06ac04fa02064b567b031 Mon Sep 17 00:00:00 2001
+From 9d04f2c9a6204160cf75dbd1970dee1db3b75d01 Mon Sep 17 00:00:00 2001
 From: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
 Date: Wed, 31 Aug 2022 20:06:52 +0800
-Subject: [PATCH 1009/1051] wifi: mt76: testmode: add pre-cal support
+Subject: [PATCH] wifi: mt76: testmode: add pre-cal support
 
 Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
 ---
@@ -12,10 +12,10 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  mt7915/mt7915.h   |   1 +
  mt7915/testmode.c | 425 +++++++++++++++++++++++++++++++++++++++++++++-
  mt7915/testmode.h |  36 ++++
- testmode.c        |  15 +-
+ testmode.c        |  15 ++
  testmode.h        |  17 ++
  tools/fields.c    |   8 +
- 10 files changed, 506 insertions(+), 7 deletions(-)
+ 10 files changed, 507 insertions(+), 6 deletions(-)
 
 --- a/eeprom.c
 +++ b/eeprom.c
@@ -634,16 +634,16 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  	if (tb[MT76_TM_ATTR_STATS]) {
  		err = -EINVAL;
  
-@@ -804,7 +816,8 @@ int mt76_testmode_dump(struct ieee80211_
- 
- 	if (dev->test_mtd.name &&
- 	    (nla_put_string(msg, MT76_TM_ATTR_MTD_PART, dev->test_mtd.name) ||
--	     nla_put_u32(msg, MT76_TM_ATTR_MTD_OFFSET, dev->test_mtd.offset)))
-+	     nla_put_u32(msg, MT76_TM_ATTR_MTD_OFFSET, dev->test_mtd.offset) ||
-+	     nla_put_u8(msg, MT76_TM_ATTR_BAND_IDX, phy->band_idx)))
+@@ -802,6 +814,9 @@ int mt76_testmode_dump(struct ieee80211_
+ 	if (nla_put_u32(msg, MT76_TM_ATTR_STATE, td->state))
  		goto out;
  
- 	if (nla_put_u32(msg, MT76_TM_ATTR_TX_COUNT, td->tx_count) ||
++	if (nla_put_u8(msg, MT76_TM_ATTR_BAND_IDX, phy->band_idx))
++		goto out;
++
+ 	if (dev->test_mtd.name &&
+ 	    (nla_put_string(msg, MT76_TM_ATTR_MTD_PART, dev->test_mtd.name) ||
+ 	     nla_put_u32(msg, MT76_TM_ATTR_MTD_OFFSET, dev->test_mtd.offset)))
 --- a/testmode.h
 +++ b/testmode.h
 @@ -19,6 +19,7 @@
