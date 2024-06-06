@@ -1,0 +1,20 @@
+From fd06c8a03f246419210d2137d67fee6f4a1889bd Mon Sep 17 00:00:00 2001
+From: Chen Minqiang <ptpt52@gmail.com>
+Date: Thu, 28 Dec 2023 21:49:23 +0800
+Subject: [PATCH] hwnat: mt76_mmio_wed_offload_enable called by natflow in bh
+
+---
+ wed.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/wed.c
++++ b/wed.c
+@@ -90,7 +90,7 @@ int mt76_wed_offload_enable(struct mtk_w
+ 	dev->token_size = wed->wlan.token_start;
+ 	spin_unlock_bh(&dev->token_lock);
+ 
+-	return !wait_event_timeout(dev->tx_wait, !dev->wed_token_count, HZ);
++	return 0;
+ }
+ EXPORT_SYMBOL_GPL(mt76_wed_offload_enable);
+ 
