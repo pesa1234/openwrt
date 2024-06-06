@@ -1,0 +1,23 @@
+From ac3f57a4dd1a054658c5989adb9eb27ae29b7f0b Mon Sep 17 00:00:00 2001
+From: Chen Minqiang <ptpt52@gmail.com>
+Date: Sat, 25 Feb 2023 12:00:59 +0800
+Subject: [PATCH] mt76: lock mt76_queue before access
+
+---
+ dma.c | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+--- a/dma.c
++++ b/dma.c
+@@ -547,6 +547,11 @@ mt76_dma_tx_queue_skb_raw(struct mt76_de
+ 	buf.len = skb->len;
+ 
+ 	spin_lock_bh(&q->lock);
++	if (q->queued + 1 >= q->ndesc - 1) {
++		spin_unlock_bh(&q->lock);
++		dma_unmap_single(dev->dma_dev, buf.addr, buf.len, DMA_TO_DEVICE);
++		goto error;
++	}
+ 	mt76_dma_add_buf(dev, q, &buf, 1, tx_info, skb, NULL);
+ 	mt76_dma_kick_queue(dev, q);
+ 	spin_unlock_bh(&q->lock);
