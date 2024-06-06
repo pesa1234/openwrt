@@ -1,0 +1,41 @@
+From 0d66b36b84a5368cbdd307fa5abe52f6630b387b Mon Sep 17 00:00:00 2001
+From: Chen Minqiang <ptpt52@gmail.com>
+Date: Mon, 8 Jan 2024 16:00:27 +0800
+Subject: [PATCH] wifi: mt76: fix possible wcid NULL pointer access
+
+---
+ tx.c | 23 +++++++++++++++++++++++
+ 1 file changed, 23 insertions(+)
+
+--- a/tx.c
++++ b/tx.c
+@@ -342,6 +342,29 @@ mt76_tx(struct mt76_phy *phy, struct iee
+ 		ieee80211_get_tx_rates(info->control.vif, sta, skb,
+ 				       info->control.rates, 1);
+ 
++	if (!wcid) {
++		struct mt76_dev *dev = phy->dev;
++		struct ieee80211_hdr *hdr = (struct ieee80211_hdr *)skb->data;
++		struct mt76_queue *q;
++
++		int qid = skb_get_queue_mapping(skb);
++
++		if ((dev->drv->drv_flags & MT_DRV_HW_MGMT_TXQ) &&
++				!(info->flags & IEEE80211_TX_CTL_HW_80211_ENCAP) &&
++				!ieee80211_is_data(hdr->frame_control) &&
++				!ieee80211_is_bufferable_mmpdu(skb)) {
++			qid = MT_TXQ_PSD;
++		}
++
++		q = phy->q_tx[qid];
++
++		spin_lock_bh(&q->lock);
++		__mt76_tx_queue_skb(phy, qid, skb, wcid, sta, NULL);
++		dev->queue_ops->kick(dev, q);
++		spin_unlock_bh(&q->lock);
++		return;
++	}
++
+ 	info->hw_queue |= FIELD_PREP(MT_TX_HW_QUEUE_PHY, phy->band_idx);
+ 
+ 	if (!wcid->tx_pending.prev || !wcid->tx_pending.next) {
