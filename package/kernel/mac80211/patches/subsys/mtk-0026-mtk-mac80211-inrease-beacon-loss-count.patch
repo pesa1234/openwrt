@@ -22,7 +22,7 @@ Signed-off-by: Amit Khatri <amit.khatri@mediatek.com>
   * default to what we want.
   */
 -static int beacon_loss_count = 7;
-+static int beacon_loss_count = 20;
++static int beacon_loss_count = 40;
  module_param(beacon_loss_count, int, 0644);
  MODULE_PARM_DESC(beacon_loss_count,
  		 "Number of beacon intervals before we decide beacon was lost.");
