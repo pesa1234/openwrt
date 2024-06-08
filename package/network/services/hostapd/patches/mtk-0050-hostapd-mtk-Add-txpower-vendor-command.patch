@@ -1,9 +1,9 @@
 --- a/hostapd/config_file.c
 +++ b/hostapd/config_file.c
-@@ -5110,6 +5110,16 @@ static int hostapd_config_fill(struct ho
- 	} else if (os_strcmp(buf, "ibf_enable") == 0) { /*ibf setting is per device*/
- 		int val = atoi(pos);
- 		conf->ibf_enable = !!val;
+@@ -5114,6 +5114,16 @@ static int hostapd_config_fill(struct ho
+ 		u8 en = strtol(pos, NULL, 10);
+ 
+ 		conf->dfs_detect_mode = en;
 +	} else if (os_strcmp(buf, "lpi_enable") == 0) {
 +		u8 en = strtol(pos, NULL, 10);
 +
@@ -31,10 +31,10 @@
  }
 --- a/src/ap/ap_config.h
 +++ b/src/ap/ap_config.h
-@@ -1233,6 +1233,9 @@ struct hostapd_config {
- 	int *edcca_threshold;
+@@ -1234,6 +1234,9 @@ struct hostapd_config {
  	u8 three_wire_enable;
  	u8 ibf_enable;
+ 	u8 dfs_detect_mode;
 +	u8 lpi_enable;
 +	u8 sku_idx;
 +	u8 beacon_dup;

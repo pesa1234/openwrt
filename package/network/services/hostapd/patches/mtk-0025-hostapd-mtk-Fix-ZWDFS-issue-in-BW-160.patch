@@ -15,7 +15,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
 
 --- a/src/ap/dfs.c
 +++ b/src/ap/dfs.c
-@@ -76,15 +76,22 @@ static int dfs_get_used_n_chans(struct h
+@@ -69,15 +69,22 @@ static int dfs_get_used_n_chans(struct h
  static int dfs_channel_available(struct hostapd_channel_data *chan,
  				 enum dfs_channel_type type)
  {
@@ -42,7 +42,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  	}
  
  	/*
-@@ -93,16 +100,14 @@ static int dfs_channel_available(struct
+@@ -86,16 +93,14 @@ static int dfs_channel_available(struct
  	 * channel for CSA, unless they are available for immediate use.
  	 */
  	if (type == DFS_AVAILABLE && (chan->flag & HOSTAPD_CHAN_RADAR) &&
@@ -65,7 +65,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  	return 1;
  }
  
-@@ -174,7 +179,7 @@ static int dfs_chan_range_available(stru
+@@ -167,7 +172,7 @@ static int dfs_chan_range_available(stru
  				    enum dfs_channel_type type)
  {
  	struct hostapd_channel_data *first_chan, *chan;
@@ -74,7 +74,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  	u32 bw = num_chan_to_bw(num_chans);
  
  	if (first_chan_idx + num_chans > mode->num_channels) {
-@@ -210,14 +215,17 @@ static int dfs_chan_range_available(stru
+@@ -203,14 +208,17 @@ static int dfs_chan_range_available(stru
  			return 0;
  		}
  
@@ -94,7 +94,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  }
  
  
-@@ -845,8 +853,12 @@ static unsigned int dfs_get_cac_time(str
+@@ -838,8 +846,12 @@ static unsigned int dfs_get_cac_time(str
   */
  int hostapd_handle_dfs(struct hostapd_iface *iface)
  {
@@ -108,7 +108,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  
  	if (is_6ghz_freq(iface->freq))
  		return 1;
-@@ -909,7 +921,7 @@ int hostapd_handle_dfs(struct hostapd_if
+@@ -902,7 +914,7 @@ int hostapd_handle_dfs(struct hostapd_if
  	/* Finally start CAC */
  	hostapd_set_state(iface, HAPD_IFACE_DFS);
  	wpa_printf(MSG_DEBUG, "DFS start CAC on %d MHz%s", iface->freq,
@@ -117,7 +117,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  	wpa_msg(iface->bss[0]->msg_ctx, MSG_INFO, DFS_EVENT_CAC_START
  		"freq=%d chan=%d sec_chan=%d, width=%d, seg0=%d, seg1=%d, cac_time=%ds",
  		iface->freq,
-@@ -919,6 +931,16 @@ int hostapd_handle_dfs(struct hostapd_if
+@@ -912,6 +924,16 @@ int hostapd_handle_dfs(struct hostapd_if
  		hostapd_get_oper_centr_freq_seg1_idx(iface->conf),
  		iface->dfs_cac_ms / 1000);
  
@@ -134,7 +134,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  	res = hostapd_start_dfs_cac(
  		iface, iface->conf->hw_mode, iface->freq, iface->conf->channel,
  		iface->conf->ieee80211n, iface->conf->ieee80211ac,
-@@ -927,14 +949,14 @@ int hostapd_handle_dfs(struct hostapd_if
+@@ -920,14 +942,14 @@ int hostapd_handle_dfs(struct hostapd_if
  		hostapd_get_oper_chwidth(iface->conf),
  		hostapd_get_oper_centr_freq_seg0_idx(iface->conf),
  		hostapd_get_oper_centr_freq_seg1_idx(iface->conf),
@@ -151,7 +151,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  		/* Cache background radar parameters. */
  		iface->radar_background.channel = iface->conf->channel;
  		iface->radar_background.secondary_channel =
-@@ -955,6 +977,35 @@ int hostapd_handle_dfs(struct hostapd_if
+@@ -948,6 +970,35 @@ int hostapd_handle_dfs(struct hostapd_if
  
  		iface->radar_background.temp_ch = 1;
  		return 1;
@@ -187,7 +187,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  	}
  
  	return 0;
-@@ -1211,6 +1262,15 @@ int hostapd_dfs_complete_cac(struct host
+@@ -1204,6 +1255,15 @@ int hostapd_dfs_complete_cac(struct host
  				hostapd_setup_interface_complete(iface, 0);
  				iface->cac_started = 0;
  			}

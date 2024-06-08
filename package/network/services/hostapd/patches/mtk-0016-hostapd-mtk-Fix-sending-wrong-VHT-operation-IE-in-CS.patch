@@ -11,7 +11,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
 
 --- a/src/ap/dfs.c
 +++ b/src/ap/dfs.c
-@@ -1136,6 +1136,14 @@ static int
+@@ -1129,6 +1129,14 @@ static int
  hostapd_dfs_start_channel_switch_background(struct hostapd_iface *iface)
  {
  	u8 current_vht_oper_chwidth = hostapd_get_oper_chwidth(iface->conf);
@@ -26,7 +26,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  
  	iface->conf->channel = iface->radar_background.channel;
  	iface->freq = iface->radar_background.freq;
-@@ -1148,11 +1156,7 @@ hostapd_dfs_start_channel_switch_backgro
+@@ -1141,11 +1149,7 @@ hostapd_dfs_start_channel_switch_backgro
  
  	hostapd_dfs_update_background_chain(iface);
  
