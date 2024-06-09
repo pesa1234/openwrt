@@ -21,7 +21,7 @@ Signed-off-by: fancy.liu <fancy.liu@mediatek.com>
 
 --- a/net/mac80211/cfg.c
 +++ b/net/mac80211/cfg.c
-@@ -3797,15 +3797,7 @@ static int ieee80211_set_csa_beacon(stru
+@@ -3796,15 +3796,7 @@ static int ieee80211_set_csa_beacon(stru
  		 * immediately too.  If we would delay the switch
  		 * until the next TBTT, we would have to set the probe
  		 * response here.
@@ -37,7 +37,7 @@ Signed-off-by: fancy.liu <fancy.liu@mediatek.com>
  
  		if ((params->n_counter_offsets_beacon >
  		     IEEE80211_MAX_CNTDWN_COUNTERS_NUM) ||
-@@ -3821,14 +3813,20 @@ static int ieee80211_set_csa_beacon(stru
+@@ -3820,14 +3812,20 @@ static int ieee80211_set_csa_beacon(stru
  		csa.n_counter_offsets_presp = params->n_counter_offsets_presp;
  		csa.count = params->count;
  
@@ -64,7 +64,7 @@ Signed-off-by: fancy.liu <fancy.liu@mediatek.com>
  		break;
  	case NL80211_IFTYPE_ADHOC:
  		if (!sdata->vif.cfg.ibss_joined)
-@@ -3900,6 +3898,7 @@ static int ieee80211_set_csa_beacon(stru
+@@ -3899,6 +3897,7 @@ static int ieee80211_set_csa_beacon(stru
  		}
  #endif
  	default:
@@ -72,7 +72,7 @@ Signed-off-by: fancy.liu <fancy.liu@mediatek.com>
  		return -EOPNOTSUPP;
  	}
  
-@@ -3989,6 +3988,7 @@ __ieee80211_channel_switch(struct wiphy
+@@ -3988,6 +3987,7 @@ __ieee80211_channel_switch(struct wiphy
  
  	err = ieee80211_set_csa_beacon(sdata, params, &changed);
  	if (err) {

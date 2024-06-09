@@ -11,7 +11,7 @@ Signed-off-by: ye he <ye.he@mediatek.com>
 
 --- a/net/mac80211/agg-tx.c
 +++ b/net/mac80211/agg-tx.c
-@@ -1098,7 +1098,8 @@ next:
+@@ -1057,7 +1057,8 @@ void ieee80211_process_addba_resp(struct
  
  		tid_tx->buf_size = buf_size;
  		tid_tx->amsdu = amsdu;

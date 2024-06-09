@@ -13,7 +13,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
 
 --- a/include/net/cfg80211.h
 +++ b/include/net/cfg80211.h
-@@ -8546,6 +8546,20 @@ void cfg80211_sta_update_dfs_state(struc
+@@ -8545,6 +8545,20 @@ void cfg80211_sta_update_dfs_state(struc
  				   bool associated);
  
  /**

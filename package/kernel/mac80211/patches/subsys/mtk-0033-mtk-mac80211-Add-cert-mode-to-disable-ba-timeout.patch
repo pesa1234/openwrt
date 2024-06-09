@@ -32,7 +32,7 @@ Signed-off-by: Allen.Ye <allen.ye@mediatek.com>
  {
 --- a/net/mac80211/agg-tx.c
 +++ b/net/mac80211/agg-tx.c
-@@ -1108,7 +1108,10 @@ next:
+@@ -1067,7 +1067,10 @@ void ieee80211_process_addba_resp(struct
  		tid_tx->timeout =
  			le16_to_cpu(mgmt->u.action.u.addba_resp.timeout);
  
