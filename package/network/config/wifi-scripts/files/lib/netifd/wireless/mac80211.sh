@@ -324,6 +324,7 @@ mac80211_hostapd_setup_base() {
 			vht_link_adapt:3 \
 			vht160:2
 
+		set_default tx_burst 2.0
 		append base_cfg "ieee80211ac=1" "$N"
 		vht_cap=0
 		for cap in $(iw phy "$phy" info | awk -F "[()]" '/VHT Capabilities/ { print $2 }'); do
