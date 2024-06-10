@@ -56,6 +56,7 @@ drv_mac80211_init_device_config() {
 		he_spr_psr_enabled \
 		he_bss_color_enabled \
 		he_twt_required \
+		he_twt_responder \
 		etxbfen \
 		itxbfen \
 		lpi_enable \
@@ -337,10 +338,6 @@ mac80211_hostapd_setup_base() {
 		cap_rx_stbc=$((($vht_cap >> 8) & 7))
 		[ "$rx_stbc" -lt "$cap_rx_stbc" ] && cap_rx_stbc="$rx_stbc"
 		vht_cap="$(( ($vht_cap & ~(0x700)) | ($cap_rx_stbc << 8) ))"
-		
-		[ "$itxbfen" -eq 1 ] && {
-			etxbfen=0
-		}
 
 		[ "$etxbfen" -eq 0 ] && {
 			su_beamformer=0
@@ -443,6 +440,7 @@ mac80211_hostapd_setup_base() {
 			he_su_beamformee:1 \
 			he_mu_beamformer:1 \
 			he_twt_required:0 \
+			he_twt_responder:0 \
 			he_spr_sr_control:3 \
 			he_spr_psr_enabled:0 \
 			he_spr_non_srg_obss_pd_max_offset:0 \
@@ -471,6 +469,13 @@ mac80211_hostapd_setup_base() {
 			he_mu_beamformer:${he_phy_cap:8:2}:0x2:$he_mu_beamformer \
 			he_spr_psr_enabled:${he_phy_cap:14:2}:0x1:$he_spr_psr_enabled \
 			he_twt_required:${he_mac_cap:0:2}:0x6:$he_twt_required
+			
+		if [ -n "$he_twt_responder" ]; then
+			append base_cfg "he_twt_responder=$he_twt_responder" "$N"
+		else
+			he_twt_responder=0
+			append base_cfg "he_twt_responder=$he_twt_responder" "$N"
+		fi
 
 		if [ "$he_bss_color_enabled" -gt 0 ]; then
 			append base_cfg "he_bss_color=$he_bss_color" "$N"
