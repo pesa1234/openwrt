@@ -230,9 +230,9 @@ Subject: [PATCH] [mt76] mt7915 MCU event airtime
 +					diff_rx_airtime = wcid->stats.rx_airtime[ac];
 +				}
 +
-+				if (diff_tx_airtime > 400000)
++				if (diff_tx_airtime > 550000)
 +					diff_tx_airtime = 0;
-+				if (diff_rx_airtime > 400000)
++				if (diff_rx_airtime > 550000)
 +					diff_rx_airtime = 0;
 +
 +				ieee80211_sta_register_airtime(sta, mt76_ac_to_tid(ac),
