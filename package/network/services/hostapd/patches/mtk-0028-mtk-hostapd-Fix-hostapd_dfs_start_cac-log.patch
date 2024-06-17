@@ -10,7 +10,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
 
 --- a/src/ap/dfs.c
 +++ b/src/ap/dfs.c
-@@ -1645,9 +1645,11 @@ int hostapd_dfs_start_cac(struct hostapd
+@@ -1652,9 +1652,11 @@ int hostapd_dfs_start_cac(struct hostapd
  	/* TODO: How to check CAC time for ETSI weather channels? */
  	iface->dfs_cac_ms = 60000;
  	wpa_msg(iface->bss[0]->msg_ctx, MSG_INFO, DFS_EVENT_CAC_START

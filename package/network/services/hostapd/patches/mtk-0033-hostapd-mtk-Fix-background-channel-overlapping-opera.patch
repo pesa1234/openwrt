@@ -11,7 +11,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
 
 --- a/src/ap/dfs.c
 +++ b/src/ap/dfs.c
-@@ -814,6 +814,20 @@ static int dfs_are_channels_overlapped(s
+@@ -821,6 +821,20 @@ static int dfs_are_channels_overlapped(s
  }
  
  
@@ -32,7 +32,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  static unsigned int dfs_get_cac_time(struct hostapd_iface *iface,
  				     int start_chan_idx, int n_chans)
  {
-@@ -1141,6 +1155,8 @@ static void hostapd_dfs_update_backgroun
+@@ -1148,6 +1162,8 @@ static void hostapd_dfs_update_backgroun
  						  &oper_centr_freq_seg1_idx,
  						  &channel_type);
  	if (!channel ||
@@ -41,7 +41,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  	    hostapd_start_dfs_cac(iface, iface->conf->hw_mode,
  				  channel->freq, channel->chan,
  				  iface->conf->ieee80211n,
-@@ -1375,6 +1391,7 @@ static int hostapd_dfs_start_channel_swi
+@@ -1382,6 +1398,7 @@ static int hostapd_dfs_start_channel_swi
  	hostapd_set_oper_centr_freq_seg1_idx(iface->conf,
  					     oper_centr_freq_seg1_idx);
  	err = 0;
@@ -49,7 +49,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  
  	hostapd_setup_interface_complete(iface, err);
  	return err;
-@@ -1502,6 +1519,7 @@ static int hostapd_dfs_start_channel_swi
+@@ -1509,6 +1526,7 @@ static int hostapd_dfs_start_channel_swi
  			hostapd_set_oper_centr_freq_seg1_idx(
  				iface->conf, oper_centr_freq_seg1_idx);
  
