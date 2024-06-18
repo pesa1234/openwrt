@@ -1,6 +1,6 @@
 --- a/mt7915/mcu.c
 +++ b/mt7915/mcu.c
-@@ -3208,7 +3208,7 @@ static int mt7915_mcu_set_pre_cal(struct
+@@ -3218,7 +3218,7 @@ static int mt7915_mcu_set_pre_cal(struct
  	skb_put_data(skb, &req, sizeof(req));
  	skb_put_data(skb, data, len);
  
@@ -9,7 +9,7 @@
  }
  
  int mt7915_mcu_apply_group_cal(struct mt7915_dev *dev)
-@@ -3229,6 +3229,9 @@ int mt7915_mcu_apply_group_cal(struct mt
+@@ -3239,6 +3239,9 @@ int mt7915_mcu_apply_group_cal(struct mt
  
  		len = min_t(u32, total, MT_EE_CAL_UNIT);
  
