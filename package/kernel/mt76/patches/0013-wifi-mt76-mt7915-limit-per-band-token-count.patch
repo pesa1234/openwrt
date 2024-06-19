@@ -177,7 +177,7 @@ Signed-off-by: Peter Chiu <chui-hao.chiu@mediatek.com>
  
 --- a/tx.c
 +++ b/tx.c
-@@ -825,16 +825,30 @@ void __mt76_set_tx_blocked(struct mt76_d
+@@ -823,16 +823,30 @@ void __mt76_set_tx_blocked(struct mt76_d
  }
  EXPORT_SYMBOL_GPL(__mt76_set_tx_blocked);
  
@@ -210,7 +210,7 @@ Signed-off-by: Peter Chiu <chui-hao.chiu@mediatek.com>
  #ifdef CONFIG_NET_MEDIATEK_SOC_WED
  	if (mtk_wed_device_active(&dev->mmio.wed) &&
  	    token >= dev->mmio.wed.wlan.token_start)
-@@ -878,6 +892,8 @@ mt76_token_release(struct mt76_dev *dev,
+@@ -876,6 +890,8 @@ mt76_token_release(struct mt76_dev *dev,
  	txwi = idr_remove(&dev->token, token);
  	if (txwi) {
  		dev->token_count--;
