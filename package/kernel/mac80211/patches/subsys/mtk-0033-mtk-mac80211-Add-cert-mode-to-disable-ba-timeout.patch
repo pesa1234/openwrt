@@ -15,7 +15,7 @@ Signed-off-by: Allen.Ye <allen.ye@mediatek.com>
 
 --- a/include/net/mac80211.h
 +++ b/include/net/mac80211.h
-@@ -2912,8 +2912,14 @@ struct ieee80211_hw {
+@@ -2917,8 +2917,14 @@ struct ieee80211_hw {
  	u32 max_mtu;
  	const s8 *tx_power_levels;
  	u8 max_txpwr_levels_idx;

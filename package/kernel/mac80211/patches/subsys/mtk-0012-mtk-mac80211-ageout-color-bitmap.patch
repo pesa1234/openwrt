@@ -73,7 +73,7 @@ OBSS BSS Color will be ageout if not seen for 10 seconds.
  	u64 color_bitmap;
  
  	/* context reservation -- protected with chanctx_mtx */
-@@ -1991,9 +1992,13 @@ void ieee80211_csa_finalize_work(struct
+@@ -1988,9 +1989,13 @@ void ieee80211_csa_finalize_work(struct
  int ieee80211_channel_switch(struct wiphy *wiphy, struct net_device *dev,
  			     struct cfg80211_csa_settings *params);
  

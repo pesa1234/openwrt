@@ -82,7 +82,7 @@ Signed-off-by: fancy.liu <fancy.liu@mediatek.com>
  	}
 --- a/net/mac80211/util.c
 +++ b/net/mac80211/util.c
-@@ -4509,8 +4509,11 @@ int ieee80211_send_action_csa(struct iee
+@@ -4513,8 +4513,11 @@ int ieee80211_send_action_csa(struct iee
  	u8 *pos;
  
  	if (sdata->vif.type != NL80211_IFTYPE_ADHOC &&
@@ -95,7 +95,7 @@ Signed-off-by: fancy.liu <fancy.liu@mediatek.com>
  
  	skb = dev_alloc_skb(local->tx_headroom + hdr_len +
  			    5 + /* channel switch announcement element */
-@@ -4527,9 +4530,10 @@ int ieee80211_send_action_csa(struct iee
+@@ -4531,9 +4534,10 @@ int ieee80211_send_action_csa(struct iee
  
  	eth_broadcast_addr(mgmt->da);
  	memcpy(mgmt->sa, sdata->vif.addr, ETH_ALEN);
