@@ -1,8 +1,7 @@
-From 95297b6768f36fbe3a9d7c6c8bef138e4f3c3fdb Mon Sep 17 00:00:00 2001
+From 57ca0074490c096cf61f5857ceb233f9a763cf82 Mon Sep 17 00:00:00 2001
 From: Shayne Chen <shayne.chen@mediatek.com>
 Date: Wed, 22 Jun 2022 10:39:47 +0800
-Subject: [PATCH 1000/1051] wifi: mt76: mt7915: add mtk internal debug tools
- for mt76
+Subject: [PATCH] wifi: mt76: mt7915: add mtk internal debug tools for mt76
 
 ---
  mt76_connac_mcu.h     |    6 +
@@ -344,10 +343,11 @@ Subject: [PATCH 1000/1051] wifi: mt76: mt7915: add mtk internal debug tools
  int mt7915_mcu_rf_regval(struct mt7915_dev *dev, u32 regidx, u32 *val, bool set)
  {
  	struct {
-@@ -4213,6 +4240,25 @@ int mt7915_mcu_rf_regval(struct mt7915_d
+@@ -4212,3 +4239,22 @@ int mt7915_mcu_rf_regval(struct mt7915_d
+ 
  	return 0;
  }
- 
++
 +#ifdef MTK_DEBUG
 +int mt7915_mcu_set_amsdu_algo(struct mt7915_dev *dev, u16 wcid, u8 enable)
 +{
@@ -366,10 +366,6 @@ Subject: [PATCH 1000/1051] wifi: mt76: mt7915: add mtk internal debug tools
 +	return mt76_mcu_send_msg(&dev->mt76, MCU_EXT_CMD(MEC_CTRL), &req, sizeof(req), true);
 +}
 +#endif
-+
- int mt7915_mcu_set_qos_map(struct mt7915_dev *dev, struct ieee80211_vif *vif)
- {
- #define IP_DSCP_NUM	64
 --- a/mt7915/mcu.h
 +++ b/mt7915/mcu.h
 @@ -347,6 +347,10 @@ enum {
@@ -393,7 +389,7 @@ Subject: [PATCH 1000/1051] wifi: mt76: mt7915: add mtk internal debug tools
  #define MT7915_MAX_INTERFACES		19
  #define MT7915_WTBL_SIZE		288
  #define MT7916_WTBL_SIZE		544
-@@ -246,6 +247,14 @@ struct mt7915_phy {
+@@ -244,6 +245,14 @@ struct mt7915_phy {
  #endif
  };
  
@@ -408,7 +404,7 @@ Subject: [PATCH 1000/1051] wifi: mt76: mt7915: add mtk internal debug tools
  struct mt7915_dev {
  	union { /* must be first */
  		struct mt76_dev mt76;
-@@ -329,6 +338,33 @@ struct mt7915_dev {
+@@ -327,6 +336,33 @@ struct mt7915_dev {
  	void __iomem *dcm;
  	void __iomem *sku;
  
@@ -442,7 +438,7 @@ Subject: [PATCH 1000/1051] wifi: mt76: mt7915: add mtk internal debug tools
  	bool wmm_pbc_enable;
  	struct work_struct wmm_pbc_work;
  	u32 adie_type;
-@@ -613,4 +649,24 @@ void mt7915_sta_add_debugfs(struct ieee8
+@@ -610,4 +646,24 @@ void mt7915_sta_add_debugfs(struct ieee8
  int mt7915_mmio_wed_init(struct mt7915_dev *dev, void *pdev_ptr,
  			 bool pci, int *irq);
  
@@ -4841,7 +4837,7 @@ Subject: [PATCH 1000/1051] wifi: mt76: mt7915: add mtk internal debug tools
 +	struct mt76_dev *mdev = NULL;
 +	int i;
 +
-+	seq_printf(s, "Version: 2.2.24.3\n");
++	seq_printf(s, "Version: 2.2.24.5\n");
 +
 +	if (!test_bit(MT76_STATE_MCU_RUNNING, &dev->mphy.state))
 +		return 0;

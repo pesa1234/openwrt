@@ -267,9 +267,9 @@ Subject: [PATCH] [mt76] mt7915 MCU event airtime
  	     !rxd->seq) &&
  	     !(rxd->eid == MCU_CMD_EXT_CID &&
  	       rxd->ext_eid == MCU_EXT_EVENT_WA_TX_STAT))
-@@ -5712,3 +5774,16 @@ int mt7915_mcu_set_qos_map(struct mt7915
- 	return mt76_mcu_send_msg(&dev->mt76, MCU_WA_EXT_CMD(SET_QOS_MAP), &req,
- 				 sizeof(req), false);
+@@ -5675,3 +5737,16 @@ int mt7915_mcu_thermal_debug(struct mt79
+ 	return mt76_mcu_send_msg(&dev->mt76, MCU_EXT_CMD(THERMAL_DEBUG), &req,
+ 				 sizeof(req), true);
  }
 +
 +int mt7915_mcu_get_all_sta_info(struct mt76_dev *dev, u16 tag)
@@ -311,7 +311,7 @@ Subject: [PATCH] [mt76] mt7915 MCU event airtime
  					 sizeof(struct bss_info_bcn) +	\
 --- a/mt7915/mt7915.h
 +++ b/mt7915/mt7915.h
-@@ -699,6 +699,7 @@ int mt7915_mcu_set_thermal_protect(struc
+@@ -697,6 +697,7 @@ int mt7915_mcu_set_thermal_protect(struc
  int mt7915_mcu_get_tx_rate(struct mt7915_phy *phy, u16 wcidx);
  int mt7915_mcu_get_rx_rate(struct mt7915_phy *phy, struct ieee80211_vif *vif,
  			   struct ieee80211_sta *sta, struct rate_info *rate);

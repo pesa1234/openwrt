@@ -346,7 +346,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  
 --- a/mt7915/mt7915.h
 +++ b/mt7915/mt7915.h
-@@ -581,6 +581,7 @@ u32 mt7915_wed_init_buf(void *ptr, dma_a
+@@ -579,6 +579,7 @@ u32 mt7915_wed_init_buf(void *ptr, dma_a
  
  int mt7915_register_device(struct mt7915_dev *dev);
  void mt7915_unregister_device(struct mt7915_dev *dev);

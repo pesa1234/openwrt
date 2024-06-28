@@ -1,19 +1,17 @@
-From aae5bbaf6054b1bd04e31346054ddad42d85d33e Mon Sep 17 00:00:00 2001
+From bdc345a92e1096ef0862e0b3d4157166e23eaffd Mon Sep 17 00:00:00 2001
 From: Benjamin Lin <benjamin-jw.lin@mediatek.com>
 Date: Thu, 25 Apr 2024 17:17:13 +0800
-Subject: [PATCH 18/21] wifi: mt76: mt7915: fix inconsistent QoS mapping
- between SW and HW
+Subject: [PATCH] wifi: mt76: mt7915: fix inconsistent QoS mapping between SW
+ and HW
 
 The mapping from IP DSCP to IEEE 802.11 user priority may be customized.
-Therefore, driver needs to pass the mapping to HW, so that the QoS type of traffic can be mapped in a consistent manner for both SW and HW paths.
+Therefore, the mapping needs to be passed to HW, so that the QoS type of traffic can be mapped in a consistent manner for both SW and HW paths.
 
 Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
 ---
  mt76_connac_mcu.h |  1 +
- mt7915/main.c     |  5 +++++
- mt7915/mcu.c      | 37 +++++++++++++++++++++++++++++++++++++
- mt7915/mt7915.h   |  3 +++
- 4 files changed, 46 insertions(+)
+ mt7915/main.c     | 40 ++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 41 insertions(+)
 
 --- a/mt76_connac_mcu.h
 +++ b/mt76_connac_mcu.h
@@ -27,26 +25,11 @@ Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
  enum {
 --- a/mt7915/main.c
 +++ b/mt7915/main.c
-@@ -1697,6 +1697,11 @@ mt7915_net_fill_forward_path(struct ieee
- 
- 	ctx->dev = NULL;
- 
-+	if (!mvif->qos_map_enabled) {
-+		mt7915_mcu_set_qos_map(dev, vif);
-+		mvif->qos_map_enabled = true;
-+	}
-+
- 	return 0;
+@@ -1620,6 +1620,45 @@ mt7915_set_frag_threshold(struct ieee802
  }
- #endif
---- a/mt7915/mcu.c
-+++ b/mt7915/mcu.c
-@@ -4212,3 +4212,40 @@ int mt7915_mcu_rf_regval(struct mt7915_d
  
- 	return 0;
- }
-+
-+int mt7915_mcu_set_qos_map(struct mt7915_dev *dev, struct ieee80211_vif *vif)
+ static int
++mt7915_set_qos_map(struct ieee80211_vif *vif, struct cfg80211_qos_map *qos_map)
 +{
 +#define IP_DSCP_NUM	64
 +	struct mt7915_vif *mvif = (struct mt7915_vif *)vif->drv_priv;
@@ -57,47 +40,42 @@ Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
 +		s8 qos_map[IP_DSCP_NUM];
 +	} __packed req = {
 +		.bss_idx = mvif->mt76.idx,
-+		.qos_map_enable = false,
++		.qos_map_enable = qos_map ? true : false,
 +	};
-+	struct cfg80211_qos_map *qos_map;
 +
-+	rcu_read_lock();
-+	qos_map = ieee80211_get_qos_map(vif);
 +	if (qos_map) {
-+		struct cfg80211_dscp_range *dscp_range = qos_map->up;
-+		s8 up;
++		struct cfg80211_dscp_exception *exception = qos_map->dscp_exception;
++		struct cfg80211_dscp_range *range = qos_map->up;
++		s8 i;
 +
-+		req.qos_map_enable = true;
-+		for (up = 0; up < IEEE80211_NUM_UPS; ++up) {
-+			u8 low = dscp_range[up].low, high = dscp_range[up].high;
++		for (i = 0; i < IEEE80211_NUM_UPS; ++i) {
++			u8 low = range[i].low, high = range[i].high;
 +
-+			if (low >= IP_DSCP_NUM || high >= IP_DSCP_NUM || low > high)
-+				continue;
++			if (low < IP_DSCP_NUM && high < IP_DSCP_NUM && low <= high)
++				memset(req.qos_map + low, i, high - low + 1);
++		}
 +
-+			memset(req.qos_map + low, up, high - low + 1);
++		for (i = 0; i < qos_map->num_des; ++i) {
++			u8 dscp = exception[i].dscp, up = exception[i].up;
++
++			if (dscp < IP_DSCP_NUM && up < IEEE80211_NUM_UPS)
++				req.qos_map[dscp] = up;
 +		}
 +	}
-+	rcu_read_unlock();
 +
-+	return mt76_mcu_send_msg(&dev->mt76, MCU_WA_EXT_CMD(SET_QOS_MAP), &req,
-+				 sizeof(req), false);
++	return mt76_mcu_send_msg(&mvif->phy->dev->mt76, MCU_WA_EXT_CMD(SET_QOS_MAP),
++				 &req, sizeof(req), true);
 +}
---- a/mt7915/mt7915.h
-+++ b/mt7915/mt7915.h
-@@ -175,6 +175,8 @@ struct mt7915_vif {
- 
- 	struct ieee80211_tx_queue_params queue_params[IEEE80211_NUM_ACS];
- 	struct cfg80211_bitrate_mask bitrate_mask;
 +
-+	bool qos_map_enabled;
- };
- 
- /* crash-dump */
-@@ -521,6 +523,7 @@ int mt7915_mcu_fw_dbg_ctrl(struct mt7915
- void mt7915_mcu_rx_event(struct mt7915_dev *dev, struct sk_buff *skb);
- void mt7915_mcu_exit(struct mt7915_dev *dev);
- void mt7915_mcu_wmm_pbc_work(struct work_struct *work);
-+int mt7915_mcu_set_qos_map(struct mt7915_dev *dev, struct ieee80211_vif *vif);
- 
- static inline u16 mt7915_wtbl_size(struct mt7915_dev *dev)
++static int
+ mt7915_set_radar_background(struct ieee80211_hw *hw,
+ 			    struct cfg80211_chan_def *chandef)
  {
+@@ -1747,6 +1786,7 @@ const struct ieee80211_ops mt7915_ops =
+ 	.add_twt_setup = mt7915_mac_add_twt_setup,
+ 	.twt_teardown_request = mt7915_twt_teardown_request,
+ 	.set_frag_threshold = mt7915_set_frag_threshold,
++	.set_qos_map = mt7915_set_qos_map,
+ 	CFG80211_TESTMODE_CMD(mt76_testmode_cmd)
+ 	CFG80211_TESTMODE_DUMP(mt76_testmode_dump)
+ #ifdef CONFIG_MAC80211_DEBUGFS

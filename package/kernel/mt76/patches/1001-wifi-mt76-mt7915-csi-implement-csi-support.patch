@@ -529,7 +529,7 @@ Subject: [PATCH] wifi: mt76: mt7915: csi: implement csi support
  #endif
 --- a/mt7915/mt7915.h
 +++ b/mt7915/mt7915.h
-@@ -197,6 +197,57 @@ struct mt7915_hif {
+@@ -195,6 +195,57 @@ struct mt7915_hif {
  	int irq;
  };
  
@@ -587,7 +587,7 @@ Subject: [PATCH] wifi: mt76: mt7915: csi: implement csi support
  struct mt7915_phy {
  	struct mt76_phy *mt76;
  	struct mt7915_dev *dev;
-@@ -245,6 +296,25 @@ struct mt7915_phy {
+@@ -243,6 +294,25 @@ struct mt7915_phy {
  		u8 spe_idx;
  	} test;
  #endif
@@ -613,7 +613,7 @@ Subject: [PATCH] wifi: mt76: mt7915: csi: implement csi support
  };
  
  #ifdef MTK_DEBUG
-@@ -649,6 +719,14 @@ void mt7915_sta_add_debugfs(struct ieee8
+@@ -646,6 +716,14 @@ void mt7915_sta_add_debugfs(struct ieee8
  int mt7915_mmio_wed_init(struct mt7915_dev *dev, void *pdev_ptr,
  			 bool pci, int *irq);
  
