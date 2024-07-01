@@ -184,7 +184,7 @@ Subject: [PATCH] [mt76] mt7915 MCU event airtime
  		 * the MAC work of the first band running.
 --- a/mt7915/mcu.c
 +++ b/mt7915/mcu.c
-@@ -547,6 +547,64 @@ mt7915_mcu_rx_sr_event(struct mt7915_dev
+@@ -547,6 +547,104 @@ mt7915_mcu_rx_sr_event(struct mt7915_dev
  #endif
  
  static void
@@ -197,6 +197,7 @@ Subject: [PATCH] [mt76] mt7915 MCU event airtime
 +	for (i = 0; i < le16_to_cpu(res->sta_num); i++) {
 +		u8 ac;
 +		u16 wlan_idx;
++		bool clear;
 +		struct mt76_wcid *wcid;
 +		struct ieee80211_sta *sta;
 +		u32 prev_tx_airtime, prev_rx_airtime, diff_tx_airtime, diff_rx_airtime;
@@ -205,6 +206,7 @@ Subject: [PATCH] [mt76] mt7915 MCU event airtime
 +		case MCU_PHY_PER_STA_TXRX_AIR_TIME:
 +			wlan_idx = le16_to_cpu(res->airtime[i].wlan_idx);
 +			wcid = rcu_dereference(dev->mt76.wcid[wlan_idx]);
++			clear = false;
 +
 +			sta = wcid_to_sta(wcid);
 +			if (!sta)
@@ -230,13 +232,51 @@ Subject: [PATCH] [mt76] mt7915 MCU event airtime
 +					diff_rx_airtime = wcid->stats.rx_airtime[ac];
 +				}
 +
-+				if (diff_tx_airtime > 550000)
-+					diff_tx_airtime = 0;
-+				if (diff_rx_airtime > 550000)
-+					diff_rx_airtime = 0;
++				if ((wcid->stats.tx_airtime[ac] | wcid->stats.rx_airtime[ac]) & BIT(30)) {
++						clear = true;
++
++						dev_dbg(dev->mt76.dev,
++							"sta: %02X:%02X:%02X:%02X:%02X:%02X ac: %u tx_read: %u rx_read: %u tx_time: %u rx_time: %u tx_prev: %u rx_prev: %u tx_diff: %u rx_diff: %u clear: %d\n",
++							sta->addr[0], sta->addr[1], sta->addr[2], sta->addr[3], sta->addr[4], sta->addr[5],
++							ac,
++							le32_to_cpu(res->airtime[i].tx[lmac_ac]),
++							le32_to_cpu(res->airtime[i].rx[lmac_ac]),
++							wcid->stats.tx_airtime[ac],
++							wcid->stats.rx_airtime[ac],
++							prev_tx_airtime, prev_rx_airtime,
++							diff_tx_airtime, diff_rx_airtime,
++							clear);
++				}
++
++				if ((diff_tx_airtime > 600000) || (diff_rx_airtime > 600000)) {
++					dev_dbg(dev->mt76.dev,
++						"sta: %02X:%02X:%02X:%02X:%02X:%02X ac: %u tx_read: %u rx_read: %u tx_time: %u rx_time: %u tx_prev: %u rx_prev: %u tx_diff: %u rx_diff: %u\n",
++						sta->addr[0], sta->addr[1], sta->addr[2], sta->addr[3], sta->addr[4], sta->addr[5],
++						ac,
++						le32_to_cpu(res->airtime[i].tx[lmac_ac]),
++						le32_to_cpu(res->airtime[i].rx[lmac_ac]),
++						wcid->stats.tx_airtime[ac],
++						wcid->stats.rx_airtime[ac],
++						prev_tx_airtime, prev_rx_airtime,
++						diff_tx_airtime, diff_rx_airtime);
++
++					if (diff_tx_airtime > 600000)
++						diff_tx_airtime = 0;
++					if (diff_rx_airtime > 600000)
++						diff_rx_airtime = 0;
++				}
 +
 +				ieee80211_sta_register_airtime(sta, mt76_ac_to_tid(ac),
 +					diff_tx_airtime, diff_rx_airtime);
++			}
++
++			if (clear) {
++				dev_dbg(dev->mt76.dev,
++					"sta: %02X:%02X:%02X:%02X:%02X:%02X reset airtime counters\n",
++					sta->addr[0], sta->addr[1], sta->addr[2], sta->addr[3], sta->addr[4], sta->addr[5]);
++
++				mt7915_mac_wtbl_update(dev, wcid->idx,
++						       MT_WTBL_UPDATE_ADM_COUNT_CLEAR);
 +			}
 +			break;
 +		default:
@@ -249,7 +289,7 @@ Subject: [PATCH] [mt76] mt7915 MCU event airtime
  mt7915_mcu_rx_ext_event(struct mt7915_dev *dev, struct sk_buff *skb)
  {
  	struct mt76_connac2_mcu_rxd *rxd;
-@@ -591,6 +649,9 @@ mt7915_mcu_rx_ext_event(struct mt7915_de
+@@ -591,6 +689,9 @@ mt7915_mcu_rx_ext_event(struct mt7915_de
  	case MCU_EXT_EVENT_BSS_ACQ_PKT_CNT:
  		mt7915_mcu_rx_bss_acq_pkt_cnt(dev, skb);
  		break;
@@ -259,7 +299,7 @@ Subject: [PATCH] [mt76] mt7915 MCU event airtime
  	default:
  		break;
  	}
-@@ -624,6 +685,7 @@ void mt7915_mcu_rx_event(struct mt7915_d
+@@ -624,6 +725,7 @@ void mt7915_mcu_rx_event(struct mt7915_d
  	     rxd->ext_eid == MCU_EXT_EVENT_BCC_NOTIFY ||
  	     rxd->ext_eid == MCU_EXT_EVENT_BF_STATUS_READ ||
  	     rxd->ext_eid == MCU_EXT_EVENT_SR ||
@@ -267,7 +307,7 @@ Subject: [PATCH] [mt76] mt7915 MCU event airtime
  	     !rxd->seq) &&
  	     !(rxd->eid == MCU_CMD_EXT_CID &&
  	       rxd->ext_eid == MCU_EXT_EVENT_WA_TX_STAT))
-@@ -5675,3 +5737,16 @@ int mt7915_mcu_thermal_debug(struct mt79
+@@ -5675,3 +5777,16 @@ int mt7915_mcu_thermal_debug(struct mt79
  	return mt76_mcu_send_msg(&dev->mt76, MCU_EXT_CMD(THERMAL_DEBUG), &req,
  				 sizeof(req), true);
  }
