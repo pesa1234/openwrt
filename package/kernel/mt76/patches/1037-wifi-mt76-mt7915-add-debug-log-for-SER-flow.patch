@@ -30,7 +30,7 @@ Signed-off-by: Bo Jiao <Bo.Jiao@mediatek.com>
  }
  
  /* firmware coredump */
-@@ -1721,6 +1727,9 @@ void mt7915_coredump(struct mt7915_dev *
+@@ -1697,6 +1703,9 @@ void mt7915_mac_dump_work(struct work_st
  
  void mt7915_reset(struct mt7915_dev *dev)
  {
