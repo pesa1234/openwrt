@@ -88,7 +88,7 @@ Signed-off-by: Howard Hsu <howard-yh.hsu@mediatek.com>
  }
  
  /* system error recovery */
-@@ -1546,6 +1552,7 @@ void mt7915_mac_reset_work(struct work_s
+@@ -1543,6 +1549,7 @@ void mt7915_mac_reset_work(struct work_s
  		set_bit(MT76_RESET, &phy2->mt76->state);
  		cancel_delayed_work_sync(&phy2->mt76->mac_work);
  	}
@@ -96,17 +96,17 @@ Signed-off-by: Howard Hsu <howard-yh.hsu@mediatek.com>
  	mt76_worker_disable(&dev->mt76.tx_worker);
  	mt76_for_each_q_rx(&dev->mt76, i)
  		napi_disable(&dev->mt76.napi[i]);
-@@ -1610,6 +1617,10 @@ void mt7915_mac_reset_work(struct work_s
+@@ -1606,6 +1613,10 @@ void mt7915_mac_reset_work(struct work_s
+ 		ieee80211_queue_delayed_work(ext_phy->hw,
  					     &phy2->mt76->mac_work,
  					     MT7915_WATCHDOG_TIME);
- 
++					     
 +	if (mtk_wed_device_active(&dev->mt76.mmio.wed) &&
 +	    mtk_wed_get_rx_capa(&dev->mt76.mmio.wed))
 +		ieee80211_queue_delayed_work(mt76_hw(dev), &dev->scs_work, HZ);
-+
- 	dev_info(dev->mt76.dev,"\n%s L1 SER recovery completed.",
- 		 wiphy_name(dev->mt76.hw->wiphy));
  }
+ 
+ /* firmware coredump */
 --- a/mt7915/main.c
 +++ b/mt7915/main.c
 @@ -89,12 +89,24 @@ int mt7915_run(struct ieee80211_hw *hw)
