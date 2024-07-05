@@ -39,7 +39,7 @@ Get tx count and tx failed from mcu command
  	MCU_EXT_CMD_SET_RDD_CTRL = 0x3a,
 --- a/mt7915/mcu.c
 +++ b/mt7915/mcu.c
-@@ -4386,6 +4386,114 @@ int mt7915_mcu_get_tx_rate(struct mt7915
+@@ -4393,6 +4393,114 @@ int mt7915_mcu_get_tx_rate(struct mt7915
  		return mt7915_mcu_get_tx_rate_v2(phy, wcidx);
  }
  
@@ -156,7 +156,7 @@ Get tx count and tx failed from mcu command
  {
 --- a/mt7915/mcu.h
 +++ b/mt7915/mcu.h
-@@ -849,7 +849,8 @@ mt7915_get_power_bound(struct mt7915_phy
+@@ -853,7 +853,8 @@ mt7915_get_power_bound(struct mt7915_phy
  }
  
  enum {
@@ -166,7 +166,7 @@ Get tx count and tx failed from mcu command
  };
  
  #ifdef CONFIG_MTK_VENDOR
-@@ -1125,6 +1126,24 @@ struct mt7915_muru {
+@@ -1129,6 +1130,24 @@ struct mt7915_muru {
  /* DL&UL User config */
  #define MURU_USER_CNT                   BIT(4)
  
@@ -193,7 +193,7 @@ Get tx count and tx failed from mcu command
     CAPI_MU,
 --- a/mt7915/mt7915.h
 +++ b/mt7915/mt7915.h
-@@ -691,6 +691,7 @@ int mt7915_mcu_get_rx_rate(struct mt7915
+@@ -700,6 +700,7 @@ int mt7915_mcu_get_rx_rate(struct mt7915
  int mt7915_mcu_rdd_background_enable(struct mt7915_phy *phy,
  				     struct cfg80211_chan_def *chandef);
  int mt7915_mcu_wed_wa_tx_stats(struct mt7915_dev *dev, u16 wcid);

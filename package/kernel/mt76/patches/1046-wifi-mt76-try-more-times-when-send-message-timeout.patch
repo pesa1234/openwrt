@@ -162,7 +162,7 @@ Signed-off-by: Bo Jiao <Bo.Jiao@mediatek.com>
  	cancel_delayed_work_sync(&dev->mphy.mac_work);
  	if (ext_phy)
  		cancel_delayed_work_sync(&ext_phy->mac_work);
-@@ -1543,20 +1544,15 @@ void mt7915_mac_reset_work(struct work_s
+@@ -1546,20 +1547,15 @@ void mt7915_mac_reset_work(struct work_s
  
  	set_bit(MT76_RESET, &dev->mphy.state);
  	set_bit(MT76_MCU_RESET, &dev->mphy.state);
@@ -186,7 +186,7 @@ Signed-off-by: Bo Jiao <Bo.Jiao@mediatek.com>
  	if (mtk_wed_device_active(&dev->mt76.mmio.wed))
  		mtk_wed_device_stop(&dev->mt76.mmio.wed);
  
-@@ -1580,8 +1576,8 @@ void mt7915_mac_reset_work(struct work_s
+@@ -1583,8 +1579,8 @@ void mt7915_mac_reset_work(struct work_s
  
  	clear_bit(MT76_MCU_RESET, &dev->mphy.state);
  	clear_bit(MT76_RESET, &dev->mphy.state);
@@ -197,7 +197,7 @@ Signed-off-by: Bo Jiao <Bo.Jiao@mediatek.com>
  
  	local_bh_disable();
  	mt76_for_each_q_rx(&dev->mt76, i) {
-@@ -1603,20 +1599,8 @@ void mt7915_mac_reset_work(struct work_s
+@@ -1606,21 +1602,8 @@ void mt7915_mac_reset_work(struct work_s
  	if (ext_phy)
  		ieee80211_wake_queues(ext_phy->hw);
  
@@ -211,10 +211,11 @@ Signed-off-by: Bo Jiao <Bo.Jiao@mediatek.com>
 -		ieee80211_queue_delayed_work(ext_phy->hw,
 -					     &phy2->mt76->mac_work,
 -					     MT7915_WATCHDOG_TIME);
--					     
+-
 -	if (mtk_wed_device_active(&dev->mt76.mmio.wed) &&
 -	    mtk_wed_get_rx_capa(&dev->mt76.mmio.wed))
 -		ieee80211_queue_delayed_work(mt76_hw(dev), &dev->scs_work, HZ);
+-
+ 	dev_info(dev->mt76.dev,"\n%s L1 SER recovery completed.",
+ 		 wiphy_name(dev->mt76.hw->wiphy));
  }
- 
- /* firmware coredump */
