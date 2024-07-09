@@ -290,7 +290,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  		}
 --- a/mt7915/init.c
 +++ b/mt7915/init.c
-@@ -694,7 +694,7 @@ static void mt7915_init_work(struct work
+@@ -699,7 +699,7 @@ static void mt7915_init_work(struct work
  	struct mt7915_dev *dev = container_of(work, struct mt7915_dev,
  				 init_work);
  
