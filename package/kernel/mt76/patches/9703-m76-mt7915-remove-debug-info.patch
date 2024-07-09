@@ -4,7 +4,7 @@
  	if (ret)
  		return ret;
  
--	dev_info(dev->mt76.dev, "%s: sku enable = %d, path enable = %d\n", __func__,
+-	pr_info("%s: sku enable = %d, path enable = %d\n", __func__,
 -		sku_disable ? 0 : phy->sku_limit_en, sku_disable ? 0 : phy->sku_path_en);
 -
  	req.sku_enable = sku_disable ? 0 : phy->sku_path_en;
