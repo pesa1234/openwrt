@@ -1,4 +1,4 @@
-From bdc345a92e1096ef0862e0b3d4157166e23eaffd Mon Sep 17 00:00:00 2001
+From 5fd6278fa4d62c140f40fe2d7ae0bd86074b2d36 Mon Sep 17 00:00:00 2001
 From: Benjamin Lin <benjamin-jw.lin@mediatek.com>
 Date: Thu, 25 Apr 2024 17:17:13 +0800
 Subject: [PATCH] wifi: mt76: mt7915: fix inconsistent QoS mapping between SW
@@ -10,8 +10,8 @@ Therefore, the mapping needs to be passed to HW, so that the QoS type of traffic
 Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
 ---
  mt76_connac_mcu.h |  1 +
- mt7915/main.c     | 40 ++++++++++++++++++++++++++++++++++++++++
- 2 files changed, 41 insertions(+)
+ mt7915/main.c     | 44 ++++++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 45 insertions(+)
 
 --- a/mt76_connac_mcu.h
 +++ b/mt76_connac_mcu.h
@@ -25,7 +25,7 @@ Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
  enum {
 --- a/mt7915/main.c
 +++ b/mt7915/main.c
-@@ -1620,6 +1620,45 @@ mt7915_set_frag_threshold(struct ieee802
+@@ -1620,6 +1620,49 @@ mt7915_set_frag_threshold(struct ieee802
  }
  
  static int
@@ -42,6 +42,10 @@ Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
 +		.bss_idx = mvif->mt76.idx,
 +		.qos_map_enable = qos_map ? true : false,
 +	};
++
++	/* Prevent access to members of mt7915_vif before its initialization. */
++	if (!mvif->phy)
++		return -EPERM;
 +
 +	if (qos_map) {
 +		struct cfg80211_dscp_exception *exception = qos_map->dscp_exception;
@@ -71,7 +75,7 @@ Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
  mt7915_set_radar_background(struct ieee80211_hw *hw,
  			    struct cfg80211_chan_def *chandef)
  {
-@@ -1747,6 +1786,7 @@ const struct ieee80211_ops mt7915_ops =
+@@ -1747,6 +1790,7 @@ const struct ieee80211_ops mt7915_ops =
  	.add_twt_setup = mt7915_mac_add_twt_setup,
  	.twt_teardown_request = mt7915_twt_teardown_request,
  	.set_frag_threshold = mt7915_set_frag_threshold,
