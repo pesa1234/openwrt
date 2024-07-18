@@ -84,7 +84,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  
  			/*
  			 * When background radar is enabled but the CAC completion
-@@ -1654,7 +1654,8 @@ int hostapd_dfs_start_cac(struct hostapd
+@@ -1664,7 +1664,8 @@ int hostapd_dfs_start_cac(struct hostapd
  	} else {
  		/* This is called when the driver indicates that an offloaded
  		 * DFS has started CAC. */

@@ -218,7 +218,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  	return 0;
  }
  
-@@ -1714,14 +1718,15 @@ int hostapd_handle_dfs_offload(struct ho
+@@ -1726,14 +1730,15 @@ int hostapd_handle_dfs_offload(struct ho
  }
  
  
@@ -238,7 +238,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  
  	if (!iface->conf->ieee80211h || !mode ||
  	    mode->mode != HOSTAPD_MODE_IEEE80211A)
-@@ -1754,18 +1759,129 @@ int hostapd_is_dfs_overlap(struct hostap
+@@ -1766,18 +1771,129 @@ int hostapd_is_dfs_overlap(struct hostap
  		if (!(chan->flag & HOSTAPD_CHAN_RADAR))
  			continue;
  
@@ -312,9 +312,9 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
 -		   res ? "yes" : "no");
 +	return chan;
 +}
++
  
 -	return res;
-+
 +/*
 + * DFS handler for CSA
 + * 1  - update background radar with the filled setting

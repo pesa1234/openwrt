@@ -17,7 +17,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
 
 --- a/src/ap/dfs.c
 +++ b/src/ap/dfs.c
-@@ -1519,6 +1519,26 @@ int hostapd_dfs_nop_finished(struct host
+@@ -1529,6 +1529,26 @@ int hostapd_dfs_nop_finished(struct host
  }
  
  
