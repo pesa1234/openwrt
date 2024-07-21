@@ -15,7 +15,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
 
 --- a/hostapd/ctrl_iface.c
 +++ b/hostapd/ctrl_iface.c
-@@ -2634,11 +2634,12 @@ static int hostapd_ctrl_iface_chan_switc
+@@ -2647,11 +2647,12 @@ static int hostapd_ctrl_iface_chan_switc
  					  char *pos)
  {
  #ifdef NEED_AP_MLME
@@ -31,7 +31,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  	unsigned int num_err = 0;
  	int err = 0;
  
-@@ -2663,38 +2664,55 @@ static int hostapd_ctrl_iface_chan_switc
+@@ -2676,38 +2677,55 @@ static int hostapd_ctrl_iface_chan_switc
  	switch (settings.freq_params.bandwidth) {
  	case 40:
  		bandwidth = CHAN_WIDTH_40;
@@ -100,7 +100,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  	}
  
  	for (i = 0; i < iface->num_bss; i++) {
-@@ -2709,6 +2727,38 @@ static int hostapd_ctrl_iface_chan_switc
+@@ -2722,6 +2740,38 @@ static int hostapd_ctrl_iface_chan_switc
  			num_err++;
  		}
  	}
@@ -397,7 +397,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  #endif /* DFS_H */
 --- a/src/ap/hostapd.c
 +++ b/src/ap/hostapd.c
-@@ -4034,7 +4034,13 @@ static int hostapd_fill_csa_settings(str
+@@ -4047,7 +4047,13 @@ static int hostapd_fill_csa_settings(str
  	u8 chan, bandwidth;
  
  	os_memset(&old_freq, 0, sizeof(old_freq));

@@ -112,7 +112,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  
 --- a/src/drivers/driver.h
 +++ b/src/drivers/driver.h
-@@ -5799,6 +5799,20 @@ enum wpa_event_type {
+@@ -5843,6 +5843,20 @@ enum wpa_event_type {
  	 * EVENT_LINK_RECONFIG - Notification that AP links removed
  	 */
  	EVENT_LINK_RECONFIG,

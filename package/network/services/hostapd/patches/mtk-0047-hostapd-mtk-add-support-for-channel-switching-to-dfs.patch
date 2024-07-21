@@ -14,7 +14,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
 
 --- a/hostapd/ctrl_iface.c
 +++ b/hostapd/ctrl_iface.c
-@@ -2639,7 +2639,6 @@ static int hostapd_ctrl_iface_chan_switc
+@@ -2652,7 +2652,6 @@ static int hostapd_ctrl_iface_chan_switc
  	int dfs_range = 0;
  	unsigned int i;
  	int bandwidth;
@@ -22,7 +22,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  	unsigned int num_err = 0;
  	int err = 0;
  
-@@ -2694,29 +2693,8 @@ static int hostapd_ctrl_iface_chan_switc
+@@ -2707,29 +2706,8 @@ static int hostapd_ctrl_iface_chan_switc
  			iface, bandwidth, settings.freq_params.center_freq2);
  
  	if (dfs_range) {
@@ -96,7 +96,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  	/* TODO: How to check CAC time for ETSI weather channels? */
 --- a/src/ap/ieee802_11.c
 +++ b/src/ap/ieee802_11.c
-@@ -6251,6 +6251,11 @@ int ieee802_11_mgmt(struct hostapd_data
+@@ -6252,6 +6252,11 @@ int ieee802_11_mgmt(struct hostapd_data
  		return 1;
  	}
  

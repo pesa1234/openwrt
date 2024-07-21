@@ -18,10 +18,10 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
 
 --- a/hostapd/config_file.c
 +++ b/hostapd/config_file.c
-@@ -5058,6 +5058,10 @@ static int hostapd_config_fill(struct ho
- 		bss->mld_indicate_disabled = atoi(pos);
- #endif /* CONFIG_TESTING_OPTIONS */
- #endif /* CONFIG_IEEE80211BE */
+@@ -5108,6 +5108,10 @@ static int hostapd_config_fill(struct ho
+ 	} else if (os_strcmp(buf, "ibf_enable") == 0) { /*ibf setting is per device*/
+ 		int val = atoi(pos);
+ 		conf->ibf_enable = !!val;
 +	} else if (os_strcmp(buf, "dfs_detect_mode") == 0) { /*bypass channel switch*/
 +		u8 en = strtol(pos, NULL, 10);
 +
@@ -31,8 +31,8 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  			   "Line %d: unknown configuration item '%s'",
 --- a/hostapd/ctrl_iface.c
 +++ b/hostapd/ctrl_iface.c
-@@ -3871,6 +3871,26 @@ fail:
- #endif /* CONFIG_NAN_USD */
+@@ -4075,6 +4075,26 @@ hostapd_ctrl_iface_get_ibf(struct hostap
+ }
  
  
 +static int
@@ -58,10 +58,10 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  static int hostapd_ctrl_iface_receive_process(struct hostapd_data *hapd,
  					      char *buf, char *reply,
  					      int reply_size,
-@@ -4468,6 +4488,9 @@ static int hostapd_ctrl_iface_receive_pr
- 			reply_len = -1;
- #endif /* CONFIG_TESTING_OPTIONS */
- #endif /* CONFIG_IEEE80211BE */
+@@ -4685,6 +4705,9 @@ static int hostapd_ctrl_iface_receive_pr
+ 		reply_len = hostapd_ctrl_iface_get_mu(hapd, reply, reply_size);
+ 	} else if (os_strncmp(buf, "GET_IBF", 7) == 0) {
+ 		reply_len = hostapd_ctrl_iface_get_ibf(hapd, reply, reply_size);
 +	} else if (os_strncmp(buf, "DFS_DETECT_MODE ", 16) == 0) {
 +		reply_len = hostapd_ctrl_iface_set_dfs_detect_mode(hapd, buf + 16,
 +								   reply, reply_size);
@@ -70,13 +70,18 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  		reply_len = 16;
 --- a/src/ap/ap_config.h
 +++ b/src/ap/ap_config.h
-@@ -1225,6 +1225,19 @@ struct hostapd_config {
- 		MBSSID_ENABLED = 1,
- 		ENHANCED_MBSSID_ENABLED = 2,
- 	} mbssid;
+@@ -1232,6 +1232,7 @@ struct hostapd_config {
+ 	int *edcca_threshold;
+ 	u8 three_wire_enable;
+ 	u8 ibf_enable;
 +	u8 dfs_detect_mode;
-+};
-+
+ };
+ 
+ enum three_wire_mode {
+@@ -1246,6 +1247,18 @@ enum three_wire_mode {
+ 		NUM_THREE_WIRE_MODE - 1
+ };
+ 
 +enum dfs_mode {
 +	DFS_DETECT_MODE_DISABLE,
 +	DFS_DETECT_MODE_AP_ENABLE,
@@ -87,9 +92,11 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
 +	NUM_DFS_DETECT_MODE,
 +	DFS_DETECT_MODE_MAX =
 +		NUM_DFS_DETECT_MODE - 1
- };
- 
- 
++};
++
+ enum edcca_mode {
+ 	EDCCA_MODE_FORCE_DISABLE = 0,
+ 	EDCCA_MODE_AUTO = 1,
 --- a/src/ap/dfs.c
 +++ b/src/ap/dfs.c
 @@ -1336,6 +1336,11 @@ hostapd_dfs_background_start_channel_swi
