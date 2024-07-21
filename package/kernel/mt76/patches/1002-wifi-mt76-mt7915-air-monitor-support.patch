@@ -20,9 +20,9 @@ Subject: [PATCH] wifi: mt76: mt7915: air monitor support
  	MCU_EXT_CMD_PHY_STAT_INFO = 0xad,
 +	/* for vendor csi and air monitor */
 +	MCU_EXT_CMD_SMESH_CTRL = 0xae,
+ 	MCU_EXT_CMD_SET_QOS_MAP = 0xb4,
  	MCU_EXT_CMD_CSI_CTRL = 0xc2,
  };
- 
 --- a/mt7915/mac.c
 +++ b/mt7915/mac.c
 @@ -551,6 +551,10 @@ mt7915_mac_fill_rx(struct mt7915_dev *de

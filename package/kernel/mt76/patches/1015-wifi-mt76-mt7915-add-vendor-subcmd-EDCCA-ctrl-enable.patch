@@ -16,9 +16,9 @@ Subject: [PATCH] wifi: mt76: mt7915: add vendor subcmd EDCCA ctrl
 
 --- a/mt76_connac_mcu.h
 +++ b/mt76_connac_mcu.h
-@@ -1261,6 +1261,7 @@ enum {
- 	MCU_EXT_CMD_SMESH_CTRL = 0xae,
+@@ -1262,6 +1262,7 @@ enum {
  	MCU_EXT_CMD_RX_STAT_USER_CTRL = 0xb3,
+ 	MCU_EXT_CMD_SET_QOS_MAP = 0xb4,
  	MCU_EXT_CMD_CERT_CFG = 0xb7,
 +	MCU_EXT_CMD_EDCCA = 0xba,
  	MCU_EXT_CMD_CSI_CTRL = 0xc2,

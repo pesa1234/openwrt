@@ -45,8 +45,8 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  	MCU_EXT_CMD_RX_STAT = 0xa4,
  	MCU_EXT_CMD_SET_SPR = 0xa8,
  	MCU_EXT_CMD_GROUP_PRE_CAL_INFO = 0xab,
-@@ -1261,6 +1262,7 @@ enum {
- 	MCU_EXT_CMD_RX_STAT_USER_CTRL = 0xb3,
+@@ -1262,6 +1263,7 @@ enum {
+ 	MCU_EXT_CMD_SET_QOS_MAP = 0xb4,
  	MCU_EXT_CMD_CERT_CFG = 0xb7,
  	MCU_EXT_CMD_CSI_CTRL = 0xc2,
 +	MCU_EXT_CMD_IPI_HIST_SCAN = 0xc5,

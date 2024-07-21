@@ -274,9 +274,9 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  	/* for vendor csi and air monitor */
  	MCU_EXT_CMD_SMESH_CTRL = 0xae,
 +	MCU_EXT_CMD_RX_STAT_USER_CTRL = 0xb3,
+ 	MCU_EXT_CMD_SET_QOS_MAP = 0xb4,
  	MCU_EXT_CMD_CERT_CFG = 0xb7,
  	MCU_EXT_CMD_CSI_CTRL = 0xc2,
- };
 --- a/mt7915/eeprom.c
 +++ b/mt7915/eeprom.c
 @@ -142,7 +142,7 @@ static int mt7915_eeprom_load(struct mt7
@@ -290,7 +290,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  		}
 --- a/mt7915/init.c
 +++ b/mt7915/init.c
-@@ -726,7 +726,7 @@ static void mt7915_init_work(struct work
+@@ -697,7 +697,7 @@ static void mt7915_init_work(struct work
  	struct mt7915_dev *dev = container_of(work, struct mt7915_dev,
  				 init_work);
  
@@ -379,7 +379,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  #endif
  }
  
-@@ -1427,7 +1451,7 @@ mt7915_mac_restart(struct mt7915_dev *de
+@@ -1386,7 +1410,7 @@ mt7915_mac_restart(struct mt7915_dev *de
  		goto out;
  
  	/* set the necessary init items */

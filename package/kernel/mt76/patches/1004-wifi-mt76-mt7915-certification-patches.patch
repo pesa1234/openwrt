@@ -17,10 +17,10 @@ Subject: [PATCH 1004/1051] wifi: mt76: mt7915: certification patches
 
 --- a/mt76_connac_mcu.h
 +++ b/mt76_connac_mcu.h
-@@ -1255,6 +1255,7 @@ enum {
- 	MCU_EXT_CMD_PHY_STAT_INFO = 0xad,
+@@ -1256,6 +1256,7 @@ enum {
  	/* for vendor csi and air monitor */
  	MCU_EXT_CMD_SMESH_CTRL = 0xae,
+ 	MCU_EXT_CMD_SET_QOS_MAP = 0xb4,
 +	MCU_EXT_CMD_CERT_CFG = 0xb7,
  	MCU_EXT_CMD_CSI_CTRL = 0xc2,
  };
@@ -35,7 +35,7 @@ Subject: [PATCH 1004/1051] wifi: mt76: mt7915: certification patches
  
  #define to_rssi(field, rcpi)	((FIELD_GET(field, rcpi) - 220) / 2)
  
-@@ -1988,6 +1989,21 @@ static void mt7915_mac_severe_check(stru
+@@ -1947,6 +1948,21 @@ static void mt7915_mac_severe_check(stru
  	phy->trb_ts = trb;
  }
  
@@ -57,7 +57,7 @@ Subject: [PATCH 1004/1051] wifi: mt76: mt7915: certification patches
  void mt7915_mac_sta_rc_work(struct work_struct *work)
  {
  	struct mt7915_dev *dev = container_of(work, struct mt7915_dev, rc_work);
-@@ -2010,6 +2026,13 @@ void mt7915_mac_sta_rc_work(struct work_
+@@ -1969,6 +1985,13 @@ void mt7915_mac_sta_rc_work(struct work_
  		sta = container_of((void *)msta, struct ieee80211_sta, drv_priv);
  		vif = container_of((void *)msta->vif, struct ieee80211_vif, drv_priv);
  
