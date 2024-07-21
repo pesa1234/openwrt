@@ -16,7 +16,7 @@ Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
 
 --- a/include/net/mac80211.h
 +++ b/include/net/mac80211.h
-@@ -4369,6 +4369,7 @@ struct ieee80211_prep_tx_info {
+@@ -4376,6 +4376,7 @@ struct ieee80211_prep_tx_info {
   *	disable background CAC/radar detection.
   * @net_fill_forward_path: Called from .ndo_fill_forward_path in order to
   *	resolve a path for hardware flow offloading
@@ -24,7 +24,7 @@ Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
   * @can_activate_links: Checks if a specific active_links bitmap is
   *	supported by the driver.
   * @change_vif_links: Change the valid links on an interface, note that while
-@@ -4756,6 +4757,8 @@ struct ieee80211_ops {
+@@ -4763,6 +4764,8 @@ struct ieee80211_ops {
  				     struct ieee80211_sta *sta,
  				     struct net_device_path_ctx *ctx,
  				     struct net_device_path *path);
