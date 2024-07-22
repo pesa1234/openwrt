@@ -268,8 +268,8 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
 +	MCU_EXT_EVENT_BF_STATUS_READ = 0x35,
  	MCU_EXT_EVENT_RDD_REPORT = 0x3a,
  	MCU_EXT_EVENT_CSA_NOTIFY = 0x4f,
- 	MCU_EXT_EVENT_WA_TX_STAT = 0x74,
-@@ -1256,6 +1257,7 @@ enum {
+ 	MCU_EXT_EVENT_BSS_ACQ_PKT_CNT = 0x52,
+@@ -1258,6 +1259,7 @@ enum {
  	MCU_EXT_CMD_PHY_STAT_INFO = 0xad,
  	/* for vendor csi and air monitor */
  	MCU_EXT_CMD_SMESH_CTRL = 0xae,
@@ -379,7 +379,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  #endif
  }
  
-@@ -1386,7 +1410,7 @@ mt7915_mac_restart(struct mt7915_dev *de
+@@ -1385,7 +1409,7 @@ mt7915_mac_restart(struct mt7915_dev *de
  		goto out;
  
  	/* set the necessary init items */
@@ -401,9 +401,9 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  
 --- a/mt7915/mcu.c
 +++ b/mt7915/mcu.c
-@@ -390,6 +390,11 @@ mt7915_mcu_rx_ext_event(struct mt7915_de
- 	case MCU_EXT_EVENT_BCC_NOTIFY:
- 		mt7915_mcu_rx_bcc_notify(dev, skb);
+@@ -326,6 +326,11 @@ mt7915_mcu_rx_log_message(struct mt7915_
+ 	case 2:
+ 		type = "WA";
  		break;
 +#ifdef CONFIG_NL80211_TESTMODE
 +	case MCU_EXT_EVENT_BF_STATUS_READ:
@@ -411,9 +411,9 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
 +		break;
 +#endif
  	default:
+ 		type = "unknown";
  		break;
- 	}
-@@ -421,6 +426,7 @@ void mt7915_mcu_rx_event(struct mt7915_d
+@@ -511,6 +516,7 @@ void mt7915_mcu_rx_event(struct mt7915_d
  	     rxd->ext_eid == MCU_EXT_EVENT_ASSERT_DUMP ||
  	     rxd->ext_eid == MCU_EXT_EVENT_PS_SYNC ||
  	     rxd->ext_eid == MCU_EXT_EVENT_BCC_NOTIFY ||
@@ -421,7 +421,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  	     !rxd->seq) &&
  	     !(rxd->eid == MCU_CMD_EXT_CID &&
  	       rxd->ext_eid == MCU_EXT_EVENT_WA_TX_STAT))
-@@ -2765,7 +2771,8 @@ int mt7915_mcu_set_chan_info(struct mt79
+@@ -2854,7 +2860,8 @@ int mt7915_mcu_set_chan_info(struct mt79
  	}
  #endif
  
@@ -431,7 +431,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  		req.tx_path_num = fls(phy->mt76->antenna_mask);
  
  	if (phy->mt76->hw->conf.flags & IEEE80211_CONF_MONITOR)
-@@ -2833,21 +2840,21 @@ static int mt7915_mcu_set_eeprom_flash(s
+@@ -2922,21 +2929,21 @@ static int mt7915_mcu_set_eeprom_flash(s
  	return 0;
  }
  
@@ -456,7 +456,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  {
  	struct mt7915_mcu_eeprom_info req = {
  		.addr = cpu_to_le32(round_down(offset,
-@@ -2856,7 +2863,7 @@ int mt7915_mcu_get_eeprom(struct mt7915_
+@@ -2945,7 +2952,7 @@ int mt7915_mcu_get_eeprom(struct mt7915_
  	struct mt7915_mcu_eeprom_info *res;
  	struct sk_buff *skb;
  	int ret;
@@ -465,7 +465,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  
  	ret = mt76_mcu_send_and_get_msg(&dev->mt76,
  					MCU_EXT_QUERY(EFUSE_ACCESS),
-@@ -2865,8 +2872,11 @@ int mt7915_mcu_get_eeprom(struct mt7915_
+@@ -2954,8 +2961,11 @@ int mt7915_mcu_get_eeprom(struct mt7915_
  		return ret;
  
  	res = (struct mt7915_mcu_eeprom_info *)skb->data;
@@ -496,7 +496,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  };
  
  struct mt7915_mcu_thermal_ctrl {
-@@ -472,6 +477,12 @@ enum {
+@@ -487,6 +492,12 @@ enum {
  
  enum {
  	MT_BF_SOUNDING_ON = 1,
@@ -509,7 +509,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  	MT_BF_TYPE_UPDATE = 20,
  	MT_BF_MODULE_UPDATE = 25
  };
-@@ -713,10 +724,20 @@ struct mt7915_muru {
+@@ -728,10 +739,20 @@ struct mt7915_muru {
  #define MURU_OFDMA_SCH_TYPE_UL          BIT(1)
  
  /* Common Config */
@@ -585,7 +585,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  #ifdef MTK_DEBUG
  enum {
  	ADIE0,
-@@ -610,8 +622,8 @@ int mt7915_mcu_set_fixed_rate_ctrl(struc
+@@ -612,8 +624,8 @@ int mt7915_mcu_set_fixed_rate_ctrl(struc
  				   struct ieee80211_vif *vif,
  				   struct ieee80211_sta *sta,
  				   void *data, u32 field);
@@ -596,14 +596,14 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  int mt7915_mcu_get_eeprom_free_block(struct mt7915_dev *dev, u8 *block_num);
  int mt7915_mcu_set_mac(struct mt7915_dev *dev, int band, bool enable,
  		       bool hdr_trans);
-@@ -649,6 +661,7 @@ int mt7915_mcu_fw_log_2_host(struct mt79
+@@ -651,6 +663,7 @@ int mt7915_mcu_fw_log_2_host(struct mt79
  int mt7915_mcu_fw_dbg_ctrl(struct mt7915_dev *dev, u32 module, u8 level);
  void mt7915_mcu_rx_event(struct mt7915_dev *dev, struct sk_buff *skb);
  void mt7915_mcu_exit(struct mt7915_dev *dev);
 +int mt7915_tm_txbf_status_read(struct mt7915_dev *dev, struct sk_buff *skb);
+ void mt7915_mcu_wmm_pbc_work(struct work_struct *work);
  
  static inline u16 mt7915_wtbl_size(struct mt7915_dev *dev)
- {
 --- a/mt7915/regs.h
 +++ b/mt7915/regs.h
 @@ -62,6 +62,7 @@ enum offs_rev {

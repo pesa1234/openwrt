@@ -70,7 +70,7 @@ Signed-off-by: Peter Chiu <chui-hao.chiu@mediatek.com>
  	idr_destroy(&dev->token);
 --- a/mt7915/init.c
 +++ b/mt7915/init.c
-@@ -1216,6 +1216,8 @@ int mt7915_register_device(struct mt7915
+@@ -1218,6 +1218,8 @@ int mt7915_register_device(struct mt7915
  
  	dev->dbdc_support = mt7915_band_config(dev);
  
@@ -79,7 +79,7 @@ Signed-off-by: Peter Chiu <chui-hao.chiu@mediatek.com>
  	phy2 = mt7915_alloc_ext_phy(dev);
  	if (IS_ERR(phy2))
  		return PTR_ERR(phy2);
-@@ -1248,6 +1250,7 @@ int mt7915_register_device(struct mt7915
+@@ -1250,6 +1252,7 @@ int mt7915_register_device(struct mt7915
  	}
  
  	dev->recovery.hw_init_done = true;

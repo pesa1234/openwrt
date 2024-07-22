@@ -23,7 +23,7 @@ Subject: [PATCH 1003/1051] wifi: mt76: mt7915: add support for muru_onoff via
  	hw->vif_data_size = sizeof(struct mt7915_vif);
 --- a/mt7915/mcu.c
 +++ b/mt7915/mcu.c
-@@ -874,6 +874,7 @@ mt7915_mcu_sta_muru_tlv(struct mt7915_de
+@@ -964,6 +964,7 @@ mt7915_mcu_sta_muru_tlv(struct mt7915_de
  {
  	struct mt7915_vif *mvif = (struct mt7915_vif *)vif->drv_priv;
  	struct ieee80211_he_cap_elem *elem = &sta->deflink.he_cap.he_cap_elem;
@@ -31,7 +31,7 @@ Subject: [PATCH 1003/1051] wifi: mt76: mt7915: add support for muru_onoff via
  	struct sta_rec_muru *muru;
  	struct tlv *tlv;
  
-@@ -885,13 +886,18 @@ mt7915_mcu_sta_muru_tlv(struct mt7915_de
+@@ -975,13 +976,18 @@ mt7915_mcu_sta_muru_tlv(struct mt7915_de
  
  	muru = (struct sta_rec_muru *)tlv;
  
@@ -54,7 +54,7 @@ Subject: [PATCH 1003/1051] wifi: mt76: mt7915: add support for muru_onoff via
  			!!(sta->deflink.vht_cap.cap & IEEE80211_VHT_CAP_MU_BEAMFORMEE_CAPABLE);
 --- a/mt7915/mcu.h
 +++ b/mt7915/mcu.h
-@@ -604,4 +604,10 @@ enum CSI_CHAIN_TYPE {
+@@ -619,4 +619,10 @@ enum CSI_CHAIN_TYPE {
  };
  #endif
  
