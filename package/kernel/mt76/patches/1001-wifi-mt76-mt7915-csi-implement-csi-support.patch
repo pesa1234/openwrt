@@ -28,7 +28,7 @@ Subject: [PATCH] wifi: mt76: mt7915: csi: implement csi support
  };
  
  /* unified event table */
-@@ -1255,6 +1256,7 @@ enum {
+@@ -1256,6 +1257,7 @@ enum {
  	MCU_EXT_CMD_DPD_PRE_CAL_INFO = 0xac,
  	MCU_EXT_CMD_PHY_STAT_INFO = 0xad,
  	MCU_EXT_CMD_SET_QOS_MAP = 0xb4,
@@ -117,7 +117,7 @@ Subject: [PATCH] wifi: mt76: mt7915: csi: implement csi support
  		dev->debugfs_dir = dir;
 --- a/mt7915/init.c
 +++ b/mt7915/init.c
-@@ -665,6 +665,14 @@ mt7915_register_ext_phy(struct mt7915_de
+@@ -667,6 +667,14 @@ mt7915_register_ext_phy(struct mt7915_de
  	/* init wiphy according to mphy and phy */
  	mt7915_init_wiphy(phy);
  
@@ -132,7 +132,7 @@ Subject: [PATCH] wifi: mt76: mt7915: csi: implement csi support
  	ret = mt76_register_phy(mphy, true, mt76_rates,
  				ARRAY_SIZE(mt76_rates));
  	if (ret)
-@@ -1143,6 +1151,28 @@ void mt7915_set_stream_he_caps(struct mt
+@@ -1145,6 +1153,28 @@ void mt7915_set_stream_he_caps(struct mt
  	}
  }
  
@@ -161,7 +161,7 @@ Subject: [PATCH] wifi: mt76: mt7915: csi: implement csi support
  static void mt7915_unregister_ext_phy(struct mt7915_dev *dev)
  {
  	struct mt7915_phy *phy = mt7915_ext_phy(dev);
-@@ -1151,6 +1181,10 @@ static void mt7915_unregister_ext_phy(st
+@@ -1153,6 +1183,10 @@ static void mt7915_unregister_ext_phy(st
  	if (!phy)
  		return;
  
@@ -172,7 +172,7 @@ Subject: [PATCH] wifi: mt76: mt7915: csi: implement csi support
  	mt7915_unregister_thermal(phy);
  	mt76_unregister_phy(mphy);
  	ieee80211_free_hw(mphy->hw);
-@@ -1163,6 +1197,10 @@ static void mt7915_stop_hardware(struct
+@@ -1165,6 +1199,10 @@ static void mt7915_stop_hardware(struct
  	mt7915_dma_cleanup(dev);
  	tasklet_disable(&dev->mt76.irq_tasklet);
  
@@ -183,7 +183,7 @@ Subject: [PATCH] wifi: mt76: mt7915: csi: implement csi support
  	if (is_mt798x(&dev->mt76))
  		mt7986_wmac_disable(dev);
  }
-@@ -1205,6 +1243,14 @@ int mt7915_register_device(struct mt7915
+@@ -1209,6 +1247,14 @@ int mt7915_register_device(struct mt7915
  	dev->mt76.test_ops = &mt7915_testmode_ops;
  #endif
  
@@ -200,12 +200,11 @@ Subject: [PATCH] wifi: mt76: mt7915: csi: implement csi support
  	if (ret)
 --- a/mt7915/main.c
 +++ b/mt7915/main.c
-@@ -786,7 +786,21 @@ void mt7915_mac_sta_remove(struct mt76_d
- {
- 	struct mt7915_dev *dev = container_of(mdev, struct mt7915_dev, mt76);
+@@ -789,6 +789,20 @@ void mt7915_mac_sta_remove(struct mt76_d
  	struct mt7915_sta *msta = (struct mt7915_sta *)sta->drv_priv;
-+	struct mt7915_phy *phy = msta->vif->phy;
+ 	struct mt7915_phy *phy = msta->vif->phy;
  	int i;
++	
 +#ifdef CONFIG_MTK_VENDOR
 +	struct csi_mac_filter *ent;
 +
@@ -247,7 +246,7 @@ Subject: [PATCH] wifi: mt76: mt7915: csi: implement csi support
  	case MCU_EXT_EVENT_BCC_NOTIFY:
  		mt7915_mcu_rx_bcc_notify(dev, skb);
  		break;
-@@ -4036,6 +4045,200 @@ out:
+@@ -4197,6 +4206,200 @@ out:
  	return ret;
  }
  
@@ -450,10 +449,11 @@ Subject: [PATCH] wifi: mt76: mt7915: csi: implement csi support
  {
 --- a/mt7915/mcu.h
 +++ b/mt7915/mcu.h
-@@ -546,4 +546,77 @@ mt7915_get_power_bound(struct mt7915_phy
- 	return txpower;
- }
- 
+@@ -604,4 +604,78 @@ mt7915_get_power_bound(struct mt7915_phy
+ enum {
+ 	MCU_GET_TX_RATE = 4
+ };
++
 +#ifdef CONFIG_MTK_VENDOR
 +struct mt7915_mcu_csi {
 +	u8 band;
@@ -530,7 +530,7 @@ Subject: [PATCH] wifi: mt76: mt7915: csi: implement csi support
  #endif
 --- a/mt7915/mt7915.h
 +++ b/mt7915/mt7915.h
-@@ -194,6 +194,57 @@ struct mt7915_hif {
+@@ -195,6 +195,57 @@ struct mt7915_hif {
  	int irq;
  };
  
@@ -588,7 +588,7 @@ Subject: [PATCH] wifi: mt76: mt7915: csi: implement csi support
  struct mt7915_phy {
  	struct mt76_phy *mt76;
  	struct mt7915_dev *dev;
-@@ -238,6 +289,25 @@ struct mt7915_phy {
+@@ -243,6 +294,25 @@ struct mt7915_phy {
  		u8 spe_idx;
  	} test;
  #endif
@@ -614,7 +614,7 @@ Subject: [PATCH] wifi: mt76: mt7915: csi: implement csi support
  };
  
  #ifdef MTK_DEBUG
-@@ -639,6 +709,14 @@ void mt7915_sta_add_debugfs(struct ieee8
+@@ -645,6 +715,14 @@ void mt7915_sta_add_debugfs(struct ieee8
  int mt7915_mmio_wed_init(struct mt7915_dev *dev, void *pdev_ptr,
  			 bool pci, int *irq);
  

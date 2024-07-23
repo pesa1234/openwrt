@@ -43,7 +43,7 @@ Subject: [PATCH] mt76: mt7915: wed: add wds support when wed is enabled
  	__le16 flags;
 --- a/mt7915/mac.c
 +++ b/mt7915/mac.c
-@@ -836,9 +836,9 @@ u32 mt7915_wed_init_buf(void *ptr, dma_a
+@@ -815,9 +815,9 @@ u32 mt7915_wed_init_buf(void *ptr, dma_a
  
  	txp->token = cpu_to_le16(token_id);
  	txp->nbuf = 1;
@@ -55,7 +55,7 @@ Subject: [PATCH] mt76: mt7915: wed: add wds support when wed is enabled
  }
  
  static void
-@@ -887,6 +887,7 @@ mt7915_mac_tx_free(struct mt7915_dev *de
+@@ -866,6 +866,7 @@ mt7915_mac_tx_free(struct mt7915_dev *de
  	LIST_HEAD(free_list);
  	void *end = data + len;
  	bool v3, wake = false;
@@ -63,7 +63,7 @@ Subject: [PATCH] mt76: mt7915: wed: add wds support when wed is enabled
  	u16 total, count = 0;
  	u32 txd = le32_to_cpu(free->txd);
  	__le32 *cur_info;
-@@ -960,12 +961,15 @@ mt7915_mac_tx_free(struct mt7915_dev *de
+@@ -947,12 +948,15 @@ mt7915_mac_tx_free(struct mt7915_dev *de
  			txwi = mt76_token_release(mdev, msdu, &wake);
  			if (!txwi)
  				continue;
@@ -96,7 +96,7 @@ Subject: [PATCH] mt76: mt7915: wed: add wds support when wed is enabled
  	if (idx < 0)
  		return -ENOSPC;
  
-@@ -1270,6 +1274,13 @@ static void mt7915_sta_set_4addr(struct
+@@ -1277,6 +1281,13 @@ static void mt7915_sta_set_4addr(struct
  	else
  		clear_bit(MT_WCID_FLAG_4ADDR, &msta->wcid.flags);
  
@@ -110,7 +110,7 @@ Subject: [PATCH] mt76: mt7915: wed: add wds support when wed is enabled
  	mt76_connac_mcu_wtbl_update_hdr_trans(&dev->mt76, vif, sta);
  }
  
-@@ -1756,15 +1767,19 @@ mt7915_net_fill_forward_path(struct ieee
+@@ -1763,15 +1774,19 @@ mt7915_net_fill_forward_path(struct ieee
  	if (!mtk_wed_device_active(wed))
  		return -ENODEV;
  
@@ -161,7 +161,7 @@ Subject: [PATCH] mt76: mt7915: wed: add wds support when wed is enabled
  	if (ret)
 --- a/mt7915/mcu.h
 +++ b/mt7915/mcu.h
-@@ -298,6 +298,7 @@ enum {
+@@ -353,6 +353,7 @@ enum {
  	MCU_WA_PARAM_PDMA_RX = 0x04,
  	MCU_WA_PARAM_CPU_UTIL = 0x0b,
  	MCU_WA_PARAM_RED = 0x0e,

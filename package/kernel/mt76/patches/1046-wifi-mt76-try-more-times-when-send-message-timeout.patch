@@ -129,7 +129,7 @@ Signed-off-by: Bo Jiao <Bo.Jiao@mediatek.com>
  	return ret;
 --- a/mt7915/mac.c
 +++ b/mt7915/mac.c
-@@ -1352,12 +1352,6 @@ mt7915_mac_restart(struct mt7915_dev *de
+@@ -1346,12 +1346,6 @@ mt7915_mac_restart(struct mt7915_dev *de
  		}
  	}
  
@@ -142,7 +142,7 @@ Signed-off-by: Bo Jiao <Bo.Jiao@mediatek.com>
  	/* lock/unlock all queues to ensure that no tx is pending */
  	mt76_txq_schedule_all(&dev->mphy);
  	if (ext_phy)
-@@ -1458,11 +1452,18 @@ mt7915_mac_full_reset(struct mt7915_dev
+@@ -1452,11 +1446,18 @@ mt7915_mac_full_reset(struct mt7915_dev
  
  	dev->recovery.hw_full_reset = true;
  
@@ -162,7 +162,7 @@ Signed-off-by: Bo Jiao <Bo.Jiao@mediatek.com>
  	cancel_delayed_work_sync(&dev->mphy.mac_work);
  	if (ext_phy)
  		cancel_delayed_work_sync(&ext_phy->mac_work);
-@@ -1541,19 +1542,15 @@ void mt7915_mac_reset_work(struct work_s
+@@ -1535,19 +1536,15 @@ void mt7915_mac_reset_work(struct work_s
  
  	set_bit(MT76_RESET, &dev->mphy.state);
  	set_bit(MT76_MCU_RESET, &dev->mphy.state);
@@ -185,7 +185,7 @@ Signed-off-by: Bo Jiao <Bo.Jiao@mediatek.com>
  	if (mtk_wed_device_active(&dev->mt76.mmio.wed))
  		mtk_wed_device_stop(&dev->mt76.mmio.wed);
  
-@@ -1577,8 +1574,8 @@ void mt7915_mac_reset_work(struct work_s
+@@ -1571,8 +1568,8 @@ void mt7915_mac_reset_work(struct work_s
  
  	clear_bit(MT76_MCU_RESET, &dev->mphy.state);
  	clear_bit(MT76_RESET, &dev->mphy.state);

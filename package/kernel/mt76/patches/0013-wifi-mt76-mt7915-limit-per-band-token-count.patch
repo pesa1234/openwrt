@@ -21,7 +21,7 @@ Signed-off-by: Peter Chiu <chui-hao.chiu@mediatek.com>
 
 --- a/mt76.h
 +++ b/mt76.h
-@@ -407,6 +407,8 @@ struct mt76_txwi_cache {
+@@ -411,6 +411,8 @@ struct mt76_txwi_cache {
  	struct list_head list;
  	dma_addr_t dma_addr;
  
@@ -30,7 +30,7 @@ Signed-off-by: Peter Chiu <chui-hao.chiu@mediatek.com>
  	union {
  		struct sk_buff *skb;
  		void *ptr;
-@@ -819,6 +821,7 @@ struct mt76_phy {
+@@ -823,6 +825,7 @@ struct mt76_phy {
  		bool al;
  		u8 pin;
  	} leds;
@@ -38,7 +38,7 @@ Signed-off-by: Peter Chiu <chui-hao.chiu@mediatek.com>
  };
  
  struct mt76_dev {
-@@ -872,6 +875,8 @@ struct mt76_dev {
+@@ -876,6 +879,8 @@ struct mt76_dev {
  	u16 wed_token_count;
  	u16 token_count;
  	u16 token_size;
@@ -47,7 +47,7 @@ Signed-off-by: Peter Chiu <chui-hao.chiu@mediatek.com>
  
  	spinlock_t rx_token_lock;
  	struct idr rx_token;
-@@ -1678,7 +1683,8 @@ static inline bool mt76_queue_is_wed_rx(
+@@ -1682,7 +1687,8 @@ static inline bool mt76_queue_is_wed_rx(
  
  struct mt76_txwi_cache *
  mt76_token_release(struct mt76_dev *dev, int token, bool *wake);
@@ -70,7 +70,7 @@ Signed-off-by: Peter Chiu <chui-hao.chiu@mediatek.com>
  	idr_destroy(&dev->token);
 --- a/mt7915/init.c
 +++ b/mt7915/init.c
-@@ -1218,6 +1218,8 @@ int mt7915_register_device(struct mt7915
+@@ -1222,6 +1222,8 @@ int mt7915_register_device(struct mt7915
  
  	dev->dbdc_support = mt7915_band_config(dev);
  
@@ -79,7 +79,7 @@ Signed-off-by: Peter Chiu <chui-hao.chiu@mediatek.com>
  	phy2 = mt7915_alloc_ext_phy(dev);
  	if (IS_ERR(phy2))
  		return PTR_ERR(phy2);
-@@ -1250,6 +1252,7 @@ int mt7915_register_device(struct mt7915
+@@ -1254,6 +1256,7 @@ int mt7915_register_device(struct mt7915
  	}
  
  	dev->recovery.hw_init_done = true;
@@ -89,7 +89,7 @@ Signed-off-by: Peter Chiu <chui-hao.chiu@mediatek.com>
  	if (ret)
 --- a/mt7915/mac.c
 +++ b/mt7915/mac.c
-@@ -758,6 +758,7 @@ int mt7915_tx_prepare_skb(struct mt76_de
+@@ -738,6 +738,7 @@ int mt7915_tx_prepare_skb(struct mt76_de
  	struct mt76_connac_fw_txp *txp;
  	struct mt76_txwi_cache *t;
  	int id, i, nbuf = tx_info->nbuf - 1;
@@ -97,7 +97,7 @@ Signed-off-by: Peter Chiu <chui-hao.chiu@mediatek.com>
  	u8 *txwi = (u8 *)txwi_ptr;
  	int pid;
  
-@@ -781,7 +782,7 @@ int mt7915_tx_prepare_skb(struct mt76_de
+@@ -761,7 +762,7 @@ int mt7915_tx_prepare_skb(struct mt76_de
  	t = (struct mt76_txwi_cache *)(txwi + mdev->drv->txwi_size);
  	t->skb = tx_info->skb;
  
