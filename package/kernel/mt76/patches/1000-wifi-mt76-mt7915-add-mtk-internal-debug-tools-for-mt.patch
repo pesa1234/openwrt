@@ -438,7 +438,7 @@ Subject: [PATCH] wifi: mt76: mt7915: add mtk internal debug tools for mt76
  
  	bool wmm_pbc_enable;
  	struct work_struct wmm_pbc_work;
-@@ -609,4 +645,24 @@ void mt7915_sta_add_debugfs(struct ieee8
+@@ -610,4 +646,24 @@ void mt7915_sta_add_debugfs(struct ieee8
  int mt7915_mmio_wed_init(struct mt7915_dev *dev, void *pdev_ptr,
  			 bool pci, int *irq);
  
@@ -5717,7 +5717,7 @@ Subject: [PATCH] wifi: mt76: mt7915: add mtk internal debug tools for mt76
 +}
 --- a/mt7915/soc.c
 +++ b/mt7915/soc.c
-@@ -359,6 +359,13 @@ static int mt798x_wmac_sku_setup(struct
+@@ -360,6 +360,13 @@ static int mt798x_wmac_sku_setup(struct
  	*adie_type = FIELD_GET(MT_ADIE_CHIP_ID_MASK, adie_main) |
  		     (MT_ADIE_CHIP_ID_MASK & adie_ext);
  

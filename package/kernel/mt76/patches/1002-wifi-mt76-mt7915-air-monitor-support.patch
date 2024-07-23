@@ -101,7 +101,7 @@ Subject: [PATCH] wifi: mt76: mt7915: air monitor support
  #endif
  };
  
-@@ -721,6 +751,9 @@ int mt7915_mcu_set_csi(struct mt7915_phy
+@@ -722,6 +752,9 @@ int mt7915_mcu_set_csi(struct mt7915_phy
  		       u8 cfg, u8 v1, u32 v2, u8 *mac_addr, u32 sta_interval);
  struct csi_mac_filter *mt7915_csi_mac_filter_find(struct mt7915_phy *phy, u8 *addr);
  void mt7915_csi_mac_filter_clear(struct mt7915_phy *phy);
