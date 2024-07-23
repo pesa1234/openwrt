@@ -35,7 +35,7 @@ Signed-off-by: Henry.Yen <henry.yen@mediatek.com>
  	switch (mt76_chip(dev)) {
 --- a/mt7915/main.c
 +++ b/mt7915/main.c
-@@ -1097,7 +1097,7 @@ static void mt7915_sta_statistics(struct
+@@ -1120,7 +1120,7 @@ static void mt7915_sta_statistics(struct
  	struct rate_info *txrate = &msta->wcid.rate;
  	struct rate_info rxrate = {};
  

@@ -158,7 +158,7 @@ Subject: [PATCH] [mt76] mt7915 MCU event airtime
  		rate = &msta->wcid.rate;
  
  		switch (rate->bw) {
-@@ -2053,11 +1992,14 @@ void mt7915_mac_work(struct work_struct
+@@ -2060,11 +1999,14 @@ void mt7915_mac_work(struct work_struct
  {
  	struct mt7915_phy *phy;
  	struct mt76_phy *mphy;
@@ -173,7 +173,7 @@ Subject: [PATCH] [mt76] mt7915 MCU event airtime
  	mutex_lock(&mphy->dev->mutex);
  
  	mt76_update_survey(mphy);
-@@ -2071,6 +2013,8 @@ void mt7915_mac_work(struct work_struct
+@@ -2078,6 +2020,8 @@ void mt7915_mac_work(struct work_struct
  
  		if (phy->dev->muru_debug)
  			mt7915_mcu_muru_debug_get(phy);
@@ -307,7 +307,7 @@ Subject: [PATCH] [mt76] mt7915 MCU event airtime
  	     !rxd->seq) &&
  	     !(rxd->eid == MCU_CMD_EXT_CID &&
  	       rxd->ext_eid == MCU_EXT_EVENT_WA_TX_STAT))
-@@ -5228,3 +5330,16 @@ int mt7915_mcu_sw_aci_set(struct mt7915_
+@@ -5234,3 +5336,16 @@ int mt7915_mcu_sw_aci_set(struct mt7915_
  	return mt76_mcu_send_msg(&dev->mt76, MCU_EXT_CMD(SWLNA_ACI_CTRL), &req,
  				 sizeof(req), NULL);
  }
