@@ -16,7 +16,7 @@ Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
 
 --- a/include/net/mac80211.h
 +++ b/include/net/mac80211.h
-@@ -4376,6 +4376,7 @@ struct ieee80211_prep_tx_info {
+@@ -4377,6 +4377,7 @@ struct ieee80211_prep_tx_info {
   *	disable background CAC/radar detection.
   * @net_fill_forward_path: Called from .ndo_fill_forward_path in order to
   *	resolve a path for hardware flow offloading
@@ -24,7 +24,7 @@ Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
   * @can_activate_links: Checks if a specific active_links bitmap is
   *	supported by the driver.
   * @change_vif_links: Change the valid links on an interface, note that while
-@@ -4763,6 +4764,8 @@ struct ieee80211_ops {
+@@ -4764,6 +4765,8 @@ struct ieee80211_ops {
  				     struct ieee80211_sta *sta,
  				     struct net_device_path_ctx *ctx,
  				     struct net_device_path *path);
@@ -70,11 +70,10 @@ Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
  #endif /* __MAC80211_DRIVER_OPS */
 --- a/net/mac80211/trace.h
 +++ b/net/mac80211/trace.h
-@@ -3145,6 +3145,13 @@ TRACE_EVENT(drv_neg_ttlm_res,
- 		  LOCAL_PR_ARG, VIF_PR_ARG, __entry->res
+@@ -3167,6 +3167,12 @@ TRACE_EVENT(bss_color_bitmap,
  	)
  );
-+
+ 
 +DEFINE_EVENT(local_sdata_evt, drv_set_qos_map,
 +	TP_PROTO(struct ieee80211_local *local,
 +		 struct ieee80211_sub_if_data *sdata),
