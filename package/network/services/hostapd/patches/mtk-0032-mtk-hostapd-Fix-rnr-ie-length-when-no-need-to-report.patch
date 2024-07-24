@@ -1,7 +1,7 @@
-From 70c8f9355c4df3c083965ce652d33e01f8fe7e7c Mon Sep 17 00:00:00 2001
+From fea4788692076f9c0701ecec68a85198a70d05c0 Mon Sep 17 00:00:00 2001
 From: "Allen.Ye" <allen.ye@mediatek.com>
 Date: Mon, 7 Aug 2023 15:27:27 +0800
-Subject: [PATCH 38/38] hostapd: mtk: Fix rnr ie length when no need to report
+Subject: [PATCH 32/54] mtk: hostapd: Fix rnr ie length when no need to report
  bss
 
 Fix rnr ie length when no need to report bss. If we don't have content in
