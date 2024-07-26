@@ -1,0 +1,11 @@
+--- a/net/mac80211/driver-ops.h
++++ b/net/mac80211/driver-ops.h
+@@ -1529,7 +1529,7 @@ static inline int drv_net_setup_tc(struc
+ 				   struct net_device *dev,
+ 				   enum tc_setup_type type, void *type_data)
+ {
+-	int ret = -EOPNOTSUPP;
++	int ret = 0;
+ 
+ 	sdata = get_bss_sdata(sdata);
+ 	trace_drv_net_setup_tc(local, sdata, type);
