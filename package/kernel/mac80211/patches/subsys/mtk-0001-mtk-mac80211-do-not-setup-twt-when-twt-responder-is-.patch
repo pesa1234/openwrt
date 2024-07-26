@@ -1,0 +1,22 @@
+From 45ed016428208e89e136b5af7e50bec57d63fdf6 Mon Sep 17 00:00:00 2001
+From: Peter Chiu <chui-hao.chiu@mediatek.com>
+Date: Tue, 18 Jan 2022 20:29:44 +0800
+Subject: [PATCH 01/37] mtk: mac80211: do not setup twt when twt responder is
+ false
+
+---
+ net/mac80211/rx.c | 3 +++
+ 1 file changed, 3 insertions(+)
+
+--- a/net/mac80211/rx.c
++++ b/net/mac80211/rx.c
+@@ -3422,6 +3422,9 @@ ieee80211_process_rx_twt_action(struct i
+ 	if (sdata->vif.type != NL80211_IFTYPE_AP)
+ 		return false;
+ 
++	if (!sdata->vif.bss_conf.twt_responder)
++		return false;
++
+ 	if (!rx->local->ops->add_twt_setup)
+ 		return false;
+ 

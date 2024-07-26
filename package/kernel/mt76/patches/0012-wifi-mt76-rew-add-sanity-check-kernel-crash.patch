@@ -1,0 +1,43 @@
+From e2f5606ec4d1848fd33aaee2f1c67732c582b2ea Mon Sep 17 00:00:00 2001
+From: Chen Minqiang <ptpt52@gmail.com>
+Date: Sat, 8 Jun 2024 22:25:32 +0800
+Subject: [PATCH] mt76: add sanity check to prevent kernel crash
+
+---
+ mac80211.c | 8 +++++++-
+ tx.c       | 6 ++++++
+ 2 files changed, 13 insertions(+), 1 deletion(-)
+
+--- a/mac80211.c
++++ b/mac80211.c
+@@ -1490,8 +1490,14 @@ int mt76_sta_state(struct ieee80211_hw *
+ 		dev->drv->sta_assoc(dev, vif, sta);
+ 
+ 	if (old_state == IEEE80211_STA_NONE &&
+-	    new_state == IEEE80211_STA_NOTEXIST)
++	    new_state == IEEE80211_STA_NOTEXIST) {
++		struct mt76_wcid *wcid = (struct mt76_wcid *)sta->drv_priv;
++		if (!wcid || !wcid->tx_pending.prev || !wcid->tx_pending.next) {
++			dev_warn(dev->dev, "Un-initialized STA %pM wcid %d in mt76_tx (wcid=%p)\n", sta ? sta->addr : NULL, wcid ? wcid->idx : -1, wcid);
++			return 0;
++		}
+ 		mt76_sta_remove(dev, vif, sta);
++	}
+ 
+ 	return 0;
+ }
+--- a/tx.c
++++ b/tx.c
+@@ -345,6 +345,12 @@ mt76_tx(struct mt76_phy *phy, struct iee
+ 
+ 	info->hw_queue |= FIELD_PREP(MT_TX_HW_QUEUE_PHY, phy->band_idx);
+ 
++	if (!wcid || !wcid->tx_pending.prev || !wcid->tx_pending.next) {
++		dev_warn(phy->dev->dev, "Un-initialized STA %pM wcid %d in mt76_tx (wcid=%p)\n", sta ? sta->addr : NULL, wcid ? wcid->idx : -1, wcid);
++		ieee80211_free_txskb(phy->hw, skb);
++		return;
++	}
++
+ 	spin_lock_bh(&wcid->tx_pending.lock);
+ 	__skb_queue_tail(&wcid->tx_pending, skb);
+ 	spin_unlock_bh(&wcid->tx_pending.lock);
