@@ -1,0 +1,34 @@
+From 8936ae49130bf6db3da835d2c1bbf0a6df9af4b3 Mon Sep 17 00:00:00 2001
+From: Johannes Berg <johannes.berg@intel.com>
+Date: Wed, 15 May 2024 13:34:10 +0200
+Subject: wifi: mac80211: apply mcast rate only if interface is up
+
+[ Upstream commit 02c665f048a439c0d58cc45334c94634bd7c18e6 ]
+
+If the interface isn't enabled, don't apply multicast
+rate changes immediately.
+
+Reported-by: syzbot+de87c09cc7b964ea2e23@syzkaller.appspotmail.com
+Link: https://msgid.link/20240515133410.d6cffe5756cc.I47b624a317e62bdb4609ff7fa79403c0c444d32d@changeid
+Signed-off-by: Johannes Berg <johannes.berg@intel.com>
+Signed-off-by: Sasha Levin <sashal@kernel.org>
+---
+ net/mac80211/cfg.c | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
+
+(limited to 'net/mac80211')
+
+--- a/net/mac80211/cfg.c
++++ b/net/mac80211/cfg.c
+@@ -2954,8 +2954,9 @@ static int ieee80211_set_mcast_rate(stru
+ 	memcpy(sdata->vif.bss_conf.mcast_rate, rate,
+ 	       sizeof(int) * NUM_NL80211_BANDS);
+ 
+-	ieee80211_link_info_change_notify(sdata, &sdata->deflink,
+-					  BSS_CHANGED_MCAST_RATE);
++	if (ieee80211_sdata_running(sdata))
++		ieee80211_link_info_change_notify(sdata, &sdata->deflink,
++						  BSS_CHANGED_MCAST_RATE);
+ 
+ 	return 0;
+ }
