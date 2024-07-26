@@ -27,7 +27,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  /*
 --- a/net/mac80211/cfg.c
 +++ b/net/mac80211/cfg.c
-@@ -5056,6 +5056,25 @@ static int ieee80211_set_hw_timestamp(st
+@@ -5058,6 +5058,25 @@ static int ieee80211_set_hw_timestamp(st
  	return local->ops->set_hw_timestamp(&local->hw, &sdata->vif, hwts);
  }
  
@@ -53,7 +53,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  const struct cfg80211_ops mac80211_config_ops = {
  	.add_virtual_intf = ieee80211_add_iface,
  	.del_virtual_intf = ieee80211_del_iface,
-@@ -5168,4 +5187,5 @@ const struct cfg80211_ops mac80211_confi
+@@ -5170,4 +5189,5 @@ const struct cfg80211_ops mac80211_confi
  	.mod_link_station = ieee80211_mod_link_station,
  	.del_link_station = ieee80211_del_link_station,
  	.set_hw_timestamp = ieee80211_set_hw_timestamp,
