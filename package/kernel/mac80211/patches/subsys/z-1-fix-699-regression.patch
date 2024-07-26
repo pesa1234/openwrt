@@ -1,0 +1,151 @@
+--- a/drivers/net/wireless/mediatek/mt76/eeprom.c
++++ b/drivers/net/wireless/mediatek/mt76/eeprom.c
+@@ -28,7 +28,7 @@ static int mt76_get_of_eeprom_data(struc
+ 	return 0;
+ }
+ 
+-int mt76_get_of_data_from_mtd(struct mt76_dev *dev, void *eep, int offset, int len)
++static int mt76_get_of_epprom_from_mtd(struct mt76_dev *dev, void *eep, int offset, int len)
+ {
+ #ifdef CONFIG_MTD
+ 	struct device_node *np = dev->dev->of_node;
+@@ -105,10 +105,8 @@ out_put_node:
+ 	return -ENOENT;
+ #endif
+ }
+-EXPORT_SYMBOL_GPL(mt76_get_of_data_from_mtd);
+ 
+-int mt76_get_of_data_from_nvmem(struct mt76_dev *dev, void *eep,
+-				const char *cell_name, int len)
++static int mt76_get_of_eeprom_from_nvmem(struct mt76_dev *dev, void *eep, int len)
+ {
+ 	struct device_node *np = dev->dev->of_node;
+ 	struct nvmem_cell *cell;
+@@ -116,7 +114,7 @@ int mt76_get_of_data_from_nvmem(struct m
+ 	size_t retlen;
+ 	int ret = 0;
+ 
+-	cell = of_nvmem_cell_get(np, cell_name);
++	cell = of_nvmem_cell_get(np, "eeprom");
+ 	if (IS_ERR(cell))
+ 		return PTR_ERR(cell);
+ 
+@@ -138,9 +136,8 @@ exit:
+ 
+ 	return ret;
+ }
+-EXPORT_SYMBOL_GPL(mt76_get_of_data_from_nvmem);
+ 
+-static int mt76_get_of_eeprom(struct mt76_dev *dev, void *eep, int len)
++int mt76_get_of_eeprom(struct mt76_dev *dev, void *eep, int offset, int len)
+ {
+ 	struct device_node *np = dev->dev->of_node;
+ 	int ret;
+@@ -152,12 +149,13 @@ static int mt76_get_of_eeprom(struct mt7
+ 	if (!ret)
+ 		return 0;
+ 
+-	ret = mt76_get_of_data_from_mtd(dev, eep, 0, len);
++	ret = mt76_get_of_epprom_from_mtd(dev, eep, offset, len);
+ 	if (!ret)
+ 		return 0;
+ 
+-	return mt76_get_of_data_from_nvmem(dev, eep, "eeprom", len);
++	return mt76_get_of_eeprom_from_nvmem(dev, eep, len);
+ }
++EXPORT_SYMBOL_GPL(mt76_get_of_eeprom);
+ 
+ void
+ mt76_eeprom_override(struct mt76_phy *phy)
+@@ -190,7 +188,7 @@ static bool mt76_string_prop_find(struct
+ 	return false;
+ }
+ 
+-struct device_node *
++static struct device_node *
+ mt76_find_power_limits_node(struct mt76_dev *dev)
+ {
+ 	struct device_node *np = dev->dev->of_node;
+@@ -229,7 +227,6 @@ mt76_find_power_limits_node(struct mt76_
+ 	of_node_put(np);
+ 	return fallback;
+ }
+-EXPORT_SYMBOL_GPL(mt76_find_power_limits_node);
+ 
+ static const __be32 *
+ mt76_get_of_array(struct device_node *np, char *name, size_t *len, int min)
+@@ -244,7 +241,7 @@ mt76_get_of_array(struct device_node *np
+ 	return prop->value;
+ }
+ 
+-struct device_node *
++static struct device_node *
+ mt76_find_channel_node(struct device_node *np, struct ieee80211_channel *chan)
+ {
+ 	struct device_node *cur;
+@@ -268,8 +265,6 @@ mt76_find_channel_node(struct device_nod
+ 
+ 	return NULL;
+ }
+-EXPORT_SYMBOL_GPL(mt76_find_channel_node);
+-
+ 
+ static s8
+ mt76_get_txs_delta(struct device_node *np, u8 nss)
+@@ -381,7 +376,7 @@ s8 mt76_get_rate_power_limits(struct mt7
+ 	if (!np)
+ 		return target_power;
+ 
+-	txs_delta = mt76_get_txs_delta(np, hweight16(phy->chainmask));
++	txs_delta = mt76_get_txs_delta(np, hweight8(phy->antenna_mask));
+ 
+ 	val = mt76_get_of_array(np, "rates-cck", &len, ARRAY_SIZE(dest->cck));
+ 	mt76_apply_array_limit(dest->cck, ARRAY_SIZE(dest->cck), val,
+@@ -414,6 +409,6 @@ mt76_eeprom_init(struct mt76_dev *dev, i
+ 	if (!dev->eeprom.data)
+ 		return -ENOMEM;
+ 
+-	return !mt76_get_of_eeprom(dev, dev->eeprom.data, len);
++	return !mt76_get_of_eeprom(dev, dev->eeprom.data, 0, len);
+ }
+ EXPORT_SYMBOL_GPL(mt76_eeprom_init);
+--- a/drivers/net/wireless/mediatek/mt76/mt7915/eeprom.c
++++ b/drivers/net/wireless/mediatek/mt76/mt7915/eeprom.c
+@@ -11,7 +11,6 @@ static int mt7915_eeprom_load_precal(str
+ 	u8 *eeprom = mdev->eeprom.data;
+ 	u32 val = eeprom[MT_EE_DO_PRE_CAL];
+ 	u32 offs;
+-	int ret;
+ 
+ 	if (!dev->flash_mode)
+ 		return 0;
+@@ -26,11 +25,7 @@ static int mt7915_eeprom_load_precal(str
+ 
+ 	offs = is_mt7915(&dev->mt76) ? MT_EE_PRECAL : MT_EE_PRECAL_V2;
+ 
+-	ret = mt76_get_of_data_from_mtd(mdev, dev->cal, offs, val);
+-	if (!ret)
+-		return ret;
+-
+-	return mt76_get_of_data_from_nvmem(mdev, dev->cal, "precal", val);
++	return mt76_get_of_eeprom(mdev, dev->cal, offs, val);
+ }
+ 
+ static int mt7915_check_eeprom(struct mt7915_dev *dev)
+--- a/drivers/net/wireless/mediatek/mt76/mac80211.c
++++ b/drivers/net/wireless/mediatek/mt76/mac80211.c
+@@ -466,12 +466,11 @@ mt76_phy_init(struct mt76_phy *phy, stru
+ 	ieee80211_hw_set(hw, SUPPORTS_AMSDU_IN_AMPDU);
+ 	ieee80211_hw_set(hw, SUPPORTS_REORDERING_BUFFER);
+ 
+-	if (!(dev->drv->drv_flags & MT_DRV_AMSDU_OFFLOAD) &&
+-	    hw->max_tx_fragments > 1) {
++	if (!(dev->drv->drv_flags & MT_DRV_AMSDU_OFFLOAD)) {
+ 		ieee80211_hw_set(hw, TX_AMSDU);
+ 		ieee80211_hw_set(hw, TX_FRAG_LIST);
+ 	}
+-
++	
+ 	ieee80211_hw_set(hw, MFP_CAPABLE);
+ 	ieee80211_hw_set(hw, AP_LINK_PS);
+ 	ieee80211_hw_set(hw, REPORTS_TX_ACK_STATUS);
