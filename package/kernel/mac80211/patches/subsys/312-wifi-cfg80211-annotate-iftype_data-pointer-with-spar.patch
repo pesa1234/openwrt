@@ -270,7 +270,7 @@ Signed-off-by: Johannes Berg <johannes.berg@intel.com>
  #ifdef CPTCFG_MAC80211_MESH
 --- a/include/net/cfg80211.h
 +++ b/include/net/cfg80211.h
-@@ -415,6 +415,19 @@ struct ieee80211_sta_eht_cap {
+@@ -417,6 +417,19 @@ struct ieee80211_sta_eht_cap {
  	u8 eht_ppe_thres[IEEE80211_EHT_PPE_THRES_MAX_LEN];
  };
  
@@ -290,7 +290,7 @@ Signed-off-by: Johannes Berg <johannes.berg@intel.com>
  /**
   * struct ieee80211_sband_iftype_data - sband data per interface type
   *
-@@ -548,10 +561,48 @@ struct ieee80211_supported_band {
+@@ -550,10 +563,48 @@ struct ieee80211_supported_band {
  	struct ieee80211_sta_s1g_cap s1g_cap;
  	struct ieee80211_edmg edmg_cap;
  	u16 n_iftype_data;
@@ -340,7 +340,7 @@ Signed-off-by: Johannes Berg <johannes.berg@intel.com>
   * ieee80211_get_sband_iftype_data - return sband data for a given iftype
   * @sband: the sband to search for the STA on
   * @iftype: enum nl80211_iftype
-@@ -562,6 +613,7 @@ static inline const struct ieee80211_sba
+@@ -564,6 +615,7 @@ static inline const struct ieee80211_sba
  ieee80211_get_sband_iftype_data(const struct ieee80211_supported_band *sband,
  				u8 iftype)
  {
@@ -348,7 +348,7 @@ Signed-off-by: Johannes Berg <johannes.berg@intel.com>
  	int i;
  
  	if (WARN_ON(iftype >= NL80211_IFTYPE_MAX))
-@@ -570,10 +622,7 @@ ieee80211_get_sband_iftype_data(const st
+@@ -572,10 +624,7 @@ ieee80211_get_sband_iftype_data(const st
  	if (iftype == NL80211_IFTYPE_AP_VLAN)
  		iftype = NL80211_IFTYPE_AP;
  

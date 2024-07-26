@@ -13,7 +13,7 @@ Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
 
 --- a/net/mac80211/tx.c
 +++ b/net/mac80211/tx.c
-@@ -3829,8 +3829,11 @@ begin:
+@@ -3820,8 +3820,11 @@ begin:
  	skb = __skb_dequeue(&txqi->frags);
  	if (unlikely(skb)) {
  		if (!(IEEE80211_SKB_CB(skb)->control.flags &

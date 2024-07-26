@@ -97,7 +97,7 @@ OBSS BSS Color will be ageout if not seen for 10 seconds.
  
  	if (sdata->wdev.cac_started) {
  		chandef = sdata->vif.bss_conf.chandef;
-@@ -1451,6 +1452,10 @@ int ieee80211_do_open(struct wireless_de
+@@ -1455,6 +1456,10 @@ int ieee80211_do_open(struct wireless_de
  
  	set_bit(SDATA_STATE_RUNNING, &sdata->state);
  

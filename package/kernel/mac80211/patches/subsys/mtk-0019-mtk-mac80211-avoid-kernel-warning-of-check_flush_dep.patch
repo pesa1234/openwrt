@@ -10,7 +10,7 @@ Subject: [PATCH 19/37] mtk: mac80211: avoid kernel warning of
 
 --- a/net/mac80211/main.c
 +++ b/net/mac80211/main.c
-@@ -1286,7 +1286,7 @@ int ieee80211_register_hw(struct ieee802
+@@ -1287,7 +1287,7 @@ int ieee80211_register_hw(struct ieee802
  		hw->queues = IEEE80211_MAX_QUEUES;
  
  	local->workqueue =

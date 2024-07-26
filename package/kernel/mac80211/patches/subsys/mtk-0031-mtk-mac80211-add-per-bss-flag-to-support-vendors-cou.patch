@@ -57,7 +57,7 @@ Subject: [PATCH 31/37] mtk: mac80211: add per-bss flag to support vendors
  
  	if (hdr->frame_control & cpu_to_le16(IEEE80211_STYPE_QOS_DATA)) {
  		tid = skb->priority & IEEE80211_QOS_CTL_TAG1D_MASK;
-@@ -4314,7 +4316,9 @@ void __ieee80211_subif_start_xmit(struct
+@@ -4317,7 +4319,9 @@ void __ieee80211_subif_start_xmit(struct
  			goto out;
  		}
  
@@ -68,7 +68,7 @@ Subject: [PATCH 31/37] mtk: mac80211: add per-bss flag to support vendors
  
  		ieee80211_xmit(sdata, sta, skb);
  	}
-@@ -4646,7 +4650,10 @@ static void ieee80211_8023_xmit(struct i
+@@ -4649,7 +4653,10 @@ static void ieee80211_8023_xmit(struct i
  		info->ack_frame_id = ieee80211_store_ack_skb(local, skb,
  							     &info->flags, NULL);
  
