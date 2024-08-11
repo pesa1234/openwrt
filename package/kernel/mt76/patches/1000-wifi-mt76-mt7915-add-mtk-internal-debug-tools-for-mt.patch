@@ -1,7 +1,8 @@
-From 57ca0074490c096cf61f5857ceb233f9a763cf82 Mon Sep 17 00:00:00 2001
+From 3f35505b3bbdfe9e381dbaa1c2450a7e7e461989 Mon Sep 17 00:00:00 2001
 From: Shayne Chen <shayne.chen@mediatek.com>
 Date: Wed, 22 Jun 2022 10:39:47 +0800
-Subject: [PATCH] wifi: mt76: mt7915: add mtk internal debug tools for mt76
+Subject: [PATCH 01/70] wifi: mt76: mt7915: add mtk internal debug tools for
+ mt76
 
 ---
  mt76_connac_mcu.h     |    6 +
@@ -24,7 +25,7 @@ Subject: [PATCH] wifi: mt76: mt7915: add mtk internal debug tools for mt76
 
 --- a/mt76_connac_mcu.h
 +++ b/mt76_connac_mcu.h
-@@ -1197,6 +1197,7 @@ enum {
+@@ -1207,6 +1207,7 @@ enum {
  	MCU_EXT_CMD_SET_TX_POWER_CTRL = 0x11,
  	MCU_EXT_CMD_FW_LOG_2_HOST = 0x13,
  	MCU_EXT_CMD_TXBF_ACTION = 0x1e,
@@ -32,7 +33,7 @@ Subject: [PATCH] wifi: mt76: mt7915: add mtk internal debug tools for mt76
  	MCU_EXT_CMD_EFUSE_BUFFER_MODE = 0x21,
  	MCU_EXT_CMD_THERMAL_PROT = 0x23,
  	MCU_EXT_CMD_STA_REC_UPDATE = 0x25,
-@@ -1220,6 +1221,11 @@ enum {
+@@ -1230,6 +1231,11 @@ enum {
  	MCU_EXT_CMD_TX_POWER_FEATURE_CTRL = 0x58,
  	MCU_EXT_CMD_RXDCOC_CAL = 0x59,
  	MCU_EXT_CMD_GET_MIB_INFO = 0x5a,
@@ -298,7 +299,7 @@ Subject: [PATCH] wifi: mt76: mt7915: add mtk internal debug tools for mt76
  	return mt76_tx_queue_skb_raw(dev, mdev->q_mcu[qid], skb, 0);
  }
  
-@@ -2384,7 +2389,10 @@ static int mt7915_red_set_watermark(stru
+@@ -2386,7 +2391,10 @@ static int mt7915_red_set_watermark(stru
  				 sizeof(req), false);
  }
  
@@ -310,7 +311,7 @@ Subject: [PATCH] wifi: mt76: mt7915: add mtk internal debug tools for mt76
  {
  #define RED_DISABLE		0
  #define RED_BY_WA_ENABLE	2
-@@ -3518,6 +3526,8 @@ int mt7915_mcu_set_sku_en(struct mt7915_
+@@ -3520,6 +3528,8 @@ int mt7915_mcu_set_sku_en(struct mt7915_
  		.sku_enable = enable,
  	};
  
@@ -319,7 +320,7 @@ Subject: [PATCH] wifi: mt76: mt7915: add mtk internal debug tools for mt76
  	return mt76_mcu_send_msg(&dev->mt76,
  				 MCU_EXT_CMD(TX_POWER_FEATURE_CTRL), &req,
  				 sizeof(req), true);
-@@ -4184,6 +4194,23 @@ out:
+@@ -4186,6 +4196,23 @@ out:
  	return ret;
  }
  
@@ -343,7 +344,7 @@ Subject: [PATCH] wifi: mt76: mt7915: add mtk internal debug tools for mt76
  int mt7915_mcu_rf_regval(struct mt7915_dev *dev, u32 regidx, u32 *val, bool set)
  {
  	struct {
-@@ -4212,3 +4239,22 @@ int mt7915_mcu_rf_regval(struct mt7915_d
+@@ -4214,3 +4241,22 @@ int mt7915_mcu_rf_regval(struct mt7915_d
  
  	return 0;
  }
@@ -831,8 +832,8 @@ Subject: [PATCH] wifi: mt76: mt7915: add mtk internal debug tools for mt76
 +	[DBG_PSE_FREEPG_CNT]		= { DBG_INVALID_BASE, 0x380},
 +	[DBG_PSE_FREEPG_HEAD_TAIL]	= { DBG_INVALID_BASE, 0x384},
 +	[DBG_PSE_HIF0_PG_INFO]		= { DBG_INVALID_BASE, 0x150},
-+	[DBG_PSE_PG_HIF1_GROUP]		= { DBG_INVALID_BASE, 0x154},
-+	[DBG_PSE_HIF1_PG_INFO]		= { DBG_INVALID_BASE, 0x160},
++	[DBG_PSE_PG_HIF1_GROUP]		= { DBG_INVALID_BASE, 0x114},
++	[DBG_PSE_HIF1_PG_INFO]		= { DBG_INVALID_BASE, 0x154},
 +	[DBG_PSE_PG_CPU_GROUP]		= { DBG_INVALID_BASE, 0x118},
 +	[DBG_PSE_CPU_PG_INFO]		= { DBG_INVALID_BASE, 0x158},
 +	[DBG_PSE_PG_PLE_GROUP]		= { DBG_INVALID_BASE, 0x11c},
@@ -844,7 +845,7 @@ Subject: [PATCH] wifi: mt76: mt7915: add mtk internal debug tools for mt76
 +	[DBG_PSE_PG_LMAC2_GROUP]	= { DBG_INVALID_BASE, 0x12c},
 +	[DBG_PSE_LMAC2_PG_INFO]		= { DBG_INVALID_BASE, 0x16c},
 +	[DBG_PSE_PG_LMAC3_GROUP]	= { DBG_INVALID_BASE, 0x130},
-+	[DBG_PSE_LMAC3_PG_INFO]		= { DBG_INVALID_BASE, 0x17c},
++	[DBG_PSE_LMAC3_PG_INFO]		= { DBG_INVALID_BASE, 0x170},
 +	[DBG_PSE_PG_MDP_GROUP]		= { DBG_INVALID_BASE, 0x134},
 +	[DBG_PSE_MDP_PG_INFO]		= { DBG_INVALID_BASE, 0x174},
 +	[DBG_PSE_PG_PLE1_GROUP]		= { DBG_INVALID_BASE, 0x120},
@@ -1364,17 +1365,17 @@ Subject: [PATCH] wifi: mt76: mt7915: add mtk internal debug tools for mt76
 +#define MT_DBG_PSE_MDP_PG_INFO_MDP_SRC_CNT_MASK		GENMASK(27, 16)
 +#define MT_DBG_PSE_MDP_PG_INFO_MDP_RSV_CNT_MASK		GENMASK(11, 0)
 +
-+#define MT_DBG_PSE_FL_QUE_CTRL_0_ADDR			MT_DBG_PLE(0x1b0)
++#define MT_DBG_PSE_FL_QUE_CTRL_0_ADDR			MT_DBG_PSE(0x1b0)
 +#define MT_DBG_PSE_FL_QUE_CTRL_0_EXECUTE_MASK	   	BIT(31)
 +#define MT_DBG_PSE_FL_QUE_CTRL_0_Q_BUF_QID_SHFT         24
 +#define MT_DBG_PSE_FL_QUE_CTRL_0_Q_BUF_PID_SHFT         10
 +#define MT_DBG_PSE_FL_QUE_CTRL_0_Q_BUF_WLANID_MASK    	GENMASK(9, 0)
 +
-+#define MT_DBG_PSE_FL_QUE_CTRL_2_ADDR			MT_DBG_PLE(0x1b8)
++#define MT_DBG_PSE_FL_QUE_CTRL_2_ADDR			MT_DBG_PSE(0x1b8)
 +#define MT_DBG_PSE_FL_QUE_CTRL_2_QUEUE_TAIL_FID_MASK    GENMASK(27, 16)
 +#define MT_DBG_PSE_FL_QUE_CTRL_2_QUEUE_HEAD_FID_MASK    GENMASK(11, 0)
 +
-+#define MT_DBG_PSE_FL_QUE_CTRL_3_ADDR			MT_DBG_PLE(0x1bc)
++#define MT_DBG_PSE_FL_QUE_CTRL_3_ADDR			MT_DBG_PSE(0x1bc)
 +#define MT_DBG_PSE_FL_QUE_CTRL_3_QUEUE_PKT_NUM_MASK    	GENMASK(11, 0)
 +
 +
@@ -3724,8 +3725,8 @@ Subject: [PATCH] wifi: mt76: mt7915: add mtk internal debug tools for mt76
 +	rsv_pg = FIELD_GET(MT_DBG_PSE_LMAC1_PG_INFO_LMAC1_RSV_CNT_MASK, pg_flow_ctrl[11]);
 +	used_pg = FIELD_GET(MT_DBG_PSE_LMAC1_PG_INFO_LMAC1_SRC_CNT_MASK, pg_flow_ctrl[11]);
 +	seq_printf(s, "\t\tThe used/reserved pages of LMAC1 group=0x%03x/0x%03x\n", used_pg, rsv_pg);
-+	seq_printf(s, "\tReserved page counter of LMAC2 group(0x82068180): 0x%08x\n", pg_flow_ctrl[11]);
-+	seq_printf(s, "\tLMAC2 group page status(0x82068184): 0x%08x\n", pg_flow_ctrl[12]);
++	seq_printf(s, "\tReserved page counter of LMAC2 group(0x82068180): 0x%08x\n", pg_flow_ctrl[12]);
++	seq_printf(s, "\tLMAC2 group page status(0x82068184): 0x%08x\n", pg_flow_ctrl[13]);
 +	min_q = FIELD_GET(MT_DBG_PSE_PG_LMAC2_GROUP_LMAC2_MIN_QUOTA_MASK, pg_flow_ctrl[12]);
 +	max_q = FIELD_GET(MT_DBG_PSE_PG_LMAC2_GROUP_LMAC2_MAX_QUOTA_MASK, pg_flow_ctrl[12]);
 +	seq_printf(s, "\t\tThe max/min quota pages of LMAC2 group=0x%03x/0x%03x\n", max_q, min_q);
@@ -3751,8 +3752,8 @@ Subject: [PATCH] wifi: mt76: mt7915: add mtk internal debug tools for mt76
 +	used_pg = FIELD_GET(MT_DBG_PSE_PLE_PG_INFO_PLE_SRC_CNT_MASK, pg_flow_ctrl[15]);
 +	seq_printf(s, "\t\tThe used/reserved pages of PLE group=0x%03x/0x%03x\n", used_pg, rsv_pg);
 +
-+	seq_printf(s, "\tReserved page counter of PLE1 group(0x82068168): 0x%08x\n", pg_flow_ctrl[14]);
-+	seq_printf(s, "\tPLE1 group page status(0x8206816c): 0x%08x\n", pg_flow_ctrl[15]);
++	seq_printf(s, "\tReserved page counter of PLE1 group(0x82068168): 0x%08x\n", pg_flow_ctrl[20]);
++	seq_printf(s, "\tPLE1 group page status(0x8206816c): 0x%08x\n", pg_flow_ctrl[21]);
 +	min_q = FIELD_GET(MT_DBG_PSE_PG_PLE_GROUP_PLE_MIN_QUOTA_MASK, pg_flow_ctrl[20]);
 +	max_q = FIELD_GET(MT_DBG_PSE_PG_PLE_GROUP_PLE_MAX_QUOTA_MASK, pg_flow_ctrl[20]);
 +	seq_printf(s, "\t\tThe max/min quota pages of PLE1 group=0x%03x/0x%03x\n", max_q, min_q);
@@ -4837,7 +4838,7 @@ Subject: [PATCH] wifi: mt76: mt7915: add mtk internal debug tools for mt76
 +	struct mt76_dev *mdev = NULL;
 +	int i;
 +
-+	seq_printf(s, "Version: 2.2.24.5\n");
++	seq_printf(s, "Version: 2.2.24.7\n");
 +
 +	if (!test_bit(MT76_STATE_MCU_RUNNING, &dev->mphy.state))
 +		return 0;

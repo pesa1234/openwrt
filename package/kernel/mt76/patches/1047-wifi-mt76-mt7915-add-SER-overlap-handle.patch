@@ -50,7 +50,7 @@ Signed-off-by: Bo Jiao <Bo.Jiao@mediatek.com>
  				cmd, (MT76_MSG_MAX_RETRY_CNT - retry_cnt));
 --- a/mt76.h
 +++ b/mt76.h
-@@ -483,6 +483,14 @@ enum {
+@@ -488,6 +488,14 @@ enum {
  	MT76_STATE_WED_RESET,
  };
  
@@ -65,7 +65,7 @@ Signed-off-by: Bo Jiao <Bo.Jiao@mediatek.com>
  struct mt76_hw_cap {
  	bool has_2ghz;
  	bool has_5ghz;
-@@ -949,6 +957,7 @@ struct mt76_dev {
+@@ -954,6 +962,7 @@ struct mt76_dev {
  	wait_queue_head_t tx_wait;
  	/* spinclock used to protect wcid pktid linked list */
  	spinlock_t status_lock;

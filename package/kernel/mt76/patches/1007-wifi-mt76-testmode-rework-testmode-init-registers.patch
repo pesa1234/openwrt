@@ -31,7 +31,7 @@ Subject: [PATCH 1007/1051] wifi: mt76: testmode: rework testmode init
  			phy->test.rx_stats.fcs_error[q]++;
 --- a/mt76.h
 +++ b/mt76.h
-@@ -714,6 +714,8 @@ struct mt76_testmode_ops {
+@@ -719,6 +719,8 @@ struct mt76_testmode_ops {
  	int (*dump_stats)(struct mt76_phy *phy, struct sk_buff *msg);
  };
  
@@ -40,7 +40,7 @@ Subject: [PATCH 1007/1051] wifi: mt76: testmode: rework testmode init
  struct mt76_testmode_data {
  	enum mt76_testmode_state state;
  
-@@ -745,6 +747,8 @@ struct mt76_testmode_data {
+@@ -750,6 +752,8 @@ struct mt76_testmode_data {
  
  	u8 addr[3][ETH_ALEN];
  
@@ -49,7 +49,7 @@ Subject: [PATCH 1007/1051] wifi: mt76: testmode: rework testmode init
  	u32 tx_pending;
  	u32 tx_queued;
  	u16 tx_queued_limit;
-@@ -752,6 +756,7 @@ struct mt76_testmode_data {
+@@ -757,6 +761,7 @@ struct mt76_testmode_data {
  	struct {
  		u64 packets[__MT_RXQ_MAX];
  		u64 fcs_error[__MT_RXQ_MAX];
@@ -59,7 +59,7 @@ Subject: [PATCH 1007/1051] wifi: mt76: testmode: rework testmode init
  
 --- a/mt76_connac_mcu.h
 +++ b/mt76_connac_mcu.h
-@@ -1241,6 +1241,7 @@ enum {
+@@ -1251,6 +1251,7 @@ enum {
  	MCU_EXT_CMD_OFFCH_SCAN_CTRL = 0x9a,
  	MCU_EXT_CMD_SET_RDD_TH = 0x9d,
  	MCU_EXT_CMD_MURU_CTRL = 0x9f,

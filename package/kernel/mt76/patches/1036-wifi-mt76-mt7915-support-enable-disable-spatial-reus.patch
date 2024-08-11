@@ -13,7 +13,7 @@ Signed-off-by: Howard Hsu <howard-yh.hsu@mediatek.com>
 
 --- a/mt7915/mcu.c
 +++ b/mt7915/mcu.c
-@@ -3755,8 +3755,7 @@ int mt7915_mcu_set_txbf(struct mt7915_de
+@@ -3757,8 +3757,7 @@ int mt7915_mcu_set_txbf(struct mt7915_de
  				 sizeof(req), true);
  }
  

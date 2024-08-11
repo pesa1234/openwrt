@@ -22,7 +22,7 @@ Signed-off-by: Howard Hsu <howard-yh.hsu@mediatek.com>
 
 --- a/mt76_connac_mcu.h
 +++ b/mt76_connac_mcu.h
-@@ -1234,6 +1234,7 @@ enum {
+@@ -1244,6 +1244,7 @@ enum {
  	MCU_EXT_CMD_RED_ENABLE = 0x68,
  	MCU_EXT_CMD_PKT_BUDGET_CTRL = 0x6c,
  	MCU_EXT_CMD_CP_SUPPORT = 0x75,
@@ -32,7 +32,7 @@ Signed-off-by: Howard Hsu <howard-yh.hsu@mediatek.com>
  	MCU_EXT_CMD_MWDS_SUPPORT = 0x80,
 --- a/mt7915/mcu.c
 +++ b/mt7915/mcu.c
-@@ -5355,3 +5355,18 @@ void mt7915_mcu_scs_sta_poll(struct work
+@@ -5357,3 +5357,18 @@ void mt7915_mcu_scs_sta_poll(struct work
  	if (scs_enable_flag)
  		ieee80211_queue_delayed_work(mt76_hw(dev), &dev->scs_work, HZ);
  }
