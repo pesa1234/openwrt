@@ -47,7 +47,7 @@ Signed-off-by: Felix Fietkau <nbd@nbd.name>
  {
 --- a/mt76.h
 +++ b/mt76.h
-@@ -1290,8 +1290,6 @@ bool mt76_check_bin_file_mode(struct mt7
+@@ -1289,8 +1289,6 @@ bool mt76_check_bin_file_mode(struct mt7
  struct mt76_queue *
  mt76_init_queue(struct mt76_dev *dev, int qid, int idx, int n_desc,
  		int ring_base, void *wed, u32 flags);
