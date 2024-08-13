@@ -55,7 +55,12 @@ drv_mac80211_init_device_config() {
 		he_spr_sr_control \
 		he_spr_psr_enabled \
 		he_bss_color_enabled \
-		he_twt_required
+		he_twt_required \
+		he_twt_responder \
+		etxbfen \
+		itxbfen \
+		lpi_enable \
+		beacon_dup
 	config_add_int \
 		beamformer_antennas \
 		beamformee_antennas \
@@ -66,7 +71,8 @@ drv_mac80211_init_device_config() {
 		rx_stbc \
 		tx_stbc \
 		he_bss_color \
-		he_spr_non_srg_obss_pd_max_offset
+		he_spr_non_srg_obss_pd_max_offset \
+		sku_idx
 	config_add_boolean \
 		ldpc \
 		greenfield \
@@ -142,7 +148,8 @@ mac80211_hostapd_setup_base() {
 	[ -n "$acs_exclude_dfs" ] && [ "$acs_exclude_dfs" -gt 0 ] &&
 		append base_cfg "acs_exclude_dfs=1" "$N"
 
-	json_get_vars noscan ht_coex min_tx_power:0 tx_burst
+	json_get_vars noscan ht_coex vendor_vht min_tx_power:0 tx_burst
+	json_get_vars etxbfen:1 itxbfen lpi_enable:0 sku_idx:0 beacon_dup:1
 	json_get_values ht_capab_list ht_capab
 	json_get_values channel_list channels
 
@@ -296,7 +303,7 @@ mac80211_hostapd_setup_base() {
 	}
 	[ "$hwmode" = "a" ] || enable_ac=0
 
-	if [ "$enable_ac" != "0" ]; then
+	if [ "$enable_ac" != "0" -o "$vendor_vht" = "1" ]; then
 		json_get_vars \
 			rxldpc:1 \
 			short_gi_80:1 \
@@ -331,6 +338,12 @@ mac80211_hostapd_setup_base() {
 		cap_rx_stbc=$((($vht_cap >> 8) & 7))
 		[ "$rx_stbc" -lt "$cap_rx_stbc" ] && cap_rx_stbc="$rx_stbc"
 		vht_cap="$(( ($vht_cap & ~(0x700)) | ($cap_rx_stbc << 8) ))"
+
+		[ "$etxbfen" -eq 0 ] && {
+			su_beamformer=0
+			su_beamformee=0
+			mu_beamformer=0
+		}
 
 		[ "$vht_oper_chwidth" -lt 2 ] && {
 			vht160=0
@@ -427,6 +440,7 @@ mac80211_hostapd_setup_base() {
 			he_su_beamformee:1 \
 			he_mu_beamformer:1 \
 			he_twt_required:0 \
+			he_twt_responder:0 \
 			he_spr_sr_control:3 \
 			he_spr_psr_enabled:0 \
 			he_spr_non_srg_obss_pd_max_offset:0 \
@@ -443,6 +457,11 @@ mac80211_hostapd_setup_base() {
 			append base_cfg "he_oper_chwidth=$vht_oper_chwidth" "$N"
 			append base_cfg "he_oper_centr_freq_seg0_idx=$vht_center_seg0" "$N"
 		}
+		
+		[ "$etxbfen" -eq 0 ] && {
+			he_su_beamformer=0
+			he_mu_beamformer=0
+		}
 
 		mac80211_add_he_capabilities \
 			he_su_beamformer:${he_phy_cap:6:2}:0x80:$he_su_beamformer \
@@ -450,6 +469,13 @@ mac80211_hostapd_setup_base() {
 			he_mu_beamformer:${he_phy_cap:8:2}:0x2:$he_mu_beamformer \
 			he_spr_psr_enabled:${he_phy_cap:14:2}:0x1:$he_spr_psr_enabled \
 			he_twt_required:${he_mac_cap:0:2}:0x6:$he_twt_required
+			
+		if [ -n "$he_twt_responder" ]; then
+			append base_cfg "he_twt_responder=$he_twt_responder" "$N"
+		else
+			he_twt_responder=0
+			append base_cfg "he_twt_responder=$he_twt_responder" "$N"
+		fi
 
 		if [ "$he_bss_color_enabled" -gt 0 ]; then
 			append base_cfg "he_bss_color=$he_bss_color" "$N"
@@ -491,6 +517,8 @@ mac80211_hostapd_setup_base() {
 		append base_cfg "he_mu_edca_ac_vo_ecwmax=7" "$N"
 		append base_cfg "he_mu_edca_ac_vo_timer=255" "$N"
 	fi
+	
+	set_default tx_burst 2
 
 	hostapd_prepare_device_config "$hostapd_conf_file" nl80211
 	cat >> "$hostapd_conf_file" <<EOF
@@ -498,6 +526,10 @@ ${channel:+channel=$channel}
 ${channel_list:+chanlist=$channel_list}
 ${hostapd_noscan:+noscan=1}
 ${tx_burst:+tx_queue_data2_burst=$tx_burst}
+${itxbfen:+ibf_enable=$itxbfen}
+${lpi_enable:+lpi_enable=$lpi_enable}
+${sku_idx:+sku_idx=$sku_idx}
+${beacon_dup:+beacon_dup=$beacon_dup}
 ${multiple_bssid:+mbssid=$multiple_bssid}
 #num_global_macaddr=$num_global_macaddr
 $base_cfg
