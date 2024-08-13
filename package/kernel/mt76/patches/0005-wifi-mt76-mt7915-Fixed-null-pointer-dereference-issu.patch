@@ -18,7 +18,7 @@ Signed-off-by: MeiChia Chiu <meichia.chiu@mediatek.com>
 
 --- a/mt7915/main.c
 +++ b/mt7915/main.c
-@@ -1170,9 +1170,16 @@ static void mt7915_sta_rc_update(struct
+@@ -1168,9 +1168,16 @@ static void mt7915_sta_rc_update(struct
  				 struct ieee80211_sta *sta,
  				 u32 changed)
  {
