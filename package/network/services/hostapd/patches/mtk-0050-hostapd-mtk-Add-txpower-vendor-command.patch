@@ -1,6 +1,6 @@
 --- a/hostapd/config_file.c
 +++ b/hostapd/config_file.c
-@@ -5114,6 +5114,16 @@ static int hostapd_config_fill(struct ho
+@@ -5123,6 +5123,16 @@ static int hostapd_config_fill(struct ho
  		u8 en = strtol(pos, NULL, 10);
  
  		conf->dfs_detect_mode = en;
@@ -31,7 +31,7 @@
  }
 --- a/src/ap/ap_config.h
 +++ b/src/ap/ap_config.h
-@@ -1234,6 +1234,9 @@ struct hostapd_config {
+@@ -1263,6 +1263,9 @@ struct hostapd_config {
  	u8 three_wire_enable;
  	u8 ibf_enable;
  	u8 dfs_detect_mode;
@@ -43,7 +43,7 @@
  enum three_wire_mode {
 --- a/src/ap/ap_drv_ops.c
 +++ b/src/ap/ap_drv_ops.c
-@@ -1276,4 +1276,12 @@ int hostapd_drv_ibf_dump(struct hostapd_
+@@ -1302,4 +1302,12 @@ int hostapd_drv_ibf_dump(struct hostapd_
  	if (!hapd->driver || !hapd->driver->ibf_dump)
  		return 0;
  	return hapd->driver->ibf_dump(hapd->drv_priv, ibf_enable);
@@ -60,7 +60,7 @@
 +}
 --- a/src/ap/ap_drv_ops.h
 +++ b/src/ap/ap_drv_ops.h
-@@ -153,6 +153,7 @@ int hostapd_drv_mu_dump(struct hostapd_d
+@@ -156,6 +156,7 @@ int hostapd_drv_mu_dump(struct hostapd_d
  int hostapd_drv_three_wire_ctrl(struct hostapd_data *hapd);
  int hostapd_drv_ibf_ctrl(struct hostapd_data *hapd);
  int hostapd_drv_ibf_dump(struct hostapd_data *hapd, u8 *ibf_enable);
@@ -163,7 +163,7 @@
  static struct nl_sock * nl_create_handle(struct nl_cb *cb, const char *dbg)
  {
  	struct nl_sock *handle;
-@@ -14366,6 +14373,49 @@ fail:
+@@ -14356,6 +14363,49 @@ fail:
  	return -ENOBUFS;
  }
  
@@ -213,7 +213,7 @@
  const struct wpa_driver_ops wpa_driver_nl80211_ops = {
  	.name = "nl80211",
  	.desc = "Linux nl80211/cfg80211",
-@@ -14530,4 +14580,5 @@ const struct wpa_driver_ops wpa_driver_n
+@@ -14520,4 +14570,5 @@ const struct wpa_driver_ops wpa_driver_n
  	.three_wire_ctrl = nl80211_enable_three_wire,
  	.ibf_ctrl = nl80211_ibf_enable,
  	.ibf_dump = nl80211_ibf_dump,

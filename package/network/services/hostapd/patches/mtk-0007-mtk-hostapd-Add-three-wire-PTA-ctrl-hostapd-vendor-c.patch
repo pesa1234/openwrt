@@ -21,10 +21,10 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
 
 --- a/hostapd/config_file.c
 +++ b/hostapd/config_file.c
-@@ -5101,6 +5101,10 @@ static int hostapd_config_fill(struct ho
+@@ -5110,6 +5110,10 @@ static int hostapd_config_fill(struct ho
  			return 1;
  		}
- 		conf->edcca_compensation = (s8) val;
+ 		conf->edcca_compensation = (s8) val;	
 +	} else if (os_strcmp(buf, "three_wire_enable") == 0) {
 +		u8 en = atoi(pos);
 +
@@ -44,7 +44,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  }
 --- a/src/ap/ap_config.h
 +++ b/src/ap/ap_config.h
-@@ -1230,6 +1230,19 @@ struct hostapd_config {
+@@ -1259,6 +1259,19 @@ struct hostapd_config {
  	u8 edcca_enable;
  	s8 edcca_compensation;
  	int *edcca_threshold;
@@ -66,7 +66,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  enum edcca_mode {
 --- a/src/ap/ap_drv_ops.c
 +++ b/src/ap/ap_drv_ops.c
-@@ -1252,3 +1252,14 @@ int hostapd_drv_mu_dump(struct hostapd_d
+@@ -1278,3 +1278,14 @@ int hostapd_drv_mu_dump(struct hostapd_d
  		return 0;
  	return hapd->driver->mu_dump(hapd->drv_priv, mu_onoff);
  }
@@ -83,7 +83,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
 +}
 --- a/src/ap/ap_drv_ops.h
 +++ b/src/ap/ap_drv_ops.h
-@@ -150,6 +150,7 @@ int hostapd_drv_configure_edcca_threshol
+@@ -153,6 +153,7 @@ int hostapd_drv_configure_edcca_threshol
  int hostapd_drv_get_edcca(struct hostapd_data *hapd, const u8 mode, u8 *value);
  int hostapd_drv_mu_ctrl(struct hostapd_data *hapd);
  int hostapd_drv_mu_dump(struct hostapd_data *hapd, u8 *mu_onoff);
@@ -153,7 +153,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  /**
 --- a/src/drivers/driver_nl80211.c
 +++ b/src/drivers/driver_nl80211.c
-@@ -14227,6 +14227,38 @@ static int nl80211_get_edcca(void *priv,
+@@ -14217,6 +14217,38 @@ static int nl80211_get_edcca(void *priv,
  	return ret;
  }
  
@@ -192,7 +192,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  
  const struct wpa_driver_ops wpa_driver_nl80211_ops = {
  	.name = "nl80211",
-@@ -14389,4 +14421,5 @@ const struct wpa_driver_ops wpa_driver_n
+@@ -14379,4 +14411,5 @@ const struct wpa_driver_ops wpa_driver_n
  	.configure_edcca_enable = nl80211_configure_edcca_enable,
  	.configure_edcca_threshold = nl80211_configure_edcca_threshold,
  	.get_edcca = nl80211_get_edcca,

@@ -49,7 +49,7 @@ Subject: [PATCH 13/54] mtk: hostapd: Add he_ldpc configuration
  	/* Set default basic MCS/NSS set to single stream MCS 0-7 */
 --- a/src/ap/ap_config.h
 +++ b/src/ap/ap_config.h
-@@ -976,6 +976,7 @@ struct hostapd_bss_config {
+@@ -1005,6 +1005,7 @@ struct hostapd_bss_config {
   * struct he_phy_capabilities_info - HE PHY capabilities
   */
  struct he_phy_capabilities_info {

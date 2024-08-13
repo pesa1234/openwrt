@@ -165,7 +165,7 @@ Subject: [PATCH 06/54] mtk: hostapd: Add hostapd MU SET/GET control
  	/* The third octet of the country string uses an ASCII space character
 --- a/src/ap/ap_config.h
 +++ b/src/ap/ap_config.h
-@@ -1176,6 +1176,7 @@ struct hostapd_config {
+@@ -1205,6 +1205,7 @@ struct hostapd_config {
  	int reg_def_cli_eirp;
  
  	bool require_he;
@@ -175,7 +175,7 @@ Subject: [PATCH 06/54] mtk: hostapd: Add hostapd MU SET/GET control
  	/* VHT enable/disable config from CHAN_SWITCH */
 --- a/src/ap/ap_drv_ops.c
 +++ b/src/ap/ap_drv_ops.c
-@@ -1238,3 +1238,17 @@ int hostapd_drv_get_edcca(struct hostapd
+@@ -1264,3 +1264,17 @@ int hostapd_drv_get_edcca(struct hostapd
  		return 0;
  	return hapd->driver->get_edcca(hapd->drv_priv, mode, value);
  }
@@ -195,7 +195,7 @@ Subject: [PATCH 06/54] mtk: hostapd: Add hostapd MU SET/GET control
 +}
 --- a/src/ap/ap_drv_ops.h
 +++ b/src/ap/ap_drv_ops.h
-@@ -148,6 +148,8 @@ int hostapd_drv_configure_edcca_enable(s
+@@ -151,6 +151,8 @@ int hostapd_drv_configure_edcca_enable(s
  int hostapd_drv_configure_edcca_threshold(struct hostapd_data *hapd,
  					  const int *threshold);
  int hostapd_drv_get_edcca(struct hostapd_data *hapd, const u8 mode, u8 *value);
@@ -277,7 +277,7 @@ Subject: [PATCH 06/54] mtk: hostapd: Add hostapd MU SET/GET control
  /**
 --- a/src/drivers/driver_nl80211.c
 +++ b/src/drivers/driver_nl80211.c
-@@ -13819,6 +13819,114 @@ fail:
+@@ -13809,6 +13809,114 @@ fail:
  }
  
  
@@ -392,7 +392,7 @@ Subject: [PATCH 06/54] mtk: hostapd: Add hostapd MU SET/GET control
  #ifdef CONFIG_DPP
  static int nl80211_dpp_listen(void *priv, bool enable)
  {
-@@ -14266,6 +14374,8 @@ const struct wpa_driver_ops wpa_driver_n
+@@ -14256,6 +14364,8 @@ const struct wpa_driver_ops wpa_driver_n
  	.update_connect_params = nl80211_update_connection_params,
  	.send_external_auth_status = nl80211_send_external_auth_status,
  	.set_4addr_mode = nl80211_set_4addr_mode,

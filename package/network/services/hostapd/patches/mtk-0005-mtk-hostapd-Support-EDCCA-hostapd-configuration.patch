@@ -21,10 +21,10 @@ edcca_enable and edcca_compensation and implement edcca related handlers.
 
 --- a/hostapd/config_file.c
 +++ b/hostapd/config_file.c
-@@ -5058,6 +5058,40 @@ static int hostapd_config_fill(struct ho
- 		bss->mld_indicate_disabled = atoi(pos);
- #endif /* CONFIG_TESTING_OPTIONS */
- #endif /* CONFIG_IEEE80211BE */
+@@ -5067,6 +5067,40 @@ static int hostapd_config_fill(struct ho
+ 		os_strlcpy(bss->apup_peer_ifname_prefix,
+ 		           pos, sizeof(bss->apup_peer_ifname_prefix));
+ #endif // def CONFIG_APUP
 +	} else if (os_strcmp(buf, "edcca_threshold") == 0) {
 +		if (hostapd_parse_intlist(&conf->edcca_threshold, pos) ||
 +		    conf->edcca_threshold[0] < EDCCA_MIN_CONFIG_THRES ||
@@ -58,7 +58,7 @@ edcca_enable and edcca_compensation and implement edcca related handlers.
 +				   EDCCA_MAX_COMPENSATION);
 +			return 1;
 +		}
-+		conf->edcca_compensation = (s8) val;
++		conf->edcca_compensation = (s8) val;	
  	} else {
  		wpa_printf(MSG_ERROR,
  			   "Line %d: unknown configuration item '%s'",
@@ -232,7 +232,7 @@ edcca_enable and edcca_compensation and implement edcca related handlers.
  
 --- a/src/ap/ap_config.h
 +++ b/src/ap/ap_config.h
-@@ -1225,8 +1225,38 @@ struct hostapd_config {
+@@ -1254,8 +1254,38 @@ struct hostapd_config {
  		MBSSID_ENABLED = 1,
  		ENHANCED_MBSSID_ENABLED = 2,
  	} mbssid;
@@ -273,7 +273,7 @@ edcca_enable and edcca_compensation and implement edcca related handlers.
  hostapd_get_oper_chwidth(struct hostapd_config *conf)
 --- a/src/ap/ap_drv_ops.c
 +++ b/src/ap/ap_drv_ops.c
-@@ -1214,3 +1214,27 @@ int hostapd_drv_set_secure_ranging_ctx(s
+@@ -1240,3 +1240,27 @@ int hostapd_drv_set_secure_ranging_ctx(s
  	return hapd->driver->set_secure_ranging_ctx(hapd->drv_priv, &params);
  }
  #endif /* CONFIG_PASN */
@@ -303,7 +303,7 @@ edcca_enable and edcca_compensation and implement edcca related handlers.
 +}
 --- a/src/ap/ap_drv_ops.h
 +++ b/src/ap/ap_drv_ops.h
-@@ -144,6 +144,10 @@ int hostapd_drv_set_secure_ranging_ctx(s
+@@ -147,6 +147,10 @@ int hostapd_drv_set_secure_ranging_ctx(s
  				       u8 ltf_keyseed_len,
  				       const u8 *ltf_keyseed, u32 action);
  
@@ -385,7 +385,7 @@ edcca_enable and edcca_compensation and implement edcca related handlers.
  
  
  #ifndef NETLINK_CAP_ACK
-@@ -13949,6 +13951,174 @@ static int testing_nl80211_radio_disable
+@@ -13939,6 +13941,174 @@ static int testing_nl80211_radio_disable
  
  #endif /* CONFIG_TESTING_OPTIONS */
  
@@ -560,7 +560,7 @@ edcca_enable and edcca_compensation and implement edcca related handlers.
  
  const struct wpa_driver_ops wpa_driver_nl80211_ops = {
  	.name = "nl80211",
-@@ -14105,4 +14275,8 @@ const struct wpa_driver_ops wpa_driver_n
+@@ -14095,4 +14265,8 @@ const struct wpa_driver_ops wpa_driver_n
  	.register_frame = testing_nl80211_register_frame,
  	.radio_disable = testing_nl80211_radio_disable,
  #endif /* CONFIG_TESTING_OPTIONS */

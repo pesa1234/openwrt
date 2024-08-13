@@ -14,7 +14,7 @@ Signed-off-by: Allen.Ye <allen.ye@mediatek.com>
 
 --- a/src/ap/ieee802_11.c
 +++ b/src/ap/ieee802_11.c
-@@ -7688,8 +7688,10 @@ static u8 * hostapd_eid_rnr_iface(struct
+@@ -7704,8 +7704,10 @@ static u8 * hostapd_eid_rnr_iface(struct
  		}
  
  		start = i;

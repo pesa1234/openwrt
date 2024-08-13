@@ -18,7 +18,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
 
 --- a/hostapd/config_file.c
 +++ b/hostapd/config_file.c
-@@ -5108,6 +5108,10 @@ static int hostapd_config_fill(struct ho
+@@ -5117,6 +5117,10 @@ static int hostapd_config_fill(struct ho
  	} else if (os_strcmp(buf, "ibf_enable") == 0) { /*ibf setting is per device*/
  		int val = atoi(pos);
  		conf->ibf_enable = !!val;
@@ -70,7 +70,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  		reply_len = 16;
 --- a/src/ap/ap_config.h
 +++ b/src/ap/ap_config.h
-@@ -1232,6 +1232,7 @@ struct hostapd_config {
+@@ -1261,6 +1261,7 @@ struct hostapd_config {
  	int *edcca_threshold;
  	u8 three_wire_enable;
  	u8 ibf_enable;
@@ -78,7 +78,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  };
  
  enum three_wire_mode {
-@@ -1246,6 +1247,18 @@ enum three_wire_mode {
+@@ -1275,6 +1276,18 @@ enum three_wire_mode {
  		NUM_THREE_WIRE_MODE - 1
  };
  
