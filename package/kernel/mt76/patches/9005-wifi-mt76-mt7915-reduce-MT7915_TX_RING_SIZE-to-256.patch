@@ -10,21 +10,16 @@ TX and RX to achieve similar performance.
 
 Signed-off-by: Rany Hany <rany_hany@riseup.net>
 ---
- ...t76-mt7915-reduce-MT7915_TX_RING_SIZE-to-256.patch | 11 +++++++++++
- 1 file changed, 11 insertions(+)
- create mode 100644 package/kernel/mt76/patches/9005-wifi-mt76-mt7915-reduce-MT7915_TX_RING_SIZE-to-256.patch
 
---- /dev/null
-+++ b/package/kernel/mt76/patches/9005-wifi-mt76-mt7915-reduce-MT7915_TX_RING_SIZE-to-256.patch
-@@ -0,0 +1,11 @@
-+--- a/mt7915/mt7915.h
-++++ b/mt7915/mt7915.h
-+@@ -21,7 +21,7 @@
-+ #define MT7915_WATCHDOG_TIME		(HZ / 10)
-+ #define MT7915_RESET_TIMEOUT		(30 * HZ)
-+ 
-+-#define MT7915_TX_RING_SIZE		2048
-++#define MT7915_TX_RING_SIZE		256
-+ #define MT7915_TX_MCU_RING_SIZE		256
-+ #define MT7915_TX_FWDL_RING_SIZE	128
-+ 
+ 
+--- a/mt7915/mt7915.h
++++ b/mt7915/mt7915.h
+@@ -21,7 +21,7 @@
+ #define MT7915_WATCHDOG_TIME		(HZ / 10)
+ #define MT7915_RESET_TIMEOUT		(30 * HZ)
+ 
+-#define MT7915_TX_RING_SIZE		2048
++#define MT7915_TX_RING_SIZE		256
+ #define MT7915_TX_MCU_RING_SIZE		256
+ #define MT7915_TX_FWDL_RING_SIZE	128
+ 
