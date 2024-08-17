@@ -277,7 +277,7 @@ Subject: [PATCH 01/70] wifi: mt76: mt7915: add mtk internal debug tools for
  	if (ret)
  		goto out;
  
-@@ -254,6 +258,7 @@ static int mt7915_add_interface(struct i
+@@ -256,6 +260,7 @@ static int mt7915_add_interface(struct i
  	mvif->sta.wcid.hw_key_idx = -1;
  	mvif->sta.wcid.tx_info |= MT_WCID_TX_INFO_SET;
  	mt76_wcid_init(&mvif->sta.wcid);
@@ -287,7 +287,7 @@ Subject: [PATCH 01/70] wifi: mt76: mt7915: add mtk internal debug tools for
  			       MT_WTBL_UPDATE_ADM_COUNT_CLEAR);
 --- a/mt7915/mcu.c
 +++ b/mt7915/mcu.c
-@@ -204,6 +204,11 @@ mt7915_mcu_send_message(struct mt76_dev
+@@ -206,6 +206,11 @@ mt7915_mcu_send_message(struct mt76_dev
  	else
  		qid = MT_MCUQ_WM;
  
@@ -299,7 +299,7 @@ Subject: [PATCH 01/70] wifi: mt76: mt7915: add mtk internal debug tools for
  	return mt76_tx_queue_skb_raw(dev, mdev->q_mcu[qid], skb, 0);
  }
  
-@@ -2386,7 +2391,10 @@ static int mt7915_red_set_watermark(stru
+@@ -2392,7 +2397,10 @@ static int mt7915_red_set_watermark(stru
  				 sizeof(req), false);
  }
  
@@ -311,7 +311,7 @@ Subject: [PATCH 01/70] wifi: mt76: mt7915: add mtk internal debug tools for
  {
  #define RED_DISABLE		0
  #define RED_BY_WA_ENABLE	2
-@@ -3520,6 +3528,8 @@ int mt7915_mcu_set_sku_en(struct mt7915_
+@@ -3528,6 +3536,8 @@ int mt7915_mcu_set_sku_en(struct mt7915_
  		.sku_enable = enable,
  	};
  
@@ -320,7 +320,7 @@ Subject: [PATCH 01/70] wifi: mt76: mt7915: add mtk internal debug tools for
  	return mt76_mcu_send_msg(&dev->mt76,
  				 MCU_EXT_CMD(TX_POWER_FEATURE_CTRL), &req,
  				 sizeof(req), true);
-@@ -4186,6 +4196,23 @@ out:
+@@ -4194,6 +4204,23 @@ out:
  	return ret;
  }
  
@@ -344,7 +344,7 @@ Subject: [PATCH 01/70] wifi: mt76: mt7915: add mtk internal debug tools for
  int mt7915_mcu_rf_regval(struct mt7915_dev *dev, u32 regidx, u32 *val, bool set)
  {
  	struct {
-@@ -4214,3 +4241,22 @@ int mt7915_mcu_rf_regval(struct mt7915_d
+@@ -4222,3 +4249,22 @@ int mt7915_mcu_rf_regval(struct mt7915_d
  
  	return 0;
  }
@@ -439,7 +439,7 @@ Subject: [PATCH 01/70] wifi: mt76: mt7915: add mtk internal debug tools for
  	bool wmm_pbc_enable;
  	struct work_struct wmm_pbc_work;
  	u32 adie_type;
-@@ -610,4 +646,24 @@ void mt7915_sta_add_debugfs(struct ieee8
+@@ -612,4 +648,24 @@ void mt7915_sta_add_debugfs(struct ieee8
  int mt7915_mmio_wed_init(struct mt7915_dev *dev, void *pdev_ptr,
  			 bool pci, int *irq);
  

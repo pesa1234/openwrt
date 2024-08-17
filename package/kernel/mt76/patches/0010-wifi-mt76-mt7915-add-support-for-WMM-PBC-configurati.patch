@@ -44,7 +44,7 @@ Subject: [PATCH 10/21] wifi: mt76: mt7915: add support for WMM PBC
  	phy2 = mt7915_alloc_ext_phy(dev);
 --- a/mt7915/mac.c
 +++ b/mt7915/mac.c
-@@ -2032,6 +2032,8 @@ void mt7915_mac_work(struct work_struct
+@@ -2033,6 +2033,8 @@ void mt7915_mac_work(struct work_struct
  
  	mt76_update_survey(mphy);
  	if (++mphy->mac_work_count == 5) {
@@ -53,7 +53,7 @@ Subject: [PATCH 10/21] wifi: mt76: mt7915: add support for WMM PBC
  		mphy->mac_work_count = 0;
  
  		mt7915_mac_update_stats(phy);
-@@ -2039,6 +2041,18 @@ void mt7915_mac_work(struct work_struct
+@@ -2040,6 +2042,18 @@ void mt7915_mac_work(struct work_struct
  
  		if (phy->dev->muru_debug)
  			mt7915_mcu_muru_debug_get(phy);
@@ -74,7 +74,7 @@ Subject: [PATCH 10/21] wifi: mt76: mt7915: add support for WMM PBC
  	if (++phy->stats_work_count == 10) {
 --- a/mt7915/mcu.c
 +++ b/mt7915/mcu.c
-@@ -354,6 +354,93 @@ mt7915_mcu_rx_bcc_notify(struct mt7915_d
+@@ -356,6 +356,93 @@ mt7915_mcu_rx_bcc_notify(struct mt7915_d
  			mt7915_mcu_cca_finish, mphy->hw);
  }
  
@@ -168,7 +168,7 @@ Subject: [PATCH 10/21] wifi: mt76: mt7915: add support for WMM PBC
  static void
  mt7915_mcu_rx_ext_event(struct mt7915_dev *dev, struct sk_buff *skb)
  {
-@@ -376,6 +463,9 @@ mt7915_mcu_rx_ext_event(struct mt7915_de
+@@ -378,6 +465,9 @@ mt7915_mcu_rx_ext_event(struct mt7915_de
  	case MCU_EXT_EVENT_BCC_NOTIFY:
  		mt7915_mcu_rx_bcc_notify(dev, skb);
  		break;

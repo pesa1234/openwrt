@@ -19,7 +19,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
 
 --- a/mt76.h
 +++ b/mt76.h
-@@ -802,6 +802,15 @@ struct mt76_testmode_data {
+@@ -813,6 +813,15 @@ struct mt76_testmode_data {
  		u64 fcs_error[__MT_RXQ_MAX];
  		u64 len_mismatch;
  	} rx_stats;
@@ -55,7 +55,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  enum {
 --- a/mt7915/mcu.c
 +++ b/mt7915/mcu.c
-@@ -2760,6 +2760,7 @@ mt7915_mcu_background_chain_ctrl(struct
+@@ -2768,6 +2768,7 @@ mt7915_mcu_background_chain_ctrl(struct
  		req.monitor_chan = chandef->chan->hw_value;
  		req.monitor_central_chan =
  			ieee80211_frequency_to_channel(chandef->center_freq1);
@@ -63,7 +63,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  		req.band_idx = phy->mt76->band_idx;
  		req.scan_mode = 2;
  		break;
-@@ -4955,3 +4956,68 @@ int mt7915_mcu_set_amsdu_algo(struct mt7
+@@ -4963,3 +4964,68 @@ int mt7915_mcu_set_amsdu_algo(struct mt7
  	return mt76_mcu_send_msg(&dev->mt76, MCU_EXT_CMD(MEC_CTRL), &req, sizeof(req), true);
  }
  #endif
@@ -197,7 +197,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  
  	u8 stats_work_count;
  	struct list_head stats_list;
-@@ -786,6 +787,9 @@ int mt7915_vendor_amnt_sta_remove(struct
+@@ -788,6 +789,9 @@ int mt7915_vendor_amnt_sta_remove(struct
  				  struct ieee80211_sta *sta);
  #endif
  
@@ -519,7 +519,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  static int
  mt7915_tm_set_wmm_qid(struct mt7915_phy *phy, u8 qid, u8 aifs, u8 cw_min,
  		      u16 cw_max, u16 txop, u8 tx_cmd)
-@@ -1273,6 +1551,8 @@ mt7915_tm_init(struct mt7915_phy *phy, b
+@@ -1274,6 +1552,8 @@ mt7915_tm_init(struct mt7915_phy *phy, b
  		phy->mt76->test.tx_mpdu_len = 0;
  		phy->test.bf_en = 0;
  		mt7915_tm_set_entry(phy);
@@ -528,7 +528,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  	}
  }
  
-@@ -2038,6 +2318,14 @@ mt7915_tm_update_params(struct mt7915_ph
+@@ -2039,6 +2319,14 @@ mt7915_tm_update_params(struct mt7915_ph
  		mt7915_tm_set_cfg(phy);
  	if (changed & BIT(TM_CHANGED_TXBF_ACT))
  		mt7915_tm_set_txbf(phy);
