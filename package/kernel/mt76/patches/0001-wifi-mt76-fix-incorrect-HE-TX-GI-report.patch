@@ -141,7 +141,7 @@ Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
  out:
  	rcu_read_unlock();
  }
-@@ -1953,6 +1947,27 @@ static void mt7915_mac_severe_check(stru
+@@ -1955,6 +1949,27 @@ static void mt7915_mac_severe_check(stru
  	phy->trb_ts = trb;
  }
  
@@ -169,7 +169,7 @@ Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
  void mt7915_mac_sta_rc_work(struct work_struct *work)
  {
  	struct mt7915_dev *dev = container_of(work, struct mt7915_dev, rc_work);
-@@ -2011,6 +2026,11 @@ void mt7915_mac_work(struct work_struct
+@@ -2013,6 +2028,11 @@ void mt7915_mac_work(struct work_struct
  			mt7915_mcu_muru_debug_get(phy);
  	}
  
@@ -183,7 +183,7 @@ Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
  	mt76_tx_status_check(mphy->dev, false);
 --- a/mt7915/main.c
 +++ b/mt7915/main.c
-@@ -742,6 +742,7 @@ int mt7915_mac_sta_add(struct mt76_dev *
+@@ -743,6 +743,7 @@ int mt7915_mac_sta_add(struct mt76_dev *
  
  	INIT_LIST_HEAD(&msta->rc_list);
  	INIT_LIST_HEAD(&msta->wcid.poll_list);
@@ -191,7 +191,7 @@ Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
  	msta->vif = mvif;
  	msta->wcid.idx = idx;
  	msta->wcid.phy_idx = ext_phy;
-@@ -802,6 +803,7 @@ void mt7915_mac_sta_remove(struct mt76_d
+@@ -805,6 +806,7 @@ void mt7915_mac_sta_remove(struct mt76_d
  {
  	struct mt7915_dev *dev = container_of(mdev, struct mt7915_dev, mt76);
  	struct mt7915_sta *msta = (struct mt7915_sta *)sta->drv_priv;
@@ -199,7 +199,7 @@ Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
  	int i;
  
  	mt7915_mac_wtbl_update(dev, msta->wcid.idx,
-@@ -816,6 +818,11 @@ void mt7915_mac_sta_remove(struct mt76_d
+@@ -819,6 +821,11 @@ void mt7915_mac_sta_remove(struct mt76_d
  	if (!list_empty(&msta->rc_list))
  		list_del_init(&msta->rc_list);
  	spin_unlock_bh(&mdev->sta_poll_lock);
