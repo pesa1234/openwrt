@@ -73,7 +73,7 @@ Subject: [PATCH 1004/1051] wifi: mt76: mt7915: certification patches
  			       IEEE80211_RC_BW_CHANGED))
 --- a/mt7915/main.c
 +++ b/mt7915/main.c
-@@ -760,6 +760,9 @@ int mt7915_mac_sta_add(struct mt76_dev *
+@@ -761,6 +761,9 @@ int mt7915_mac_sta_add(struct mt76_dev *
  	struct mt7915_sta *msta = (struct mt7915_sta *)sta->drv_priv;
  	struct mt7915_vif *mvif = (struct mt7915_vif *)vif->drv_priv;
  	bool ext_phy = mvif->phy != &dev->phy;
@@ -83,7 +83,7 @@ Subject: [PATCH 1004/1051] wifi: mt76: mt7915: certification patches
  	int ret, idx;
  	u32 addr;
  
-@@ -792,7 +795,15 @@ int mt7915_mac_sta_add(struct mt76_dev *
+@@ -793,7 +796,15 @@ int mt7915_mac_sta_add(struct mt76_dev *
  #ifdef CONFIG_MTK_VENDOR
  	mt7915_vendor_amnt_sta_remove(mvif->phy, sta);
  #endif

@@ -183,7 +183,7 @@ Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
  	mt76_tx_status_check(mphy->dev, false);
 --- a/mt7915/main.c
 +++ b/mt7915/main.c
-@@ -740,6 +740,7 @@ int mt7915_mac_sta_add(struct mt76_dev *
+@@ -741,6 +741,7 @@ int mt7915_mac_sta_add(struct mt76_dev *
  
  	INIT_LIST_HEAD(&msta->rc_list);
  	INIT_LIST_HEAD(&msta->wcid.poll_list);
@@ -191,7 +191,7 @@ Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
  	msta->vif = mvif;
  	msta->wcid.sta = 1;
  	msta->wcid.idx = idx;
-@@ -767,6 +768,7 @@ void mt7915_mac_sta_remove(struct mt76_d
+@@ -768,6 +769,7 @@ void mt7915_mac_sta_remove(struct mt76_d
  {
  	struct mt7915_dev *dev = container_of(mdev, struct mt7915_dev, mt76);
  	struct mt7915_sta *msta = (struct mt7915_sta *)sta->drv_priv;
@@ -199,7 +199,7 @@ Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
  	int i;
  
  	mt7915_mcu_add_sta(dev, vif, sta, false);
-@@ -783,6 +785,11 @@ void mt7915_mac_sta_remove(struct mt76_d
+@@ -784,6 +786,11 @@ void mt7915_mac_sta_remove(struct mt76_d
  	if (!list_empty(&msta->rc_list))
  		list_del_init(&msta->rc_list);
  	spin_unlock_bh(&mdev->sta_poll_lock);

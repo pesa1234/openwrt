@@ -200,7 +200,7 @@ Subject: [PATCH] wifi: mt76: mt7915: csi: implement csi support
  	if (ret)
 --- a/mt7915/main.c
 +++ b/mt7915/main.c
-@@ -799,6 +799,19 @@ void mt7915_mac_sta_remove(struct mt76_d
+@@ -800,6 +800,19 @@ void mt7915_mac_sta_remove(struct mt76_d
  	struct mt7915_sta *msta = (struct mt7915_sta *)sta->drv_priv;
  	struct mt7915_phy *phy = msta->vif->phy;
  	int i;
