@@ -30,7 +30,7 @@ Signed-off-by: Howard Hsu <howard-yh.hsu@mediatek.com>
  
 --- a/mt7915/mcu.c
 +++ b/mt7915/mcu.c
-@@ -451,6 +451,91 @@ mt7915_mcu_rx_bss_acq_pkt_cnt(struct mt7
+@@ -452,6 +452,91 @@ mt7915_mcu_rx_bss_acq_pkt_cnt(struct mt7
  	}
  }
  
@@ -122,7 +122,7 @@ Signed-off-by: Howard Hsu <howard-yh.hsu@mediatek.com>
  static void
  mt7915_mcu_rx_ext_event(struct mt7915_dev *dev, struct sk_buff *skb)
  {
-@@ -478,6 +563,11 @@ mt7915_mcu_rx_ext_event(struct mt7915_de
+@@ -479,6 +564,11 @@ mt7915_mcu_rx_ext_event(struct mt7915_de
  	case MCU_EXT_EVENT_BCC_NOTIFY:
  		mt7915_mcu_rx_bcc_notify(dev, skb);
  		break;
@@ -134,7 +134,7 @@ Signed-off-by: Howard Hsu <howard-yh.hsu@mediatek.com>
  #if defined CONFIG_NL80211_TESTMODE || defined MTK_DEBUG
  	case MCU_EXT_EVENT_BF_STATUS_READ:
  		mt7915_mcu_txbf_status_read(dev, skb);
-@@ -523,6 +613,7 @@ void mt7915_mcu_rx_event(struct mt7915_d
+@@ -524,6 +614,7 @@ void mt7915_mcu_rx_event(struct mt7915_d
  	     rxd->ext_eid == MCU_EXT_EVENT_PS_SYNC ||
  	     rxd->ext_eid == MCU_EXT_EVENT_BCC_NOTIFY ||
  	     rxd->ext_eid == MCU_EXT_EVENT_BF_STATUS_READ ||
@@ -142,7 +142,7 @@ Signed-off-by: Howard Hsu <howard-yh.hsu@mediatek.com>
  	     !rxd->seq) &&
  	     !(rxd->eid == MCU_CMD_EXT_CID &&
  	       rxd->ext_eid == MCU_EXT_EVENT_WA_TX_STAT))
-@@ -4003,6 +4094,10 @@ int mt7915_mcu_add_obss_spr(struct mt791
+@@ -4012,6 +4103,10 @@ int mt7915_mcu_add_obss_spr(struct mt791
  	if (ret)
  		return ret;
  

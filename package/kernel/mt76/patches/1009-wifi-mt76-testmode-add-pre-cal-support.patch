@@ -34,7 +34,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  out_put_node:
 --- a/mt76.h
 +++ b/mt76.h
-@@ -717,6 +717,7 @@ struct mt76_testmode_ops {
+@@ -729,6 +729,7 @@ struct mt76_testmode_ops {
  			  enum mt76_testmode_state new_state);
  	int (*dump_stats)(struct mt76_phy *phy, struct sk_buff *msg);
  	int (*set_eeprom)(struct mt76_phy *phy, u32 offset, u8 *val, u8 action);
@@ -54,7 +54,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  	MCU_EXT_EVENT_THERMAL_PROTECT = 0x22,
 --- a/mt7915/mcu.c
 +++ b/mt7915/mcu.c
-@@ -481,6 +481,9 @@ mt7915_mcu_rx_ext_event(struct mt7915_de
+@@ -483,6 +483,9 @@ mt7915_mcu_rx_ext_event(struct mt7915_de
  	case MCU_EXT_EVENT_BF_STATUS_READ:
  		mt7915_tm_txbf_status_read(dev, skb);
  		break;
@@ -84,7 +84,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  
  enum {
  	TM_CHANGED_TXPOWER,
-@@ -1604,18 +1605,16 @@ mt7915_tm_rf_switch_mode(struct mt7915_d
+@@ -1605,18 +1606,16 @@ mt7915_tm_rf_switch_mode(struct mt7915_d
  static int
  mt7915_tm_set_tx_cont(struct mt7915_phy *phy, bool en)
  {
@@ -105,7 +105,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  		.icap_len = 120,
  		.op.rf.func_idx = cpu_to_le32(func_idx),
  	};
-@@ -1700,6 +1699,316 @@ out:
+@@ -1701,6 +1700,316 @@ out:
  				 sizeof(req), true);
  }
  
@@ -422,7 +422,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  static void
  mt7915_tm_update_params(struct mt7915_phy *phy, u32 changed)
  {
-@@ -1750,6 +2059,10 @@ mt7915_tm_set_state(struct mt76_phy *mph
+@@ -1751,6 +2060,10 @@ mt7915_tm_set_state(struct mt76_phy *mph
  	else if (prev_state == MT76_TM_STATE_OFF ||
  		 state == MT76_TM_STATE_OFF)
  		mt7915_tm_init(phy, !(state == MT76_TM_STATE_OFF));
@@ -433,7 +433,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  
  	if ((state == MT76_TM_STATE_IDLE &&
  	     prev_state == MT76_TM_STATE_OFF) ||
-@@ -1930,9 +2243,113 @@ mt7915_tm_set_eeprom(struct mt76_phy *mp
+@@ -1931,9 +2244,113 @@ mt7915_tm_set_eeprom(struct mt76_phy *mp
  	return ret;
  }
  

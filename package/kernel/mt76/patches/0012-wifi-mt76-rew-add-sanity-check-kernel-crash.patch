@@ -10,8 +10,8 @@ Subject: [PATCH] mt76: add sanity check to prevent kernel crash
 
 --- a/mac80211.c
 +++ b/mac80211.c
-@@ -1495,8 +1495,14 @@ int mt76_sta_state(struct ieee80211_hw *
- 		dev->drv->sta_assoc(dev, vif, sta);
+@@ -1515,8 +1515,14 @@ int mt76_sta_state(struct ieee80211_hw *
+ 		return mt76_sta_add(phy, vif, sta);
  
  	if (old_state == IEEE80211_STA_NONE &&
 -	    new_state == IEEE80211_STA_NOTEXIST)
@@ -24,20 +24,5 @@ Subject: [PATCH] mt76: add sanity check to prevent kernel crash
  		mt76_sta_remove(dev, vif, sta);
 +	}
  
- 	return 0;
- }
---- a/tx.c
-+++ b/tx.c
-@@ -345,6 +345,12 @@ mt76_tx(struct mt76_phy *phy, struct iee
- 
- 	info->hw_queue |= FIELD_PREP(MT_TX_HW_QUEUE_PHY, phy->band_idx);
- 
-+	if (!wcid || !wcid->tx_pending.prev || !wcid->tx_pending.next) {
-+		dev_warn(phy->dev->dev, "Un-initialized STA %pM wcid %d in mt76_tx (wcid=%p)\n", sta ? sta->addr : NULL, wcid ? wcid->idx : -1, wcid);
-+		ieee80211_free_txskb(phy->hw, skb);
-+		return;
-+	}
-+
- 	spin_lock_bh(&wcid->tx_pending.lock);
- 	__skb_queue_tail(&wcid->tx_pending, skb);
- 	spin_unlock_bh(&wcid->tx_pending.lock);
+ 	if (!dev->drv->sta_event)
+ 		return 0;

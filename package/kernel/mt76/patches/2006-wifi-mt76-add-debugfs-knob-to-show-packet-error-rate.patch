@@ -16,7 +16,7 @@ Get tx count and tx failed from mcu command
 
 --- a/mt76.h
 +++ b/mt76.h
-@@ -319,8 +319,10 @@ struct mt76_sta_stats {
+@@ -322,8 +322,10 @@ struct mt76_sta_stats {
  	u64 last_tx_bytes;
  	/* WED TX */
  	u32 tx_packets;		/* unit: MSDU */
@@ -39,7 +39,7 @@ Get tx count and tx failed from mcu command
  	MCU_EXT_CMD_SET_RDD_CTRL = 0x3a,
 --- a/mt7915/mcu.c
 +++ b/mt7915/mcu.c
-@@ -4395,6 +4395,114 @@ int mt7915_mcu_get_tx_rate(struct mt7915
+@@ -4397,6 +4397,114 @@ int mt7915_mcu_get_tx_rate(struct mt7915
  		return mt7915_mcu_get_tx_rate_v2(phy, wcidx);
  }
  

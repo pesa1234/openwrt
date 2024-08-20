@@ -35,7 +35,7 @@ Subject: [PATCH 1004/1051] wifi: mt76: mt7915: certification patches
  
  #define to_rssi(field, rcpi)	((FIELD_GET(field, rcpi) - 220) / 2)
  
-@@ -1961,6 +1962,21 @@ static void mt7915_mac_sta_stats_work(st
+@@ -1964,6 +1965,21 @@ static void mt7915_mac_sta_stats_work(st
  	spin_unlock_bh(&phy->stats_lock);
  }
  
@@ -57,7 +57,7 @@ Subject: [PATCH 1004/1051] wifi: mt76: mt7915: certification patches
  void mt7915_mac_sta_rc_work(struct work_struct *work)
  {
  	struct mt7915_dev *dev = container_of(work, struct mt7915_dev, rc_work);
-@@ -1983,6 +1999,13 @@ void mt7915_mac_sta_rc_work(struct work_
+@@ -1986,6 +2002,13 @@ void mt7915_mac_sta_rc_work(struct work_
  		sta = container_of((void *)msta, struct ieee80211_sta, drv_priv);
  		vif = container_of((void *)msta->vif, struct ieee80211_vif, drv_priv);
  
@@ -73,36 +73,32 @@ Subject: [PATCH 1004/1051] wifi: mt76: mt7915: certification patches
  			       IEEE80211_RC_BW_CHANGED))
 --- a/mt7915/main.c
 +++ b/mt7915/main.c
-@@ -771,6 +771,9 @@ int mt7915_mac_sta_add(struct mt76_dev *
+@@ -795,6 +795,10 @@ int mt7915_mac_sta_event(struct mt76_dev
+ 	struct mt7915_dev *dev = container_of(mdev, struct mt7915_dev, mt76);
  	struct mt7915_sta *msta = (struct mt7915_sta *)sta->drv_priv;
  	struct mt7915_vif *mvif = (struct mt7915_vif *)vif->drv_priv;
- 	bool ext_phy = mvif->phy != &dev->phy;
++	bool ext_phy = mvif->phy != &dev->phy;
 +#ifdef CONFIG_MTK_VENDOR
 +	struct mt7915_phy *phy = ext_phy ? mt7915_ext_phy(dev) : &dev->phy;
 +#endif
- 	int ret, idx;
  	u32 addr;
+ 	int ret;
  
-@@ -803,7 +806,15 @@ int mt7915_mac_sta_add(struct mt76_dev *
- #ifdef CONFIG_MTK_VENDOR
- 	mt7915_vendor_amnt_sta_remove(mvif->phy, sta);
- #endif
--	return mt7915_mcu_add_rate_ctrl(dev, vif, sta, false);
-+	ret = mt7915_mcu_add_rate_ctrl(dev, vif, sta, false);
-+	if (ret)
-+		return ret;
-+
+@@ -814,6 +818,11 @@ int mt7915_mac_sta_event(struct mt76_dev
+ 		ret = mt7915_mcu_add_rate_ctrl(dev, vif, sta, false);
+ 		if (ret)
+ 			return ret;
++			
 +#ifdef CONFIG_MTK_VENDOR
 +	if (phy->muru_onoff & MUMIMO_DL_CERT)
 +		mt7915_mcu_set_mimo(phy, 0);
 +#endif
-+	return 0;
- }
  
- void mt7915_mac_sta_remove(struct mt76_dev *mdev, struct ieee80211_vif *vif,
+ 		msta->wcid.sta = 1;
+ 		msta->wcid.sta_disabled = 0;
 --- a/mt7915/mcu.c
 +++ b/mt7915/mcu.c
-@@ -4403,6 +4403,472 @@ mt7915_mcu_report_csi(struct mt7915_dev
+@@ -4413,6 +4413,472 @@ mt7915_mcu_report_csi(struct mt7915_dev
  
  	return 0;
  }
@@ -809,7 +805,7 @@ Subject: [PATCH 1004/1051] wifi: mt76: mt7915: certification patches
  #endif
 --- a/mt7915/mt7915.h
 +++ b/mt7915/mt7915.h
-@@ -749,6 +749,19 @@ int mt7915_mmio_wed_init(struct mt7915_d
+@@ -751,6 +751,19 @@ int mt7915_mmio_wed_init(struct mt7915_d
  			 bool pci, int *irq);
  
  #ifdef CONFIG_MTK_VENDOR
