@@ -1,0 +1,45 @@
+From ab9177d83c040eba58387914077ebca56f14fae6 Mon Sep 17 00:00:00 2001
+From: Johannes Berg <johannes.berg@intel.com>
+Date: Tue, 26 Mar 2024 22:08:54 +0100
+Subject: wifi: mac80211: don't use rate mask for scanning
+
+The rate mask is intended for use during operation, and
+can be set to only have masks for the currently active
+band. As such, it cannot be used for scanning which can
+be on other bands as well.
+
+Simply ignore the rate masks during scanning to avoid
+warnings from incorrect settings.
+
+Reported-by: syzbot+fdc5123366fb9c3fdc6d@syzkaller.appspotmail.com
+Closes: https://syzkaller.appspot.com/bug?extid=fdc5123366fb9c3fdc6d
+Co-developed-by: Dmitry Antipov <dmantipov@yandex.ru>
+Signed-off-by: Dmitry Antipov <dmantipov@yandex.ru>
+Tested-by: Dmitry Antipov <dmantipov@yandex.ru>
+Link: https://msgid.link/20240326220854.9594cbb418ca.I7f86c0ba1f98cf7e27c2bacf6c2d417200ecea5c@changeid
+Signed-off-by: Johannes Berg <johannes.berg@intel.com>
+---
+ include/net/mac80211.h | 3 +++
+ 1 file changed, 3 insertions(+)
+
+(limited to 'include/net/mac80211.h')
+
+--- a/include/net/mac80211.h
++++ b/include/net/mac80211.h
+@@ -936,6 +936,8 @@ enum mac80211_tx_info_flags {
+  *	of their QoS TID or other priority field values.
+  * @IEEE80211_TX_CTRL_MCAST_MLO_FIRST_TX: first MLO TX, used mostly internally
+  *	for sequence number assignment
++ * @IEEE80211_TX_CTRL_SCAN_TX: Indicates that this frame is transmitted
++ *	due to scanning, not in normal operation on the interface.
+  * @IEEE80211_TX_CTRL_MLO_LINK: If not @IEEE80211_LINK_UNSPECIFIED, this
+  *	frame should be transmitted on the specific link. This really is
+  *	only relevant for frames that do not have data present, and is
+@@ -956,6 +958,7 @@ enum mac80211_tx_control_flags {
+ 	IEEE80211_TX_CTRL_NO_SEQNO		= BIT(7),
+ 	IEEE80211_TX_CTRL_DONT_REORDER		= BIT(8),
+ 	IEEE80211_TX_CTRL_MCAST_MLO_FIRST_TX	= BIT(9),
++	IEEE80211_TX_CTRL_SCAN_TX		= BIT(10),
+ 	IEEE80211_TX_CTRL_MLO_LINK		= 0xf0000000,
+ };
+ 
