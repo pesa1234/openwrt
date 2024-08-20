@@ -1,4 +1,4 @@
-From ffdfecf03c7a44727180abf451b871be79624c2d Mon Sep 17 00:00:00 2001
+From 2a0fee3e5d7a7d457381faf04e842e63036f2a16 Mon Sep 17 00:00:00 2001
 From: Chen Minqiang <ptpt52@gmail.com>
 Date: Tue, 19 Dec 2023 16:50:11 +0800
 Subject: [PATCH] mt76: mt7915: wed: add wds support when wed is enabled
@@ -7,14 +7,14 @@ Subject: [PATCH] mt76: mt7915: wed: add wds support when wed is enabled
  mt76.h          |  6 ++++++
  mt76_connac.h   |  1 +
  mt7915/mac.c    | 10 +++++++---
- mt7915/main.c   | 37 ++++++++++++++++++++++++++++++++++---
+ mt7915/main.c   | 21 ++++++++++++++++++---
  mt7915/mcu.c    | 18 ++++++++++++++----
  mt7915/mcu.h    |  1 +
  mt7915/mmio.c   |  3 ++-
  mt7915/mt7915.h |  2 +-
  util.c          | 40 +++++++++++++++++++++++++++++++++++++---
  util.h          |  7 ++++++-
- 10 files changed, 109 insertions(+), 16 deletions(-)
+ 10 files changed, 93 insertions(+), 16 deletions(-)
 
 --- a/mt76.h
 +++ b/mt76.h
@@ -83,9 +83,9 @@ Subject: [PATCH] mt76: mt7915: wed: add wds support when wed is enabled
 --- a/mt7915/main.c
 +++ b/mt7915/main.c
 @@ -824,8 +824,12 @@ int mt7915_mac_sta_add(struct mt76_dev *
- 	struct mt7915_vif *mvif = (struct mt7915_vif *)vif->drv_priv;
- 	bool ext_phy = mvif->phy != &dev->phy;
- 	int idx;
+ #endif
+ 	int ret, idx;
+ 	u32 addr;
 +	u8 flags = MT76_WED_DEFAULT;
  
 -	idx = mt76_wcid_alloc(dev->mt76.wcid_mask, MT7915_WTBL_STA);
@@ -96,30 +96,7 @@ Subject: [PATCH] mt76: mt7915: wed: add wds support when wed is enabled
  	if (idx < 0)
  		return -ENOSPC;
  
-@@ -1041,6 +1045,22 @@ mt7915_ampdu_action(struct ieee80211_hw
- }
- 
- static int
-+mt7915_sta_add(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
-+	       struct ieee80211_sta *sta)
-+{
-+	return mt76_sta_state(hw, vif, sta, IEEE80211_STA_NOTEXIST,
-+			      IEEE80211_STA_NONE);
-+}
-+
-+static int
-+mt7915_sta_remove(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
-+		  struct ieee80211_sta *sta)
-+{
-+	return mt76_sta_state(hw, vif, sta, IEEE80211_STA_NONE,
-+			      IEEE80211_STA_NOTEXIST);
-+}
-+
-+static int
- mt7915_get_stats(struct ieee80211_hw *hw,
- 		 struct ieee80211_low_level_stats *stats)
- {
-@@ -1343,6 +1363,13 @@ static void mt7915_sta_set_4addr(struct
+@@ -1317,6 +1321,13 @@ static void mt7915_sta_set_4addr(struct
  	else
  		clear_bit(MT_WCID_FLAG_4ADDR, &msta->wcid.flags);
  
@@ -133,7 +110,7 @@ Subject: [PATCH] mt76: mt7915: wed: add wds support when wed is enabled
  	mt76_connac_mcu_wtbl_update_hdr_trans(&dev->mt76, vif, sta);
  }
  
-@@ -1839,15 +1866,19 @@ mt7915_net_fill_forward_path(struct ieee
+@@ -1810,15 +1821,19 @@ mt7915_net_fill_forward_path(struct ieee
  	if (!mtk_wed_device_active(wed))
  		return -ENODEV;
  
@@ -157,7 +134,7 @@ Subject: [PATCH] mt76: mt7915: wed: add wds support when wed is enabled
  
 --- a/mt7915/mcu.c
 +++ b/mt7915/mcu.c
-@@ -2689,10 +2689,20 @@ int mt7915_mcu_init_firmware(struct mt79
+@@ -2691,10 +2691,20 @@ int mt7915_mcu_init_firmware(struct mt79
  	if (ret)
  		return ret;
  

@@ -112,7 +112,7 @@ Signed-off-by: Shayne Chen <shayne.chen@mediatek.com>
  }
 --- a/mt76.h
 +++ b/mt76.h
-@@ -1111,6 +1111,14 @@ struct mt76_power_limits {
+@@ -1110,6 +1110,14 @@ struct mt76_power_limits {
  	s8 mcs[4][10];
  	s8 ru[7][12];
  	s8 eht[16][16];
@@ -277,7 +277,7 @@ Signed-off-by: Shayne Chen <shayne.chen@mediatek.com>
  
 --- a/mt7915/mcu.c
 +++ b/mt7915/mcu.c
-@@ -3430,7 +3430,8 @@ int mt7915_mcu_set_txpower_frame(struct
+@@ -3432,7 +3432,8 @@ int mt7915_mcu_set_txpower_frame(struct
  	int ret;
  	s8 txpower_sku[MT7915_SKU_RATE_NUM];
  
@@ -287,7 +287,7 @@ Signed-off-by: Shayne Chen <shayne.chen@mediatek.com>
  	if (ret)
  		return ret;
  
-@@ -3470,53 +3471,139 @@ int mt7915_mcu_set_txpower_frame(struct
+@@ -3472,53 +3473,139 @@ int mt7915_mcu_set_txpower_frame(struct
  				 sizeof(req), true);
  }
  
@@ -455,7 +455,7 @@ Signed-off-by: Shayne Chen <shayne.chen@mediatek.com>
  	struct mt7915_dev *dev = phy->dev;
  	struct {
  		u8 format_id;
-@@ -3525,10 +3612,9 @@ int mt7915_mcu_get_txpower_sku(struct mt
+@@ -3527,10 +3614,9 @@ int mt7915_mcu_get_txpower_sku(struct mt
  		u8 _rsv;
  	} __packed req = {
  		.format_id = TX_POWER_LIMIT_INFO,
@@ -467,7 +467,7 @@ Signed-off-by: Shayne Chen <shayne.chen@mediatek.com>
  	struct sk_buff *skb;
  	int ret, i;
  
-@@ -3538,9 +3624,15 @@ int mt7915_mcu_get_txpower_sku(struct mt
+@@ -3540,9 +3626,15 @@ int mt7915_mcu_get_txpower_sku(struct mt
  	if (ret)
  		return ret;
  
@@ -486,7 +486,7 @@ Signed-off-by: Shayne Chen <shayne.chen@mediatek.com>
  
  	dev_kfree_skb(skb);
  
-@@ -3569,7 +3661,7 @@ int mt7915_mcu_set_test_param(struct mt7
+@@ -3571,7 +3663,7 @@ int mt7915_mcu_set_test_param(struct mt7
  				 sizeof(req), false);
  }
  
@@ -495,7 +495,7 @@ Signed-off-by: Shayne Chen <shayne.chen@mediatek.com>
  {
  	struct mt7915_dev *dev = phy->dev;
  	struct mt7915_sku {
-@@ -3580,10 +3672,24 @@ int mt7915_mcu_set_sku_en(struct mt7915_
+@@ -3582,10 +3674,24 @@ int mt7915_mcu_set_sku_en(struct mt7915_
  	} __packed req = {
  		.format_id = TX_POWER_LIMIT_ENABLE,
  		.band_idx = phy->mt76->band_idx,

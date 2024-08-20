@@ -93,7 +93,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  		flags |= RATE_INFO_FLAGS_MCS;
  
  		if (td->tx_rate_sgi)
-@@ -1462,7 +1470,6 @@ mt7915_tm_set_tx_frames(struct mt7915_ph
+@@ -1460,7 +1468,6 @@ mt7915_tm_set_tx_frames(struct mt7915_ph
  			if (duty_cycle < 100)
  				tx_time = duty_cycle * ipg / (100 - duty_cycle);
  		}

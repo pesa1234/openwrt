@@ -21,7 +21,7 @@ Signed-off-by: Peter Chiu <chui-hao.chiu@mediatek.com>
 
 --- a/mt76.h
 +++ b/mt76.h
-@@ -416,6 +416,8 @@ struct mt76_txwi_cache {
+@@ -415,6 +415,8 @@ struct mt76_txwi_cache {
  	struct list_head list;
  	dma_addr_t dma_addr;
  
@@ -30,7 +30,7 @@ Signed-off-by: Peter Chiu <chui-hao.chiu@mediatek.com>
  	union {
  		struct sk_buff *skb;
  		void *ptr;
-@@ -836,6 +838,7 @@ struct mt76_phy {
+@@ -835,6 +837,7 @@ struct mt76_phy {
  		bool al;
  		u8 pin;
  	} leds;
@@ -38,7 +38,7 @@ Signed-off-by: Peter Chiu <chui-hao.chiu@mediatek.com>
  };
  
  struct mt76_dev {
-@@ -889,6 +892,8 @@ struct mt76_dev {
+@@ -888,6 +891,8 @@ struct mt76_dev {
  	u16 wed_token_count;
  	u16 token_count;
  	u16 token_size;
@@ -47,7 +47,7 @@ Signed-off-by: Peter Chiu <chui-hao.chiu@mediatek.com>
  
  	spinlock_t rx_token_lock;
  	struct idr rx_token;
-@@ -1701,7 +1706,8 @@ static inline bool mt76_queue_is_wed_rx(
+@@ -1684,7 +1689,8 @@ static inline bool mt76_queue_is_wed_rx(
  
  struct mt76_txwi_cache *
  mt76_token_release(struct mt76_dev *dev, int token, bool *wake);
@@ -177,7 +177,7 @@ Signed-off-by: Peter Chiu <chui-hao.chiu@mediatek.com>
  
 --- a/tx.c
 +++ b/tx.c
-@@ -835,16 +835,30 @@ void __mt76_set_tx_blocked(struct mt76_d
+@@ -832,16 +832,30 @@ void __mt76_set_tx_blocked(struct mt76_d
  }
  EXPORT_SYMBOL_GPL(__mt76_set_tx_blocked);
  
@@ -210,7 +210,7 @@ Signed-off-by: Peter Chiu <chui-hao.chiu@mediatek.com>
  #ifdef CONFIG_NET_MEDIATEK_SOC_WED
  	if (mtk_wed_device_active(&dev->mmio.wed) &&
  	    token >= dev->mmio.wed.wlan.token_start)
-@@ -888,6 +902,8 @@ mt76_token_release(struct mt76_dev *dev,
+@@ -885,6 +899,8 @@ mt76_token_release(struct mt76_dev *dev,
  	txwi = idr_remove(&dev->token, token);
  	if (txwi) {
  		dev->token_count--;
