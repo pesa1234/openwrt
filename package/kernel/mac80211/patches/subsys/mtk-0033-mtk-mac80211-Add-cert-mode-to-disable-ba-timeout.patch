@@ -15,7 +15,7 @@ Signed-off-by: Allen.Ye <allen.ye@mediatek.com>
 
 --- a/include/net/mac80211.h
 +++ b/include/net/mac80211.h
-@@ -3015,8 +3015,14 @@ struct ieee80211_hw {
+@@ -3016,8 +3016,14 @@ struct ieee80211_hw {
  	u32 max_mtu;
  	const s8 *tx_power_levels;
  	u8 max_txpwr_levels_idx;
@@ -32,7 +32,7 @@ Signed-off-by: Allen.Ye <allen.ye@mediatek.com>
  {
 --- a/net/mac80211/agg-tx.c
 +++ b/net/mac80211/agg-tx.c
-@@ -1040,7 +1040,10 @@ void ieee80211_process_addba_resp(struct
+@@ -1042,7 +1042,10 @@ void ieee80211_process_addba_resp(struct
  		tid_tx->timeout =
  			le16_to_cpu(mgmt->u.action.u.addba_resp.timeout);
  
