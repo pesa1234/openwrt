@@ -16,7 +16,7 @@ Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
 
 --- a/include/net/mac80211.h
 +++ b/include/net/mac80211.h
-@@ -4394,6 +4394,7 @@ struct ieee80211_prep_tx_info {
+@@ -4402,6 +4402,7 @@ struct ieee80211_prep_tx_info {
   *	if the requested TID-To-Link mapping can be accepted or not.
   *	If it's not accepted the driver may suggest a preferred mapping and
   *	modify @ttlm parameter with the suggested TID-to-Link mapping.
@@ -24,7 +24,7 @@ Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
   */
  struct ieee80211_ops {
  	void (*tx)(struct ieee80211_hw *hw,
-@@ -4778,6 +4779,8 @@ struct ieee80211_ops {
+@@ -4786,6 +4787,8 @@ struct ieee80211_ops {
  	enum ieee80211_neg_ttlm_res
  	(*can_neg_ttlm)(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
  			struct ieee80211_neg_ttlm *ttlm);
@@ -70,11 +70,10 @@ Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
  #endif /* __MAC80211_DRIVER_OPS */
 --- a/net/mac80211/trace.h
 +++ b/net/mac80211/trace.h
-@@ -3145,6 +3145,13 @@ TRACE_EVENT(drv_neg_ttlm_res,
- 		  LOCAL_PR_ARG, VIF_PR_ARG, __entry->res
+@@ -3167,6 +3167,12 @@ TRACE_EVENT(bss_color_bitmap,
  	)
  );
-+
+ 
 +DEFINE_EVENT(local_sdata_evt, drv_set_qos_map,
 +	TP_PROTO(struct ieee80211_local *local,
 +		 struct ieee80211_sub_if_data *sdata),
