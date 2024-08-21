@@ -106,7 +106,7 @@ Signed-off-by: Yi-Chia Hsieh <yi-chia.hsieh@mediatek.com>
 -}
 --- a/net/mac80211/rx.c
 +++ b/net/mac80211/rx.c
-@@ -5455,7 +5455,7 @@ void ieee80211_rx_list(struct ieee80211_
+@@ -5458,7 +5458,7 @@ void ieee80211_rx_list(struct ieee80211_
  	if (skb) {
  		if ((status->flag & RX_FLAG_8023) ||
  			ieee80211_is_data_present(hdr->frame_control))
