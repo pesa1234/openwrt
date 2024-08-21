@@ -1,0 +1,11 @@
+--- a/mt7915/mcu.c
++++ b/mt7915/mcu.c
+@@ -1207,6 +1207,8 @@ mt7915_mcu_sta_muru_tlv(struct mt7915_de
+ 	if (!is_mt7915(&dev->mt76))
+ 		muru->cfg.mimo_ul_en = true;
+ 	muru->cfg.ofdma_dl_en = true;
++	if (!is_mt7915(&dev->mt76))
++		muru->cfg.ofdma_ul_en = true;
+ 
+ 	muru->cfg.mimo_ul_en = !!(phy->muru_onoff & MUMIMO_UL);
+ 	muru->cfg.ofdma_dl_en = !!(phy->muru_onoff & OFDMA_DL);

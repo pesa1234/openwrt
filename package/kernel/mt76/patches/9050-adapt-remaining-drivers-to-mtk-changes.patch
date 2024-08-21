@@ -1,0 +1,28 @@
+--- a/mt7921/init.c
++++ b/mt7921/init.c
+@@ -64,12 +64,12 @@ mt7921_regd_channel_update(struct wiphy
+ #define IS_UNII_INVALID(idx, sfreq, efreq) \
+ 	(!(dev->phy.clc_chan_conf & BIT(idx)) && (cfreq) >= (sfreq) && (cfreq) <= (efreq))
+ 	struct ieee80211_supported_band *sband;
+-	struct mt76_dev *mdev = &dev->mt76;
++	struct mt76_phy *mphy = &dev->mphy;
+ 	struct device_node *np, *band_np;
+ 	struct ieee80211_channel *ch;
+ 	int i, cfreq;
+ 
+-	np = mt76_find_power_limits_node(mdev);
++	np = mt76_find_power_limits_node(mphy);
+ 
+ 	sband = wiphy->bands[NL80211_BAND_5GHZ];
+ 	band_np = np ? of_get_child_by_name(np, "txpower-5g") : NULL;
+--- a/mt7921/mcu.c
++++ b/mt7921/mcu.c
+@@ -1334,7 +1334,7 @@ int __mt7921_mcu_set_clc(struct mt792x_d
+ 
+ 	if (dev->phy.chip_cap & MT792x_CHIP_CAP_CLC_EVT_EN)
+ 		req.cap |= CLC_CAP_EVT_EN;
+-	if (mt76_find_power_limits_node(&dev->mt76))
++	if (mt76_find_power_limits_node(&dev->mphy))
+ 		req.cap |= CLC_CAP_DTS_EN;
+ 
+ 	buf_len = le32_to_cpu(clc->len) - sizeof(*clc);
