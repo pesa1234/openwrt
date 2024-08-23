@@ -311,7 +311,7 @@ Subject: [PATCH 01/70] wifi: mt76: mt7915: add mtk internal debug tools for
  {
  #define RED_DISABLE		0
  #define RED_BY_WA_ENABLE	2
-@@ -3530,6 +3538,8 @@ int mt7915_mcu_set_sku_en(struct mt7915_
+@@ -3532,6 +3540,8 @@ int mt7915_mcu_set_sku_en(struct mt7915_
  		.sku_enable = enable,
  	};
  
@@ -320,7 +320,7 @@ Subject: [PATCH 01/70] wifi: mt76: mt7915: add mtk internal debug tools for
  	return mt76_mcu_send_msg(&dev->mt76,
  				 MCU_EXT_CMD(TX_POWER_FEATURE_CTRL), &req,
  				 sizeof(req), true);
-@@ -4196,6 +4206,23 @@ out:
+@@ -4198,6 +4208,23 @@ out:
  	return ret;
  }
  
@@ -344,7 +344,7 @@ Subject: [PATCH 01/70] wifi: mt76: mt7915: add mtk internal debug tools for
  int mt7915_mcu_rf_regval(struct mt7915_dev *dev, u32 regidx, u32 *val, bool set)
  {
  	struct {
-@@ -4224,3 +4251,22 @@ int mt7915_mcu_rf_regval(struct mt7915_d
+@@ -4226,3 +4253,22 @@ int mt7915_mcu_rf_regval(struct mt7915_d
  
  	return 0;
  }

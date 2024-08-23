@@ -209,7 +209,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  
  	if (enable) {
  		mt7915_mcu_bss_rfch_tlv(skb, vif, phy);
-@@ -3593,6 +3606,7 @@ int mt7915_mcu_set_ser(struct mt7915_dev
+@@ -3595,6 +3608,7 @@ int mt7915_mcu_set_ser(struct mt7915_dev
  
  int mt7915_mcu_set_txbf(struct mt7915_dev *dev, u8 action)
  {
@@ -217,7 +217,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  	struct {
  		u8 action;
  		union {
-@@ -3619,7 +3633,6 @@ int mt7915_mcu_set_txbf(struct mt7915_de
+@@ -3621,7 +3635,6 @@ int mt7915_mcu_set_txbf(struct mt7915_de
  		.action = action,
  	};
  
@@ -225,7 +225,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  	switch (action) {
  	case MT_BF_SOUNDING_ON:
  		req.snd.snd_mode = MT_BF_PROCESSING;
-@@ -4858,6 +4871,9 @@ int mt7915_mcu_set_txbf_sound_info(struc
+@@ -4860,6 +4873,9 @@ int mt7915_mcu_set_txbf_sound_info(struc
  		req.he_opt = v2;
  		req.glo_opt = v3;
  		break;

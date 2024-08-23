@@ -421,7 +421,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  	     !rxd->seq) &&
  	     !(rxd->eid == MCU_CMD_EXT_CID &&
  	       rxd->ext_eid == MCU_EXT_EVENT_WA_TX_STAT))
-@@ -2864,7 +2870,8 @@ int mt7915_mcu_set_chan_info(struct mt79
+@@ -2866,7 +2872,8 @@ int mt7915_mcu_set_chan_info(struct mt79
  	}
  #endif
  
@@ -431,7 +431,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  		req.tx_path_num = fls(phy->mt76->antenna_mask);
  
  	if (phy->mt76->hw->conf.flags & IEEE80211_CONF_MONITOR)
-@@ -2932,21 +2939,21 @@ static int mt7915_mcu_set_eeprom_flash(s
+@@ -2934,21 +2941,21 @@ static int mt7915_mcu_set_eeprom_flash(s
  	return 0;
  }
  
@@ -456,7 +456,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  {
  	struct mt7915_mcu_eeprom_info req = {
  		.addr = cpu_to_le32(round_down(offset,
-@@ -2955,7 +2962,7 @@ int mt7915_mcu_get_eeprom(struct mt7915_
+@@ -2957,7 +2964,7 @@ int mt7915_mcu_get_eeprom(struct mt7915_
  	struct mt7915_mcu_eeprom_info *res;
  	struct sk_buff *skb;
  	int ret;
@@ -465,7 +465,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  
  	ret = mt76_mcu_send_and_get_msg(&dev->mt76,
  					MCU_EXT_QUERY(EFUSE_ACCESS),
-@@ -2964,8 +2971,11 @@ int mt7915_mcu_get_eeprom(struct mt7915_
+@@ -2966,8 +2973,11 @@ int mt7915_mcu_get_eeprom(struct mt7915_
  		return ret;
  
  	res = (struct mt7915_mcu_eeprom_info *)skb->data;

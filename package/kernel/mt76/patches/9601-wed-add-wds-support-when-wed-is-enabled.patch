@@ -157,9 +157,9 @@ Subject: [PATCH] mt76: mt7915: wed: add wds support when wed is enabled
  
 --- a/mt7915/mcu.c
 +++ b/mt7915/mcu.c
-@@ -2691,10 +2691,20 @@ int mt7915_mcu_init_firmware(struct mt79
- 	if (ret)
- 		return ret;
+@@ -2693,10 +2693,20 @@ int mt7915_mcu_init_firmware(struct mt79
+ 
+ 	mt76_connac_mcu_del_wtbl_all(&dev->mt76);
  
 -	if ((mtk_wed_device_active(&dev->mt76.mmio.wed) &&
 -	     is_mt7915(&dev->mt76)) ||

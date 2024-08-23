@@ -51,7 +51,7 @@ Signed-off-by: Bo Jiao <Bo.Jiao@mediatek.com>
  	struct net_device tx_napi_dev;
 --- a/mt76_connac_mcu.c
 +++ b/mt76_connac_mcu.c
-@@ -2948,6 +2948,9 @@ int mt76_connac2_load_ram(struct mt76_de
+@@ -2959,6 +2959,9 @@ int mt76_connac2_load_ram(struct mt76_de
  		goto out;
  	}
  
@@ -61,7 +61,7 @@ Signed-off-by: Bo Jiao <Bo.Jiao@mediatek.com>
  	snprintf(dev->hw->wiphy->fw_version,
  		 sizeof(dev->hw->wiphy->fw_version),
  		 "%.10s-%.15s", hdr->fw_ver, hdr->build_date);
-@@ -2977,6 +2980,9 @@ int mt76_connac2_load_ram(struct mt76_de
+@@ -2988,6 +2991,9 @@ int mt76_connac2_load_ram(struct mt76_de
  		goto out;
  	}
  
@@ -71,7 +71,7 @@ Signed-off-by: Bo Jiao <Bo.Jiao@mediatek.com>
  	snprintf(dev->hw->wiphy->fw_version,
  		 sizeof(dev->hw->wiphy->fw_version),
  		 "%.10s-%.15s", hdr->fw_ver, hdr->build_date);
-@@ -3047,6 +3053,9 @@ int mt76_connac2_load_patch(struct mt76_
+@@ -3058,6 +3064,9 @@ int mt76_connac2_load_patch(struct mt76_
  	dev_info(dev->dev, "HW/SW Version: 0x%x, Build Time: %.16s\n",
  		 be32_to_cpu(hdr->hw_sw_ver), hdr->build_date);
  
@@ -509,7 +509,7 @@ Signed-off-by: Bo Jiao <Bo.Jiao@mediatek.com>
  }
 --- a/mt7915/mac.c
 +++ b/mt7915/mac.c
-@@ -1600,28 +1600,31 @@ void mt7915_mac_reset_work(struct work_s
+@@ -1601,28 +1601,31 @@ void mt7915_mac_reset_work(struct work_s
  }
  
  /* firmware coredump */
@@ -547,7 +547,7 @@ Signed-off-by: Bo Jiao <Bo.Jiao@mediatek.com>
  	if (!mem_region || !crash_data->memdump_buf_len) {
  		mutex_unlock(&dev->dump_mutex);
  		goto skip_memdump;
-@@ -1631,6 +1634,9 @@ void mt7915_mac_dump_work(struct work_st
+@@ -1632,6 +1635,9 @@ void mt7915_mac_dump_work(struct work_st
  	buf_len = crash_data->memdump_buf_len;
  
  	/* dumping memory content... */
@@ -557,7 +557,7 @@ Signed-off-by: Bo Jiao <Bo.Jiao@mediatek.com>
  	memset(buf, 0, buf_len);
  	for (i = 0; i < num; i++) {
  		if (mem_region->len > buf_len) {
-@@ -1648,6 +1654,7 @@ void mt7915_mac_dump_work(struct work_st
+@@ -1649,6 +1655,7 @@ void mt7915_mac_dump_work(struct work_st
  		mt7915_memcpy_fromio(dev, buf, mem_region->start,
  				     mem_region->len);
  
@@ -565,7 +565,7 @@ Signed-off-by: Bo Jiao <Bo.Jiao@mediatek.com>
  		hdr->start = mem_region->start;
  		hdr->len = mem_region->len;
  
-@@ -1664,8 +1671,18 @@ void mt7915_mac_dump_work(struct work_st
+@@ -1665,8 +1672,18 @@ void mt7915_mac_dump_work(struct work_st
  	mutex_unlock(&dev->dump_mutex);
  
  skip_memdump:

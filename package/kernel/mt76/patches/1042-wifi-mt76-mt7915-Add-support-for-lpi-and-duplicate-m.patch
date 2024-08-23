@@ -216,7 +216,7 @@ Signed-off-by: Allen Ye <allen.ye@mediatek.com>
  
  	return mt7915_mcu_set_fixed_rate_ctrl(dev, vif, sta, &spe_idx,
  					      RATE_PARAM_SPE_UPDATE);
-@@ -3498,6 +3499,22 @@ mt7915_update_txpower(struct mt7915_phy
+@@ -3500,6 +3501,22 @@ mt7915_update_txpower(struct mt7915_phy
  		mphy->txpower_cur = e2p_power_limit;
  }
  
@@ -239,7 +239,7 @@ Signed-off-by: Allen Ye <allen.ye@mediatek.com>
  int mt7915_mcu_set_txpower_sku(struct mt7915_phy *phy)
  {
  #define TX_POWER_LIMIT_TABLE_RATE	0
-@@ -3529,14 +3546,37 @@ int mt7915_mcu_set_txpower_sku(struct mt
+@@ -3531,14 +3548,37 @@ int mt7915_mcu_set_txpower_sku(struct mt
  		mt7915_update_txpower(phy, tx_power);
  		return 0;
  	}
@@ -279,7 +279,7 @@ Signed-off-by: Allen Ye <allen.ye@mediatek.com>
  	skb_put_data(skb, &la.mcs[0], len[SKU_HT_BW20]);
  	skb_put_data(skb, &la.mcs[1], len[SKU_HT_BW40]);
  
-@@ -3566,8 +3606,34 @@ int mt7915_mcu_set_txpower_sku(struct mt
+@@ -3568,8 +3608,34 @@ int mt7915_mcu_set_txpower_sku(struct mt
  	hdr.limit_type = TX_POWER_LIMIT_TABLE_PATH;
  	skb_put_data(skb, &hdr, sizeof(hdr));
  	skb_put_data(skb, &la.path.cck, sizeof(la.path.cck));
@@ -316,7 +316,7 @@ Signed-off-by: Allen Ye <allen.ye@mediatek.com>
  
  	/* HT20 and HT40 */
  	skb_put_data(skb, &la.path.ru[3], sizeof(la.path.ru[3]));
-@@ -3643,6 +3709,21 @@ int mt7915_mcu_get_txpower_sku(struct mt
+@@ -3645,6 +3711,21 @@ int mt7915_mcu_get_txpower_sku(struct mt
  	return 0;
  }
  

@@ -277,7 +277,7 @@ Signed-off-by: Shayne Chen <shayne.chen@mediatek.com>
  
 --- a/mt7915/mcu.c
 +++ b/mt7915/mcu.c
-@@ -3432,7 +3432,8 @@ int mt7915_mcu_set_txpower_frame(struct
+@@ -3434,7 +3434,8 @@ int mt7915_mcu_set_txpower_frame(struct
  	int ret;
  	s8 txpower_sku[MT7915_SKU_RATE_NUM];
  
@@ -287,7 +287,7 @@ Signed-off-by: Shayne Chen <shayne.chen@mediatek.com>
  	if (ret)
  		return ret;
  
-@@ -3472,53 +3473,139 @@ int mt7915_mcu_set_txpower_frame(struct
+@@ -3474,53 +3475,139 @@ int mt7915_mcu_set_txpower_frame(struct
  				 sizeof(req), true);
  }
  
@@ -455,7 +455,7 @@ Signed-off-by: Shayne Chen <shayne.chen@mediatek.com>
  	struct mt7915_dev *dev = phy->dev;
  	struct {
  		u8 format_id;
-@@ -3527,10 +3614,9 @@ int mt7915_mcu_get_txpower_sku(struct mt
+@@ -3529,10 +3616,9 @@ int mt7915_mcu_get_txpower_sku(struct mt
  		u8 _rsv;
  	} __packed req = {
  		.format_id = TX_POWER_LIMIT_INFO,
@@ -467,7 +467,7 @@ Signed-off-by: Shayne Chen <shayne.chen@mediatek.com>
  	struct sk_buff *skb;
  	int ret, i;
  
-@@ -3540,9 +3626,15 @@ int mt7915_mcu_get_txpower_sku(struct mt
+@@ -3542,9 +3628,15 @@ int mt7915_mcu_get_txpower_sku(struct mt
  	if (ret)
  		return ret;
  
@@ -486,7 +486,7 @@ Signed-off-by: Shayne Chen <shayne.chen@mediatek.com>
  
  	dev_kfree_skb(skb);
  
-@@ -3571,7 +3663,7 @@ int mt7915_mcu_set_test_param(struct mt7
+@@ -3573,7 +3665,7 @@ int mt7915_mcu_set_test_param(struct mt7
  				 sizeof(req), false);
  }
  
@@ -495,7 +495,7 @@ Signed-off-by: Shayne Chen <shayne.chen@mediatek.com>
  {
  	struct mt7915_dev *dev = phy->dev;
  	struct mt7915_sku {
-@@ -3582,10 +3674,24 @@ int mt7915_mcu_set_sku_en(struct mt7915_
+@@ -3584,10 +3676,24 @@ int mt7915_mcu_set_sku_en(struct mt7915_
  	} __packed req = {
  		.format_id = TX_POWER_LIMIT_ENABLE,
  		.band_idx = phy->mt76->band_idx,
