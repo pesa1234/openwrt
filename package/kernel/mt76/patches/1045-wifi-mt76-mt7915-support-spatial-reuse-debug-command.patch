@@ -142,7 +142,7 @@ Signed-off-by: Howard Hsu <howard-yh.hsu@mediatek.com>
  	     !rxd->seq) &&
  	     !(rxd->eid == MCU_CMD_EXT_CID &&
  	       rxd->ext_eid == MCU_EXT_EVENT_WA_TX_STAT))
-@@ -4014,6 +4105,10 @@ int mt7915_mcu_add_obss_spr(struct mt791
+@@ -4007,6 +4098,10 @@ int mt7915_mcu_add_obss_spr(struct mt791
  	if (ret)
  		return ret;
  

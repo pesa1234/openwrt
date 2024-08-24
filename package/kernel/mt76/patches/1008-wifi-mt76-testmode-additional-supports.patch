@@ -277,17 +277,6 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  	MCU_EXT_CMD_SET_QOS_MAP = 0xb4,
  	MCU_EXT_CMD_CERT_CFG = 0xb7,
  	MCU_EXT_CMD_CSI_CTRL = 0xc2,
---- a/mt7915/eeprom.c
-+++ b/mt7915/eeprom.c
-@@ -142,7 +142,7 @@ static int mt7915_eeprom_load(struct mt7
- 		/* read eeprom data from efuse */
- 		block_num = DIV_ROUND_UP(eeprom_size, eeprom_blk_size);
- 		for (i = 0; i < block_num; i++) {
--			ret = mt7915_mcu_get_eeprom(dev, i * eeprom_blk_size);
-+			ret = mt7915_mcu_get_eeprom(dev, i * eeprom_blk_size, NULL);
- 			if (ret < 0)
- 				return ret;
- 		}
 --- a/mt7915/init.c
 +++ b/mt7915/init.c
 @@ -700,7 +700,7 @@ static void mt7915_init_work(struct work
@@ -431,7 +420,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  		req.tx_path_num = fls(phy->mt76->antenna_mask);
  
  	if (phy->mt76->hw->conf.flags & IEEE80211_CONF_MONITOR)
-@@ -2934,21 +2941,21 @@ static int mt7915_mcu_set_eeprom_flash(s
+@@ -2934,14 +2941,14 @@ static int mt7915_mcu_set_eeprom_flash(s
  	return 0;
  }
  
@@ -448,36 +437,6 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  		return mt7915_mcu_set_eeprom_flash(dev);
  
  	return mt76_mcu_send_msg(&dev->mt76, MCU_EXT_CMD(EFUSE_BUFFER_MODE),
- 				 &req, sizeof(req), true);
- }
- 
--int mt7915_mcu_get_eeprom(struct mt7915_dev *dev, u32 offset)
-+int mt7915_mcu_get_eeprom(struct mt7915_dev *dev, u32 offset, u8 *read_buf)
- {
- 	struct mt7915_mcu_eeprom_info req = {
- 		.addr = cpu_to_le32(round_down(offset,
-@@ -2957,7 +2964,7 @@ int mt7915_mcu_get_eeprom(struct mt7915_
- 	struct mt7915_mcu_eeprom_info *res;
- 	struct sk_buff *skb;
- 	int ret;
--	u8 *buf;
-+	u8 *buf = read_buf;
- 
- 	ret = mt76_mcu_send_and_get_msg(&dev->mt76,
- 					MCU_EXT_QUERY(EFUSE_ACCESS),
-@@ -2966,8 +2973,11 @@ int mt7915_mcu_get_eeprom(struct mt7915_
- 		return ret;
- 
- 	res = (struct mt7915_mcu_eeprom_info *)skb->data;
--	buf = dev->mt76.eeprom.data + le32_to_cpu(res->addr);
-+
-+	if (!buf)
-+		buf = dev->mt76.eeprom.data + le32_to_cpu(res->addr);
- 	memcpy(buf, res->data, MT7915_EEPROM_BLOCK_SIZE);
-+
- 	dev_kfree_skb(skb);
- 
- 	return 0;
 --- a/mt7915/mcu.h
 +++ b/mt7915/mcu.h
 @@ -8,10 +8,15 @@
@@ -585,17 +544,15 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  #ifdef MTK_DEBUG
  	u16 wlan_idx;
  	struct {
-@@ -618,8 +630,8 @@ int mt7915_mcu_set_fixed_rate_ctrl(struc
+@@ -618,7 +630,7 @@ int mt7915_mcu_set_fixed_rate_ctrl(struc
  				   struct ieee80211_vif *vif,
  				   struct ieee80211_sta *sta,
  				   void *data, u32 field);
 -int mt7915_mcu_set_eeprom(struct mt7915_dev *dev);
--int mt7915_mcu_get_eeprom(struct mt7915_dev *dev, u32 offset);
 +int mt7915_mcu_set_eeprom(struct mt7915_dev *dev, bool flash_mode);
-+int mt7915_mcu_get_eeprom(struct mt7915_dev *dev, u32 offset, u8 *read_buf);
+ int mt7915_mcu_get_eeprom(struct mt7915_dev *dev, u8 *buf, u32 offset);
  int mt7915_mcu_get_eeprom_free_block(struct mt7915_dev *dev, u8 *block_num);
  int mt7915_mcu_set_mac(struct mt7915_dev *dev, int band, bool enable,
- 		       bool hdr_trans);
 @@ -658,6 +670,7 @@ int mt7915_mcu_fw_log_2_host(struct mt79
  int mt7915_mcu_fw_dbg_ctrl(struct mt7915_dev *dev, u32 module, u8 level);
  void mt7915_mcu_rx_event(struct mt7915_dev *dev, struct sk_buff *skb);
@@ -2029,7 +1986,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
 +		req.addr = cpu_to_le32(i);
 +		memcpy(req.data, eeprom + i, MT76_TM_EEPROM_BLOCK_SIZE);
 +
-+		ret = mt7915_mcu_get_eeprom(dev, i, read_buf);
++		ret = mt7915_mcu_get_eeprom(dev, read_buf, i);
 +		if (ret < 0)
 +			return ret;
 +

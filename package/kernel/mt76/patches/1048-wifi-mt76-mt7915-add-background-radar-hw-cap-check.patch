@@ -49,7 +49,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
 +	case 0x7915:
 +		return 1;
 +	case 0x7906:
-+		if (!mt7915_mcu_get_eeprom(dev, offs, buf)) {
++		if (!mt7915_mcu_get_eeprom(dev, buf, offs)) {
 +			val = buf[offs % MT7915_EEPROM_BLOCK_SIZE];
 +			band_sel = FIELD_GET(MT_EE_WIFI_CONF0_BAND_SEL, val);
 +			rx_path = FIELD_GET(MT_EE_WIFI_CONF0_RX_PATH, val);

@@ -137,24 +137,30 @@ Signed-off-by: Shayne Chen <shayne.chen@mediatek.com>
  		ret = -EINVAL;
  		goto out;
  	}
-@@ -126,6 +159,7 @@ static int mt7915_eeprom_load(struct mt7
+@@ -161,8 +194,13 @@ static int mt7915_eeprom_load(struct mt7
+ 	if (ret < 0)
+ 		return ret;
  
- 	if (ret) {
+-	if (ret)
++	if (ret) {
  		dev->flash_mode = true;
 +		dev->eeprom_mode = FLASH_MODE;
- 	} else {
- 		u8 free_block_num;
- 		u32 block_num, i;
-@@ -146,6 +180,8 @@ static int mt7915_eeprom_load(struct mt7
- 			if (ret < 0)
- 				return ret;
++		}
++	else {
++		dev->eeprom_mode = EFUSE_MODE;
++	}
+ 
+ 	mt7915_eeprom_load_efuse(dev);
+ 
+@@ -417,6 +455,7 @@ static int mt7915_apply_cal_free_data(st
+ 			eeprom[ddie_offset] = buf[ddie_offset % MT7915_EEPROM_BLOCK_SIZE];
+ 			prev_block_num = block_num;
  		}
 +
-+		dev->eeprom_mode = EFUSE_MODE;
  	}
  
- 	return mt7915_check_eeprom(dev);
-@@ -251,12 +287,33 @@ int mt7915_eeprom_init(struct mt7915_dev
+ 	/* adie */
+@@ -465,12 +504,33 @@ int mt7915_eeprom_init(struct mt7915_dev
  {
  	int ret;
  
@@ -191,7 +197,7 @@ Signed-off-by: Shayne Chen <shayne.chen@mediatek.com>
  			return ret;
 --- a/mt7915/eeprom.h
 +++ b/mt7915/eeprom.h
-@@ -109,6 +109,13 @@ enum mt7915_sku_rate_group {
+@@ -111,6 +111,13 @@ enum mt7915_sku_rate_group {
  	MAX_SKU_RATE_GROUP_NUM,
  };
  
