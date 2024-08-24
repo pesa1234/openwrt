@@ -14,7 +14,7 @@ Signed-off-by: Felix Fietkau <nbd@nbd.name>
 
 --- a/mac80211.c
 +++ b/mac80211.c
-@@ -1820,30 +1820,6 @@ mt76_init_queue(struct mt76_dev *dev, in
+@@ -1826,30 +1826,6 @@ mt76_init_queue(struct mt76_dev *dev, in
  }
  EXPORT_SYMBOL_GPL(mt76_init_queue);
  

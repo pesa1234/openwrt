@@ -96,7 +96,7 @@ Subject: [PATCH] mt76: mt7915: wed: add wds support when wed is enabled
  	if (idx < 0)
  		return -ENOSPC;
  
-@@ -1318,6 +1322,13 @@ static void mt7915_sta_set_4addr(struct
+@@ -1325,6 +1329,13 @@ static void mt7915_sta_set_4addr(struct
  	else
  		clear_bit(MT_WCID_FLAG_4ADDR, &msta->wcid.flags);
  
@@ -110,7 +110,7 @@ Subject: [PATCH] mt76: mt7915: wed: add wds support when wed is enabled
  	mt76_connac_mcu_wtbl_update_hdr_trans(&dev->mt76, vif, sta);
  }
  
-@@ -1811,15 +1822,19 @@ mt7915_net_fill_forward_path(struct ieee
+@@ -1818,15 +1829,19 @@ mt7915_net_fill_forward_path(struct ieee
  	if (!mtk_wed_device_active(wed))
  		return -ENODEV;
  
