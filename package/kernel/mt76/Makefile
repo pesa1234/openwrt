@@ -6,11 +6,11 @@ PKG_RELEASE=1
 PKG_LICENSE:=GPLv2
 PKG_LICENSE_FILES:=
 
-PKG_SOURCE_URL:=https://github.com/openwrt/mt76
+PKG_SOURCE_URL:=https://github.com/pesa1234/mt76
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_DATE:=2024-08-21
-PKG_SOURCE_VERSION:=a5e630ef458ce7b91bf522247ef3320ed5845e2a
-PKG_MIRROR_HASH:=a16f647206d68d67f9b2b134935f27ed66b7302a4ca8243842987dcfafbe8317
+PKG_SOURCE_DATE:=2024-08-20
+PKG_SOURCE_VERSION:=0c0712172c7518f75f990467625faee3e8999870
+PKG_MIRROR_HASH:=e68cdec5aebb6fcc6a9df8ea10b839778fb76a9559986c273abbcb42d773b1ef
 
 PKG_MAINTAINER:=Felix Fietkau <nbd@nbd.name>
 PKG_USE_NINJA:=0
@@ -24,8 +24,7 @@ PKG_CONFIG_DEPENDS += \
 	CONFIG_PACKAGE_kmod-mt76x2-common \
 	CONFIG_PACKAGE_kmod-mt76x2 \
 	CONFIG_PACKAGE_kmod-mt76x2u \
-	CONFIG_PACKAGE_kmod-mt7603 \
-	CONFIG_PACKAGE_CFG80211_TESTMODE
+	CONFIG_PACKAGE_kmod-mt7603
 
 STAMP_CONFIGURED_DEPENDS := $(STAGING_DIR)/usr/include/mac80211-backport/backport/autoconf.h
 
@@ -329,12 +328,6 @@ define KernelPackage/mt7996-firmware
   DEPENDS+=+kmod-mt7996e
 endef
 
-define KernelPackage/mt7925-firmware
-  $(KernelPackage/mt76-default)
-  TITLE:=MediaTek MT7925 firmware
-  DEPENDS+=+kmod-mt7925e
-endef
-
 define KernelPackage/mt7925-common
   $(KernelPackage/mt76-default)
   TITLE:=MediaTek MT7925 wireless driver common code
@@ -348,7 +341,7 @@ define KernelPackage/mt7925u
   TITLE:=MediaTek MT7925U wireless driver
   DEPENDS+=+kmod-mt792x-usb +kmod-mt7925-common
   FILES:= $(PKG_BUILD_DIR)/mt7925/mt7925u.ko
-  AUTOLOAD:=$(call AutoProbe,mt7925u)
+  AUTOLOAD:=$(call AutoProbe,mt7921u)
 endef
 
 define KernelPackage/mt7925e
@@ -356,7 +349,7 @@ define KernelPackage/mt7925e
   TITLE:=MediaTek MT7925e wireless driver
   DEPENDS+=@PCI_SUPPORT +kmod-mt7925-common
   FILES:= $(PKG_BUILD_DIR)/mt7925/mt7925e.ko
-  AUTOLOAD:=$(call AutoProbe,mt7925e)
+  AUTOLOAD:=$(call AutoProbe,mt7921e)
 endef
 
 define Package/mt76-test
@@ -382,10 +375,13 @@ ifdef CONFIG_PACKAGE_MAC80211_MESH
   NOSTDINC_FLAGS += -DCONFIG_MAC80211_MESH
 endif
 
-ifdef CONFIG_PACKAGE_CFG80211_TESTMODE
-  NOSTDINC_FLAGS += -DCONFIG_NL80211_TESTMODE
-  PKG_MAKE_FLAGS += CONFIG_NL80211_TESTMODE=y
+ifdef CONFIG_PACKAGE_MAC80211_DEBUGFS
+  NOSTDINC_FLAGS += -DCONFIG_MAC80211_DEBUGFS
+  PKG_MAKE_FLAGS += CONFIG_MAC80211_DEBUGFS=y
 endif
+
+NOSTDINC_FLAGS += -DCONFIG_NL80211_TESTMODE
+PKG_MAKE_FLAGS += CONFIG_NL80211_TESTMODE=y
 
 ifdef CONFIG_PACKAGE_kmod-mt76-usb
   PKG_MAKE_FLAGS += CONFIG_MT76_USB=m
@@ -481,7 +477,8 @@ ifdef CONFIG_PACKAGE_kmod-mt7925e
 endif
 
 define Build/Compile
-	+$(KERNEL_MAKE) $(PKG_JOBS) \
+	+$(MAKE) $(PKG_JOBS) -C "$(LINUX_DIR)" \
+		$(KERNEL_MAKE_FLAGS) \
 		$(PKG_MAKE_FLAGS) \
 		M="$(PKG_BUILD_DIR)" \
 		NOSTDINC_FLAGS="$(NOSTDINC_FLAGS)" \
@@ -622,14 +619,6 @@ define KernelPackage/mt7922-firmware/install
 		$(1)/lib/firmware/mediatek
 endef
 
-define KernelPackage/mt7925-firmware/install
-        $(INSTALL_DIR) $(1)/lib/firmware/mediatek/mt7925
-	cp \
-		$(PKG_BUILD_DIR)/firmware/mt7925/WIFI_MT7925_PATCH_MCU_1_1_hdr.bin \
-		$(PKG_BUILD_DIR)/firmware/mt7925/WIFI_RAM_CODE_MT7925_1_1.bin \
-		$(1)/lib/firmware/mediatek/mt7925
-endef
-
 define KernelPackage/mt7996-firmware/install
 	$(INSTALL_DIR) $(1)/lib/firmware/mediatek/mt7996
 	cp \
@@ -680,7 +669,6 @@ $(eval $(call KernelPackage,mt7981-firmware))
 $(eval $(call KernelPackage,mt7986-firmware))
 $(eval $(call KernelPackage,mt7921-firmware))
 $(eval $(call KernelPackage,mt7922-firmware))
-$(eval $(call KernelPackage,mt7925-firmware))
 $(eval $(call KernelPackage,mt792x-common))
 $(eval $(call KernelPackage,mt792x-usb))
 $(eval $(call KernelPackage,mt7921-common))
