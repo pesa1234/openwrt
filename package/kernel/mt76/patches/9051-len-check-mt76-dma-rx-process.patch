@@ -12,21 +12,14 @@ patch can't apply cleanly).
 
 Signed-off-by: Rany Hany <rany_hany@riseup.net>
 ---
- ...-add-len-check-in-mt76_dma_rx_process-to-dro.patch | 11 +++++++++++
- 1 file changed, 11 insertions(+)
- create mode 100644 package/kernel/mt76/patches/9003-mt76-dma-add-len-check-in-mt76_dma_rx_process-to-dro.patch
-
---- /dev/null
-+++ b/package/kernel/mt76/patches/9003-mt76-dma-add-len-check-in-mt76_dma_rx_process-to-dro.patch
-@@ -0,0 +1,11 @@
-+--- a/dma.c
-++++ b/dma.c
-+@@ -901,7 +901,7 @@ mt76_dma_rx_process(struct mt76_dev *dev
-+ 		if (!data)
-+ 			break;
-+ 
-+-		if (drop)
-++		if (drop || (len == 0))
-+ 			goto free_frag;
-+ 
-+ 		if (q->rx_head)
+--- a/dma.c
++++ b/dma.c
+@@ -858,7 +858,7 @@ mt76_dma_rx_process(struct mt76_dev *dev
+ 		if (!data)
+ 			break;
+ 
+-		if (drop)
++		if (drop || (len == 0))
+ 			goto free_frag;
+ 
+ 		if (q->rx_head)
