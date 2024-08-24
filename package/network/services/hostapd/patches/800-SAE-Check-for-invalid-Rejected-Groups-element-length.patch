@@ -15,7 +15,7 @@ Signed-off-by: Jouni Malinen <j@w1.fi>
 
 --- a/src/ap/ieee802_11.c
 +++ b/src/ap/ieee802_11.c
-@@ -1229,7 +1229,7 @@ static int check_sae_rejected_groups(str
+@@ -1232,7 +1232,7 @@ static int check_sae_rejected_groups(str
  				     struct sae_data *sae)
  {
  	const struct wpabuf *groups;
@@ -24,7 +24,7 @@ Signed-off-by: Jouni Malinen <j@w1.fi>
  	const u8 *pos;
  
  	if (!sae->tmp)
-@@ -1239,7 +1239,15 @@ static int check_sae_rejected_groups(str
+@@ -1242,7 +1242,15 @@ static int check_sae_rejected_groups(str
  		return 0;
  
  	pos = wpabuf_head(groups);
