@@ -22,7 +22,7 @@ Signed-off-by: MeiChia Chiu <meichia.chiu@mediatek.com>
 
 --- a/mt7915/mcu.c
 +++ b/mt7915/mcu.c
-@@ -5106,6 +5106,17 @@ int mt7915_mcu_set_rfeature_trig_type(st
+@@ -5108,6 +5108,17 @@ int mt7915_mcu_set_rfeature_trig_type(st
  		return 0;
  	}
  }

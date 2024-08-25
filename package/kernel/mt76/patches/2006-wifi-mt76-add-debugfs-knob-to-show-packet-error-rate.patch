@@ -39,7 +39,7 @@ Get tx count and tx failed from mcu command
  	MCU_EXT_CMD_SET_RDD_CTRL = 0x3a,
 --- a/mt7915/mcu.c
 +++ b/mt7915/mcu.c
-@@ -4392,6 +4392,114 @@ int mt7915_mcu_get_tx_rate(struct mt7915
+@@ -4394,6 +4394,114 @@ int mt7915_mcu_get_tx_rate(struct mt7915
  		return mt7915_mcu_get_tx_rate_v2(phy, wcidx);
  }
  

@@ -141,7 +141,7 @@ Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
  out:
  	rcu_read_unlock();
  }
-@@ -1956,6 +1950,27 @@ static void mt7915_mac_severe_check(stru
+@@ -1961,6 +1955,27 @@ static void mt7915_mac_severe_check(stru
  	phy->trb_ts = trb;
  }
  
@@ -169,7 +169,7 @@ Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
  void mt7915_mac_sta_rc_work(struct work_struct *work)
  {
  	struct mt7915_dev *dev = container_of(work, struct mt7915_dev, rc_work);
-@@ -2014,6 +2029,11 @@ void mt7915_mac_work(struct work_struct
+@@ -2019,6 +2034,11 @@ void mt7915_mac_work(struct work_struct
  			mt7915_mcu_muru_debug_get(phy);
  	}
  
@@ -213,7 +213,7 @@ Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
  static void mt7915_tx(struct ieee80211_hw *hw,
 --- a/mt7915/mcu.c
 +++ b/mt7915/mcu.c
-@@ -3808,6 +3808,167 @@ out:
+@@ -3810,6 +3810,167 @@ out:
  	return ret;
  }
  
