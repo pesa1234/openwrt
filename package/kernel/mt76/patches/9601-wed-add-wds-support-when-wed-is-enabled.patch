@@ -82,7 +82,7 @@ Subject: [PATCH] mt76: mt7915: wed: add wds support when wed is enabled
  static void
 --- a/mt7915/main.c
 +++ b/mt7915/main.c
-@@ -825,8 +825,12 @@ int mt7915_mac_sta_add(struct mt76_dev *
+@@ -831,8 +831,12 @@ int mt7915_mac_sta_add(struct mt76_dev *
  	struct mt7915_vif *mvif = (struct mt7915_vif *)vif->drv_priv;
  	bool ext_phy = mvif->phy != &dev->phy;
  	int idx;
@@ -96,7 +96,7 @@ Subject: [PATCH] mt76: mt7915: wed: add wds support when wed is enabled
  	if (idx < 0)
  		return -ENOSPC;
  
-@@ -1041,6 +1045,22 @@ mt7915_ampdu_action(struct ieee80211_hw
+@@ -1047,6 +1051,22 @@ mt7915_ampdu_action(struct ieee80211_hw
  }
  
  static int
@@ -119,7 +119,7 @@ Subject: [PATCH] mt76: mt7915: wed: add wds support when wed is enabled
  mt7915_get_stats(struct ieee80211_hw *hw,
  		 struct ieee80211_low_level_stats *stats)
  {
-@@ -1349,6 +1369,13 @@ static void mt7915_sta_set_4addr(struct
+@@ -1355,6 +1375,13 @@ static void mt7915_sta_set_4addr(struct
  	if (!msta->wcid.sta)
  		return;
  
@@ -133,7 +133,7 @@ Subject: [PATCH] mt76: mt7915: wed: add wds support when wed is enabled
  	mt76_connac_mcu_wtbl_update_hdr_trans(&dev->mt76, vif, sta);
  }
  
-@@ -1845,15 +1872,19 @@ mt7915_net_fill_forward_path(struct ieee
+@@ -1851,15 +1878,19 @@ mt7915_net_fill_forward_path(struct ieee
  	if (!mtk_wed_device_active(wed))
  		return -ENODEV;
  
