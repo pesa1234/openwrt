@@ -31,4 +31,4 @@
 +		fq->memory_limit = 8 << 20; /* 8 Mbytes */
  
  	codel_params_init(&local->cparams);
- 	local->cparams.interval = MS2TIME(80);
+ 	local->cparams.interval = MS2TIME(100);

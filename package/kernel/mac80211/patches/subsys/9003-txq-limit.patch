@@ -12,7 +12,7 @@
  
  /* The per interface airtime threshold to switch to lower queue limit */
 -#define IEEE80211_AQL_THRESHOLD			24000
-+#define IEEE80211_AQL_THRESHOLD			8000
++#define IEEE80211_AQL_THRESHOLD			12000
  
  /**
   * struct cfg80211_pmksa - PMK Security Association
