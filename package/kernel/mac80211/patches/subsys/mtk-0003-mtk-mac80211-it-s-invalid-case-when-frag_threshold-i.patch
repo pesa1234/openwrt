@@ -11,7 +11,7 @@ Signed-off-by: Bo Jiao <Bo.Jiao@mediatek.com>
 
 --- a/net/wireless/nl80211.c
 +++ b/net/wireless/nl80211.c
-@@ -3761,6 +3761,9 @@ static int nl80211_set_wiphy(struct sk_b
+@@ -3788,6 +3788,9 @@ static int nl80211_set_wiphy(struct sk_b
  			goto out;
  		}
  
