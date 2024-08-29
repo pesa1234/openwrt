@@ -11,7 +11,7 @@ Signed-off-by: Felix Fietkau <nbd@nbd.name>
 
 --- a/include/net/cfg80211.h
 +++ b/include/net/cfg80211.h
-@@ -1600,6 +1600,7 @@ struct cfg80211_color_change_settings {
+@@ -1598,6 +1598,7 @@ struct cfg80211_color_change_settings {
   *
   * Used to pass interface combination parameters
   *
@@ -19,7 +19,7 @@ Signed-off-by: Felix Fietkau <nbd@nbd.name>
   * @num_different_channels: the number of different channels we want
   *	to use for verification
   * @radar_detect: a bitmap where each bit corresponds to a channel
-@@ -1613,6 +1614,7 @@ struct cfg80211_color_change_settings {
+@@ -1611,6 +1612,7 @@ struct cfg80211_color_change_settings {
   *	the verification
   */
  struct iface_combination_params {
@@ -27,7 +27,7 @@ Signed-off-by: Felix Fietkau <nbd@nbd.name>
  	int num_different_channels;
  	u8 radar_detect;
  	int iftype_num[NUM_NL80211_IFTYPES];
-@@ -4581,6 +4583,8 @@ struct mgmt_frame_regs {
+@@ -4579,6 +4581,8 @@ struct mgmt_frame_regs {
   *
   * @set_hw_timestamp: Enable/disable HW timestamping of TM/FTM frames.
   * @set_ttlm: set the TID to link mapping.
@@ -36,7 +36,7 @@ Signed-off-by: Felix Fietkau <nbd@nbd.name>
   */
  struct cfg80211_ops {
  	int	(*suspend)(struct wiphy *wiphy, struct cfg80211_wowlan *wow);
-@@ -4942,6 +4946,7 @@ struct cfg80211_ops {
+@@ -4940,6 +4944,7 @@ struct cfg80211_ops {
  				    struct cfg80211_set_hw_timestamp *hwts);
  	int	(*set_ttlm)(struct wiphy *wiphy, struct net_device *dev,
  			    struct cfg80211_ttlm_params *params);
@@ -46,7 +46,7 @@ Signed-off-by: Felix Fietkau <nbd@nbd.name>
  /*
 --- a/net/mac80211/util.c
 +++ b/net/mac80211/util.c
-@@ -3934,6 +3934,7 @@ int ieee80211_check_combinations(struct
+@@ -3930,6 +3930,7 @@ int ieee80211_check_combinations(struct
  	int total = 1;
  	struct iface_combination_params params = {
  		.radar_detect = radar_detect,
@@ -54,7 +54,7 @@ Signed-off-by: Felix Fietkau <nbd@nbd.name>
  	};
  
  	lockdep_assert_wiphy(local->hw.wiphy);
-@@ -4024,7 +4025,9 @@ int ieee80211_max_num_channels(struct ie
+@@ -4020,7 +4021,9 @@ int ieee80211_max_num_channels(struct ie
  	struct ieee80211_chanctx *ctx;
  	u32 max_num_different_channels = 1;
  	int err;

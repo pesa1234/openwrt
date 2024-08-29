@@ -44,7 +44,7 @@ Signed-off-by: fancy.liu <fancy.liu@mediatek.com>
  #endif /* MAC80211_H */
 --- a/net/mac80211/util.c
 +++ b/net/mac80211/util.c
-@@ -4372,3 +4372,12 @@ ieee80211_min_bw_limit_from_chandef(stru
+@@ -4369,3 +4369,12 @@ ieee80211_min_bw_limit_from_chandef(stru
  		return IEEE80211_CONN_BW_LIMIT_20;
  	}
  }

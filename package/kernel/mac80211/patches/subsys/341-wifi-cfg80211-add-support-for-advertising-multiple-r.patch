@@ -20,7 +20,7 @@ Signed-off-by: Felix Fietkau <nbd@nbd.name>
 
 --- a/include/net/cfg80211.h
 +++ b/include/net/cfg80211.h
-@@ -5047,7 +5047,9 @@ struct ieee80211_iface_limit {
+@@ -5045,7 +5045,9 @@ struct ieee80211_iface_limit {
   * struct ieee80211_iface_combination - possible interface combination
   *
   * With this structure the driver can describe which interface
@@ -31,7 +31,7 @@ Signed-off-by: Felix Fietkau <nbd@nbd.name>
   *
   * Examples:
   *
-@@ -5405,6 +5407,38 @@ struct wiphy_iftype_akm_suites {
+@@ -5403,6 +5405,38 @@ struct wiphy_iftype_akm_suites {
  	int n_akm_suites;
  };
  
@@ -70,7 +70,7 @@ Signed-off-by: Felix Fietkau <nbd@nbd.name>
  #define CFG80211_HW_TIMESTAMP_ALL_PEERS	0xffff
  
  /**
-@@ -5623,6 +5657,9 @@ struct wiphy_iftype_akm_suites {
+@@ -5621,6 +5655,9 @@ struct wiphy_iftype_akm_suites {
   *	A value of %CFG80211_HW_TIMESTAMP_ALL_PEERS indicates the driver
   *	supports enabling HW timestamping for all peers (i.e. no need to
   *	specify a mac address).
@@ -80,7 +80,7 @@ Signed-off-by: Felix Fietkau <nbd@nbd.name>
   */
  struct wiphy {
  	struct mutex mtx;
-@@ -5773,6 +5810,9 @@ struct wiphy {
+@@ -5771,6 +5808,9 @@ struct wiphy {
  
  	u16 hw_timestamp_max_peers;
  

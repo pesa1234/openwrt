@@ -13,7 +13,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
 
 --- a/include/net/cfg80211.h
 +++ b/include/net/cfg80211.h
-@@ -8709,6 +8709,20 @@ void cfg80211_cac_event(struct net_devic
+@@ -8707,6 +8707,20 @@ void cfg80211_cac_event(struct net_devic
  			enum nl80211_radar_event event, gfp_t gfp);
  
  /**

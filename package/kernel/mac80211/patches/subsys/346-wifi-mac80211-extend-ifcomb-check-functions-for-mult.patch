@@ -136,7 +136,7 @@ Signed-off-by: Felix Fietkau <nbd@nbd.name>
  static int ieee80211_check_queues(struct ieee80211_sub_if_data *sdata,
 --- a/net/mac80211/util.c
 +++ b/net/mac80211/util.c
-@@ -3922,20 +3922,103 @@ static u8 ieee80211_chanctx_radar_detect
+@@ -3918,20 +3918,103 @@ static u8 ieee80211_chanctx_radar_detect
  	return radar_detect;
  }
  
@@ -245,7 +245,7 @@ Signed-off-by: Felix Fietkau <nbd@nbd.name>
  
  	lockdep_assert_wiphy(local->hw.wiphy);
  
-@@ -3972,37 +4055,9 @@ int ieee80211_check_combinations(struct
+@@ -3968,37 +4051,9 @@ int ieee80211_check_combinations(struct
  	if (iftype != NL80211_IFTYPE_UNSPECIFIED)
  		params.iftype_num[iftype] = 1;
  
@@ -286,7 +286,7 @@ Signed-off-by: Felix Fietkau <nbd@nbd.name>
  	if (total == 1 && !params.radar_detect)
  		return 0;
  
-@@ -4019,30 +4074,17 @@ ieee80211_iter_max_chans(const struct ie
+@@ -4015,30 +4070,17 @@ ieee80211_iter_max_chans(const struct ie
  					  c->num_different_channels);
  }
  

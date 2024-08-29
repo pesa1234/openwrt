@@ -10,7 +10,7 @@ Signed-off-by: Felix Fietkau <nbd@nbd.name>
 
 --- a/include/net/cfg80211.h
 +++ b/include/net/cfg80211.h
-@@ -6487,6 +6487,15 @@ static inline bool cfg80211_channel_is_p
+@@ -6485,6 +6485,15 @@ static inline bool cfg80211_channel_is_p
  }
  
  /**
