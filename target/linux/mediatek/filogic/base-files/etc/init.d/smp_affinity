@@ -11,6 +11,7 @@ start() {
 	
 	case $board in
 	*gl-mt6000)
+        #move ethernet to CPU1 & CPU3
         IRQs=`ls -d /proc/irq/*/$ethdevice | awk -F\/ '{ print $4 }'`
 			for ETHirq in ${IRQs}; do
 				echo $(( 2**(${count}+1))) > /proc/irq/${ETHirq}/smp_affinity
@@ -18,13 +19,10 @@ start() {
 				let "cpu=${count}-1"
 				logger -s "smp_affinity: assigning ${ethdevice} to CPU${cpu} on IRQ ${ETHirq}"
 			done
+		#move usb to CPU2
 		USBirq=`ls -d /proc/irq/*/$usbdevice | awk -F\/ '{ print $4 }'`
-		USBcpu=`cat /proc/irq/${USBirq}/smp_affinity`
-		if [ "$USBcpu" == "f" ]; then
-			logger -s "smp_affinity: leave ${usbdevice} to All CPUs on IRQ ${USBirq}"
-		else
-			logger -s "smp_affinity: leave ${usbdevice} to CPU${USBcpu} on IRQ ${USBirq}"
-		fi
+		echo 4 > /proc/irq/${USBirq}/smp_affinity
+		#leave wifi to all CPU
 		WIFIirq=`ls -d /proc/irq/*/$wifidevice | awk -F\/ '{ print $4 }'`
 		WIFIcpu=`cat /proc/irq/${WIFIirq}/smp_affinity`
 		if [ "$WIFIcpu" == "f" ]; then
@@ -43,14 +41,20 @@ start() {
 stop() {
 	local board=$(board_name)
 	local ethdevice='15100000.ethernet'
+	local usbdevice='xhci-hcd:usb1'
 	
 	case $board in
 	*gl-mt6000)
+        #restore ethernet to f (all cpu)
         IRQs=`ls -d /proc/irq/*/$ethdevice | awk -F\/ '{ print $4 }'`
 			for ETHirq in ${IRQs}; do
 				echo f > /proc/irq/${ETHirq}/smp_affinity
 				logger -s "smp_affinity: restore ${ethdevice} to AllCPUs on IRQ ${ETHirq}"
 			done
+		#restore usb to f (all cpu)
+		USBirq=`ls -d /proc/irq/*/$usbdevice | awk -F\/ '{ print $4 }'`
+		echo f > /proc/irq/${USBirq}/smp_affinity
+		logger -s "smp_affinity: restore ${usbdevice} to AllCPUs on IRQ ${USBirq}"
     ;;
     *)
 		logger -s "smp_affinity:  Not compatible with ${BOARD}"
