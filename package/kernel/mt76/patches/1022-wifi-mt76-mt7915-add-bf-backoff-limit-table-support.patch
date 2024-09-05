@@ -33,7 +33,7 @@ Signed-off-by: Shayne Chen <shayne.chen@mediatek.com>
  EXPORT_SYMBOL_GPL(mt76_seq_puts_array);
 --- a/eeprom.c
 +++ b/eeprom.c
-@@ -330,9 +330,10 @@ mt76_apply_array_limit(s8 *pwr, size_t p
+@@ -345,9 +345,10 @@ mt76_apply_array_limit(s8 *pwr, size_t p
  static void
  mt76_apply_multi_array_limit(s8 *pwr, size_t pwr_len, s8 pwr_num,
  			     const __be32 *data, size_t len, s8 target_power,
@@ -45,7 +45,7 @@ Signed-off-by: Shayne Chen <shayne.chen@mediatek.com>
  
  	if (!data)
  		return;
-@@ -344,7 +345,7 @@ mt76_apply_multi_array_limit(s8 *pwr, si
+@@ -359,7 +360,7 @@ mt76_apply_multi_array_limit(s8 *pwr, si
  			break;
  
  		mt76_apply_array_limit(pwr + pwr_len * i, pwr_len, data + 1,
@@ -54,7 +54,7 @@ Signed-off-by: Shayne Chen <shayne.chen@mediatek.com>
  		if (--cur > 0)
  			continue;
  
-@@ -371,12 +372,16 @@ s8 mt76_get_rate_power_limits(struct mt7
+@@ -386,12 +387,16 @@ s8 mt76_get_rate_power_limits(struct mt7
  	char band;
  	size_t len;
  	s8 max_power = -127;
@@ -72,7 +72,7 @@ Signed-off-by: Shayne Chen <shayne.chen@mediatek.com>
  
  	if (!IS_ENABLED(CONFIG_OF))
  		return target_power;
-@@ -422,12 +427,35 @@ s8 mt76_get_rate_power_limits(struct mt7
+@@ -437,12 +442,35 @@ s8 mt76_get_rate_power_limits(struct mt7
  	val = mt76_get_of_array(np, "rates-mcs", &len, mcs_rates + 1);
  	mt76_apply_multi_array_limit(dest->mcs[0], ARRAY_SIZE(dest->mcs[0]),
  				     ARRAY_SIZE(dest->mcs), val, len,

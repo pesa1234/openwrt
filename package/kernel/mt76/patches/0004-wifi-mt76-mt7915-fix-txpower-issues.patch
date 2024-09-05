@@ -11,7 +11,7 @@ Subject: [PATCH 04/21] wifi: mt76: mt7915: fix txpower issues
 
 --- a/eeprom.c
 +++ b/eeprom.c
-@@ -343,7 +343,7 @@ s8 mt76_get_rate_power_limits(struct mt7
+@@ -358,7 +358,7 @@ s8 mt76_get_rate_power_limits(struct mt7
  	u32 ru_rates = ARRAY_SIZE(dest->ru[0]);
  	char band;
  	size_t len;
