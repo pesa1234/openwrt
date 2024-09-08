@@ -102,7 +102,7 @@ Subject: [PATCH 1033/1051] wifi: mt76: mt7915: Disable RegDB when enable
  }
 --- a/mt7915/init.c
 +++ b/mt7915/init.c
-@@ -284,9 +284,11 @@ static void __mt7915_init_txpower(struct
+@@ -286,9 +286,11 @@ static void __mt7915_init_txpower(struct
  	int nss_delta = mt76_tx_power_nss_delta(n_chains);
  	int pwr_delta = mt7915_eeprom_get_power_delta(dev, sband->band);
  	struct mt76_power_limits limits;
@@ -114,7 +114,7 @@ Subject: [PATCH 1033/1051] wifi: mt76: mt7915: Disable RegDB when enable
  	for (i = 0; i < sband->n_channels; i++) {
  		struct ieee80211_channel *chan = &sband->channels[i];
  		u32 target_power = 0;
-@@ -310,8 +312,13 @@ static void __mt7915_init_txpower(struct
+@@ -312,8 +314,13 @@ static void __mt7915_init_txpower(struct
  
  		target_power += nss_delta;
  		target_power = DIV_ROUND_UP(target_power, 2);
