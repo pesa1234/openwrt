@@ -28,8 +28,10 @@ Signed-off-by: SkyLake.Huang <skylake.huang@mediatek.com>
  drivers/net/phy/mediatek/mtk.h         | 21 ++++++
  4 files changed, 116 insertions(+), 4 deletions(-)
 
---- a/drivers/net/phy/mediatek/mtk-ge-soc.c
-+++ b/drivers/net/phy/mediatek/mtk-ge-soc.c
+Index: linux-6.6.49/drivers/net/phy/mediatek/mtk-ge-soc.c
+===================================================================
+--- linux-6.6.49.orig/drivers/net/phy/mediatek/mtk-ge-soc.c
++++ linux-6.6.49/drivers/net/phy/mediatek/mtk-ge-soc.c
 @@ -1396,6 +1396,7 @@ static struct phy_driver mtk_socphy_driv
  		PHY_ID_MATCH_EXACT(MTK_GPHY_ID_MT7981),
  		.name		= "MediaTek MT7981 PHY",
@@ -46,8 +48,10 @@ Signed-off-by: SkyLake.Huang <skylake.huang@mediatek.com>
  		.config_intr	= genphy_no_config_intr,
  		.handle_interrupt = genphy_handle_interrupt_no_ack,
  		.probe		= mt7988_phy_probe,
---- a/drivers/net/phy/mediatek/mtk-ge.c
-+++ b/drivers/net/phy/mediatek/mtk-ge.c
+Index: linux-6.6.49/drivers/net/phy/mediatek/mtk-ge.c
+===================================================================
+--- linux-6.6.49.orig/drivers/net/phy/mediatek/mtk-ge.c
++++ linux-6.6.49/drivers/net/phy/mediatek/mtk-ge.c
 @@ -9,10 +9,6 @@
  #define MTK_GPHY_ID_MT7530		0x03a29412
  #define MTK_GPHY_ID_MT7531		0x03a29441
@@ -67,9 +71,11 @@ Signed-off-by: SkyLake.Huang <skylake.huang@mediatek.com>
  		/* Interrupts are handled by the switch, not the PHY
  		 * itself.
  		 */
---- a/drivers/net/phy/mediatek/mtk-phy-lib.c
-+++ b/drivers/net/phy/mediatek/mtk-phy-lib.c
-@@ -109,6 +109,105 @@ int mtk_phy_write_page(struct phy_device
+Index: linux-6.6.49/drivers/net/phy/mediatek/mtk-phy-lib.c
+===================================================================
+--- linux-6.6.49.orig/drivers/net/phy/mediatek/mtk-phy-lib.c
++++ linux-6.6.49/drivers/net/phy/mediatek/mtk-phy-lib.c
+@@ -109,6 +109,110 @@ int mtk_phy_write_page(struct phy_device
  }
  EXPORT_SYMBOL_GPL(mtk_phy_write_page);
  
@@ -95,6 +101,8 @@ Signed-off-by: SkyLake.Huang <skylake.huang@mediatek.com>
 +				    reg_val & MTK_PHY_FINAL_SPEED_1000,
 +				    10000, 500000, false, phydev,
 +				    MDIO_MMD_VEND1, MTK_PHY_LINK_STATUS_MISC);
++	
++	phydev_err(phydev, "%s: Training Indicator: 0x%x\n", __func__, reg_val);
 +	if (ret < 0)
 +		return ret;
 +
@@ -122,6 +130,8 @@ Signed-off-by: SkyLake.Huang <skylake.huang@mediatek.com>
 +					     AN_STATE_SHIFT),
 +					    10000, 1000000, false, phydev,
 +					    0x0, 0xf, 0x2);
++
++		phydev_err(phydev, "%s: AN State: 0x%x\n", __func__, reg_val);
 +		if (!timeout) {
 +			msleep(625);
 +			mtk_tr_modify(phydev, 0x0, 0xf, 0x3c,
@@ -163,6 +173,7 @@ Signed-off-by: SkyLake.Huang <skylake.huang@mediatek.com>
 +		ret = phy_read(phydev, MII_CTRL1000);
 +		if (ret & (ADVERTISE_1000FULL | ADVERTISE_1000HALF)) {
 +			ret = extend_an_new_lp_cnt_limit(phydev);
++			phydev_err(phydev, "%s: counter limit ret: %d\n", __func__, ret);
 +			if (ret < 0)
 +				return ret;
 +		}
@@ -175,8 +186,10 @@ Signed-off-by: SkyLake.Huang <skylake.huang@mediatek.com>
  int mtk_phy_led_hw_is_supported(struct phy_device *phydev, u8 index,
  				unsigned long rules,
  				unsigned long supported_triggers)
---- a/drivers/net/phy/mediatek/mtk.h
-+++ b/drivers/net/phy/mediatek/mtk.h
+Index: linux-6.6.49/drivers/net/phy/mediatek/mtk.h
+===================================================================
+--- linux-6.6.49.orig/drivers/net/phy/mediatek/mtk.h
++++ linux-6.6.49/drivers/net/phy/mediatek/mtk.h
 @@ -10,8 +10,28 @@
  
  #define MTK_EXT_PAGE_ACCESS			0x1f
