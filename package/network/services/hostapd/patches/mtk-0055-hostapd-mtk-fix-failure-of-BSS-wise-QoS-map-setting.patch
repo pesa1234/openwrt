@@ -14,7 +14,7 @@ Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
 
 --- a/src/drivers/driver_nl80211.c
 +++ b/src/drivers/driver_nl80211.c
-@@ -11606,7 +11606,7 @@ static int nl80211_set_qos_map(void *pri
+@@ -11908,7 +11908,7 @@ static int nl80211_set_qos_map(void *pri
  	wpa_hexdump(MSG_DEBUG, "nl80211: Setting QoS Map",
  		    qos_map_set, qos_map_set_len);
  

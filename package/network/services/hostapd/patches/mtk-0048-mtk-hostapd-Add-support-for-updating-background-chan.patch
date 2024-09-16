@@ -17,7 +17,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
 
 --- a/src/ap/dfs.c
 +++ b/src/ap/dfs.c
-@@ -823,11 +823,14 @@ static int dfs_are_channels_overlapped(s
+@@ -831,11 +831,14 @@ static int dfs_are_channels_overlapped(s
  
  static void dfs_check_background_overlapped(struct hostapd_iface *iface)
  {
@@ -33,7 +33,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  	if (dfs_are_channels_overlapped(iface, iface->radar_background.freq,
  					width, iface->radar_background.centr_freq_seg0_idx,
  					iface->radar_background.centr_freq_seg1_idx))
-@@ -992,6 +995,15 @@ int hostapd_handle_dfs(struct hostapd_if
+@@ -1000,6 +1003,15 @@ int hostapd_handle_dfs(struct hostapd_if
  		iface->radar_background.temp_ch = 1;
  		return 1;
  	} else if (dfs_use_radar_background(iface)) {
@@ -49,7 +49,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  		if (iface->dfs_domain == HOSTAPD_DFS_REGION_ETSI)
  			channel_type = DFS_ANY_CHANNEL;
  
-@@ -1132,6 +1144,8 @@ static int hostapd_dfs_request_channel_s
+@@ -1140,6 +1152,8 @@ static int hostapd_dfs_request_channel_s
  	 * ch_switch_notify event is received */
  	wpa_printf(MSG_DEBUG, "DFS waiting channel switch event");
  
@@ -58,7 +58,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  	return 0;
  }
  
-@@ -1183,6 +1197,9 @@ static void hostapd_dfs_update_backgroun
+@@ -1191,6 +1205,9 @@ static void hostapd_dfs_update_backgroun
  	iface->radar_background.secondary_channel = sec;
  	iface->radar_background.centr_freq_seg0_idx = oper_centr_freq_seg0_idx;
  	iface->radar_background.centr_freq_seg1_idx = oper_centr_freq_seg1_idx;
@@ -68,7 +68,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  
  	wpa_printf(MSG_DEBUG,
  		   "%s: setting background chain to chan %d (%d MHz)",
-@@ -1205,6 +1222,10 @@ hostapd_dfs_start_channel_switch_backgro
+@@ -1213,6 +1230,10 @@ hostapd_dfs_start_channel_switch_backgro
  	u8 current_vht_oper_chwidth = hostapd_get_oper_chwidth(iface->conf);
  	int ret;
  
@@ -79,7 +79,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  	ret = hostapd_dfs_request_channel_switch(iface, iface->radar_background.channel,
  						 iface->radar_background.freq,
  						 iface->radar_background.secondary_channel,
-@@ -1227,6 +1248,52 @@ hostapd_dfs_start_channel_switch_backgro
+@@ -1235,6 +1256,52 @@ hostapd_dfs_start_channel_switch_backgro
  }
  
  
@@ -132,7 +132,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  int hostapd_dfs_complete_cac(struct hostapd_iface *iface, int success, int freq,
  			     int ht_enabled, int chan_offset, int chan_width,
  			     int cf1, int cf2)
-@@ -1260,6 +1327,10 @@ int hostapd_dfs_complete_cac(struct host
+@@ -1277,6 +1344,10 @@ int hostapd_dfs_complete_cac(struct host
  					return 0;
  
  				iface->radar_background.temp_ch = 0;
@@ -143,7 +143,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  				return hostapd_dfs_start_channel_switch_background(iface);
  			}
  
-@@ -1290,6 +1361,8 @@ int hostapd_dfs_complete_cac(struct host
+@@ -1307,6 +1378,8 @@ int hostapd_dfs_complete_cac(struct host
  		}
  	} else if (hostapd_dfs_is_background_event(iface, freq)) {
  		iface->radar_background.cac_started = 0;
@@ -152,7 +152,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  		hostapd_dfs_update_background_chain(iface);
  	}
  
-@@ -1422,6 +1495,9 @@ hostapd_dfs_background_start_channel_swi
+@@ -1440,6 +1513,9 @@ hostapd_dfs_background_start_channel_swi
  	    iface->conf->dfs_detect_mode == DFS_DETECT_MODE_ALL_ENABLE)
  		return 0;
  
@@ -162,7 +162,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  	/* Check if CSA in progress */
  	if (hostapd_csa_in_progress(iface))
  		return 0;
-@@ -1655,6 +1731,35 @@ int hostapd_is_dfs_required(struct hosta
+@@ -1675,6 +1751,35 @@ int hostapd_is_dfs_required(struct hosta
  }
  
  
@@ -212,7 +212,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  				 int cf1, int cf2, u32 state);
 --- a/src/ap/drv_callbacks.c
 +++ b/src/ap/drv_callbacks.c
-@@ -2243,6 +2243,18 @@ static void hostapd_event_dfs_cac_starte
+@@ -2292,6 +2292,18 @@ static void hostapd_event_dfs_cac_starte
  			      radar->cf1, radar->cf2);
  }
  
@@ -231,7 +231,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  static void hostapd_event_dfs_sta_cac_skipped(struct hostapd_data *hapd,
  					      struct dfs_event *radar)
  {
-@@ -2609,6 +2621,16 @@ void hostapd_wpa_event(void *ctx, enum w
+@@ -2809,6 +2821,16 @@ void hostapd_wpa_event(void *ctx, enum w
  		hapd = switch_link_hapd(hapd, data->dfs_event.link_id);
  		hostapd_event_dfs_nop_finished(hapd, &data->dfs_event);
  		break;
@@ -250,7 +250,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  			break;
 --- a/src/ap/hostapd.h
 +++ b/src/ap/hostapd.h
-@@ -614,6 +614,11 @@ struct hostapd_iface {
+@@ -676,6 +676,11 @@ struct hostapd_iface {
  		unsigned int temp_ch:1;
  		/* CAC started on radar offchain */
  		unsigned int cac_started:1;
@@ -264,11 +264,10 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  	u16 hw_flags;
 --- a/src/drivers/driver.h
 +++ b/src/drivers/driver.h
-@@ -5857,6 +5857,18 @@ enum wpa_event_type {
- 	 * The channel in the notification is now marked as usable.
+@@ -6058,6 +6058,18 @@ enum wpa_event_type {
  	 */
  	EVENT_DFS_STA_CAC_EXPIRED,
-+
+ 
 +	/**
 +	 * EVENT_DFS_BACKGROUND_CHAN_UPDATE - Notification that background
 +	 * channel has been updated.
@@ -280,12 +279,13 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
 +	 * channel has been updated and operating channel should expand its width.
 +	 */
 +	EVENT_DFS_BACKGROUND_CHAN_EXPAND,
++
  };
  
  
 --- a/src/drivers/driver_nl80211_event.c
 +++ b/src/drivers/driver_nl80211_event.c
-@@ -2518,6 +2518,12 @@ static void nl80211_radar_event(struct w
+@@ -2593,6 +2593,12 @@ static void nl80211_radar_event(struct w
  	case NL80211_RADAR_CAC_STARTED:
  		wpa_supplicant_event(drv->ctx, EVENT_DFS_CAC_STARTED, &data);
  		break;
@@ -300,7 +300,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  		break;
 --- a/src/drivers/nl80211_copy.h
 +++ b/src/drivers/nl80211_copy.h
-@@ -6699,6 +6699,10 @@ enum nl80211_smps_mode {
+@@ -6843,6 +6843,10 @@ enum nl80211_smps_mode {
   *	applicable for ETSI dfs domain where pre-CAC is valid for ever.
   * @NL80211_RADAR_CAC_STARTED: Channel Availability Check has been started,
   *	should be generated by HW if NL80211_EXT_FEATURE_DFS_OFFLOAD is enabled.
@@ -311,7 +311,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
   * @NL80211_RADAR_STA_CAC_SKIPPED: STA set the DFS state to available
   *	when receiving CSA/assoc resp
   * @NL80211_RADAR_STA_CAC_EXPIRED: STA set the DFS state to usable
-@@ -6711,6 +6715,8 @@ enum nl80211_radar_event {
+@@ -6855,6 +6859,8 @@ enum nl80211_radar_event {
  	NL80211_RADAR_NOP_FINISHED,
  	NL80211_RADAR_PRE_CAC_EXPIRED,
  	NL80211_RADAR_CAC_STARTED,

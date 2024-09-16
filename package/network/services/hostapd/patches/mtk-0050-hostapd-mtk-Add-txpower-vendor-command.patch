@@ -1,6 +1,6 @@
 --- a/hostapd/config_file.c
 +++ b/hostapd/config_file.c
-@@ -5123,6 +5123,16 @@ static int hostapd_config_fill(struct ho
+@@ -5265,6 +5265,16 @@ static int hostapd_config_fill(struct ho
  		u8 en = strtol(pos, NULL, 10);
  
  		conf->dfs_detect_mode = en;
@@ -19,7 +19,7 @@
  			   "Line %d: unknown configuration item '%s'",
 --- a/src/ap/ap_config.c
 +++ b/src/ap/ap_config.c
-@@ -308,6 +308,9 @@ struct hostapd_config * hostapd_config_d
+@@ -312,6 +312,9 @@ struct hostapd_config * hostapd_config_d
  	conf->edcca_compensation = EDCCA_DEFAULT_COMPENSATION;
  	conf->three_wire_enable = THREE_WIRE_MODE_DISABLE;
  	conf->ibf_enable = IBF_DEFAULT_ENABLE;
@@ -31,7 +31,7 @@
  }
 --- a/src/ap/ap_config.h
 +++ b/src/ap/ap_config.h
-@@ -1263,6 +1263,9 @@ struct hostapd_config {
+@@ -1294,6 +1294,9 @@ struct hostapd_config {
  	u8 three_wire_enable;
  	u8 ibf_enable;
  	u8 dfs_detect_mode;
@@ -43,7 +43,7 @@
  enum three_wire_mode {
 --- a/src/ap/ap_drv_ops.c
 +++ b/src/ap/ap_drv_ops.c
-@@ -1302,4 +1302,12 @@ int hostapd_drv_ibf_dump(struct hostapd_
+@@ -1362,4 +1362,12 @@ int hostapd_drv_ibf_dump(struct hostapd_
  	if (!hapd->driver || !hapd->driver->ibf_dump)
  		return 0;
  	return hapd->driver->ibf_dump(hapd->drv_priv, ibf_enable);
@@ -60,7 +60,7 @@
 +}
 --- a/src/ap/ap_drv_ops.h
 +++ b/src/ap/ap_drv_ops.h
-@@ -156,6 +156,7 @@ int hostapd_drv_mu_dump(struct hostapd_d
+@@ -166,6 +166,7 @@ int hostapd_drv_mu_dump(struct hostapd_d
  int hostapd_drv_three_wire_ctrl(struct hostapd_data *hapd);
  int hostapd_drv_ibf_ctrl(struct hostapd_data *hapd);
  int hostapd_drv_ibf_dump(struct hostapd_data *hapd, u8 *ibf_enable);
@@ -70,7 +70,7 @@
  
 --- a/src/ap/hostapd.c
 +++ b/src/ap/hostapd.c
-@@ -2615,6 +2615,8 @@ dfs_offload:
+@@ -2779,6 +2779,8 @@ dfs_offload:
  		goto fail;
  	if (hostapd_drv_ibf_ctrl(hapd) < 0)
  		goto fail;
@@ -131,7 +131,7 @@
  #define ETH_ALEN 6
 --- a/src/drivers/driver.h
 +++ b/src/drivers/driver.h
-@@ -5216,6 +5216,15 @@ struct wpa_driver_ops {
+@@ -5399,6 +5399,15 @@ struct wpa_driver_ops {
  	 *
  	 */
  	int (*ibf_dump)(void *priv, u8 *ibf_enable);
@@ -143,13 +143,13 @@
 +	* @beacon_dup: 1 to enable beacon duplicate, 0 to disable duplicate
 +	* @sku_idx: index used to indicate which sku table should be used
 +	*/
-+	int (*txpower_ctrl)(void *priv, u8 lpi_enable, u8 sku_idx, u8 beacon_dup);
- };
++	int (*txpower_ctrl)(void *priv, u8 lpi_enable, u8 sku_idx, u8 beacon_dup);	
  
- /**
+ 	/**
+ 	 * get_multi_hw_info - Get multiple underlying hardware information
 --- a/src/drivers/driver_nl80211.c
 +++ b/src/drivers/driver_nl80211.c
-@@ -88,6 +88,13 @@ static void handle_nl_debug_hook(struct
+@@ -90,6 +90,13 @@ static void handle_nl_debug_hook(struct
  	wpa_netlink_hook(tx, nlh, nlh->nlmsg_len);
  }
  
@@ -163,7 +163,7 @@
  static struct nl_sock * nl_create_handle(struct nl_cb *cb, const char *dbg)
  {
  	struct nl_sock *handle;
-@@ -14356,6 +14363,49 @@ fail:
+@@ -14981,6 +14988,49 @@ fail:
  	return -ENOBUFS;
  }
  
@@ -213,15 +213,18 @@
  const struct wpa_driver_ops wpa_driver_nl80211_ops = {
  	.name = "nl80211",
  	.desc = "Linux nl80211/cfg80211",
-@@ -14520,4 +14570,5 @@ const struct wpa_driver_ops wpa_driver_n
+@@ -15157,6 +15207,7 @@ const struct wpa_driver_ops wpa_driver_n
+ 	.get_edcca = nl80211_get_edcca,
  	.three_wire_ctrl = nl80211_enable_three_wire,
  	.ibf_ctrl = nl80211_ibf_enable,
- 	.ibf_dump = nl80211_ibf_dump,
+-	.ibf_dump = nl80211_ibf_dump,	
++	.ibf_dump = nl80211_ibf_dump,
 +	.txpower_ctrl = nl80211_txpower_ctrl,
+ 	.get_multi_hw_info = wpa_driver_get_multi_hw_info,
  };
 --- a/src/drivers/driver_nl80211.h
 +++ b/src/drivers/driver_nl80211.h
-@@ -203,6 +203,7 @@ struct wpa_driver_nl80211_data {
+@@ -205,6 +205,7 @@ struct wpa_driver_nl80211_data {
  	unsigned int mtk_mu_vendor_cmd_avail:1;
  	unsigned int mtk_3wire_vendor_cmd_avail:1;
  	unsigned int mtk_ibf_vendor_cmd_avail:1;
@@ -231,7 +234,7 @@
  	u32 ignore_next_local_deauth;
 --- a/src/drivers/driver_nl80211_capa.c
 +++ b/src/drivers/driver_nl80211_capa.c
-@@ -1149,6 +1149,9 @@ static int wiphy_info_handler(struct nl_
+@@ -1156,6 +1156,9 @@ static int wiphy_info_handler(struct nl_
  				case MTK_NL80211_VENDOR_SUBCMD_IBF_CTRL:
  					drv->mtk_ibf_vendor_cmd_avail = 1;
  					break;

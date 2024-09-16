@@ -14,7 +14,7 @@ Subject: [PATCH 13/54] mtk: hostapd: Add he_ldpc configuration
 
 --- a/hostapd/config_file.c
 +++ b/hostapd/config_file.c
-@@ -3723,6 +3723,8 @@ static int hostapd_config_fill(struct ho
+@@ -3816,6 +3816,8 @@ static int hostapd_config_fill(struct ho
  		conf->he_phy_capab.he_su_beamformee = atoi(pos);
  	} else if (os_strcmp(buf, "he_mu_beamformer") == 0) {
  		conf->he_phy_capab.he_mu_beamformer = atoi(pos);
@@ -25,7 +25,7 @@ Subject: [PATCH 13/54] mtk: hostapd: Add he_ldpc configuration
  		conf->he_op.he_bss_color_disabled = 0;
 --- a/hostapd/hostapd.conf
 +++ b/hostapd/hostapd.conf
-@@ -833,6 +833,11 @@ wmm_ac_vo_acm=0
+@@ -858,6 +858,11 @@ wmm_ac_vo_acm=0
  # 1 = supported
  #he_mu_beamformer=1
  
@@ -39,7 +39,7 @@ Subject: [PATCH 13/54] mtk: hostapd: Add he_ldpc configuration
  
 --- a/src/ap/ap_config.c
 +++ b/src/ap/ap_config.c
-@@ -270,6 +270,7 @@ struct hostapd_config * hostapd_config_d
+@@ -274,6 +274,7 @@ struct hostapd_config * hostapd_config_d
  #endif /* CONFIG_ACS */
  
  #ifdef CONFIG_IEEE80211AX
@@ -49,7 +49,7 @@ Subject: [PATCH 13/54] mtk: hostapd: Add he_ldpc configuration
  	/* Set default basic MCS/NSS set to single stream MCS 0-7 */
 --- a/src/ap/ap_config.h
 +++ b/src/ap/ap_config.h
-@@ -1005,6 +1005,7 @@ struct hostapd_bss_config {
+@@ -1034,6 +1034,7 @@ struct hostapd_bss_config {
   * struct he_phy_capabilities_info - HE PHY capabilities
   */
  struct he_phy_capabilities_info {
@@ -75,7 +75,7 @@ Subject: [PATCH 13/54] mtk: hostapd: Add he_ldpc configuration
  			HE_PHYCAP_SU_BEAMFORMER_CAPAB;
 --- a/src/common/ieee802_11_defs.h
 +++ b/src/common/ieee802_11_defs.h
-@@ -2443,6 +2443,9 @@ struct ieee80211_spatial_reuse {
+@@ -2499,6 +2499,9 @@ struct ieee80211_spatial_reuse {
  #define HE_PHYCAP_CHANNEL_WIDTH_SET_160MHZ_IN_5G	((u8) BIT(3))
  #define HE_PHYCAP_CHANNEL_WIDTH_SET_80PLUS80MHZ_IN_5G	((u8) BIT(4))
  

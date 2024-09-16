@@ -12,7 +12,7 @@ add the support for "HE capabilities" check in hostapd.
 
 --- a/src/ap/hw_features.c
 +++ b/src/ap/hw_features.c
-@@ -707,6 +707,32 @@ static int ieee80211ac_supported_vht_cap
+@@ -742,6 +742,32 @@ static int ieee80211ac_supported_vht_cap
  #ifdef CONFIG_IEEE80211AX
  static int ieee80211ax_supported_he_capab(struct hostapd_iface *iface)
  {
