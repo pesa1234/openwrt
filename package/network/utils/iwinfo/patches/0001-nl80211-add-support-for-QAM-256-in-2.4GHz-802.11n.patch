@@ -16,7 +16,7 @@ Signed-off-by: Christian Marangi <ansuelsmth@gmail.com>
 
 --- a/iwinfo_nl80211.c
 +++ b/iwinfo_nl80211.c
-@@ -3187,6 +3187,14 @@ static void nl80211_eval_modelist(struct
+@@ -3216,6 +3216,14 @@ static void nl80211_eval_modelist(struct
  	{
  		m->hw |= IWINFO_80211_B;
  		m->hw |= IWINFO_80211_G;
@@ -31,39 +31,36 @@ Signed-off-by: Christian Marangi <ansuelsmth@gmail.com>
  	}
  
  	if (m->bands & IWINFO_BAND_5)
-@@ -3321,10 +3329,10 @@ static int nl80211_get_htmode_cb(struct
- 
- static int nl80211_get_htmode(const char *ifname, int *buf)
- {
-+	bool he = false, vendor_qam256 = false;
+@@ -3366,6 +3374,7 @@ static int nl80211_get_htmode(const char
  	struct chan_info chn = { 0 };
  	char *res, b[2] = { 0 };
  	int err;
--	bool he = false;
++	bool vendor_qam256 = false;
+ 	bool he = false;
+ 	bool eht = false;
  
- 	res = nl80211_phy2ifname(ifname);
- 	*buf = 0;
-@@ -3340,11 +3348,15 @@ static int nl80211_get_htmode(const char
+@@ -3385,12 +3394,16 @@ static int nl80211_get_htmode(const char
+ 		he = b[0] == '1';
  	else if (nl80211_wpactl_query(res ? res : ifname, "wifi_generation", b, sizeof(b)))
  		he = b[0] == '6';
- 
++		
 +	if ((chn.width == NL80211_CHAN_WIDTH_20 || chn.width == NL80211_CHAN_WIDTH_40) &&
 +	    nl80211_hostapd_query(res ? res : ifname, "vht_capab", b, sizeof(b)))
 +		vendor_qam256 = true;
-+
+ 
  	switch (chn.width) {
  	case NL80211_CHAN_WIDTH_20:
  		if (he)
- 			*buf = IWINFO_HTMODE_HE20;
+ 			*buf = (eht == true) ? IWINFO_HTMODE_EHT20 : IWINFO_HTMODE_HE20;
 -		else if (chn.mode == -1)
 +		else if (chn.mode == -1 || vendor_qam256)
  			*buf = IWINFO_HTMODE_VHT20;
  		else
  			*buf = IWINFO_HTMODE_HT20;
-@@ -3352,7 +3364,7 @@ static int nl80211_get_htmode(const char
+@@ -3398,7 +3411,7 @@ static int nl80211_get_htmode(const char
  	case NL80211_CHAN_WIDTH_40:
  		if (he)
- 			*buf = IWINFO_HTMODE_HE40;
+ 			*buf = (eht == true) ? IWINFO_HTMODE_EHT40 : IWINFO_HTMODE_HE40;
 -		else if (chn.mode == -1)
 +		else if (chn.mode == -1 || vendor_qam256)
  			*buf = IWINFO_HTMODE_VHT40;
