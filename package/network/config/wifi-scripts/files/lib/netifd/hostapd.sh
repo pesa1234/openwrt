@@ -320,7 +320,7 @@ hostapd_common_add_bss_config() {
 	config_add_string time_zone
 	config_add_string vendor_elements
 
-	config_add_boolean ieee80211k rrm_neighbor_report rrm_beacon_report
+	config_add_boolean ieee80211k rrm_neighbor_report rrm_beacon_report rnr
 
 	config_add_boolean ftm_responder stationary_ap
 	config_add_string lci civic
