@@ -48,7 +48,7 @@ Signed-off-by: Howard Hsu <howard-yh.hsu@mediatek.com>
  enum mt76_wcid_flags {
 --- a/mt76_connac_mcu.h
 +++ b/mt76_connac_mcu.h
-@@ -1253,6 +1253,7 @@ enum {
+@@ -1254,6 +1254,7 @@ enum {
  	MCU_EXT_CMD_SET_RDD_PATTERN = 0x7d,
  	MCU_EXT_CMD_MWDS_SUPPORT = 0x80,
  	MCU_EXT_CMD_SET_SER_TRIGGER = 0x81,
@@ -134,7 +134,7 @@ Signed-off-by: Howard Hsu <howard-yh.hsu@mediatek.com>
  	}
 --- a/mt7915/mcu.c
 +++ b/mt7915/mcu.c
-@@ -5245,3 +5245,121 @@ int mt7915_mcu_sw_aci_set(struct mt7915_
+@@ -5246,3 +5246,121 @@ int mt7915_mcu_sw_aci_set(struct mt7915_
  	return mt76_mcu_send_msg(&dev->mt76, MCU_EXT_CMD(SWLNA_ACI_CTRL), &req,
  				 sizeof(req), NULL);
  }
@@ -302,10 +302,10 @@ Signed-off-by: Howard Hsu <howard-yh.hsu@mediatek.com>
  	bool wmm_pbc_enable;
  	struct work_struct wmm_pbc_work;
  	u32 adie_type;
-@@ -826,6 +838,8 @@ int mt7915_mcu_sw_aci_set(struct mt7915_
+@@ -825,6 +837,8 @@ int mt7915_mcu_get_edcca(struct mt7915_p
+ int mt7915_mcu_sw_aci_set(struct mt7915_dev *dev, bool val);
  int mt7915_mcu_ipi_hist_ctrl(struct mt7915_phy *phy, void *data, u8 cmd, bool wait_resp);
  int mt7915_mcu_ipi_hist_scan(struct mt7915_phy *phy, void *data, u8 mode, bool wait_resp);
- int mt7915_mcu_enable_obss_spr(struct mt7915_phy *phy, u8 action, u8 val);
 +int mt7915_mcu_set_scs_en(struct mt7915_phy *phy, u8 enable);
 +void mt7915_mcu_scs_sta_poll(struct work_struct *work);
  
@@ -313,9 +313,9 @@ Signed-off-by: Howard Hsu <howard-yh.hsu@mediatek.com>
  int mt7915_mtk_init_debugfs(struct mt7915_phy *phy, struct dentry *dir);
 --- a/mt7915/mtk_debugfs.c
 +++ b/mt7915/mtk_debugfs.c
-@@ -3820,6 +3820,29 @@ mt7915_sr_enable_set(void *data, u64 val
- DEFINE_DEBUGFS_ATTRIBUTE(fops_sr_enable, NULL,
- 			 mt7915_sr_enable_set, "%llx\n");
+@@ -3809,6 +3809,29 @@ mt7915_sw_aci_set(void *data, u64 val)
+ DEFINE_DEBUGFS_ATTRIBUTE(fops_sw_aci, NULL,
+ 			 mt7915_sw_aci_set, "%llx\n");
  
 +static int
 +mt7915_scs_enable_set(void *data, u64 val)
@@ -343,10 +343,10 @@ Signed-off-by: Howard Hsu <howard-yh.hsu@mediatek.com>
  int mt7915_mtk_init_debugfs(struct mt7915_phy *phy, struct dentry *dir)
  {
  	struct mt7915_dev *dev = phy->dev;
-@@ -3912,6 +3935,7 @@ int mt7915_mtk_init_debugfs(struct mt791
+@@ -3900,6 +3923,7 @@ int mt7915_mtk_init_debugfs(struct mt791
+ 				    mt7915_show_eeprom_mode);
  	debugfs_create_file("sw_aci", 0600, dir, dev,
  			    &fops_sw_aci);
- 	debugfs_create_file("sr_enable", 0200, dir, phy, &fops_sr_enable);
 +	debugfs_create_file("scs_enable", 0200, dir, phy, &fops_scs_enable);
  	return 0;
  }

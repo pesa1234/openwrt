@@ -38,7 +38,7 @@ Subject: [PATCH 1038/1051] wifi: mt76: mt7915: add debuffs knob for protect
  static int mt7915_red_enable_set(void *data, u64 en)
  {
  	struct mt7915_dev *dev = data;
-@@ -3879,6 +3889,7 @@ int mt7915_mtk_init_debugfs(struct mt791
+@@ -3868,6 +3878,7 @@ int mt7915_mtk_init_debugfs(struct mt791
  	debugfs_create_devm_seqfile(dev->mt76.dev, "fw_wm_info", dir,
  				    mt7915_fw_wm_info_read);
  
