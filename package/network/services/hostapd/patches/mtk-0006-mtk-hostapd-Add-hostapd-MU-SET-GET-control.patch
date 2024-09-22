@@ -206,7 +206,7 @@ Subject: [PATCH 06/54] mtk: hostapd: Add hostapd MU SET/GET control
  
 --- a/src/ap/hostapd.c
 +++ b/src/ap/hostapd.c
-@@ -2773,6 +2773,8 @@ dfs_offload:
+@@ -2775,6 +2775,8 @@ dfs_offload:
  	if (hostapd_drv_configure_edcca_threshold(hapd,
  						  hapd->iconf->edcca_threshold) < 0)
  		goto fail;

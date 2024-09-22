@@ -161,7 +161,7 @@ Signed-off-by: mtk27835 <shurong.wen@mediatek.com>
  
 --- a/src/ap/hostapd.c
 +++ b/src/ap/hostapd.c
-@@ -2777,6 +2777,8 @@ dfs_offload:
+@@ -2779,6 +2779,8 @@ dfs_offload:
  		goto fail;
  	if (hostapd_drv_three_wire_ctrl(hapd) < 0)
  		goto fail;

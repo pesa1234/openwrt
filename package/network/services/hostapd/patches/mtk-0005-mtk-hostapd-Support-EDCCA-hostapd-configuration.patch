@@ -321,7 +321,7 @@ edcca_enable and edcca_compensation and implement edcca related handlers.
  
 --- a/src/ap/hostapd.c
 +++ b/src/ap/hostapd.c
-@@ -2767,6 +2767,13 @@ dfs_offload:
+@@ -2769,6 +2769,13 @@ dfs_offload:
  	}
  #endif /* CONFIG_MESH */
  

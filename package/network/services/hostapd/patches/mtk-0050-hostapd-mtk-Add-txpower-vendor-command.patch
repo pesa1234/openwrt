@@ -92,7 +92,7 @@ control.
  
 --- a/src/ap/hostapd.c
 +++ b/src/ap/hostapd.c
-@@ -2779,6 +2779,8 @@ dfs_offload:
+@@ -2781,6 +2781,8 @@ dfs_offload:
  		goto fail;
  	if (hostapd_drv_ibf_ctrl(hapd) < 0)
  		goto fail;
