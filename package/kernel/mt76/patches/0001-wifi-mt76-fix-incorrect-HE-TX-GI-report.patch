@@ -18,7 +18,7 @@ Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
 
 --- a/mt76.h
 +++ b/mt76.h
-@@ -285,12 +285,16 @@ struct mt76_queue_ops {
+@@ -286,12 +286,16 @@ struct mt76_queue_ops {
  	void (*reset_q)(struct mt76_dev *dev, struct mt76_queue *q);
  };
  
