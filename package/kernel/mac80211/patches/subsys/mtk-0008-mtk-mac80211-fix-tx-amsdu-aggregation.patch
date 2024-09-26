@@ -10,7 +10,7 @@ Subject: [PATCH 08/37] mtk: mac80211: fix tx amsdu aggregation
 
 --- a/include/net/mac80211.h
 +++ b/include/net/mac80211.h
-@@ -3031,6 +3031,13 @@ static inline void _ieee80211_hw_set(str
+@@ -3068,6 +3068,13 @@ static inline void _ieee80211_hw_set(str
  }
  #define ieee80211_hw_set(hw, flg)	_ieee80211_hw_set(hw, IEEE80211_HW_##flg)
  

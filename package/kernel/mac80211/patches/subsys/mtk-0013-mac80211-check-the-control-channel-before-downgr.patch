@@ -10,8 +10,8 @@ Subject: [PATCH 13/61] mtk: mac80211: check the control channel before
 
 --- a/net/mac80211/mlme.c
 +++ b/net/mac80211/mlme.c
-@@ -5015,6 +5015,26 @@ ieee80211_determine_our_sta_mode_assoc(s
- 			       conn->bw_limit, tmp.bw_limit);
+@@ -5417,6 +5417,26 @@ ieee80211_ap_power_type(u8 control)
+ 	}
  }
  
 +static bool ieee80211_check_same_ctrl_channel(struct ieee80211_sub_if_data *sdata,
@@ -37,7 +37,7 @@ Subject: [PATCH 13/61] mtk: mac80211: check the control channel before
  static int ieee80211_prep_channel(struct ieee80211_sub_if_data *sdata,
  				  struct ieee80211_link_data *link,
  				  int link_id,
-@@ -5094,6 +5114,9 @@ static int ieee80211_prep_channel(struct
+@@ -5493,6 +5513,9 @@ static int ieee80211_prep_channel(struct
  	    chanreq.oper.width == NL80211_CHAN_WIDTH_10)
  		return ret;
  

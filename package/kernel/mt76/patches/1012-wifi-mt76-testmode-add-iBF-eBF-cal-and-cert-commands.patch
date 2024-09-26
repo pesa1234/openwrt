@@ -26,7 +26,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
 
 --- a/mt76.h
 +++ b/mt76.h
-@@ -776,6 +776,7 @@ struct mt76_testmode_data {
+@@ -777,6 +777,7 @@ struct mt76_testmode_data {
  
  	struct list_head tm_entry_list;
  	struct mt76_wcid *cur_entry;
@@ -34,7 +34,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  	u8 entry_num;
  	union {
  		struct mt76_testmode_entry_data ed;
-@@ -804,6 +805,9 @@ struct mt76_testmode_data {
+@@ -805,6 +806,9 @@ struct mt76_testmode_data {
  
  	u8 txbf_act;
  	u16 txbf_param[8];
@@ -1824,7 +1824,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  	memcpy(hdr->addr3, addr[2], ETH_ALEN);
 --- a/testmode.h
 +++ b/testmode.h
-@@ -303,7 +303,10 @@ enum mt76_testmode_cfg {
+@@ -301,7 +301,10 @@ enum mt76_testmode_cfg {
  };
  
  enum mt76_testmode_txbf_act {
@@ -1835,7 +1835,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  	MT76_TM_TXBF_ACT_UPDATE_CH,
  	MT76_TM_TXBF_ACT_PHASE_COMP,
  	MT76_TM_TXBF_ACT_TX_PREP,
-@@ -314,6 +317,12 @@ enum mt76_testmode_txbf_act {
+@@ -312,6 +315,12 @@ enum mt76_testmode_txbf_act {
  	MT76_TM_TXBF_ACT_PROF_UPDATE_ALL,
  	MT76_TM_TXBF_ACT_PROF_UPDATE_ALL_CMD,
  	MT76_TM_TXBF_ACT_E2P_UPDATE,

@@ -11,7 +11,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
 
 --- a/net/wireless/nl80211.c
 +++ b/net/wireless/nl80211.c
-@@ -10118,6 +10118,10 @@ static int nl80211_start_radar_detection
+@@ -10150,6 +10150,10 @@ static int nl80211_start_radar_detection
  		wdev->cac_started = true;
  		wdev->cac_start_time = jiffies;
  		wdev->cac_time_ms = cac_time_ms;

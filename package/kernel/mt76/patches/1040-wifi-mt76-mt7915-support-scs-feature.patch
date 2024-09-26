@@ -30,7 +30,7 @@ Signed-off-by: Howard Hsu <howard-yh.hsu@mediatek.com>
 
 --- a/mt76.h
 +++ b/mt76.h
-@@ -319,6 +319,7 @@ struct mt76_sta_stats {
+@@ -320,6 +320,7 @@ struct mt76_sta_stats {
  	u64 tx_nss[4];		/* 1, 2, 3, 4 */
  	u64 tx_mcs[16];		/* mcs idx */
  	u64 tx_bytes;
@@ -38,7 +38,7 @@ Signed-off-by: Howard Hsu <howard-yh.hsu@mediatek.com>
  	/* WED TX */
  	u32 tx_packets;		/* unit: MSDU */
  	u32 tx_retries;
-@@ -328,6 +329,7 @@ struct mt76_sta_stats {
+@@ -329,6 +330,7 @@ struct mt76_sta_stats {
  	u32 rx_packets;
  	u32 rx_errors;
  	u32 rx_drops;

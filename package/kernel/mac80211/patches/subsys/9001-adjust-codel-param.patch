@@ -48,4 +48,4 @@
 +	local->cparams.target = MS2TIME(5);
  	local->cparams.ecn = true;
  
- 	local->cvars = kcalloc(fq->flows_cnt, sizeof(local->cvars[0]),
+ 	local->cvars = kvcalloc(fq->flows_cnt, sizeof(local->cvars[0]),

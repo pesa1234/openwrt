@@ -16,7 +16,7 @@ echo 1 > /sys/kernel/debug/tracing/events/mac80211/bss_color_collision/enable
 
 --- a/include/net/mac80211.h
 +++ b/include/net/mac80211.h
-@@ -764,6 +764,7 @@ struct ieee80211_bss_conf {
+@@ -801,6 +801,7 @@ struct ieee80211_bss_conf {
  	} he_oper;
  	struct ieee80211_he_obss_pd he_obss_pd;
  	struct cfg80211_he_bss_color he_bss_color;
@@ -26,25 +26,25 @@ echo 1 > /sys/kernel/debug/tracing/events/mac80211/bss_color_collision/enable
  	struct cfg80211_bitrate_mask beacon_tx_rate;
 --- a/net/mac80211/rx.c
 +++ b/net/mac80211/rx.c
-@@ -3391,9 +3391,14 @@ ieee80211_rx_check_bss_color_collision(s
+@@ -3393,9 +3393,14 @@ ieee80211_rx_check_bss_color_collision(s
  
  		color = le32_get_bits(he_oper->he_oper_params,
  				      IEEE80211_HE_OPERATION_BSS_COLOR_MASK);
-+
++				      
 +		bss_conf->used_color_bitmap |= BIT_ULL(color);
 +
 +		// trace_bss_color_bitmap(color, bss_conf->used_color_bitmap);
-+				      
++		
  		if (color == bss_conf->he_bss_color.color)
  			ieee80211_obss_color_collision_notify(&rx->sdata->vif,
--							      BIT_ULL(color));
-+							      bss_conf->used_color_bitmap);
+-							      BIT_ULL(color),
++							      bss_conf->used_color_bitmap,
+ 							      bss_conf->link_id);
  	}
  }
- 
 --- a/net/mac80211/trace.h
 +++ b/net/mac80211/trace.h
-@@ -3145,6 +3145,28 @@ TRACE_EVENT(drv_neg_ttlm_res,
+@@ -3154,6 +3154,28 @@ TRACE_EVENT(drv_neg_ttlm_res,
  		  LOCAL_PR_ARG, VIF_PR_ARG, __entry->res
  	)
  );

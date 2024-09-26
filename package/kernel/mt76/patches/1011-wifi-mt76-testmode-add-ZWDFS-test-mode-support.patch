@@ -19,7 +19,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
 
 --- a/mt76.h
 +++ b/mt76.h
-@@ -814,6 +814,15 @@ struct mt76_testmode_data {
+@@ -815,6 +815,15 @@ struct mt76_testmode_data {
  		u64 fcs_error[__MT_RXQ_MAX];
  		u64 len_mismatch;
  	} rx_stats;
@@ -645,7 +645,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  	/* keep last */
  	NUM_MT76_TM_ATTRS,
  	MT76_TM_ATTR_MAX = NUM_MT76_TM_ATTRS - 1,
-@@ -296,4 +320,25 @@ enum mt76_testmode_txbf_act {
+@@ -294,4 +318,25 @@ enum mt76_testmode_txbf_act {
  	MT76_TM_TXBF_ACT_MAX = NUM_MT76_TM_TXBF_ACT - 1,
  };
  
