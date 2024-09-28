@@ -18,7 +18,7 @@ Signed-off-by: mtk20656 <chank.chen@mediatek.com>
 
 --- a/src/ap/ieee802_11.c
 +++ b/src/ap/ieee802_11.c
-@@ -8185,7 +8185,7 @@ static size_t hostapd_eid_mbssid_elem_le
+@@ -8192,7 +8192,7 @@ static size_t hostapd_eid_mbssid_elem_le
  		else if (hapd->conf->xrates_supported)
  			ie_count++;
  		if (ie_count)
@@ -27,7 +27,7 @@ Signed-off-by: mtk20656 <chank.chen@mediatek.com>
  
  		if (len + nontx_profile_len > 255)
  			break;
-@@ -8343,7 +8343,7 @@ static u8 * hostapd_eid_mbssid_elem(stru
+@@ -8350,7 +8350,7 @@ static u8 * hostapd_eid_mbssid_elem(stru
  			non_inherit_ie[ie_count++] = WLAN_EID_RSNX;
  		if (ie_count) {
  			*eid++ = WLAN_EID_EXTENSION;

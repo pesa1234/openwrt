@@ -935,7 +935,7 @@ Signed-off-by: Glenn Strauss <gstrauss@gluelogic.com>
  
 --- a/tests/hwsim/test_ap_ft.py
 +++ b/tests/hwsim/test_ap_ft.py
-@@ -2494,11 +2494,11 @@ def test_ap_ft_ap_oom5(dev, apdev):
+@@ -2543,11 +2543,11 @@ def test_ap_ft_ap_oom5(dev, apdev):
          # This will fail to roam
          dev[0].roam(bssid1, check_bssid=False)
  
