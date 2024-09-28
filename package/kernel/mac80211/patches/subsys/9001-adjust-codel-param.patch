@@ -1,6 +1,6 @@
 --- a/net/mac80211/sta_info.c
 +++ b/net/mac80211/sta_info.c
-@@ -689,7 +689,7 @@ __sta_info_alloc(struct ieee80211_sub_if
+@@ -685,7 +685,7 @@ __sta_info_alloc(struct ieee80211_sub_if
  	}
  
  	sta->cparams.ce_threshold = CODEL_DISABLED_THRESHOLD;
@@ -9,7 +9,7 @@
  	sta->cparams.interval = MS2TIME(100);
  	sta->cparams.ecn = true;
  	sta->cparams.ce_threshold_selector = 0;
-@@ -2893,23 +2893,18 @@ unsigned long ieee80211_sta_last_active(
+@@ -2889,23 +2889,18 @@ unsigned long ieee80211_sta_last_active(
  
  static void sta_update_codel_params(struct sta_info *sta, u32 thr)
  {
