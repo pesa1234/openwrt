@@ -51,7 +51,7 @@ Signed-off-by: Shayne Chen <shayne.chen@mediatek.com>
  {
 --- a/mt76.h
 +++ b/mt76.h
-@@ -1006,6 +1006,9 @@ struct mt76_dev {
+@@ -1007,6 +1007,9 @@ struct mt76_dev {
  		struct mt76_usb usb;
  		struct mt76_sdio sdio;
  	};
@@ -61,7 +61,7 @@ Signed-off-by: Shayne Chen <shayne.chen@mediatek.com>
  };
  
  /* per-phy stats.  */
-@@ -1270,6 +1273,7 @@ void mt76_eeprom_override(struct mt76_ph
+@@ -1271,6 +1274,7 @@ void mt76_eeprom_override(struct mt76_ph
  int mt76_get_of_data_from_mtd(struct mt76_dev *dev, void *eep, int offset, int len);
  int mt76_get_of_data_from_nvmem(struct mt76_dev *dev, void *eep,
  				const char *cell_name, int len);
