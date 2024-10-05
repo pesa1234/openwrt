@@ -13,8 +13,8 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
 
 --- a/include/net/cfg80211.h
 +++ b/include/net/cfg80211.h
-@@ -8754,6 +8754,20 @@ void cfg80211_cac_event(struct net_devic
- 			enum nl80211_radar_event event, gfp_t gfp);
+@@ -8757,6 +8757,20 @@ void cfg80211_cac_event(struct net_devic
+ 			unsigned int link_id);
  
  /**
 + * cfg80211_background_radar_update_channel - notify background chandef has been updated
@@ -58,7 +58,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  /**
 --- a/net/wireless/mlme.c
 +++ b/net/wireless/mlme.c
-@@ -1275,6 +1275,18 @@ cfg80211_start_background_radar_detectio
+@@ -1277,6 +1277,18 @@ cfg80211_start_background_radar_detectio
  	return 0;
  }
  

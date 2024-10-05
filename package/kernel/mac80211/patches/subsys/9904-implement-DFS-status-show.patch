@@ -70,7 +70,7 @@
 +}
 +
 +static int dfs_status_read_wdev(struct wiphy *wiphy, struct wireless_dev *wdev, char *buf,
-+				unsigned int buf_size, unsigned int offset)
++				unsigned int buf_size, unsigned int offset, unsigned int link_id)
 +{
 +	struct cfg80211_registered_device *rdev = wiphy_to_rdev(wiphy);
 +	struct cfg80211_chan_def *chandef = &wdev->links[0].ap.chandef;
@@ -102,10 +102,10 @@
 +				if (remain_time > wait_time_ms)
 +					remain_time = 0;
 +			} else if (chan->dfs_state == NL80211_DFS_USABLE) {
-+				if (wdev->cac_started &&
++				if (wdev->links[link_id].cac_started &&
 +				    cfg80211_is_sub_chan(chandef, chan, false)) {
-+					jiffies_passed = jiffies - wdev->cac_start_time;
-+					wait_time_ms = wdev->cac_time_ms;
++					jiffies_passed = jiffies - wdev->links[link_id].cac_start_time;
++					wait_time_ms = wdev->links[link_id].cac_time_ms;
 +					remain_time = (wait_time_ms -
 +						       jiffies_to_msecs(jiffies_passed));
 +				}
@@ -170,7 +170,7 @@
 +				    "wdev 0x%x\n"
 +				    "interface type %s\n",
 +				    wdev->identifier, iftype_str[wdev->iftype]);
-+		offset = dfs_status_read_wdev(wiphy, wdev, buf, buf_size, offset);
++		offset = dfs_status_read_wdev(wiphy, wdev, buf, buf_size, offset, 0);
 +	}
 +
 +	r = simple_read_from_buffer(user_buf, count, ppos, buf, offset);
