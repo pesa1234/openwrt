@@ -129,7 +129,7 @@ Signed-off-by: mtk27835 <shurong.wen@mediatek.com>
  struct hostapd_config * hostapd_config_defaults(void);
 --- a/src/ap/ap_drv_ops.c
 +++ b/src/ap/ap_drv_ops.c
-@@ -1349,3 +1349,17 @@ int hostapd_drv_three_wire_ctrl(struct h
+@@ -1361,3 +1361,17 @@ int hostapd_drv_three_wire_ctrl(struct h
  	}
  	return hapd->driver->three_wire_ctrl(hapd->drv_priv, hapd->iconf->three_wire_enable);
  }
@@ -235,7 +235,7 @@ Signed-off-by: mtk27835 <shurong.wen@mediatek.com>
  };
  
  #define HE_MAC_CAPAB_0		0
-@@ -5379,7 +5384,21 @@ struct wpa_driver_ops {
+@@ -5383,7 +5388,21 @@ struct wpa_driver_ops {
  	 * @three_wire_enable: three_wire_ctrl mode
  	 *
  	 */
@@ -260,7 +260,7 @@ Signed-off-by: mtk27835 <shurong.wen@mediatek.com>
  	 * get_multi_hw_info - Get multiple underlying hardware information
 --- a/src/drivers/driver_nl80211.c
 +++ b/src/drivers/driver_nl80211.c
-@@ -14867,6 +14867,47 @@ static int nl80211_enable_three_wire(voi
+@@ -14882,6 +14882,47 @@ static int nl80211_enable_three_wire(voi
  	return ret;
  }
  
@@ -308,7 +308,7 @@ Signed-off-by: mtk27835 <shurong.wen@mediatek.com>
  static struct hostapd_multi_hw_info *
  wpa_driver_get_multi_hw_info(void *priv, unsigned int *num_multi_hws)
  {
-@@ -14875,6 +14916,71 @@ wpa_driver_get_multi_hw_info(void *priv,
+@@ -14890,6 +14931,71 @@ wpa_driver_get_multi_hw_info(void *priv,
  	return nl80211_get_multi_hw_info(bss, num_multi_hws);
  }
  
@@ -380,7 +380,7 @@ Signed-off-by: mtk27835 <shurong.wen@mediatek.com>
  const struct wpa_driver_ops wpa_driver_nl80211_ops = {
  	.name = "nl80211",
  	.desc = "Linux nl80211/cfg80211",
-@@ -15050,5 +15156,7 @@ const struct wpa_driver_ops wpa_driver_n
+@@ -15065,5 +15171,7 @@ const struct wpa_driver_ops wpa_driver_n
  	.configure_edcca_threshold = nl80211_configure_edcca_threshold,
  	.get_edcca = nl80211_get_edcca,
  	.three_wire_ctrl = nl80211_enable_three_wire,

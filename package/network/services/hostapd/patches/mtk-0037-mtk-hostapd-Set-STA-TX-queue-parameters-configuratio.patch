@@ -18,7 +18,7 @@ Signed-off-by: Michael Lee <michael-cy.lee@mediatek.com>
 
 --- a/wpa_supplicant/driver_i.h
 +++ b/wpa_supplicant/driver_i.h
-@@ -322,6 +322,18 @@ static inline int wpa_drv_set_country(st
+@@ -324,6 +324,18 @@ static inline int wpa_drv_set_country(st
  	return 0;
  }
  

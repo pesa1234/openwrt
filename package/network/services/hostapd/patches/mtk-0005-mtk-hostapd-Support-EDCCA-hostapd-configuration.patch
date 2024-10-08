@@ -276,7 +276,7 @@ edcca_enable and edcca_compensation and implement edcca related handlers.
  hostapd_get_oper_chwidth(struct hostapd_config *conf)
 --- a/src/ap/ap_drv_ops.c
 +++ b/src/ap/ap_drv_ops.c
-@@ -1291,6 +1291,29 @@ int hostapd_drv_set_secure_ranging_ctx(s
+@@ -1303,6 +1303,29 @@ int hostapd_drv_set_secure_ranging_ctx(s
  }
  #endif /* CONFIG_PASN */
  
@@ -368,7 +368,7 @@ edcca_enable and edcca_compensation and implement edcca related handlers.
  	[MTK_VENDOR_ATTR_EDCCA_CTRL_PRI20_VAL] = { .type = NLA_U8 },
 --- a/src/drivers/driver.h
 +++ b/src/drivers/driver.h
-@@ -5355,6 +5355,11 @@ struct wpa_driver_ops {
+@@ -5359,6 +5359,11 @@ struct wpa_driver_ops {
  			      bool multicast);
  #endif /* CONFIG_TESTING_OPTIONS */
  
@@ -391,7 +391,7 @@ edcca_enable and edcca_compensation and implement edcca related handlers.
  
  
  #ifndef NETLINK_CAP_ACK
-@@ -13949,7 +13951,6 @@ fail:
+@@ -13964,7 +13966,6 @@ fail:
  	return -1;
  }
  
@@ -399,7 +399,7 @@ edcca_enable and edcca_compensation and implement edcca related handlers.
  static int nl80211_nan_cancel_subscribe(void *priv, int subscribe_id)
  {
  	struct i802_bss *bss = priv;
-@@ -14559,6 +14560,171 @@ static int testing_nl80211_radio_disable
+@@ -14574,6 +14575,171 @@ static int testing_nl80211_radio_disable
  
  #endif /* CONFIG_TESTING_OPTIONS */
  
@@ -571,7 +571,7 @@ edcca_enable and edcca_compensation and implement edcca related handlers.
  
  static struct hostapd_multi_hw_info *
  wpa_driver_get_multi_hw_info(void *priv, unsigned int *num_multi_hws)
-@@ -14737,5 +14903,9 @@ const struct wpa_driver_ops wpa_driver_n
+@@ -14752,5 +14918,9 @@ const struct wpa_driver_ops wpa_driver_n
  	.register_frame = testing_nl80211_register_frame,
  	.radio_disable = testing_nl80211_radio_disable,
  #endif /* CONFIG_TESTING_OPTIONS */

@@ -258,7 +258,7 @@ as adding/removing interfaces.
  	 * set_sta_vlan - Bind a station into a specific interface (AP only)
  	 * @priv: Private driver interface data
  	 * @ifname: Interface (main or virtual BSS or VLAN)
-@@ -6720,6 +6739,7 @@ union wpa_event_data {
+@@ -6724,6 +6743,7 @@ union wpa_event_data {
  
  	/**
  	 * struct ch_switch
@@ -266,7 +266,7 @@ as adding/removing interfaces.
  	 * @freq: Frequency of new channel in MHz
  	 * @ht_enabled: Whether this is an HT channel
  	 * @ch_offset: Secondary channel offset
-@@ -6730,6 +6750,7 @@ union wpa_event_data {
+@@ -6734,6 +6754,7 @@ union wpa_event_data {
  	 * @punct_bitmap: Puncturing bitmap
  	 */
  	struct ch_switch {
@@ -455,7 +455,7 @@ as adding/removing interfaces.
  
  static int cookie_handler(struct nl_msg *msg, void *arg)
  {
-@@ -10962,6 +11024,37 @@ static bool nl80211_is_drv_shared(void *
+@@ -10976,6 +11038,37 @@ static bool nl80211_is_drv_shared(void *
  #endif /* CONFIG_IEEE80211BE */
  
  
@@ -493,7 +493,7 @@ as adding/removing interfaces.
  static int driver_nl80211_send_mlme(void *priv, const u8 *data,
  				    size_t data_len, int noack,
  				    unsigned int freq,
-@@ -14510,6 +14603,8 @@ const struct wpa_driver_ops wpa_driver_n
+@@ -14525,6 +14618,8 @@ const struct wpa_driver_ops wpa_driver_n
  	.set_acl = wpa_driver_nl80211_set_acl,
  	.if_add = wpa_driver_nl80211_if_add,
  	.if_remove = driver_nl80211_if_remove,
@@ -521,7 +521,7 @@ as adding/removing interfaces.
  
  	if (link) {
  		data.ch_switch.link_id = nla_get_u8(link);
-@@ -4054,6 +4057,7 @@ static void do_process_drv_event(struct
+@@ -4117,6 +4120,7 @@ static void do_process_drv_event(struct
  				     tb[NL80211_ATTR_CENTER_FREQ1],
  				     tb[NL80211_ATTR_CENTER_FREQ2],
  				     tb[NL80211_ATTR_PUNCT_BITMAP],
@@ -529,7 +529,7 @@ as adding/removing interfaces.
  				     0);
  		break;
  	case NL80211_CMD_CH_SWITCH_NOTIFY:
-@@ -4066,6 +4070,7 @@ static void do_process_drv_event(struct
+@@ -4129,6 +4133,7 @@ static void do_process_drv_event(struct
  				     tb[NL80211_ATTR_CENTER_FREQ1],
  				     tb[NL80211_ATTR_CENTER_FREQ2],
  				     tb[NL80211_ATTR_PUNCT_BITMAP],

@@ -65,7 +65,7 @@ control.
  enum three_wire_mode {
 --- a/src/ap/ap_drv_ops.c
 +++ b/src/ap/ap_drv_ops.c
-@@ -1362,4 +1362,12 @@ int hostapd_drv_ibf_dump(struct hostapd_
+@@ -1374,4 +1374,12 @@ int hostapd_drv_ibf_dump(struct hostapd_
  	if (!hapd->driver || !hapd->driver->ibf_dump)
  		return 0;
  	return hapd->driver->ibf_dump(hapd->drv_priv, ibf_enable);
@@ -144,7 +144,7 @@ control.
  
 --- a/src/drivers/driver.h
 +++ b/src/drivers/driver.h
-@@ -5401,6 +5401,15 @@ struct wpa_driver_ops {
+@@ -5405,6 +5405,15 @@ struct wpa_driver_ops {
  	int (*ibf_dump)(void *priv, u8 *ibf_enable);
  
  	/**
@@ -176,7 +176,7 @@ control.
  static struct nl_sock * nl_create_handle(struct nl_cb *cb, const char *dbg)
  {
  	struct nl_sock *handle;
-@@ -14981,6 +14988,49 @@ fail:
+@@ -14996,6 +15003,49 @@ fail:
  	return -ENOBUFS;
  }
  
@@ -226,7 +226,7 @@ control.
  const struct wpa_driver_ops wpa_driver_nl80211_ops = {
  	.name = "nl80211",
  	.desc = "Linux nl80211/cfg80211",
-@@ -15157,6 +15207,7 @@ const struct wpa_driver_ops wpa_driver_n
+@@ -15172,6 +15222,7 @@ const struct wpa_driver_ops wpa_driver_n
  	.get_edcca = nl80211_get_edcca,
  	.three_wire_ctrl = nl80211_enable_three_wire,
  	.ibf_ctrl = nl80211_ibf_enable,
