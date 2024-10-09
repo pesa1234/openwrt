@@ -26,7 +26,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  }
 --- a/mt7915/mcu.c
 +++ b/mt7915/mcu.c
-@@ -297,6 +297,9 @@ mt7915_mcu_rx_radar_detected(struct mt79
+@@ -318,6 +318,9 @@ mt7915_mcu_rx_radar_detected(struct mt79
  	if (r->band_idx > MT_RX_SEL2)
  		return;
  

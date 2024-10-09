@@ -96,7 +96,7 @@ Signed-off-by: Felix Fietkau <nbd@nbd.name>
  }
 --- a/mt7915/mcu.c
 +++ b/mt7915/mcu.c
-@@ -2838,7 +2838,7 @@ int mt7915_mcu_set_eeprom(struct mt7915_
+@@ -2859,7 +2859,7 @@ int mt7915_mcu_set_eeprom(struct mt7915_
  				 &req, sizeof(req), true);
  }
  
@@ -105,7 +105,7 @@ Signed-off-by: Felix Fietkau <nbd@nbd.name>
  {
  	struct mt7915_mcu_eeprom_info req = {
  		.addr = cpu_to_le32(round_down(offset,
-@@ -2847,7 +2847,6 @@ int mt7915_mcu_get_eeprom(struct mt7915_
+@@ -2868,7 +2868,6 @@ int mt7915_mcu_get_eeprom(struct mt7915_
  	struct mt7915_mcu_eeprom_info *res;
  	struct sk_buff *skb;
  	int ret;
@@ -113,7 +113,7 @@ Signed-off-by: Felix Fietkau <nbd@nbd.name>
  
  	ret = mt76_mcu_send_and_get_msg(&dev->mt76,
  					MCU_EXT_QUERY(EFUSE_ACCESS),
-@@ -2856,11 +2855,13 @@ int mt7915_mcu_get_eeprom(struct mt7915_
+@@ -2877,11 +2876,13 @@ int mt7915_mcu_get_eeprom(struct mt7915_
  		return ret;
  
  	res = (struct mt7915_mcu_eeprom_info *)skb->data;
