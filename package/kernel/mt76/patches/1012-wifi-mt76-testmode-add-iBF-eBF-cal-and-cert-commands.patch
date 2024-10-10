@@ -79,7 +79,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  #endif
 --- a/mt7915/main.c
 +++ b/mt7915/main.c
-@@ -205,46 +205,37 @@ static void mt7915_init_bitrate_mask(str
+@@ -205,55 +205,44 @@ static void mt7915_init_bitrate_mask(str
  	}
  }
  
@@ -138,7 +138,18 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  
  	dev->mt76.vif_mask |= BIT_ULL(mvif->mt76.idx);
  	phy->omac_mask |= BIT_ULL(mvif->mt76.omac_idx);
-@@ -288,7 +279,26 @@ static int mt7915_add_interface(struct i
+ 
+ 	idx = mt76_wcid_alloc(dev->mt76.wcid_mask, mt7915_wtbl_size(dev));
+-	if (idx < 0) {
+-		ret = -ENOSPC;
+-		goto out;
+-	}
++	if (idx < 0)
++		return -ENOSPC;
+ 
+ 	INIT_LIST_HEAD(&mvif->sta.rc_list);
+ 	INIT_LIST_HEAD(&mvif->sta.wcid.poll_list);
+@@ -290,7 +279,26 @@ static int mt7915_add_interface(struct i
  	mt7915_mcu_add_sta(dev, vif, NULL, CONN_STATE_PORT_SECURE, true);
  	rcu_assign_pointer(dev->mt76.wcid[idx], &mvif->sta.wcid);
  

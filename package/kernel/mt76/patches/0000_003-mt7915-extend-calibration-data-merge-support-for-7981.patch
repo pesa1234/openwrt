@@ -11,7 +11,7 @@ Signed-off-by: Felix Fietkau <nbd@nbd.name>
 
 --- a/mt7915/eeprom.c
 +++ b/mt7915/eeprom.c
-@@ -275,6 +275,7 @@ static int mt7915_apply_cal_free_data(st
+@@ -292,6 +292,7 @@ static int mt7915_apply_cal_free_data(st
  	enum adie_type {
  		ADIE_7975,
  		ADIE_7976,
@@ -19,7 +19,7 @@ Signed-off-by: Felix Fietkau <nbd@nbd.name>
  	};
  	enum ddie_type {
  		DDIE_7915,
-@@ -299,6 +300,13 @@ static int mt7915_apply_cal_free_data(st
+@@ -316,6 +317,13 @@ static int mt7915_apply_cal_free_data(st
  			       0x9b2, 0x9b3, 0x9b4, 0x9b5, 0x9b6, 0x9b7, -1},
  		[ADIE_7976] = {0x24c, 0x24d, 0x24e, 0x24f, 0x250, 0x251, 0x253, 0x255, 0x257,
  			       0x259, 0x990, 0x991, 0x994, 0x995, 0x9a6, 0x9a8, 0x9aa, -1},
@@ -33,7 +33,7 @@ Signed-off-by: Felix Fietkau <nbd@nbd.name>
  	};
  	static const u16 eep_offs_list[][MT_EE_CAL_FREE_MAX_SIZE] = {
  		[ADIE_7975] = {0xe00, 0xe01, 0xe02, 0xe03, 0xe04, 0xe05, 0xe06, 0xe07, 0xe08,
-@@ -332,8 +340,11 @@ static int mt7915_apply_cal_free_data(st
+@@ -349,8 +357,11 @@ static int mt7915_apply_cal_free_data(st
  		/* same as adie offset */
  		eep_offs[0] = NULL;
  		break;

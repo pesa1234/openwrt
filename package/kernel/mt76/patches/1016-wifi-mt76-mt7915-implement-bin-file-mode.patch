@@ -71,9 +71,9 @@ Signed-off-by: Shayne Chen <shayne.chen@mediatek.com>
  mt76_init_queue(struct mt76_dev *dev, int qid, int idx, int n_desc,
 --- a/mt7915/eeprom.c
 +++ b/mt7915/eeprom.c
-@@ -5,6 +5,30 @@
- #include "mt7915.h"
- #include "eeprom.h"
+@@ -10,6 +10,30 @@ static bool enable_6ghz;
+ module_param(enable_6ghz, bool, 0644);
+ MODULE_PARM_DESC(enable_6ghz, "Enable 6 GHz instead of 5 GHz on hardware that supports both");
  
 +static int
 +mt7915_eeprom_load_precal_binfile(struct mt7915_dev *dev, u32 offs, u32 size)
@@ -102,7 +102,7 @@ Signed-off-by: Shayne Chen <shayne.chen@mediatek.com>
  static int mt7915_eeprom_load_precal(struct mt7915_dev *dev)
  {
  	struct mt76_dev *mdev = &dev->mt76;
-@@ -24,6 +48,9 @@ static int mt7915_eeprom_load_precal(str
+@@ -29,6 +53,9 @@ static int mt7915_eeprom_load_precal(str
  
  	offs = is_mt7915(&dev->mt76) ? MT_EE_PRECAL : MT_EE_PRECAL_V2;
  
@@ -112,7 +112,7 @@ Signed-off-by: Shayne Chen <shayne.chen@mediatek.com>
  	ret = mt76_get_of_data_from_mtd(mdev, dev->cal, offs, size);
  	if (!ret)
  		return ret;
-@@ -59,8 +86,11 @@ static int mt7915_check_eeprom(struct mt
+@@ -64,8 +91,11 @@ static int mt7915_check_eeprom(struct mt
  	}
  }
  
@@ -125,7 +125,7 @@ Signed-off-by: Shayne Chen <shayne.chen@mediatek.com>
  	switch (mt76_chip(&dev->mt76)) {
  	case 0x7915:
  		return dev->dbdc_support ?
-@@ -101,7 +131,10 @@ mt7915_eeprom_load_default(struct mt7915
+@@ -106,7 +136,10 @@ mt7915_eeprom_load_default(struct mt7915
  		return ret;
  
  	if (!fw || !fw->data) {
@@ -137,7 +137,7 @@ Signed-off-by: Shayne Chen <shayne.chen@mediatek.com>
  		ret = -EINVAL;
  		goto out;
  	}
-@@ -161,8 +194,13 @@ static int mt7915_eeprom_load(struct mt7
+@@ -166,8 +199,13 @@ static int mt7915_eeprom_load(struct mt7
  	if (ret < 0)
  		return ret;
  
@@ -152,7 +152,7 @@ Signed-off-by: Shayne Chen <shayne.chen@mediatek.com>
  
  	mt7915_eeprom_load_efuse(dev);
  
-@@ -417,6 +455,7 @@ static int mt7915_apply_cal_free_data(st
+@@ -434,6 +472,7 @@ static int mt7915_apply_cal_free_data(st
  			eeprom[ddie_offset] = buf[ddie_offset % MT7915_EEPROM_BLOCK_SIZE];
  			prev_block_num = block_num;
  		}
@@ -160,7 +160,7 @@ Signed-off-by: Shayne Chen <shayne.chen@mediatek.com>
  	}
  
  	/* adie */
-@@ -465,12 +504,33 @@ int mt7915_eeprom_init(struct mt7915_dev
+@@ -482,12 +521,33 @@ int mt7915_eeprom_init(struct mt7915_dev
  {
  	int ret;
  

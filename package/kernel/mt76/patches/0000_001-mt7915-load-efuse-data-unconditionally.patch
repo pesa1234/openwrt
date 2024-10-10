@@ -14,7 +14,7 @@ Signed-off-by: Felix Fietkau <nbd@nbd.name>
 
 --- a/mt7915/eeprom.c
 +++ b/mt7915/eeprom.c
-@@ -115,38 +115,56 @@ out:
+@@ -120,38 +120,56 @@ out:
  	return ret;
  }
  

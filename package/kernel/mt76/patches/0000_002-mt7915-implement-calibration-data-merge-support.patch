@@ -13,7 +13,7 @@ Signed-off-by: Felix Fietkau <nbd@nbd.name>
 
 --- a/mt7915/eeprom.c
 +++ b/mt7915/eeprom.c
-@@ -265,6 +265,191 @@ void mt7915_eeprom_parse_hw_cap(struct m
+@@ -282,6 +282,191 @@ void mt7915_eeprom_parse_hw_cap(struct m
  	dev->chainshift = hweight8(dev->mphy.chainmask);
  }
  
@@ -205,7 +205,7 @@ Signed-off-by: Felix Fietkau <nbd@nbd.name>
  int mt7915_eeprom_init(struct mt7915_dev *dev)
  {
  	int ret;
-@@ -281,6 +466,10 @@ int mt7915_eeprom_init(struct mt7915_dev
+@@ -298,6 +483,10 @@ int mt7915_eeprom_init(struct mt7915_dev
  	}
  
  	mt7915_eeprom_load_precal(dev);
