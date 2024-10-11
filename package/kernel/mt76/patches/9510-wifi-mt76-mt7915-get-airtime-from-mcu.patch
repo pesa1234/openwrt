@@ -158,7 +158,7 @@ Subject: [PATCH] [mt76] mt7915 MCU event airtime
  		rate = &msta->wcid.rate;
  
  		switch (rate->bw) {
-@@ -2113,11 +2052,14 @@ void mt7915_mac_work(struct work_struct
+@@ -2115,11 +2054,14 @@ void mt7915_mac_work(struct work_struct
  {
  	struct mt7915_phy *phy;
  	struct mt76_phy *mphy;
@@ -173,7 +173,7 @@ Subject: [PATCH] [mt76] mt7915 MCU event airtime
  	mutex_lock(&mphy->dev->mutex);
  
  	mt76_update_survey(mphy);
-@@ -2131,6 +2073,8 @@ void mt7915_mac_work(struct work_struct
+@@ -2133,6 +2075,8 @@ void mt7915_mac_work(struct work_struct
  
  		if (phy->dev->muru_debug)
  			mt7915_mcu_muru_debug_get(phy);
@@ -351,7 +351,7 @@ Subject: [PATCH] [mt76] mt7915 MCU event airtime
  					 sizeof(struct bss_info_bcn) +	\
 --- a/mt7915/mt7915.h
 +++ b/mt7915/mt7915.h
-@@ -697,6 +697,7 @@ int mt7915_mcu_set_thermal_protect(struc
+@@ -698,6 +698,7 @@ int mt7915_mcu_set_thermal_protect(struc
  int mt7915_mcu_get_tx_rate(struct mt7915_phy *phy, u16 wcidx);
  int mt7915_mcu_get_rx_rate(struct mt7915_phy *phy, struct ieee80211_vif *vif,
  			   struct ieee80211_sta *sta, struct rate_info *rate);

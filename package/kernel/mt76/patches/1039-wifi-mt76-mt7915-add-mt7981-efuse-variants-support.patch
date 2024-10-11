@@ -49,7 +49,7 @@ Subject: [PATCH 1039/1051] wifi: mt76: mt7915 add mt7981 efuse variants
  
 --- a/mt7915/mt7915.h
 +++ b/mt7915/mt7915.h
-@@ -428,6 +428,7 @@ struct mt7915_dev {
+@@ -429,6 +429,7 @@ struct mt7915_dev {
  
  	u32 hw_pattern;
  
@@ -57,7 +57,7 @@ Subject: [PATCH 1039/1051] wifi: mt76: mt7915 add mt7981 efuse variants
  	bool dbdc_support;
  	bool flash_mode;
  	bool bin_file_mode;
-@@ -701,7 +702,11 @@ void mt7915_tm_rf_test_event(struct mt79
+@@ -702,7 +703,11 @@ void mt7915_tm_rf_test_event(struct mt79
  
  static inline u16 mt7915_wtbl_size(struct mt7915_dev *dev)
  {

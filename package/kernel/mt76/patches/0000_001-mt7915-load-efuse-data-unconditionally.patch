@@ -132,7 +132,7 @@ Signed-off-by: Felix Fietkau <nbd@nbd.name>
  int mt7915_mcu_get_eeprom_free_block(struct mt7915_dev *dev, u8 *block_num)
 --- a/mt7915/mt7915.h
 +++ b/mt7915/mt7915.h
-@@ -472,7 +472,7 @@ int mt7915_mcu_set_fixed_rate_ctrl(struc
+@@ -473,7 +473,7 @@ int mt7915_mcu_set_fixed_rate_ctrl(struc
  				   struct ieee80211_sta *sta,
  				   void *data, u32 field);
  int mt7915_mcu_set_eeprom(struct mt7915_dev *dev);

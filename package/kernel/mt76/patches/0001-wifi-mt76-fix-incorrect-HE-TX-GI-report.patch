@@ -141,7 +141,7 @@ Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
  out:
  	rcu_read_unlock();
  }
-@@ -1961,6 +1955,27 @@ static void mt7915_mac_severe_check(stru
+@@ -1963,6 +1957,27 @@ static void mt7915_mac_severe_check(stru
  	phy->trb_ts = trb;
  }
  
@@ -169,7 +169,7 @@ Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
  void mt7915_mac_sta_rc_work(struct work_struct *work)
  {
  	struct mt7915_dev *dev = container_of(work, struct mt7915_dev, rc_work);
-@@ -2019,6 +2034,11 @@ void mt7915_mac_work(struct work_struct
+@@ -2021,6 +2036,11 @@ void mt7915_mac_work(struct work_struct
  			mt7915_mcu_muru_debug_get(phy);
  	}
  
@@ -463,7 +463,7 @@ Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
  	u32 airtime_ac[8];
  
  	int ack_signal;
-@@ -224,6 +225,10 @@ struct mt7915_phy {
+@@ -225,6 +226,10 @@ struct mt7915_phy {
  	struct mt76_mib_stats mib;
  	struct mt76_channel_state state_ts;
  
@@ -474,7 +474,7 @@ Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
  #ifdef CONFIG_NL80211_TESTMODE
  	struct {
  		u32 *reg_backup;
-@@ -499,6 +504,7 @@ int mt7915_mcu_get_chan_mib_info(struct
+@@ -500,6 +505,7 @@ int mt7915_mcu_get_chan_mib_info(struct
  int mt7915_mcu_get_temperature(struct mt7915_phy *phy);
  int mt7915_mcu_set_thermal_throttling(struct mt7915_phy *phy, u8 state);
  int mt7915_mcu_set_thermal_protect(struct mt7915_phy *phy);
