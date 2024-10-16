@@ -3155,7 +3155,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  
 --- a/tx.c
 +++ b/tx.c
-@@ -259,8 +259,7 @@ void __mt76_tx_complete_skb(struct mt76_
+@@ -260,8 +260,7 @@ void __mt76_tx_complete_skb(struct mt76_
  	if (mt76_is_testmode_skb(dev, skb, &hw)) {
  		struct mt76_phy *phy = hw->priv;
  
