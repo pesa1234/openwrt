@@ -18,7 +18,7 @@ Signed-off-by: Howard Hsu <howard-yh.hsu@mediatek.com>
 
 --- a/mt7915/init.c
 +++ b/mt7915/init.c
-@@ -84,12 +84,13 @@ static ssize_t mt7915_thermal_temp_store
+@@ -86,12 +86,13 @@ static ssize_t mt7915_thermal_temp_store
  	mutex_lock(&phy->dev->mt76.mutex);
  	val = clamp_val(DIV_ROUND_CLOSEST(val, 1000), 60, 130);
  

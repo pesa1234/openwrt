@@ -239,7 +239,7 @@ Signed-off-by: Shayne Chen <shayne.chen@mediatek.com>
  	debugfs_create_file("rf_regval", 0600, dir, dev, &fops_rf_regval);
 --- a/mt7915/init.c
 +++ b/mt7915/init.c
-@@ -287,6 +287,8 @@ static void __mt7915_init_txpower(struct
+@@ -290,6 +290,8 @@ static void __mt7915_init_txpower(struct
  	int pwr_delta = mt7915_eeprom_get_power_delta(dev, sband->band);
  	struct mt76_power_limits limits;
  
@@ -248,7 +248,7 @@ Signed-off-by: Shayne Chen <shayne.chen@mediatek.com>
  	for (i = 0; i < sband->n_channels; i++) {
  		struct ieee80211_channel *chan = &sband->channels[i];
  		u32 target_power = 0;
-@@ -303,6 +305,11 @@ static void __mt7915_init_txpower(struct
+@@ -306,6 +308,11 @@ static void __mt7915_init_txpower(struct
  		target_power = mt76_get_rate_power_limits(phy->mt76, chan,
  							  &limits,
  							  target_power);
