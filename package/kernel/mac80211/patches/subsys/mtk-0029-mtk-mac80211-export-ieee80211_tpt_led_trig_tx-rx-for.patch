@@ -23,7 +23,7 @@ Signed-off-by: Yi-Chia Hsieh <yi-chia.hsieh@mediatek.com>
 
 --- a/include/net/mac80211.h
 +++ b/include/net/mac80211.h
-@@ -4913,6 +4913,8 @@ __ieee80211_create_tpt_led_trigger(struc
+@@ -4915,6 +4915,8 @@ __ieee80211_create_tpt_led_trigger(struc
  				   unsigned int flags,
  				   const struct ieee80211_tpt_blink *blink_table,
  				   unsigned int blink_table_len);
@@ -32,7 +32,7 @@ Signed-off-by: Yi-Chia Hsieh <yi-chia.hsieh@mediatek.com>
  #endif
  /**
   * ieee80211_get_tx_led_name - get name of TX LED
-@@ -5023,6 +5025,21 @@ ieee80211_create_tpt_led_trigger(struct
+@@ -5025,6 +5027,21 @@ ieee80211_create_tpt_led_trigger(struct
  #endif
  }
  
@@ -106,7 +106,7 @@ Signed-off-by: Yi-Chia Hsieh <yi-chia.hsieh@mediatek.com>
 -}
 --- a/net/mac80211/rx.c
 +++ b/net/mac80211/rx.c
-@@ -5462,7 +5462,7 @@ void ieee80211_rx_list(struct ieee80211_
+@@ -5469,7 +5469,7 @@ void ieee80211_rx_list(struct ieee80211_
  	if (skb) {
  		if ((status->flag & RX_FLAG_8023) ||
  			ieee80211_is_data_present(hdr->frame_control))
@@ -117,7 +117,7 @@ Signed-off-by: Yi-Chia Hsieh <yi-chia.hsieh@mediatek.com>
  			__ieee80211_rx_handle_8023(hw, pubsta, skb, list);
 --- a/net/mac80211/tx.c
 +++ b/net/mac80211/tx.c
-@@ -4345,7 +4345,7 @@ void __ieee80211_subif_start_xmit(struct
+@@ -4347,7 +4347,7 @@ void __ieee80211_subif_start_xmit(struct
  	len = 0;
   out:
  	if (len)
@@ -126,7 +126,7 @@ Signed-off-by: Yi-Chia Hsieh <yi-chia.hsieh@mediatek.com>
  	rcu_read_unlock();
  }
  
-@@ -4676,7 +4676,7 @@ static void ieee80211_8023_xmit(struct i
+@@ -4678,7 +4678,7 @@ static void ieee80211_8023_xmit(struct i
  	sta->deflink.tx_stats.packets[queue] += skbs;
  	sta->deflink.tx_stats.bytes[queue] += len;
  

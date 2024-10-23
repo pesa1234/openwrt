@@ -14,7 +14,7 @@ Signed-off-by: Ben Greear <greearb@candelatech.com>
 
 --- a/net/mac80211/cfg.c
 +++ b/net/mac80211/cfg.c
-@@ -3042,6 +3042,7 @@ static int ieee80211_set_tx_power(struct
+@@ -3051,6 +3051,7 @@ static int ieee80211_set_tx_power(struct
  	enum nl80211_tx_power_setting txp_type = type;
  	bool update_txp_type = false;
  	bool has_monitor = false;
@@ -22,7 +22,7 @@ Signed-off-by: Ben Greear <greearb@candelatech.com>
  
  	lockdep_assert_wiphy(local->hw.wiphy);
  
-@@ -3124,6 +3125,10 @@ static int ieee80211_set_tx_power(struct
+@@ -3136,6 +3137,10 @@ static int ieee80211_set_tx_power(struct
  		}
  	}
  
