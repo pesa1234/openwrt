@@ -51,7 +51,7 @@ Signed-off-by: Stijn Tintel <stijn@linux-ipv6.be>
  	sta->post_csa_sa_query = 0;
 --- a/src/ap/sta_info.c
 +++ b/src/ap/sta_info.c
-@@ -1485,9 +1485,6 @@ bool ap_sta_set_authorized_flag(struct h
+@@ -1497,9 +1497,6 @@ bool ap_sta_set_authorized_flag(struct h
  				mld_assoc_link_id = -2;
  		}
  #endif /* CONFIG_IEEE80211BE */

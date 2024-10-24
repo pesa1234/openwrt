@@ -1079,7 +1079,7 @@ Signed-off-by: Glenn Strauss <gstrauss@gluelogic.com>
              dev[0].connect("test-wpa2-eap", key_mgmt="WPA-EAP", eap="TTLS",
 --- a/tests/hwsim/test_fils.py
 +++ b/tests/hwsim/test_fils.py
-@@ -1477,6 +1477,10 @@ def check_ec_group(dev, group):
+@@ -1492,6 +1492,10 @@ def check_ec_group(dev, group):
      tls = dev.request("GET tls_library")
      if tls.startswith("wolfSSL"):
          return
@@ -1124,7 +1124,7 @@ Signed-off-by: Glenn Strauss <gstrauss@gluelogic.com>
      heavy_groups = [14, 15, 16]
      suitable_groups = [15, 16, 17, 18, 19, 20, 21]
      groups = [str(g) for g in sae_groups]
-@@ -2232,6 +2237,8 @@ def run_sae_pwe_group(dev, apdev, group)
+@@ -2234,6 +2239,8 @@ def run_sae_pwe_group(dev, apdev, group)
              logger.info("Add Brainpool EC groups since OpenSSL is new enough")
          elif tls.startswith("wolfSSL"):
              logger.info("Make sure Brainpool EC groups were enabled when compiling wolfSSL")
