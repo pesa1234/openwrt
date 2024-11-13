@@ -8,6 +8,8 @@ LANG:=C
 TZ:=UTC
 export TOPDIR LC_ALL LANG TZ
 
+export BRANCH:=$(shell git rev-parse --abbrev-ref HEAD)
+
 empty:=
 space:= $(empty) $(empty)
 $(if $(findstring $(space),$(TOPDIR)),$(error ERROR: The path to the OpenWrt directory must not include any spaces))
