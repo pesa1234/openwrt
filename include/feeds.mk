@@ -48,7 +48,7 @@ endef
 # 1: destination file
 define FeedSourcesAppendAPK
 ( \
-  echo '%U/targets/%S/packages/packages.adb'; \
+  echo '%U/$(DATE)_$(VERSION_CODE)_$(BRANCH)/targets/%S/packages/packages.adb'; \
   $(strip $(if $(CONFIG_PER_FEED_REPO), \
 	echo '%U/$(DATE)_$(VERSION_CODE)_$(BRANCH)/packages/%A/base/packages.adb'; \
 	$(if $(filter %SNAPSHOT-y,$(VERSION_NUMBER)-$(CONFIG_BUILDBOT)), \
