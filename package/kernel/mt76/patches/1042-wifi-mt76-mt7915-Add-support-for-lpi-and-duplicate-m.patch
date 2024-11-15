@@ -94,7 +94,7 @@ Signed-off-by: Allen Ye <allen.ye@mediatek.com>
  
 --- a/mt76.h
 +++ b/mt76.h
-@@ -877,6 +877,9 @@ struct mt76_phy {
+@@ -910,6 +910,9 @@ struct mt76_phy {
  	u8 macaddr[ETH_ALEN];
  
  	int txpower_cur;
@@ -104,7 +104,7 @@ Signed-off-by: Allen Ye <allen.ye@mediatek.com>
  	u8 antenna_mask;
  	u16 chainmask;
  
-@@ -1783,7 +1786,7 @@ mt76_mcu_skb_send_msg(struct mt76_dev *d
+@@ -1873,7 +1876,7 @@ mt76_mcu_skb_send_msg(struct mt76_dev *d
  void mt76_set_irq_mask(struct mt76_dev *dev, u32 addr, u32 clear, u32 set);
  
  struct device_node *
@@ -132,7 +132,7 @@ Signed-off-by: Allen Ye <allen.ye@mediatek.com>
 --- a/mt76_connac_mac.c
 +++ b/mt76_connac_mac.c
 @@ -584,7 +584,8 @@ void mt76_connac2_mac_write_txwi(struct
- 		u16 rate = mt76_connac2_mac_tx_rate_val(mphy, vif, beacon,
+ 		u16 rate = mt76_connac2_mac_tx_rate_val(mphy, &vif->bss_conf, beacon,
  							multicast);
  		u32 val = MT_TXD6_FIXED_BW;
 -

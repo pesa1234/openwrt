@@ -19,7 +19,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
 
 --- a/mt76.h
 +++ b/mt76.h
-@@ -816,6 +816,15 @@ struct mt76_testmode_data {
+@@ -829,6 +829,15 @@ struct mt76_testmode_data {
  		u64 fcs_error[__MT_RXQ_MAX];
  		u64 len_mismatch;
  	} rx_stats;
@@ -34,7 +34,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
 +	u8 ipi_reset;
  };
  
- struct mt76_vif {
+ struct mt76_vif_link {
 --- a/mt76_connac_mcu.h
 +++ b/mt76_connac_mcu.h
 @@ -1259,6 +1259,7 @@ enum {

@@ -112,7 +112,7 @@ Signed-off-by: Shayne Chen <shayne.chen@mediatek.com>
  }
 --- a/mt76.h
 +++ b/mt76.h
-@@ -1113,6 +1113,14 @@ struct mt76_power_limits {
+@@ -1156,6 +1156,14 @@ struct mt76_power_limits {
  	s8 mcs[4][10];
  	s8 ru[7][12];
  	s8 eht[16][16];
@@ -277,6 +277,15 @@ Signed-off-by: Shayne Chen <shayne.chen@mediatek.com>
  
 --- a/mt7915/mcu.c
 +++ b/mt7915/mcu.c
+@@ -2779,7 +2779,7 @@ mt7915_mcu_background_chain_ctrl(struct
+ {
+ 	struct mt7915_dev *dev = phy->dev;
+ 	struct mt76_phy *mphy = phy->mt76;
+-	struct ieee80211_channel *chan = mphy->chandef.chan;
++	struct ieee80211_channel *chan = mphy->main_chandef.chan;
+ 	int freq = mphy->chandef.center_freq1;
+ 	struct mt7915_mcu_background_chain_ctrl req = {
+ 		.monitor_scan_type = 2, /* simple rx */
 @@ -3450,7 +3450,8 @@ int mt7915_mcu_set_txpower_frame(struct
  	int ret;
  	s8 txpower_sku[MT7915_SKU_RATE_NUM];
@@ -295,7 +304,7 @@ Signed-off-by: Shayne Chen <shayne.chen@mediatek.com>
 +mt7915_update_txpower(struct mt7915_phy *phy, int tx_power)
 +{
 +	struct mt76_phy *mphy = phy->mt76;
-+	struct ieee80211_channel *chan = mphy->main_chan;
++	struct ieee80211_channel *chan = mphy->chandef.chan;
 +	int chain_idx, val, e2p_power_limit = 0;
 +
 +	if (chan == NULL) {
@@ -361,17 +370,17 @@ Signed-off-by: Shayne Chen <shayne.chen@mediatek.com>
 +		mt7915_update_txpower(phy, tx_power);
 +		return 0;
 +	}
++
++	skb = mt76_mcu_msg_alloc(&dev->mt76, NULL,
++				 sizeof(hdr) + MT7915_SKU_RATE_NUM);
++	if (!skb)
++		return -ENOMEM;
  
 -			if (i == SKU_HT_BW20 || i == SKU_VHT_BW20)
 -				la = (s8 *)&limits_array + 12;
 -		} else {
 -			mcs_num = len;
 -		}
-+	skb = mt76_mcu_msg_alloc(&dev->mt76, NULL,
-+				 sizeof(hdr) + MT7915_SKU_RATE_NUM);
-+	if (!skb)
-+		return -ENOMEM;
-+
 +	skb_put_data(skb, &hdr, sizeof(hdr));
 +	skb_put_data(skb, &la.cck, len[SKU_CCK] + len[SKU_OFDM]);
 +	skb_put_data(skb, &la.mcs[0], len[SKU_HT_BW20]);
@@ -382,19 +391,19 @@ Signed-off-by: Shayne Chen <shayne.chen@mediatek.com>
 +		skb_put_data(skb, &la.mcs[i], sizeof(la.mcs[i]));
 +		skb_put_zero(skb, 2);  /* padding */
 +	}
-+
-+	/* he */
-+	skb_put_data(skb, &la.ru[0], sizeof(la.ru));
  
 -		for (j = 0; j < min_t(u8, mcs_num, len); j++)
 -			req.txpower_sku[idx + j] = la[j];
++	/* he */
++	skb_put_data(skb, &la.ru[0], sizeof(la.ru));
+ 
+-		la += mcs_num;
+-		idx += len;
 +	ret = mt76_mcu_skb_send_msg(&dev->mt76, skb,
 +				    MCU_EXT_CMD(TX_POWER_FEATURE_CTRL), true);
 +	if (ret)
 +		return ret;
- 
--		la += mcs_num;
--		idx += len;
++
 +	/* only set per-path power table when it's configured */
 +	if (!phy->sku_path_en)
 +		return 0;

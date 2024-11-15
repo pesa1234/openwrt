@@ -277,10 +277,10 @@ Subject: [PATCH 01/70] wifi: mt76: mt7915: add mtk internal debug tools for
  	if (ret)
  		goto out;
  
-@@ -258,6 +262,7 @@ static int mt7915_add_interface(struct i
- 	mvif->sta.wcid.hw_key_idx = -1;
+@@ -256,6 +260,7 @@ static int mt7915_add_interface(struct i
+ 	mvif->sta.wcid.idx = idx;
  	mvif->sta.wcid.tx_info |= MT_WCID_TX_INFO_SET;
- 	mt76_wcid_init(&mvif->sta.wcid);
+ 	mt76_wcid_init(&mvif->sta.wcid, phy->mt76->band_idx);
 +	mvif->sta.vif = mvif;
  
  	/* init Default QoS map, defined in section 2.3 of RFC8325.

@@ -26,7 +26,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
 
 --- a/mt76.h
 +++ b/mt76.h
-@@ -778,6 +778,7 @@ struct mt76_testmode_data {
+@@ -791,6 +791,7 @@ struct mt76_testmode_data {
  
  	struct list_head tm_entry_list;
  	struct mt76_wcid *cur_entry;
@@ -34,7 +34,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  	u8 entry_num;
  	union {
  		struct mt76_testmode_entry_data ed;
-@@ -806,6 +807,9 @@ struct mt76_testmode_data {
+@@ -819,6 +820,9 @@ struct mt76_testmode_data {
  
  	u8 txbf_act;
  	u16 txbf_param[8];
@@ -46,7 +46,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  	u32 tx_queued;
 --- a/mt76_connac_mcu.c
 +++ b/mt76_connac_mcu.c
-@@ -2743,6 +2743,7 @@ int mt76_connac_mcu_bss_basic_tlv(struct
+@@ -2747,6 +2747,7 @@ int mt76_connac_mcu_bss_basic_tlv(struct
  	u32 type = vif->p2p ? NETWORK_P2P : NETWORK_INFRA;
  	struct bss_info_basic *bss;
  	struct tlv *tlv;
@@ -54,7 +54,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  
  	tlv = mt76_connac_mcu_add_tlv(skb, BSS_INFO_BASIC, sizeof(*bss));
  	bss = (struct bss_info_basic *)tlv;
-@@ -2802,6 +2803,8 @@ int mt76_connac_mcu_bss_basic_tlv(struct
+@@ -2806,6 +2807,8 @@ int mt76_connac_mcu_bss_basic_tlv(struct
  		bss->dtim_period = vif->bss_conf.dtim_period;
  		bss->phy_mode = mt76_connac_get_phy_mode(phy, vif,
  							 chandef->chan->band, NULL);
@@ -79,7 +79,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  #endif
 --- a/mt7915/main.c
 +++ b/mt7915/main.c
-@@ -205,55 +205,44 @@ static void mt7915_init_bitrate_mask(str
+@@ -205,56 +205,45 @@ static void mt7915_init_bitrate_mask(str
  	}
  }
  
@@ -124,6 +124,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  	mvif->mt76.omac_idx = idx;
  	mvif->phy = phy;
  	mvif->mt76.band_idx = phy->mt76->band_idx;
+ 	mvif->mt76.wcid = &mvif->sta.wcid;
  
 -	mvif->mt76.wmm_idx = (vif->type != NL80211_IFTYPE_AP && vif->type != NL80211_IFTYPE_MONITOR);
 +	mvif->mt76.wmm_idx = (vif->type != NL80211_IFTYPE_AP &&
@@ -148,8 +149,8 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
 +		return -ENOSPC;
  
  	INIT_LIST_HEAD(&mvif->sta.rc_list);
- 	INIT_LIST_HEAD(&mvif->sta.wcid.poll_list);
-@@ -290,7 +279,26 @@ static int mt7915_add_interface(struct i
+ 	mvif->sta.wcid.idx = idx;
+@@ -288,7 +277,26 @@ static int mt7915_add_interface(struct i
  	mt7915_mcu_add_sta(dev, vif, NULL, CONN_STATE_PORT_SECURE, true);
  	rcu_assign_pointer(dev->mt76.wcid[idx], &mvif->sta.wcid);
  
