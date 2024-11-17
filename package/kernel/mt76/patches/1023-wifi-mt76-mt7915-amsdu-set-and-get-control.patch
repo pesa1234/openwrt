@@ -12,7 +12,7 @@ Subject: [PATCH 1023/1051] wifi: mt76: mt7915: amsdu set and get control
 
 --- a/mt7915/mac.c
 +++ b/mt7915/mac.c
-@@ -2010,6 +2010,13 @@ static void mt7915_mac_sta_stats_work(st
+@@ -2009,6 +2009,13 @@ static void mt7915_mac_sta_stats_work(st
  	spin_unlock_bh(&phy->stats_lock);
  }
  
