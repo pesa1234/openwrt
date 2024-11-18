@@ -20,7 +20,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
 
 --- a/include/net/cfg80211.h
 +++ b/include/net/cfg80211.h
-@@ -8822,6 +8822,20 @@ void cfg80211_pmksa_candidate_notify(str
+@@ -8866,6 +8866,20 @@ void cfg80211_pmksa_candidate_notify(str
  				     const u8 *bssid, bool preauth, gfp_t gfp);
  
  /**

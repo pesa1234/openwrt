@@ -13,7 +13,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
 
 --- a/include/net/cfg80211.h
 +++ b/include/net/cfg80211.h
-@@ -8778,6 +8778,20 @@ void cfg80211_cac_event(struct net_devic
+@@ -8822,6 +8822,20 @@ void cfg80211_cac_event(struct net_devic
  			unsigned int link_id);
  
  /**
