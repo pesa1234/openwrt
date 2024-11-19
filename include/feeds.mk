@@ -36,12 +36,12 @@ define FeedSourcesAppendOPKG
 ( \
   echo 'src/gz %d_core %U/$(DATE)_$(VERSION_CODE)_$(BRANCH)/targets/%S/packages'; \
   $(strip $(if $(CONFIG_PER_FEED_REPO), \
-	echo 'src/gz %d_base %U/$(DATE)_$(VERSION_CODE)_$(BRANCH)/packages/%A/base'; \
+	echo 'src/gz %d_base %U/packages/%A/base'; \
 	$(if $(filter %SNAPSHOT-y,$(VERSION_NUMBER)-$(CONFIG_BUILDBOT)), \
 		echo 'src/gz %d_kmods %U/$(DATE)_$(VERSION_CODE)_$(BRANCH)/targets/%S/kmods/$(LINUX_VERSION)-$(LINUX_RELEASE)-$(LINUX_VERMAGIC)';) \
 	$(foreach feed,$(FEEDS_AVAILABLE), \
 		$(if $(CONFIG_FEED_$(feed)), \
-			echo '$(if $(filter m,$(CONFIG_FEED_$(feed))),# )src/gz %d_$(feed) %U/$(DATE)_$(VERSION_CODE)_$(BRANCH)/packages/%A/$(feed)';)))) \
+			echo '$(if $(filter m,$(CONFIG_FEED_$(feed))),# )src/gz %d_$(feed) %U/packages/%A/$(feed)';)))) \
 ) >> $(1)
 endef
 
@@ -50,12 +50,12 @@ define FeedSourcesAppendAPK
 ( \
   echo '%U/$(DATE)_$(VERSION_CODE)_$(BRANCH)/targets/%S/packages/packages.adb'; \
   $(strip $(if $(CONFIG_PER_FEED_REPO), \
-	echo '%U/$(DATE)_$(VERSION_CODE)_$(BRANCH)/packages/%A/base/packages.adb'; \
+	echo '%U/packages/%A/base/packages.adb'; \
 	$(if $(filter %SNAPSHOT-y,$(VERSION_NUMBER)-$(CONFIG_BUILDBOT)), \
 		echo '%U/$(DATE)_$(VERSION_CODE)_$(BRANCH)/targets/%S/kmods/$(LINUX_VERSION)-$(LINUX_RELEASE)-$(LINUX_VERMAGIC)/packages.adb';) \
 	$(foreach feed,$(FEEDS_AVAILABLE), \
 		$(if $(CONFIG_FEED_$(feed)), \
-			echo '$(if $(filter m,$(CONFIG_FEED_$(feed))),# )%U/$(DATE)_$(VERSION_CODE)_$(BRANCH)/packages/%A/$(feed)/packages.adb';)))) \
+			echo '$(if $(filter m,$(CONFIG_FEED_$(feed))),# )%U/packages/%A/$(feed)/packages.adb';)))) \
 ) >> $(1)
 endef
 
