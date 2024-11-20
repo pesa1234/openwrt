@@ -30,6 +30,12 @@ start() {
 		else
 			logger -s "smp_affinity: leave ${wifidevice} to CPU${WIFIcpu} on IRQ ${WIFIirq}"
 		fi
+		mtk_eth5=`pgrep napi/mtk_eth-5`
+		mtk_eth6=`pgrep napi/mtk_eth-6`
+		task1=`taskset -pc 1 $mtk_eth5`
+		task2=`taskset -pc 3 $mtk_eth6`
+		logger -s "smp_affinity: mtk_eth-5 have: ${task1}"
+		logger -s "smp_affinity: mtk_eth-6 have: ${task2}"
     ;;
     *)
 		logger -s "smp_affinity:  Not compatible with ${BOARD}"
@@ -55,6 +61,12 @@ stop() {
 		USBirq=`ls -d /proc/irq/*/$usbdevice | awk -F\/ '{ print $4 }'`
 		echo f > /proc/irq/${USBirq}/smp_affinity
 		logger -s "smp_affinity: restore ${usbdevice} to AllCPUs on IRQ ${USBirq}"
+		mtk_eth5=`pgrep napi/mtk_eth-5`
+		mtk_eth6=`pgrep napi/mtk_eth-6`
+		task1=`taskset -pc 0 $mtk_eth5`
+		task2=`taskset -pc 0 $mtk_eth6`
+		logger -s "smp_affinity: mtk_eth-5 have: ${task1}"
+		logger -s "smp_affinity: mtk_eth-6 have: ${task2}"
     ;;
     *)
 		logger -s "smp_affinity:  Not compatible with ${BOARD}"
