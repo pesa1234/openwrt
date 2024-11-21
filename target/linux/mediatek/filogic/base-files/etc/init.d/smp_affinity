@@ -1,6 +1,6 @@
 #!/bin/sh /etc/rc.common
 
-START=24
+START=26
 
 start() {
 	local board=$(board_name)
@@ -31,19 +31,15 @@ start() {
 			logger -s "smp_affinity: leave ${wifidevice} to CPU${WIFIcpu} on IRQ ${WIFIirq}"
 		fi
 		packet_sterering_status=`uci get network.globals.packet_steering`
-		if [ "$packet_sterering_status" -ge 1 ]; then
-			logger -s "smp_affinity: packet_steering script enabled no setting on mtk_eth-5 mtk_eth-6 and mt76-tx"
-		else
-			mtk_eth5=`pgrep napi/mtk_eth-5`
-			mtk_eth6=`pgrep napi/mtk_eth-6`
-			mt76_tx=`pgrep mt76-tx`
-			task1=`taskset -pc 1 $mtk_eth5`
-			task2=`taskset -pc 3 $mtk_eth6`
-			task3=`taskset -pc 2 $mt76_tx`
-			logger -s "smp_affinity: mtk_eth-5 have: ${task1}"
-			logger -s "smp_affinity: mtk_eth-6 have: ${task2}"
-			logger -s "smp_affinity: mt76-tx have: ${task3}"
-		fi
+		mtk_eth5=`pgrep napi/mtk_eth-5`
+		mtk_eth6=`pgrep napi/mtk_eth-6`
+		mt76_tx=`pgrep mt76-tx`
+		task1=`taskset -pc 1 $mtk_eth5`
+		task2=`taskset -pc 3 $mtk_eth6`
+		task3=`taskset -pc 2 $mt76_tx`
+		logger -s "smp_affinity: mtk_eth-5 have: ${task1}"
+		logger -s "smp_affinity: mtk_eth-6 have: ${task2}"
+		logger -s "smp_affinity: mt76-tx have: ${task3}"
     ;;
     *)
 		logger -s "smp_affinity:  Not compatible with ${BOARD}"
@@ -70,19 +66,15 @@ stop() {
 		echo f > /proc/irq/${USBirq}/smp_affinity
 		logger -s "smp_affinity: restore ${usbdevice} to AllCPUs on IRQ ${USBirq}"
 		packet_sterering_status=`uci get network.globals.packet_steering`
-		if [ "$packet_sterering_status" -ge 1 ]; then
-			logger -s "smp_affinity: packet_steering script enabled no setting on mtk_eth-5 mtk_eth-6 and mt76-tx"
-		else
-			mtk_eth5=`pgrep napi/mtk_eth-5`
-			mtk_eth6=`pgrep napi/mtk_eth-6`
-			mt76_tx=`pgrep mt76-tx`
-			task1=`taskset -pc 0 $mtk_eth5`
-			task2=`taskset -pc 0 $mtk_eth6`
-			task3=`taskset -pc 0 $mt76_tx`
-			logger -s "smp_affinity: mtk_eth-5 have: ${task1}"
-			logger -s "smp_affinity: mtk_eth-6 have: ${task2}"
-			logger -s "smp_affinity: mt76-tx have: ${task3}"
-		fi
+		mtk_eth5=`pgrep napi/mtk_eth-5`
+		mtk_eth6=`pgrep napi/mtk_eth-6`
+		mt76_tx=`pgrep mt76-tx`
+		task1=`taskset -pc 0 $mtk_eth5`
+		task2=`taskset -pc 0 $mtk_eth6`
+		task3=`taskset -pc 0 $mt76_tx`
+		logger -s "smp_affinity: mtk_eth-5 have: ${task1}"
+		logger -s "smp_affinity: mtk_eth-6 have: ${task2}"
+		logger -s "smp_affinity: mt76-tx have: ${task3}"
     ;;
     *)
 		logger -s "smp_affinity:  Not compatible with ${BOARD}"
