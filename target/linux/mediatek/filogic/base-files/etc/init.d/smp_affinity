@@ -71,7 +71,7 @@ stop() {
 		mt76_tx=`pgrep mt76-tx`
 		task1=`taskset -pc 0 $mtk_eth5`
 		task2=`taskset -pc 0 $mtk_eth6`
-		task3=`taskset -pc 0 $mt76_tx`
+		task3=`taskset -pc 3 $mt76_tx`
 		logger -s "smp_affinity: mtk_eth-5 have: ${task1}"
 		logger -s "smp_affinity: mtk_eth-6 have: ${task2}"
 		logger -s "smp_affinity: mt76-tx have: ${task3}"
