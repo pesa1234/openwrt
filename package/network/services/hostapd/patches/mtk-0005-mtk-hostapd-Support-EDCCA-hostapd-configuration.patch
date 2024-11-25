@@ -391,7 +391,7 @@ edcca_enable and edcca_compensation and implement edcca related handlers.
  
  
  #ifndef NETLINK_CAP_ACK
-@@ -13964,7 +13966,6 @@ fail:
+@@ -13971,7 +13973,6 @@ fail:
  	return -1;
  }
  
@@ -399,7 +399,7 @@ edcca_enable and edcca_compensation and implement edcca related handlers.
  static int nl80211_nan_cancel_subscribe(void *priv, int subscribe_id)
  {
  	struct i802_bss *bss = priv;
-@@ -14574,6 +14575,171 @@ static int testing_nl80211_radio_disable
+@@ -14581,6 +14582,171 @@ static int testing_nl80211_radio_disable
  
  #endif /* CONFIG_TESTING_OPTIONS */
  
@@ -571,7 +571,7 @@ edcca_enable and edcca_compensation and implement edcca related handlers.
  
  static struct hostapd_multi_hw_info *
  wpa_driver_get_multi_hw_info(void *priv, unsigned int *num_multi_hws)
-@@ -14752,5 +14918,9 @@ const struct wpa_driver_ops wpa_driver_n
+@@ -14759,5 +14925,9 @@ const struct wpa_driver_ops wpa_driver_n
  	.register_frame = testing_nl80211_register_frame,
  	.radio_disable = testing_nl80211_radio_disable,
  #endif /* CONFIG_TESTING_OPTIONS */

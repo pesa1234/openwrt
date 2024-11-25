@@ -260,7 +260,7 @@ Signed-off-by: mtk27835 <shurong.wen@mediatek.com>
  	 * get_multi_hw_info - Get multiple underlying hardware information
 --- a/src/drivers/driver_nl80211.c
 +++ b/src/drivers/driver_nl80211.c
-@@ -14882,6 +14882,47 @@ static int nl80211_enable_three_wire(voi
+@@ -14889,6 +14889,47 @@ static int nl80211_enable_three_wire(voi
  	return ret;
  }
  
@@ -308,7 +308,7 @@ Signed-off-by: mtk27835 <shurong.wen@mediatek.com>
  static struct hostapd_multi_hw_info *
  wpa_driver_get_multi_hw_info(void *priv, unsigned int *num_multi_hws)
  {
-@@ -14890,6 +14931,71 @@ wpa_driver_get_multi_hw_info(void *priv,
+@@ -14897,6 +14938,71 @@ wpa_driver_get_multi_hw_info(void *priv,
  	return nl80211_get_multi_hw_info(bss, num_multi_hws);
  }
  
@@ -380,7 +380,7 @@ Signed-off-by: mtk27835 <shurong.wen@mediatek.com>
  const struct wpa_driver_ops wpa_driver_nl80211_ops = {
  	.name = "nl80211",
  	.desc = "Linux nl80211/cfg80211",
-@@ -15065,5 +15171,7 @@ const struct wpa_driver_ops wpa_driver_n
+@@ -15072,5 +15178,7 @@ const struct wpa_driver_ops wpa_driver_n
  	.configure_edcca_threshold = nl80211_configure_edcca_threshold,
  	.get_edcca = nl80211_get_edcca,
  	.three_wire_ctrl = nl80211_enable_three_wire,
