@@ -1,0 +1,11 @@
+--- a/mt7915/mmio.c
++++ b/mt7915/mmio.c
+@@ -490,7 +490,7 @@ static u32 __mt7915_reg_addr(struct mt79
+ 			continue;
+ 
+ 		ofs = addr - dev->reg.map[i].phys;
+-		if (ofs > dev->reg.map[i].size)
++		if (ofs >= dev->reg.map[i].size)
+ 			continue;
+ 
+ 		return dev->reg.map[i].maps + ofs;
