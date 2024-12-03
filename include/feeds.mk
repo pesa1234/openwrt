@@ -5,6 +5,7 @@
 
 -include $(TMP_DIR)/.packageauxvars
 
+OWRT_LINK:=https://downloads.openwrt.org/snapshots/packages
 FEEDS_INSTALLED:=$(notdir $(wildcard $(TOPDIR)/package/feeds/*))
 FEEDS_AVAILABLE:=$(sort $(FEEDS_INSTALLED) $(shell $(SCRIPT_DIR)/feeds list -n 2>/dev/null))
 
@@ -34,28 +35,28 @@ endef
 # 1: destination file
 define FeedSourcesAppendOPKG
 ( \
-  echo 'src/gz %d_core %U/targets/%S/packages'; \
+  echo 'src/gz %d_core %U/$(DATE)_$(VERSION_CODE)_$(BRANCH)/targets/%S/packages'; \
   $(strip $(if $(CONFIG_PER_FEED_REPO), \
-	echo 'src/gz %d_base %U/packages/%A/base'; \
+	echo 'src/gz %d_base $(OWRT_LINK)/packages/%A/base'; \
 	$(if $(CONFIG_BUILDBOT), \
 		echo 'src/gz %d_kmods %U/targets/%S/kmods/$(LINUX_VERSION)-$(LINUX_RELEASE)-$(LINUX_VERMAGIC)';) \
 	$(foreach feed,$(FEEDS_AVAILABLE), \
 		$(if $(CONFIG_FEED_$(feed)), \
-			echo '$(if $(filter m,$(CONFIG_FEED_$(feed))),# )src/gz %d_$(feed) %U/packages/%A/$(feed)';)))) \
+			echo '$(if $(filter m,$(CONFIG_FEED_$(feed))),# )src/gz %d_$(feed) $(OWRT_LINK)/packages/%A/$(feed)';)))) \
 ) >> $(1)
 endef
 
 # 1: destination file
 define FeedSourcesAppendAPK
 ( \
-  echo '%U/targets/%S/packages/packages.adb'; \
+  echo '%U/$(DATE)_$(VERSION_CODE)_$(BRANCH)/targets/%S/packages/packages.adb'; \
   $(strip $(if $(CONFIG_PER_FEED_REPO), \
-	echo '%U/packages/%A/base/packages.adb'; \
+	echo '$(OWRT_LINK)/%A/base/packages.adb'; \
 	$(if $(CONFIG_BUILDBOT), \
 		echo '%U/targets/%S/kmods/$(LINUX_VERSION)-$(LINUX_RELEASE)-$(LINUX_VERMAGIC)/packages.adb';) \
 	$(foreach feed,$(FEEDS_AVAILABLE), \
 		$(if $(CONFIG_FEED_$(feed)), \
-			echo '$(if $(filter m,$(CONFIG_FEED_$(feed))),# )%U/packages/%A/$(feed)/packages.adb';)))) \
+			echo '$(if $(filter m,$(CONFIG_FEED_$(feed))),# )$(OWRT_LINK)/%A/$(feed)/packages.adb';)))) \
 ) >> $(1)
 endef
 
