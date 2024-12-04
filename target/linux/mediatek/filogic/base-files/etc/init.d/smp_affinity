@@ -19,24 +19,24 @@ start() {
 				let "cpu=${count}-1"
 				logger -s "smp_affinity: assigning ${ethdevice} to CPU${cpu} on IRQ ${ETHirq}"
 			done
-		#move usb to CPU2
-		USBirq=`ls -d /proc/irq/*/$usbdevice | awk -F\/ '{ print $4 }'`
-		echo 4 > /proc/irq/${USBirq}/smp_affinity
-		#leave wifi to all CPU
+		#move wifi to CPU2
 		WIFIirq=`ls -d /proc/irq/*/$wifidevice | awk -F\/ '{ print $4 }'`
-		WIFIcpu=`cat /proc/irq/${WIFIirq}/smp_affinity`
-		if [ "$WIFIcpu" == "f" ]; then
-			logger -s "smp_affinity: leave ${wifidevice} to All CPUs on IRQ ${WIFIirq}"
+		echo 4 > /proc/irq/${WIFIirq}/smp_affinity
+		logger -s "smp_affinity: assigning ${wifidevice} to CPU2 on IRQ ${WIFIirq}"
+		#leave usb to all CPU
+		USBirq=`ls -d /proc/irq/*/$usbdevice | awk -F\/ '{ print $4 }'`
+		USBcpu=`cat /proc/irq/${USBirq}/smp_affinity`
+		if [ "$USBcpu" == "f" ]; then
+			logger -s "smp_affinity: leave ${usbdevice} to All CPUs on IRQ ${USBirq}"
 		else
-			logger -s "smp_affinity: leave ${wifidevice} to CPU${WIFIcpu} on IRQ ${WIFIirq}"
+			logger -s "smp_affinity: leave ${usbdevice} to CPU${USBcpu} on IRQ ${USBirq}"
 		fi
-		packet_sterering_status=`uci get network.globals.packet_steering`
 		mtk_eth5=`pgrep napi/mtk_eth-5`
 		mtk_eth6=`pgrep napi/mtk_eth-6`
 		mt76_tx=`pgrep mt76-tx`
-		task1=`taskset -pc 1 $mtk_eth5`
-		task2=`taskset -pc 3 $mtk_eth6`
-		task3=`taskset -pc 2 $mt76_tx`
+		task1=`taskset -pc 0,2,3 $mtk_eth5`
+		task2=`taskset -pc 0,1,2 $mtk_eth6`
+		task3=`taskset -pc 0,1,3 $mt76_tx`
 		logger -s "smp_affinity: mtk_eth-5 have: ${task1}"
 		logger -s "smp_affinity: mtk_eth-6 have: ${task2}"
 		logger -s "smp_affinity: mt76-tx have: ${task3}"
@@ -52,6 +52,7 @@ stop() {
 	local board=$(board_name)
 	local ethdevice='15100000.ethernet'
 	local usbdevice='xhci-hcd:usb1'
+	local wifidevice='mt7915e'
 	
 	case $board in
 	*gl-mt6000)
@@ -61,10 +62,10 @@ stop() {
 				echo f > /proc/irq/${ETHirq}/smp_affinity
 				logger -s "smp_affinity: restore ${ethdevice} to AllCPUs on IRQ ${ETHirq}"
 			done
-		#restore usb to f (all cpu)
-		USBirq=`ls -d /proc/irq/*/$usbdevice | awk -F\/ '{ print $4 }'`
-		echo f > /proc/irq/${USBirq}/smp_affinity
-		logger -s "smp_affinity: restore ${usbdevice} to AllCPUs on IRQ ${USBirq}"
+		#restore wifi to f (all cpu)
+		WIFIirq=`ls -d /proc/irq/*/$wifidevice | awk -F\/ '{ print $4 }'`
+		echo f > /proc/irq/${WIFIirq}/smp_affinity
+		logger -s "smp_affinity: restore ${wifidevice} to AllCPUs on IRQ ${WIFIirq}"
 		packet_sterering_status=`uci get network.globals.packet_steering`
 		mtk_eth5=`pgrep napi/mtk_eth-5`
 		mtk_eth6=`pgrep napi/mtk_eth-6`
