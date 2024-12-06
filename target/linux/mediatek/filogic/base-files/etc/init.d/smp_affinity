@@ -31,15 +31,43 @@ start() {
 		else
 			logger -s "smp_affinity: leave ${usbdevice} to CPU${USBcpu} on IRQ ${USBirq}"
 		fi
-		mtk_eth5=`pgrep napi/mtk_eth-5`
-		mtk_eth6=`pgrep napi/mtk_eth-6`
-		mt76_tx=`pgrep mt76-tx`
-		task1=`taskset -pc 0,2,3 $mtk_eth5`
-		task2=`taskset -pc 0,1,2 $mtk_eth6`
-		task3=`taskset -pc 0,1,3 $mt76_tx`
-		logger -s "smp_affinity: mtk_eth-5 have: ${task1}"
-		logger -s "smp_affinity: mtk_eth-6 have: ${task2}"
-		logger -s "smp_affinity: mt76-tx have: ${task3}"
+		pss=`uci get network.globals.packet_steering`
+		if [ -z "$pss" ];then
+			mtk_eth5=`pgrep napi/mtk_eth-5`
+			mtk_eth6=`pgrep napi/mtk_eth-6`
+			mt76_tx=`pgrep mt76-tx`
+			task1=`taskset -pc 0,2,3 $mtk_eth5`
+			task2=`taskset -pc 0,1,2 $mtk_eth6`
+			task3=`taskset -pc 0,1,3 $mt76_tx`
+			logger -s "smp_affinity: mtk_eth-5 have: ${task1}"
+			logger -s "smp_affinity: mtk_eth-6 have: ${task2}"
+			logger -s "smp_affinity: mt76-tx have: ${task3}"
+			for q in /sys/class/net/eth?/queues/rx-*/rps_cpus; do a=`cat $q`; logger -s "smp_affinity: rps_cpus for $q was set to $a"; done
+			for q in /sys/class/net/phy?-ap?/queues/rx-*/rps_cpus; do a=`cat $q`; logger -s "smp_affinity: rps_cpus for $q was set to $a"; done
+			for q in /sys/class/net/eth?/queues/rx-*/rps_cpus; do echo 0 > $q; logger -s "smp_affinity: rps_cpus for $q is set to 0"; done
+			for q in /sys/class/net/phy?-ap?/queues/rx-*/rps_cpus; do echo 0 > $q; logger -s "smp_affinity: rps_cpus for $q is set to 0"; done
+			for q in /sys/class/net/eth?/queues/tx-*/xps_cpus; do a=`cat $q`; logger -s "smp_affinity: xps_cpus for $q was set to $a"; done
+			for q in /sys/class/net/eth?/queues/tx-*/xps_cpus; do echo 0 > $q; logger -s "smp_affinity: xps_cpus for $q is set to 0"; done
+		elif [ "$pss" == "0" ];then
+			mtk_eth5=`pgrep napi/mtk_eth-5`
+			mtk_eth6=`pgrep napi/mtk_eth-6`
+			mt76_tx=`pgrep mt76-tx`
+			task1=`taskset -pc 0,2,3 $mtk_eth5`
+			task2=`taskset -pc 0,1,2 $mtk_eth6`
+			task3=`taskset -pc 0,1,3 $mt76_tx`
+			logger -s "smp_affinity: mtk_eth-5 have: ${task1}"
+			logger -s "smp_affinity: mtk_eth-6 have: ${task2}"
+			logger -s "smp_affinity: mt76-tx have: ${task3}"
+			for q in /sys/class/net/eth?/queues/rx-*/rps_cpus; do a=`cat $q`; logger -s "smp_affinity: rps_cpus for $q was set to $a"; done
+			for q in /sys/class/net/phy?-ap?/queues/rx-*/rps_cpus; do a=`cat $q`; logger -s "smp_affinity: rps_cpus for $q was set to $a"; done
+			for q in /sys/class/net/eth?/queues/rx-*/rps_cpus; do echo 0 > $q; logger -s "smp_affinity: rps_cpus for $q is set to 0"; done
+			for q in /sys/class/net/phy?-ap?/queues/rx-*/rps_cpus; do echo 0 > $q; logger -s "smp_affinity: rps_cpus for $q is set to 0"; done
+			for q in /sys/class/net/eth?/queues/tx-*/xps_cpus; do a=`cat $q`; logger -s "smp_affinity: xps_cpus for $q was set to $a"; done
+			for q in /sys/class/net/eth?/queues/tx-*/xps_cpus; do echo 0 > $q; logger -s "smp_affinity: xps_cpus for $q is set to 0"; done
+		else
+			logger -s "smp_affinity: packet steering is set to ${pss}, using that script"
+		fi
+
     ;;
     *)
 		logger -s "smp_affinity:  Not compatible with ${BOARD}"
