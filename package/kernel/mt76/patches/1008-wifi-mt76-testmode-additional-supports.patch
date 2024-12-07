@@ -2860,7 +2860,17 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
   * @MT76_TM_ATTR_TX_COUNT: configured number of frames to send when setting
   *	state to MT76_TM_STATE_TX_FRAMES (u32)
   * @MT76_TM_ATTR_TX_PENDING: pending frames during MT76_TM_STATE_TX_FRAMES (u32)
-@@ -47,6 +50,15 @@
+@@ -34,6 +37,9 @@
+  * @MT76_TM_ATTR_TX_POWER_CONTROL: enable tx power control (u8)
+  * @MT76_TM_ATTR_TX_POWER: per-antenna tx power array (nested, u8 attrs)
+  *
++ * @MT76_TM_ATTR_TX_PKT_BW: per-packet data bandwidth (u8)
++ * @MT76_TM_ATTR_TX_PRI_SEL: primary channel selection index (u8)
++ *
+  * @MT76_TM_ATTR_FREQ_OFFSET: RF frequency offset (u32)
+  *
+  * @MT76_TM_ATTR_STATS: statistics (nested, see &enum mt76_testmode_stats_attr)
+@@ -47,6 +53,15 @@
   * @MT76_TM_ATTR_DRV_DATA: driver specific netlink attrs (nested)
   *
   * @MT76_TM_ATTR_MAC_ADDRS: array of nested MAC addresses (nested)
@@ -2876,7 +2886,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
   */
  enum mt76_testmode_attr {
  	MT76_TM_ATTR_UNSPEC,
-@@ -57,6 +69,7 @@ enum mt76_testmode_attr {
+@@ -57,6 +72,7 @@ enum mt76_testmode_attr {
  	MT76_TM_ATTR_MTD_PART,
  	MT76_TM_ATTR_MTD_OFFSET,
  
@@ -2884,7 +2894,17 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  	MT76_TM_ATTR_TX_COUNT,
  	MT76_TM_ATTR_TX_LENGTH,
  	MT76_TM_ATTR_TX_RATE_MODE,
-@@ -84,6 +97,17 @@ enum mt76_testmode_attr {
+@@ -70,6 +86,9 @@ enum mt76_testmode_attr {
+ 	MT76_TM_ATTR_TX_ANTENNA,
+ 	MT76_TM_ATTR_TX_POWER_CONTROL,
+ 	MT76_TM_ATTR_TX_POWER,
++	
++	MT76_TM_ATTR_TX_PKT_BW,
++	MT76_TM_ATTR_TX_PRI_SEL,
+ 
+ 	MT76_TM_ATTR_FREQ_OFFSET,
+ 
+@@ -84,6 +103,17 @@ enum mt76_testmode_attr {
  	MT76_TM_ATTR_DRV_DATA,
  
  	MT76_TM_ATTR_MAC_ADDRS,
@@ -2902,7 +2922,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  
  	/* keep last */
  	NUM_MT76_TM_ATTRS,
-@@ -128,6 +152,7 @@ enum mt76_testmode_stats_attr {
+@@ -128,6 +158,7 @@ enum mt76_testmode_stats_attr {
   *
   * @MT76_TM_RX_ATTR_FREQ_OFFSET: frequency offset (s32)
   * @MT76_TM_RX_ATTR_RCPI: received channel power indicator (array, u8)
@@ -2910,7 +2930,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
   * @MT76_TM_RX_ATTR_IB_RSSI: internal inband RSSI (array, s8)
   * @MT76_TM_RX_ATTR_WB_RSSI: internal wideband RSSI (array, s8)
   * @MT76_TM_RX_ATTR_SNR: signal-to-noise ratio (u8)
-@@ -137,6 +162,7 @@ enum mt76_testmode_rx_attr {
+@@ -137,6 +168,7 @@ enum mt76_testmode_rx_attr {
  
  	MT76_TM_RX_ATTR_FREQ_OFFSET,
  	MT76_TM_RX_ATTR_RCPI,
@@ -2918,7 +2938,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  	MT76_TM_RX_ATTR_IB_RSSI,
  	MT76_TM_RX_ATTR_WB_RSSI,
  	MT76_TM_RX_ATTR_SNR,
-@@ -196,4 +222,57 @@ enum mt76_testmode_tx_mode {
+@@ -196,4 +228,57 @@ enum mt76_testmode_tx_mode {
  	MT76_TM_TX_MODE_MAX = NUM_MT76_TM_TX_MODES - 1,
  };
  

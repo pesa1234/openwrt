@@ -607,7 +607,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  	    (mt76_testmode_param_present(td, MT76_TM_ATTR_TX_ANTENNA) &&
 --- a/testmode.h
 +++ b/testmode.h
-@@ -64,6 +64,20 @@
+@@ -67,6 +67,20 @@
   *	(nested, u8 attrs)
   *
   * @MT76_TM_ATTR_CFG: config testmode rf feature (nested, see &mt76_testmode_cfg)
@@ -628,7 +628,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
   *
   */
  enum mt76_testmode_attr {
-@@ -118,6 +132,16 @@ enum mt76_testmode_attr {
+@@ -124,6 +138,16 @@ enum mt76_testmode_attr {
  	MT76_TM_ATTR_TXBF_ACT,
  	MT76_TM_ATTR_TXBF_PARAM,
  
@@ -645,7 +645,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  	/* keep last */
  	NUM_MT76_TM_ATTRS,
  	MT76_TM_ATTR_MAX = NUM_MT76_TM_ATTRS - 1,
-@@ -294,4 +318,25 @@ enum mt76_testmode_txbf_act {
+@@ -300,4 +324,25 @@ enum mt76_testmode_txbf_act {
  	MT76_TM_TXBF_ACT_MAX = NUM_MT76_TM_TXBF_ACT - 1,
  };
  

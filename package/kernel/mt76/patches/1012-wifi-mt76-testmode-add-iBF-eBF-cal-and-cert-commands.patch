@@ -1836,7 +1836,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  	memcpy(hdr->addr3, addr[2], ETH_ALEN);
 --- a/testmode.h
 +++ b/testmode.h
-@@ -301,7 +301,10 @@ enum mt76_testmode_cfg {
+@@ -307,7 +307,10 @@ enum mt76_testmode_cfg {
  };
  
  enum mt76_testmode_txbf_act {
@@ -1847,7 +1847,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  	MT76_TM_TXBF_ACT_UPDATE_CH,
  	MT76_TM_TXBF_ACT_PHASE_COMP,
  	MT76_TM_TXBF_ACT_TX_PREP,
-@@ -312,6 +315,12 @@ enum mt76_testmode_txbf_act {
+@@ -318,6 +321,12 @@ enum mt76_testmode_txbf_act {
  	MT76_TM_TXBF_ACT_PROF_UPDATE_ALL,
  	MT76_TM_TXBF_ACT_PROF_UPDATE_ALL_CMD,
  	MT76_TM_TXBF_ACT_E2P_UPDATE,
