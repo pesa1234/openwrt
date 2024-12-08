@@ -41,13 +41,9 @@ start() {
 			task1=`taskset -pc 0,2,3 $mtk_eth5`
 			task2=`taskset -pc 0,1,2 $mtk_eth6`
 			task3=`taskset -pc 1 $mt76_tx`
-			task4=`taskset -pc 1 $phy010`
-			task5=`taskset -pc 1 $phy012`
 			logger -s "smp_affinity: mtk_eth-5 have: ${task1}"
 			logger -s "smp_affinity: mtk_eth-6 have: ${task2}"
 			logger -s "smp_affinity: mt76-tx have: ${task3}"
-			logger -s "smp_affinity: phy0-10 have: ${task4}"
-			logger -s "smp_affinity: phy0-12 have: ${task5}"
 			for p in `pgrep napi/phy0`; do taskset -p -c 0,1,3 $p; logger -s "smp_affinity: napy/phy0 pid: ${p} set to 0-1,3"; done
 			for q in /sys/class/net/eth?/queues/rx-*/rps_cpus; do a=`cat $q`; logger -s "smp_affinity: rps_cpus for $q was set to $a"; done
 			for q in /sys/class/net/eth?/queues/rx-*/rps_cpus; do echo 0 > $q; logger -s "smp_affinity: rps_cpus for $q is set to 0"; done
@@ -64,13 +60,9 @@ start() {
 			task1=`taskset -pc 0,2,3 $mtk_eth5`
 			task2=`taskset -pc 0,1,2 $mtk_eth6`
 			task3=`taskset -pc 1 $mt76_tx`
-			task4=`taskset -pc 1 $phy010`
-			task5=`taskset -pc 1 $phy012`
 			logger -s "smp_affinity: mtk_eth-5 have: ${task1}"
 			logger -s "smp_affinity: mtk_eth-6 have: ${task2}"
 			logger -s "smp_affinity: mt76-tx have: ${task3}"
-			logger -s "smp_affinity: phy0-10 have: ${task4}"
-			logger -s "smp_affinity: phy0-12 have: ${task5}"
 			for p in `pgrep napi/phy0`; do taskset -p -c 0,1,3 $p; logger -s "smp_affinity: napy/phy0 pid: ${p} set to 0-1,3"; done
 			for q in /sys/class/net/eth?/queues/rx-*/rps_cpus; do a=`cat $q`; logger -s "smp_affinity: rps_cpus for $q was set to $a"; done
 			for q in /sys/class/net/eth?/queues/rx-*/rps_cpus; do echo 0 > $q; logger -s "smp_affinity: rps_cpus for $q is set to 0"; done
