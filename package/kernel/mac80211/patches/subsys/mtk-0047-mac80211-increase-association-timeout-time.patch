@@ -13,7 +13,7 @@ Signed-off-by: Shayne Chen <shayne.chen@mediatek.com>
 
 --- a/net/mac80211/mlme.c
 +++ b/net/mac80211/mlme.c
-@@ -7794,7 +7794,7 @@ void ieee80211_sta_work(struct ieee80211
+@@ -7792,7 +7792,7 @@ void ieee80211_sta_work(struct ieee80211
  			 */
  			if (status_acked) {
  				ifmgd->assoc_data->timeout =

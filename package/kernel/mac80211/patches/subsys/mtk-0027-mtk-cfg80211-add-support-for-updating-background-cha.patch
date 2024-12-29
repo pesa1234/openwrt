@@ -58,7 +58,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  /**
 --- a/net/wireless/mlme.c
 +++ b/net/wireless/mlme.c
-@@ -1277,6 +1277,18 @@ cfg80211_start_background_radar_detectio
+@@ -1271,6 +1271,18 @@ cfg80211_start_background_radar_detectio
  	return 0;
  }
  

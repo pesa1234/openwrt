@@ -16,7 +16,7 @@ Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
 
 --- a/include/net/mac80211.h
 +++ b/include/net/mac80211.h
-@@ -4444,6 +4444,7 @@ struct ieee80211_prep_tx_info {
+@@ -4457,6 +4457,7 @@ struct ieee80211_prep_tx_info {
   *	if the requested TID-To-Link mapping can be accepted or not.
   *	If it's not accepted the driver may suggest a preferred mapping and
   *	modify @ttlm parameter with the suggested TID-to-Link mapping.
@@ -24,7 +24,7 @@ Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
   */
  struct ieee80211_ops {
  	void (*tx)(struct ieee80211_hw *hw,
-@@ -4828,6 +4829,8 @@ struct ieee80211_ops {
+@@ -4841,6 +4842,8 @@ struct ieee80211_ops {
  	enum ieee80211_neg_ttlm_res
  	(*can_neg_ttlm)(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
  			struct ieee80211_neg_ttlm *ttlm);
@@ -35,7 +35,7 @@ Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
  /**
 --- a/net/mac80211/cfg.c
 +++ b/net/mac80211/cfg.c
-@@ -4357,7 +4357,7 @@ static int ieee80211_set_qos_map(struct
+@@ -4356,7 +4356,7 @@ static int ieee80211_set_qos_map(struct
  	if (old_qos_map)
  		kfree_rcu(old_qos_map, rcu_head);
  

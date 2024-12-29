@@ -17,7 +17,7 @@ Signed-off-by: Peter Chiu <chui-hao.chiu@mediatek.com>
 
 --- a/net/mac80211/cfg.c
 +++ b/net/mac80211/cfg.c
-@@ -4268,7 +4268,8 @@ static int ieee80211_probe_client(struct
+@@ -4267,7 +4267,8 @@ static int ieee80211_probe_client(struct
  	info = IEEE80211_SKB_CB(skb);
  
  	info->flags |= IEEE80211_TX_CTL_REQ_TX_STATUS |
