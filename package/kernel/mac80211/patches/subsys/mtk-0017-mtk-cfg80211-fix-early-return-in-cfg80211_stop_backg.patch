@@ -11,7 +11,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
 
 --- a/net/wireless/mlme.c
 +++ b/net/wireless/mlme.c
-@@ -1288,9 +1288,9 @@ void cfg80211_stop_background_radar_dete
+@@ -1282,9 +1282,9 @@ void cfg80211_stop_background_radar_dete
  		return;
  
  	rdev_set_radar_background(rdev, NULL);
