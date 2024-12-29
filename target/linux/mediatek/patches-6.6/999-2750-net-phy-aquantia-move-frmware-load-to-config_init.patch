@@ -1,0 +1,44 @@
+--- a/drivers/net/phy/aquantia/aquantia_main.c
++++ b/drivers/net/phy/aquantia/aquantia_main.c
+@@ -626,6 +626,11 @@ static int aqr107_config_init(struct phy
+ 	ret = aqr107_wait_reset_complete(phydev);
+ 	if (!ret)
+ 		aqr107_chip_info(phydev);
++	else {
++		ret = aqr_firmware_load(phydev);
++		if (ret)
++			return ret;
++	}
+ 
+ 	ret = phy_clear_bits_mmd(phydev, MDIO_MMD_PMAPMD, MDIO_PMA_TXDIS,
+ 				 MDIO_PMD_TXDIS_GLOBAL);
+@@ -672,6 +677,11 @@ static int aqcs109_config_init(struct ph
+ 	ret = aqr107_wait_reset_complete(phydev);
+ 	if (!ret)
+ 		aqr107_chip_info(phydev);
++	else {
++		ret = aqr_firmware_load(phydev);
++		if (ret)
++			return ret;
++	}
+ 
+ 	/* AQCS109 belongs to a chip family partially supporting 10G and 5G.
+ 	 * PMA speed ability bits are the same for all members of the family,
+@@ -763,17 +773,11 @@ static int aqr107_resume(struct phy_devi
+ 
+ static int aqr107_probe(struct phy_device *phydev)
+ {
+-	int ret;
+-
+ 	phydev->priv = devm_kzalloc(&phydev->mdio.dev,
+ 				    sizeof(struct aqr107_priv), GFP_KERNEL);
+ 	if (!phydev->priv)
+ 		return -ENOMEM;
+ 
+-	ret = aqr_firmware_load(phydev);
+-	if (ret)
+-		return ret;
+-
+ 	return aqr_hwmon_probe(phydev);
+ }
+ 
