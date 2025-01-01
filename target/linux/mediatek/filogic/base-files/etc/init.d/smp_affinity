@@ -562,10 +562,8 @@ enable-HQoS()
 	hqos_enable=$(uci get mtkhnat.global.hqos)
 	if [ $mtkutil_enable == 1 ]; then
 		if [ $hqos_enable == 1 ]; then
-			echo 1 > /sys/kernel/debug/mtk_ppe/qos_toggle
-			cat /sys/kernel/debug/mtk_ppe/qos_toggle
 			/sbin/mtkhnat
-			logger -s "smp_affinity: mtkhnat_util is enabled - HQoS is active"
+			logger -s "smp_affinity: mtkhnat_util is enabled and active"
 		fi
 	fi
 	
