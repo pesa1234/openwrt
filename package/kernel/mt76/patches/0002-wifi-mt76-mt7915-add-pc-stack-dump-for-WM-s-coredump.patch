@@ -38,7 +38,7 @@ Signed-off-by: Bo Jiao <Bo.Jiao@mediatek.com>
  enum mt76_wed_type {
  	MT76_WED_Q_TX,
  	MT76_WED_Q_TXFREE,
-@@ -891,6 +899,9 @@ struct mt76_dev {
+@@ -887,6 +895,9 @@ struct mt76_dev {
  	struct device *dma_dev;
  
  	struct mt76_mcu mcu;
@@ -510,7 +510,7 @@ Signed-off-by: Bo Jiao <Bo.Jiao@mediatek.com>
  }
 --- a/mt7915/mac.c
 +++ b/mt7915/mac.c
-@@ -1608,28 +1608,31 @@ void mt7915_mac_reset_work(struct work_s
+@@ -1603,28 +1603,31 @@ void mt7915_mac_reset_work(struct work_s
  }
  
  /* firmware coredump */
@@ -548,7 +548,7 @@ Signed-off-by: Bo Jiao <Bo.Jiao@mediatek.com>
  	if (!mem_region || !crash_data->memdump_buf_len) {
  		mutex_unlock(&dev->dump_mutex);
  		goto skip_memdump;
-@@ -1639,6 +1642,9 @@ void mt7915_mac_dump_work(struct work_st
+@@ -1634,6 +1637,9 @@ void mt7915_mac_dump_work(struct work_st
  	buf_len = crash_data->memdump_buf_len;
  
  	/* dumping memory content... */
@@ -558,7 +558,7 @@ Signed-off-by: Bo Jiao <Bo.Jiao@mediatek.com>
  	memset(buf, 0, buf_len);
  	for (i = 0; i < num; i++) {
  		if (mem_region->len > buf_len) {
-@@ -1656,6 +1662,7 @@ void mt7915_mac_dump_work(struct work_st
+@@ -1651,6 +1657,7 @@ void mt7915_mac_dump_work(struct work_st
  		mt7915_memcpy_fromio(dev, buf, mem_region->start,
  				     mem_region->len);
  
@@ -566,7 +566,7 @@ Signed-off-by: Bo Jiao <Bo.Jiao@mediatek.com>
  		hdr->start = mem_region->start;
  		hdr->len = mem_region->len;
  
-@@ -1672,8 +1679,18 @@ void mt7915_mac_dump_work(struct work_st
+@@ -1667,8 +1674,18 @@ void mt7915_mac_dump_work(struct work_st
  	mutex_unlock(&dev->dump_mutex);
  
  skip_memdump:
@@ -589,7 +589,7 @@ Signed-off-by: Bo Jiao <Bo.Jiao@mediatek.com>
  
 --- a/mt7915/mt7915.h
 +++ b/mt7915/mt7915.h
-@@ -287,7 +287,7 @@ struct mt7915_dev {
+@@ -282,7 +282,7 @@ struct mt7915_dev {
  	struct mutex dump_mutex;
  #ifdef CONFIG_DEV_COREDUMP
  	struct {
@@ -600,7 +600,7 @@ Signed-off-by: Bo Jiao <Bo.Jiao@mediatek.com>
  
 --- a/mt7915/regs.h
 +++ b/mt7915/regs.h
-@@ -1219,4 +1219,24 @@ enum offs_rev {
+@@ -1226,4 +1226,24 @@ enum offs_rev {
  #define MT_MCU_WM_CIRQ_EINT_MASK_CLR_ADDR	MT_MCU_WM_CIRQ(0x108)
  #define MT_MCU_WM_CIRQ_EINT_SOFT_ADDR		MT_MCU_WM_CIRQ(0x118)
  

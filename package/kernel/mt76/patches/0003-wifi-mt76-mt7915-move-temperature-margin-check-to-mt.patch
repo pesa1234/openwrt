@@ -20,7 +20,7 @@ Signed-off-by: Howard Hsu <howard-yh.hsu@mediatek.com>
 +++ b/mt7915/init.c
 @@ -86,12 +86,13 @@ static ssize_t mt7915_thermal_temp_store
  	mutex_lock(&phy->dev->mt76.mutex);
- 	val = clamp_val(DIV_ROUND_CLOSEST(val, 1000), 60, 130);
+ 	val = DIV_ROUND_CLOSEST(clamp_val(val, 60 * 1000, 130 * 1000), 1000);
  
 +	/* add a safety margin ~10 */
  	if ((i - 1 == MT7915_CRIT_TEMP_IDX &&
@@ -37,7 +37,7 @@ Signed-off-by: Howard Hsu <howard-yh.hsu@mediatek.com>
  	}
 --- a/mt7915/mcu.c
 +++ b/mt7915/mcu.c
-@@ -3264,8 +3264,7 @@ int mt7915_mcu_set_thermal_protect(struc
+@@ -3269,8 +3269,7 @@ int mt7915_mcu_set_thermal_protect(struc
  
  	/* set high-temperature trigger threshold */
  	req.ctrl.ctrl_id = THERMAL_PROTECT_ENABLE;

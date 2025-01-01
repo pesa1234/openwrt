@@ -41,7 +41,7 @@ Signed-off-by: Yi-Chia Hsieh <yi-chia.hsieh@mediatek.com>
  		else if (mphy->chandef.chan->band == NL80211_BAND_6GHZ)
 --- a/mt7915/mmio.c
 +++ b/mt7915/mmio.c
-@@ -588,6 +588,7 @@ static void mt7915_mmio_wed_update_rx_st
+@@ -590,6 +590,7 @@ static void mt7915_mmio_wed_update_rx_st
  	int idx = le16_to_cpu(stats->wlan_idx);
  	struct mt7915_dev *dev;
  	struct mt76_wcid *wcid;
@@ -49,7 +49,7 @@ Signed-off-by: Yi-Chia Hsieh <yi-chia.hsieh@mediatek.com>
  
  	dev = container_of(wed, struct mt7915_dev, mt76.mmio.wed);
  
-@@ -598,6 +599,10 @@ static void mt7915_mmio_wed_update_rx_st
+@@ -600,6 +601,10 @@ static void mt7915_mmio_wed_update_rx_st
  
  	wcid = rcu_dereference(dev->mt76.wcid[idx]);
  	if (wcid) {

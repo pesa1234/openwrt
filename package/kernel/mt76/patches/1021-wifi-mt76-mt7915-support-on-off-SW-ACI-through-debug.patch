@@ -12,10 +12,10 @@ Signed-off-by: Evelyn Tsai <evelyn.tsai@mediatek.com>
 
 --- a/mt76_connac_mcu.h
 +++ b/mt76_connac_mcu.h
-@@ -1271,6 +1271,7 @@ enum {
- 	MCU_EXT_CMD_SET_QOS_MAP = 0xb4,
+@@ -1272,6 +1272,7 @@ enum {
  	MCU_EXT_CMD_SET_CFG = 0xb7,
  	MCU_EXT_CMD_EDCCA = 0xba,
+ 	MCU_EXT_CMD_WF_RF_PIN_CTRL = 0xbd,
 +	MCU_EXT_CMD_SWLNA_ACI_CTRL = 0xc0,
  	MCU_EXT_CMD_CSI_CTRL = 0xc2,
  	MCU_EXT_CMD_IPI_HIST_SCAN = 0xc5,

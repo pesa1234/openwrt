@@ -11,7 +11,7 @@ Signed-off-by: Rex Lu <rex.lu@mediatek.com>
 
 --- a/mt76.h
 +++ b/mt76.h
-@@ -352,6 +352,7 @@ DECLARE_EWMA(signal, 10, 8);
+@@ -348,6 +348,7 @@ DECLARE_EWMA(signal, 10, 8);
  #define MT_WCID_TX_INFO_TXPWR_ADJ	GENMASK(25, 18)
  #define MT_WCID_TX_INFO_SET		BIT(31)
  
@@ -19,7 +19,7 @@ Signed-off-by: Rex Lu <rex.lu@mediatek.com>
  struct mt76_wcid {
  	struct mt76_rx_tid __rcu *aggr[IEEE80211_NUM_TIDS];
  
-@@ -363,7 +364,7 @@ struct mt76_wcid {
+@@ -359,7 +360,7 @@ struct mt76_wcid {
  
  	struct rate_info rate;
  	unsigned long ampdu_state;

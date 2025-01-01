@@ -33,6 +33,6 @@ scan done and before restore to duty channel.
  	if (chandef->chan != phy->main_chandef.chan)
 -		memset(phy->chan_state, 0, sizeof(*phy->chan_state));
 +		memset(phy->chan_state, 0, sizeof(*phy->chan_state) || ieee80211_get_scanning(phy->hw));
- 	mt76_worker_enable(&dev->tx_worker);
  
  	ret = dev->drv->set_channel(phy);
+ 

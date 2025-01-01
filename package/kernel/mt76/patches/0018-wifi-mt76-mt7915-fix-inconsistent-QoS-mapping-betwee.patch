@@ -21,9 +21,9 @@ Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
  	MCU_EXT_CMD_DPD_PRE_CAL_INFO = 0xac,
  	MCU_EXT_CMD_PHY_STAT_INFO = 0xad,
 +	MCU_EXT_CMD_SET_QOS_MAP = 0xb4,
+ 	MCU_EXT_CMD_WF_RF_PIN_CTRL = 0xbd,
  };
  
- enum {
 --- a/mt7915/main.c
 +++ b/mt7915/main.c
 @@ -209,7 +209,7 @@ static int mt7915_add_interface(struct i
@@ -48,7 +48,7 @@ Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
  	mt7915_mac_wtbl_update(dev, idx,
  			       MT_WTBL_UPDATE_ADM_COUNT_CLEAR);
  
-@@ -1639,6 +1645,56 @@ mt7915_set_frag_threshold(struct ieee802
+@@ -1688,6 +1694,56 @@ mt7915_set_frag_threshold(struct ieee802
  }
  
  static int
@@ -105,7 +105,7 @@ Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
  mt7915_set_radar_background(struct ieee80211_hw *hw,
  			    struct cfg80211_chan_def *chandef)
  {
-@@ -1780,6 +1836,7 @@ const struct ieee80211_ops mt7915_ops =
+@@ -1829,6 +1885,7 @@ const struct ieee80211_ops mt7915_ops =
  	.add_twt_setup = mt7915_mac_add_twt_setup,
  	.twt_teardown_request = mt7915_twt_teardown_request,
  	.set_frag_threshold = mt7915_set_frag_threshold,
@@ -124,7 +124,7 @@ Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
  struct mt7915_vif;
  struct mt7915_sta;
  struct mt7915_dfs_pulse;
-@@ -175,6 +177,8 @@ struct mt7915_vif {
+@@ -174,6 +176,8 @@ struct mt7915_vif {
  
  	struct ieee80211_tx_queue_params queue_params[IEEE80211_NUM_ACS];
  	struct cfg80211_bitrate_mask bitrate_mask;

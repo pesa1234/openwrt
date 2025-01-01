@@ -45,7 +45,7 @@ Signed-off-by: Henry.Yen <henry.yen@mediatek.com>
  	/* mt7915: disable rx rate report by default due to hw issues */
  	mt76_clear(dev, MT_DMA_DCR0(band), MT_DMA_DCR0_RXD_G5_EN);
  
-@@ -607,23 +583,17 @@ mt7915_init_led_mux(struct mt7915_dev *d
+@@ -616,23 +592,17 @@ mt7915_init_led_mux(struct mt7915_dev *d
  void mt7915_mac_init(struct mt7915_dev *dev)
  {
  	int i;
@@ -71,7 +71,7 @@ Signed-off-by: Henry.Yen <henry.yen@mediatek.com>
  				       MT_WTBL_UPDATE_ADM_COUNT_CLEAR);
 --- a/mt7915/mac.c
 +++ b/mt7915/mac.c
-@@ -1149,61 +1149,20 @@ void mt7915_mac_reset_counters(struct mt
+@@ -1144,61 +1144,20 @@ void mt7915_mac_reset_counters(struct mt
  
  void mt7915_mac_set_timing(struct mt7915_phy *phy)
  {
@@ -85,7 +85,7 @@ Signed-off-by: Henry.Yen <henry.yen@mediatek.com>
 -		   FIELD_PREP(MT_TIMEOUT_VAL_CCA, 28);
 +	u32 val;
  	u8 band = phy->mt76->band_idx;
--	int eifs_ofdm = 360, sifs = 10, offset;
+-	int eifs_ofdm = 84, sifs = 10, offset;
  	bool a_band = !(phy->mt76->chandef.chan->band == NL80211_BAND_2GHZ);
  
  	if (!test_bit(MT76_STATE_RUNNING, &phy->mt76->state))
