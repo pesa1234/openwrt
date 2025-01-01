@@ -1,0 +1,12 @@
+--- a/drivers/net/ethernet/mediatek/mtk_eth_dbg.c
++++ b/drivers/net/ethernet/mediatek/mtk_eth_dbg.c
+@@ -137,6 +137,9 @@ static ssize_t qdma_sched_write(struct f
+ 	if (mtk_is_netsys_v3_or_greater(eth)) {
+ 		if (rate > 10000000 || rate < 0)
+ 			return -EINVAL;
++	} else if (mtk_is_netsys_v2_or_greater(eth)) {
++		if (rate > 2500000 || rate < 0)
++			return -EINVAL;
+ 	} else {
+ 		if (rate > 1000000 || rate < 0)
+ 			return -EINVAL;
