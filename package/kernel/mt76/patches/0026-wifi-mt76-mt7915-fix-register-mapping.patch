@@ -14,7 +14,7 @@ Signed-off-by: Peter Chiu <chui-hao.chiu@mediatek.com>
 
 --- a/mt7915/mmio.c
 +++ b/mt7915/mmio.c
-@@ -484,7 +484,7 @@ static u32 __mt7915_reg_addr(struct mt79
+@@ -486,7 +486,7 @@ static u32 __mt7915_reg_addr(struct mt79
  			continue;
  
  		ofs = addr - dev->reg.map[i].phys;

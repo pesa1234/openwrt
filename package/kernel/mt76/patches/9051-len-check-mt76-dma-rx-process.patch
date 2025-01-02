@@ -14,7 +14,7 @@ Signed-off-by: Rany Hany <rany_hany@riseup.net>
 ---
 --- a/dma.c
 +++ b/dma.c
-@@ -858,7 +858,7 @@ mt76_dma_rx_process(struct mt76_dev *dev
+@@ -870,7 +870,7 @@ mt76_dma_rx_process(struct mt76_dev *dev
  		if (!data)
  			break;
  

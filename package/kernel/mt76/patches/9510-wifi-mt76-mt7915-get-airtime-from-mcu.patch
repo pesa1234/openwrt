@@ -13,15 +13,15 @@ Subject: [PATCH] [mt76] mt7915 MCU event airtime
 
 --- a/mt76_connac_mcu.h
 +++ b/mt76_connac_mcu.h
-@@ -1047,6 +1047,7 @@ enum {
- 	MCU_EXT_EVENT_WA_TX_STAT = 0x74,
+@@ -1048,6 +1048,7 @@ enum {
  	MCU_EXT_EVENT_BCC_NOTIFY = 0x75,
+ 	MCU_EXT_EVENT_WF_RF_PIN_CTRL = 0x9a,
  	MCU_EXT_EVENT_MURU_CTRL = 0x9f,
 +	MCU_EXT_EVENT_GET_ALL_STA_STATS = 0xb5,
  	MCU_EXT_EVENT_CSI_REPORT = 0xc2,
  };
  
-@@ -1269,6 +1270,7 @@ enum {
+@@ -1271,6 +1272,7 @@ enum {
  	MCU_EXT_CMD_PHY_STAT_INFO = 0xad,
  	/* for vendor csi and air monitor */
  	MCU_EXT_CMD_SMESH_CTRL = 0xae,
@@ -29,7 +29,7 @@ Subject: [PATCH] [mt76] mt7915 MCU event airtime
  	MCU_EXT_CMD_RX_STAT_USER_CTRL = 0xb3,
  	MCU_EXT_CMD_SET_QOS_MAP = 0xb4,
  	MCU_EXT_CMD_SET_CFG = 0xb7,
-@@ -1279,6 +1281,16 @@ enum {
+@@ -1282,6 +1284,16 @@ enum {
  	MCU_EXT_CMD_LPI_CTRL = 0xc8,
  };
  
@@ -46,7 +46,7 @@ Subject: [PATCH] [mt76] mt7915 MCU event airtime
  enum {
  	MCU_UNI_CMD_DEV_INFO_UPDATE = 0x01,
  	MCU_UNI_CMD_BSS_INFO_UPDATE = 0x02,
-@@ -1401,11 +1413,23 @@ enum {
+@@ -1404,11 +1416,23 @@ enum {
  	UNI_OFFLOAD_OFFLOAD_BMC_RPY_DETECT,
  };
  
@@ -100,7 +100,7 @@ Subject: [PATCH] [mt76] mt7915 MCU event airtime
  		u32 addr, val;
  		u16 idx;
  		s8 rssi[4];
-@@ -130,57 +120,6 @@ static void mt7915_mac_sta_poll(struct m
+@@ -130,63 +120,6 @@ static void mt7915_mac_sta_poll(struct m
  		spin_unlock_bh(&dev->mt76.sta_poll_lock);
  
  		idx = msta->wcid.idx;
@@ -155,10 +155,16 @@ Subject: [PATCH] [mt76] mt7915 MCU event airtime
 -						       rx_cur);
 -		}
 -
+-		/*
+-		 * We don't support reading GI info from txs packets.
+-		 * For accurate tx status reporting and AQL improvement,
+-		 * we need to make sure that flags match so polling GI
+-		 * from per-sta counters directly.
+-		 */
  		rate = &msta->wcid.rate;
- 
- 		switch (rate->bw) {
-@@ -2096,11 +2035,14 @@ void mt7915_mac_work(struct work_struct
+ 		addr = mt7915_mac_wtbl_lmac_addr(dev, idx, 7);
+ 		val = mt76_rr(dev, addr);
+@@ -2070,11 +2003,14 @@ void mt7915_mac_work(struct work_struct
  {
  	struct mt7915_phy *phy;
  	struct mt76_phy *mphy;
@@ -173,7 +179,7 @@ Subject: [PATCH] [mt76] mt7915 MCU event airtime
  	mutex_lock(&mphy->dev->mutex);
  
  	mt76_update_survey(mphy);
-@@ -2114,6 +2056,8 @@ void mt7915_mac_work(struct work_struct
+@@ -2088,6 +2024,8 @@ void mt7915_mac_work(struct work_struct
  
  		if (phy->dev->muru_debug)
  			mt7915_mcu_muru_debug_get(phy);
@@ -307,7 +313,7 @@ Subject: [PATCH] [mt76] mt7915 MCU event airtime
  	     !rxd->seq) &&
  	     !(rxd->eid == MCU_CMD_EXT_CID &&
  	       rxd->ext_eid == MCU_EXT_EVENT_WA_TX_STAT))
-@@ -5497,3 +5599,16 @@ int mt7915_mcu_thermal_debug(struct mt79
+@@ -5504,3 +5606,16 @@ int mt7915_mcu_thermal_debug(struct mt79
  	return mt76_mcu_send_msg(&dev->mt76, MCU_EXT_CMD(THERMAL_DEBUG), &req,
  				 sizeof(req), true);
  }
@@ -326,7 +332,7 @@ Subject: [PATCH] [mt76] mt7915 MCU event airtime
 +}
 --- a/mt7915/mcu.h
 +++ b/mt7915/mcu.h
-@@ -772,6 +772,22 @@ enum {
+@@ -717,6 +717,22 @@ enum {
  	SER_RECOVER
  };
  
@@ -351,8 +357,8 @@ Subject: [PATCH] [mt76] mt7915 MCU event airtime
  					 sizeof(struct bss_info_bcn) +	\
 --- a/mt7915/mt7915.h
 +++ b/mt7915/mt7915.h
-@@ -697,6 +697,7 @@ int mt7915_mcu_set_thermal_protect(struc
- int mt7915_mcu_get_tx_rate(struct mt7915_phy *phy, u16 wcidx);
+@@ -760,6 +760,7 @@ int mt7915_mcu_set_thermal_throttling(st
+ int mt7915_mcu_set_thermal_protect(struct mt7915_phy *phy);
  int mt7915_mcu_get_rx_rate(struct mt7915_phy *phy, struct ieee80211_vif *vif,
  			   struct ieee80211_sta *sta, struct rate_info *rate);
 +int mt7915_mcu_get_all_sta_info(struct mt76_dev *dev, u16 tag);
@@ -361,7 +367,7 @@ Subject: [PATCH] [mt76] mt7915 MCU event airtime
  int mt7915_mcu_wed_wa_tx_stats(struct mt7915_dev *dev, u16 wcid);
 --- a/mt76.h
 +++ b/mt76.h
-@@ -327,12 +327,16 @@ struct mt76_sta_stats {
+@@ -323,12 +323,16 @@ struct mt76_sta_stats {
  	u32 tx_packets;		/* unit: MSDU */
  	u32 tx_retries;
  	u32 tx_failed;
@@ -378,7 +384,7 @@ Subject: [PATCH] [mt76] mt7915 MCU event airtime
  };
  
  enum mt76_wcid_flags {
-@@ -1412,6 +1416,22 @@ static inline int mt76_decr(int val, int
+@@ -1408,6 +1412,22 @@ static inline int mt76_decr(int val, int
  
  u8 mt76_ac_to_hwq(u8 ac);
  
