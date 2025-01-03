@@ -46,7 +46,7 @@ Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
  /** global debugfs **/
  
  struct hw_queue_map {
-@@ -223,6 +227,360 @@ static const struct file_operations mt79
+@@ -223,6 +227,361 @@ static const struct file_operations mt79
  	.llseek = default_llseek,
  };
  
@@ -75,8 +75,9 @@ Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
 +			  "vow_show_sta=<STA num>\n"
 +			  "show_vow_info\n"
 +			  "show_vow_sta_conf=<STA num> 0:all\n"
-+			  "======= Send command example=======\n"
-+			  "echo 'show_vow_info' > /sys/kernel/debug/ieee80211/phy0/mt76/vow");
++			  "======= Send command example =======\n"
++			  "echo 'show_vow_info' > /sys/kernel/debug/ieee80211/phy0/mt76/vow\n"
++			  "================================================================\n");
 +	ret = simple_read_from_buffer(user_buf, count, ppos, buff, desc);
 +	kfree(buff);
 +	return ret;
@@ -407,7 +408,7 @@ Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
  static int
  mt7915_radar_trigger(void *data, u64 val)
  {
-@@ -1531,6 +1889,7 @@ int mt7915_init_debugfs(struct mt7915_ph
+@@ -1531,6 +1890,7 @@ int mt7915_init_debugfs(struct mt7915_ph
  	debugfs_create_devm_seqfile(dev->mt76.dev, "twt_stats", dir,
  				    mt7915_twt_stats);
  	debugfs_create_file("rf_regval", 0600, dir, dev, &fops_rf_regval);

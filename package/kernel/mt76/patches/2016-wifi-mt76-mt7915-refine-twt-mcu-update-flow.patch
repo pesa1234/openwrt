@@ -16,7 +16,7 @@ Signed-off-by: Yi-Chia Hsieh <Yi-Chia.Hsieh@mediatek.com>
 
 --- a/mt7915/debugfs.c
 +++ b/mt7915/debugfs.c
-@@ -1756,7 +1756,7 @@ mt7915_twt_stats(struct seq_file *s, voi
+@@ -1757,7 +1757,7 @@ mt7915_twt_stats(struct seq_file *s, voi
  	struct mt7915_dev *dev = dev_get_drvdata(s->private);
  	struct mt7915_twt_flow *iter;
  
@@ -25,7 +25,7 @@ Signed-off-by: Yi-Chia Hsieh <Yi-Chia.Hsieh@mediatek.com>
  
  	seq_puts(s, "     wcid |       id |    flags |      exp | mantissa");
  	seq_puts(s, " | duration |            tsf |\n");
-@@ -1771,7 +1771,7 @@ mt7915_twt_stats(struct seq_file *s, voi
+@@ -1772,7 +1772,7 @@ mt7915_twt_stats(struct seq_file *s, voi
  			iter->exp, iter->mantissa,
  			iter->duration, iter->tsf);
  
