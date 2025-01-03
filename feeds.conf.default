@@ -1,4 +1,4 @@
-src-git packages https://github.com/pesa1234/packages.git;next-r4.mtk
+src-git packages https://github.com/pesa1234/packages.git;next-v4.mtk
 src-git luci https://github.com/pesa1234/luci.git;next-r4
 src-git routing https://git.openwrt.org/feed/routing.git
 src-git telephony https://git.openwrt.org/feed/telephony.git
