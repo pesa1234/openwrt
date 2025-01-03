@@ -241,24 +241,24 @@ Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
 +}
 +static int mt7915_set_show_vow_info(struct mt7915_dev *dev)
 +{
-+	dev_info(dev->mt76.dev, "====== VOW Control Information ======\n");
-+	dev_info(dev->mt76.dev, "ATF Enable: %d\n",
++	dev_info(dev->mt76.dev, ":=:====== VOW Control Information ======\n");
++	dev_info(dev->mt76.dev, ":=:ATF Enable: %d\n",
 +                 dev->vow_cfg.vow_atf_en);
-+	dev_info(dev->mt76.dev, "WATF Enable: %d\n",
++	dev_info(dev->mt76.dev, ":=:WATF Enable: %d\n",
 +                 dev->vow_cfg.vow_watf_en);
-+	dev_info(dev->mt76.dev, "refill_period: %d\n",
++	dev_info(dev->mt76.dev, ":=:refill_period: %d\n",
 +                 dev->vow_cfg.refill_period);
-+	dev_info(dev->mt76.dev, "===== VOW Max Deficit Information =====\n");
++	dev_info(dev->mt76.dev, ":=:===== VOW Max Deficit Information =====\n");
 +	dev_info(dev->mt76.dev, "VOW Max Deficit(unit 256us): %d\n",
 +                 dev->vow_cfg.sta_max_wait_time);
-+	dev_info(dev->mt76.dev, "===== VOW Quantum Information =====\n");
-+	dev_info(dev->mt76.dev, "Quantum ID 0 value(unit 256us): %d\n",
++	dev_info(dev->mt76.dev, ":=:===== VOW Quantum Information =====\n");
++	dev_info(dev->mt76.dev, ":=:Quantum ID 0 value(unit 256us): %d\n",
 +                 dev->vow_cfg.vow_sta_dwrr_quantum[0]);
-+	dev_info(dev->mt76.dev, "Quantum ID 1 value(unit 256us): %d\n",
++	dev_info(dev->mt76.dev, ":=:Quantum ID 1 value(unit 256us): %d\n",
 +                 dev->vow_cfg.vow_sta_dwrr_quantum[1]);
-+	dev_info(dev->mt76.dev, "Quantum ID 2 value(unit 256us): %d\n",
++	dev_info(dev->mt76.dev, ":=:Quantum ID 2 value(unit 256us): %d\n",
 +                 dev->vow_cfg.vow_sta_dwrr_quantum[2]);
-+	dev_info(dev->mt76.dev, "Quantum ID 3 value(unit 256us): %d\n",
++	dev_info(dev->mt76.dev, ":=:Quantum ID 3 value(unit 256us): %d\n",
 +                 dev->vow_cfg.vow_sta_dwrr_quantum[3]);
 +	return 0;
 +}
