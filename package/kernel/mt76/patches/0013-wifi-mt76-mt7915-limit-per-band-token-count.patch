@@ -130,7 +130,7 @@ Signed-off-by: Peter Chiu <chui-hao.chiu@mediatek.com>
  
 --- a/mt7996/init.c
 +++ b/mt7996/init.c
-@@ -685,6 +685,8 @@ static int mt7996_register_phy(struct mt
+@@ -686,6 +686,8 @@ static int mt7996_register_phy(struct mt
  		mtk_wed_device_start(&dev->mt76.mmio.wed_hif2, irq_mask);
  	}
  
@@ -139,7 +139,7 @@ Signed-off-by: Peter Chiu <chui-hao.chiu@mediatek.com>
  	return 0;
  
  error:
-@@ -1471,6 +1473,8 @@ int mt7996_register_device(struct mt7996
+@@ -1472,6 +1474,8 @@ int mt7996_register_device(struct mt7996
  		return ret;
  
  	mt7996_init_wiphy(hw, &dev->mt76.mmio.wed);
@@ -148,7 +148,7 @@ Signed-off-by: Peter Chiu <chui-hao.chiu@mediatek.com>
  
  	ret = mt7996_register_phy(dev, MT_BAND1);
  	if (ret)
-@@ -1489,6 +1493,8 @@ int mt7996_register_device(struct mt7996
+@@ -1490,6 +1494,8 @@ int mt7996_register_device(struct mt7996
  		mt7996_thermal_init(phy);
  
  	ieee80211_queue_work(mt76_hw(dev), &dev->init_work);
