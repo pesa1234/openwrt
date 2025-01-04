@@ -1,0 +1,42 @@
+--- a/drivers/net/ethernet/mediatek/mtk_eth_dbg.c
++++ b/drivers/net/ethernet/mediatek/mtk_eth_dbg.c
+@@ -1733,6 +1733,7 @@ static const struct proc_ops hw_lro_stat
+ int hwlro_agg_cnt_ctrl(int cnt)
+ {
+ 	struct mtk_eth *eth = g_eth;
++	const struct mtk_reg_map *reg_map = eth->soc->reg_map;
+ 	int i;
+ 
+ 	for (i = 1; i < MTK_MAX_RX_RING_NUM; i++)
+@@ -1744,6 +1745,7 @@ int hwlro_agg_cnt_ctrl(int cnt)
+ int hwlro_agg_time_ctrl(int time)
+ {
+ 	struct mtk_eth *eth = g_eth;
++	const struct mtk_reg_map *reg_map = eth->soc->reg_map;
+ 	int i;
+ 
+ 	for (i = 1; i < MTK_MAX_RX_RING_NUM; i++)
+@@ -1755,6 +1757,7 @@ int hwlro_agg_time_ctrl(int time)
+ int hwlro_age_time_ctrl(int time)
+ {
+ 	struct mtk_eth *eth = g_eth;
++	const struct mtk_reg_map *reg_map = eth->soc->reg_map;
+ 	int i;
+ 
+ 	for (i = 1; i < MTK_MAX_RX_RING_NUM; i++)
+@@ -1774,6 +1777,7 @@ int hwlro_threshold_ctrl(int bandwidth)
+ int hwlro_ring_enable_ctrl(int enable)
+ {
+ 	struct mtk_eth *eth = g_eth;
++	const struct mtk_reg_map *reg_map = eth->soc->reg_map;
+ 	int i;
+ 
+ 	pr_info("[%s] %s HW LRO rings\n", __func__, (enable) ? "Enable" : "Disable");
+@@ -1972,6 +1976,7 @@ void hw_lro_auto_tlb_dump_v2(struct seq_
+ int hw_lro_auto_tlb_read(struct seq_file *seq, void *v)
+ {
+ 	struct mtk_eth *eth = g_eth;
++	const struct mtk_reg_map *reg_map = eth->soc->reg_map;
+ 	int i;
+ 	u32 reg_val;
+ 	u32 reg_op1, reg_op2, reg_op3, reg_op4;
