@@ -384,7 +384,7 @@ Subject: [PATCH] [mt76] mt7915 MCU event airtime
  };
  
  enum mt76_wcid_flags {
-@@ -1408,6 +1412,22 @@ static inline int mt76_decr(int val, int
+@@ -1410,6 +1414,22 @@ static inline int mt76_decr(int val, int
  
  u8 mt76_ac_to_hwq(u8 ac);
  
