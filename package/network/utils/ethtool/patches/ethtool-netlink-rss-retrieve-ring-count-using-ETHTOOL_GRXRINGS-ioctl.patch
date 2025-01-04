@@ -1,0 +1,96 @@
+--- a/ethtool.c
++++ b/ethtool.c
+@@ -6470,7 +6470,7 @@ static int do_perqueue(struct cmd_contex
+ 	return 0;
+ }
+ 
+-static int ioctl_init(struct cmd_context *ctx, bool no_dev)
++int ioctl_init(struct cmd_context *ctx, bool no_dev)
+ {
+ 	if (no_dev) {
+ 		ctx->fd = -1;
+--- a/internal.h
++++ b/internal.h
+@@ -280,6 +280,7 @@ int test_fclose(FILE *fh);
+ #endif
+ #endif
+ 
++int ioctl_init(struct cmd_context *ctx, bool no_dev);
+ int send_ioctl(struct cmd_context *ctx, void *cmd);
+ 
+ void dump_hex(FILE *f, const u8 *data, int len, int offset);
+--- a/netlink/rss.c
++++ b/netlink/rss.c
+@@ -61,29 +61,29 @@ void dump_json_rss_info(struct cmd_conte
+ 	close_json_object();
+ }
+ 
+-int get_channels_cb(const struct nlmsghdr *nlhdr, void *data)
++/* There is no netlink equivalent for ETHTOOL_GRXRINGS. */
++static int get_num_rings(struct cb_args *args)
+ {
+-	const struct nlattr *tb[ETHTOOL_A_CHANNELS_MAX + 1] = {};
+-	DECLARE_ATTR_TB_INFO(tb);
+-	struct cb_args *args = data;
+ 	struct nl_context *nlctx = args->nlctx;
+-	bool silent;
+-	int err_ret;
++	struct cmd_context *ctx = nlctx->ctx;
++	struct ethtool_rxnfc ring_count = {
++		.cmd = ETHTOOL_GRXRINGS,
++	};
+ 	int ret;
+ 
+-	silent = nlctx->is_dump || nlctx->is_monitor;
+-	err_ret = silent ? MNL_CB_OK : MNL_CB_ERROR;
+-	ret = mnl_attr_parse(nlhdr, GENL_HDRLEN, attr_cb, &tb_info);
+-	if (ret < 0)
+-		return err_ret;
+-	nlctx->devname = get_dev_name(tb[ETHTOOL_A_CHANNELS_HEADER]);
+-	if (!dev_ok(nlctx))
+-		return err_ret;
+-	if (tb[ETHTOOL_A_CHANNELS_COMBINED_COUNT])
+-		args->num_rings = mnl_attr_get_u32(tb[ETHTOOL_A_CHANNELS_COMBINED_COUNT]);
+-	if (tb[ETHTOOL_A_CHANNELS_RX_COUNT])
+-		args->num_rings += mnl_attr_get_u32(tb[ETHTOOL_A_CHANNELS_RX_COUNT]);
+-	return MNL_CB_OK;
++	ret = ioctl_init(ctx, false);
++	if (ret)
++		return ret;
++
++	ret = send_ioctl(ctx, &ring_count);
++	if (ret) {
++		perror("Cannot get RX ring count");
++		return ret;
++	}
++
++	args->num_rings = (u32)ring_count.data;
++
++	return 0;
+ }
+ 
+ int rss_reply_cb(const struct nlmsghdr *nlhdr, void *data)
+@@ -142,22 +142,7 @@ int rss_reply_cb(const struct nlmsghdr *
+ 	if (ret < 0)
+ 		return silent ? MNL_CB_OK : MNL_CB_ERROR;
+ 
+-	nlctx->devname = get_dev_name(tb[ETHTOOL_A_RSS_HEADER]);
+-	if (!dev_ok(nlctx))
+-		return MNL_CB_OK;
+-
+-	/* Fetch ring count info into args->num_rings */
+-	ret = nlsock_prep_get_request(nlctx->ethnl2_socket,
+-				      ETHTOOL_MSG_CHANNELS_GET,
+-				      ETHTOOL_A_CHANNELS_HEADER, 0);
+-	if (ret < 0)
+-		return MNL_CB_ERROR;
+-
+-	ret = nlsock_sendmsg(nlctx->ethnl2_socket, NULL);
+-	if (ret < 0)
+-		return MNL_CB_ERROR;
+-
+-	ret = nlsock_process_reply(nlctx->ethnl2_socket, get_channels_cb, args);
++	ret = get_num_rings(args);
+ 	if (ret < 0)
+ 		return MNL_CB_ERROR;
+ 
