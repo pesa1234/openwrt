@@ -276,8 +276,14 @@ gl-mt6000()
 	num_of_wifi=$1
 	DEFAULT_RPS=0
 
-	eth_irq_rx=230
+	#Physical IRQ# setting
+	#Ethernet RSS feature enables 4 Rx rings
+	eth_irq_rx0=221
+	eth_irq_rx1=222
+	eth_irq_rx2=223
+	eth_irq_rx3=224
 	eth_irq_tx=229
+	
 	
 	
 	if [[ "$WED_ENABLE" -eq "1" ]]; then
@@ -315,29 +321,32 @@ gl-mt6000()
 	# CPU#_AFFINITY="add binding irq number here"
 	# CPU#_RPS="add binding interface name here"
 	if [ "$num_of_wifi" = "0" ]; then
-		CPU1_AFFINITY="$eth_irq_rx"
-		CPU2_AFFINITY="$eth_irq_tx"
+		CPU0_AFFINITY="$eth_irq_rx0"
+		CPU1_AFFINITY="$eth_irq_rx1 $eth_irq_tx"
+		CPU2_AFFINITY="$eth_irq_rx2"
+		CPU3_AFFINITY="$eth_irq_rx3"
 
 		CPU0_RPS=""
 		CPU1_RPS=""
 		CPU2_RPS=""
 		CPU3_RPS=""
 	else
-		CPU1_AFFINITY="$eth_irq_tx"
-		CPU2_AFFINITY="$eth_irq_rx"
-		CPU3_AFFINITY="$wifi1_irq"
+		#we bound all wifi card to cpu1 and bound eth to cpu0
+		CPU0_AFFINITY="$eth_irq_rx0"
+		CPU1_AFFINITY="$eth_irq_rx1 $eth_irq_tx"
+		CPU2_AFFINITY="$eth_irq_rx2 $wifi2_irq $wifi3_irq"
+		CPU3_AFFINITY="$eth_irq_rx3 $wifi1_irq"
 
 		CPU0_RPS="$WIFI_IF_LIST"
 		CPU1_RPS="$WIFI_IF_LIST"
 		CPU2_RPS="$WIFI_IF_LIST"
 		CPU3_RPS="$WIFI_IF_LIST"
 	fi
-	logger -s "smp_affinity: CPU0_AFFINITY = Default"
+	logger -s "smp_affinity: CPU0_AFFINITY = $CPU0_AFFINITY"
 	logger -s "smp_affinity: CPU1_AFFINITY = $CPU1_AFFINITY"
 	logger -s "smp_affinity: CPU2_AFFINITY = $CPU2_AFFINITY"
 	logger -s "smp_affinity: CPU3_AFFINITY = $CPU3_AFFINITY"
 }
-
 
 MT7981()
 {
