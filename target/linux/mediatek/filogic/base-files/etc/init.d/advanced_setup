@@ -285,28 +285,9 @@ gl-mt6000()
 	eth_irq_tx=229
 	
 	
-	
 	if [[ "$WED_ENABLE" -eq "1" ]]; then
-		logger -s "smp_affinity: WED_ENABLE ON irq/iptable setting"
 		wifi1_irq=237
-		#TCP Binding
-		iptables -D FORWARD -p tcp -m conntrack --ctstate RELATED,ESTABLISHED -j FLOWOFFLOAD --hw
-		iptables -I FORWARD -p tcp -m conntrack --ctstate RELATED,ESTABLISHED -j FLOWOFFLOAD --hw
-		ip6tables -D FORWARD -p tcp -m conntrack --ctstate RELATED,ESTABLISHED -j FLOWOFFLOAD --hw
-		ip6tables -I FORWARD -p tcp -m conntrack --ctstate RELATED,ESTABLISHED -j FLOWOFFLOAD --hw
-		#UDP Binding
-		iptables -D FORWARD -p udp -j FLOWOFFLOAD --hw
-		iptables -I FORWARD -p udp -j FLOWOFFLOAD --hw
-		ip6tables -D FORWARD -p udp -j FLOWOFFLOAD --hw
-		ip6tables -I FORWARD -p udp -j FLOWOFFLOAD --hw
-		#Multicast skip Binding
-		iptables -D FORWARD -m pkttype --pkt-type multicast -j ACCEPT
-		iptables -I FORWARD -m pkttype --pkt-type multicast -j ACCEPT
-		ip6tables -D FORWARD -m pkttype --pkt-type multicast -j ACCEPT
-		ip6tables -I FORWARD -m pkttype --pkt-type multicast -j ACCEPT
-
 	else
-		logger -s "smp_affinity: WED_ENABLE OFF irq/iptable setting"
 		wifi1_irq=245
 	fi
 
@@ -610,6 +591,34 @@ hw-atf-setup()
 		echo 'show_vow_info' > /sys/kernel/debug/ieee80211/phy0/mt76/vow
 }
 
+mtk-offloading()
+{
+	if [[ "$mtk_offloading_enable" -eq "1" ]]; then
+			logger -s "smp_affinity: Enabling mtk offloading"
+			#TCP Binding
+			iptables -I FORWARD -p tcp -m conntrack --ctstate RELATED,ESTABLISHED -j FLOWOFFLOAD --hw
+			ip6tables -I FORWARD -p tcp -m conntrack --ctstate RELATED,ESTABLISHED -j FLOWOFFLOAD --hw
+			#UDP Binding
+			iptables -I FORWARD -p udp -j FLOWOFFLOAD --hw
+			ip6tables -I FORWARD -p udp -j FLOWOFFLOAD --hw
+			#Multicast skip Binding
+			iptables -I FORWARD -m pkttype --pkt-type multicast -j ACCEPT
+			ip6tables -I FORWARD -m pkttype --pkt-type multicast -j ACCEPT
+		elif [[ "$mtk_offloading_enable" -eq "0" ]]; then
+			logger -s "smp_affinity: Disabling mtk offloading"
+			#TCP Binding
+			iptables -D FORWARD -p tcp -m conntrack --ctstate RELATED,ESTABLISHED -j FLOWOFFLOAD --hw
+			ip6tables -D FORWARD -p tcp -m conntrack --ctstate RELATED,ESTABLISHED -j FLOWOFFLOAD --hw
+			#UDP Binding
+			iptables -D FORWARD -p udp -j FLOWOFFLOAD --hw
+			ip6tables -D FORWARD -p udp -j FLOWOFFLOAD --hw
+			#Multicast skip Binding
+			iptables -D FORWARD -m pkttype --pkt-type multicast -j ACCEPT
+			ip6tables -D FORWARD -m pkttype --pkt-type multicast -j ACCEPT
+		fi
+	fi
+}
+
 
 logger -s "smp_affinity: # RPS and AFFINITY Setting"
 logger -s "smp_affinity: # NUM_OF_CPU=$NUM_OF_CPU"
@@ -627,4 +636,5 @@ start() {
 	enable-HQoS
 	usb-setup
 	hw-atf-setup
+	mtk-offloading
 }
