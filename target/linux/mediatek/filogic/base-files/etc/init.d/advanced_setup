@@ -593,7 +593,8 @@ hw-atf-setup()
 
 mtk-offloading()
 {
-	if [[ "$mtk_offloading_enable" -eq "1" ]]; then
+	mtk_offloading_enable=$(uci get advanced.@defaults[0].mtk_offloading_enable)
+	if [ "$mtk_offloading_enable" == "1" ]; then
 			logger -s "smp_affinity: Enabling mtk offloading"
 			#TCP Binding
 			iptables -I FORWARD -p tcp -m conntrack --ctstate RELATED,ESTABLISHED -j FLOWOFFLOAD --hw
@@ -604,7 +605,7 @@ mtk-offloading()
 			#Multicast skip Binding
 			iptables -I FORWARD -m pkttype --pkt-type multicast -j ACCEPT
 			ip6tables -I FORWARD -m pkttype --pkt-type multicast -j ACCEPT
-		elif [[ "$mtk_offloading_enable" -eq "0" ]]; then
+	elif [ "$mtk_offloading_enable" == 0 ]; then
 			logger -s "smp_affinity: Disabling mtk offloading"
 			#TCP Binding
 			iptables -D FORWARD -p tcp -m conntrack --ctstate RELATED,ESTABLISHED -j FLOWOFFLOAD --hw
@@ -615,7 +616,6 @@ mtk-offloading()
 			#Multicast skip Binding
 			iptables -D FORWARD -m pkttype --pkt-type multicast -j ACCEPT
 			ip6tables -D FORWARD -m pkttype --pkt-type multicast -j ACCEPT
-		fi
 	fi
 }
 
