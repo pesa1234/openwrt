@@ -21,7 +21,7 @@ Reviewed-on: https://gerrit.mediatek.inc/c/openwrt/feeds/mtk_openwrt_feeds/+/710
 
 --- a/drivers/net/ethernet/mediatek/mtk_eth_soc.c
 +++ b/drivers/net/ethernet/mediatek/mtk_eth_soc.c
-@@ -1631,6 +1631,13 @@ static int mtk_tx_map(struct sk_buff *sk
+@@ -1598,6 +1598,13 @@ static int mtk_tx_map(struct sk_buff *sk
  	int queue = skb_get_queue_mapping(skb);
  	int k = 0;
  
@@ -37,7 +37,7 @@ Reviewed-on: https://gerrit.mediatek.inc/c/openwrt/feeds/mtk_openwrt_feeds/+/710
  	itxd_pdma = qdma_to_pdma(ring, itxd);
 --- a/drivers/net/ethernet/mediatek/mtk_eth_soc.h
 +++ b/drivers/net/ethernet/mediatek/mtk_eth_soc.h
-@@ -33,6 +33,7 @@
+@@ -32,6 +32,7 @@
  #define MTK_MAX_RX_LENGTH_2K	2048
  #define MTK_TX_DMA_BUF_LEN	0x3fff
  #define MTK_TX_DMA_BUF_LEN_V2	0xffff

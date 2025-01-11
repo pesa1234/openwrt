@@ -58,7 +58,7 @@ We are currently working hard to find the cause, and it might be the same issue 
 
 --- a/drivers/net/ethernet/mediatek/mtk_eth_soc.c
 +++ b/drivers/net/ethernet/mediatek/mtk_eth_soc.c
-@@ -133,6 +133,16 @@ static const struct mtk_reg_map mt7986_r
+@@ -131,6 +131,16 @@ static const struct mtk_reg_map mt7986_r
  		.irq_mask	= 0x4228,
  		.adma_rx_dbg0	= 0x4238,
  		.int_grp	= 0x4250,
@@ -75,7 +75,7 @@ We are currently working hard to find the cause, and it might be the same issue 
  	},
  	.qdma = {
  		.qtx_cfg	= 0x4400,
-@@ -189,6 +199,13 @@ static const struct mtk_reg_map mt7988_r
+@@ -186,6 +196,13 @@ static const struct mtk_reg_map mt7988_r
  		.irq_mask	= 0x6a28,
  		.adma_rx_dbg0	= 0x6a38,
  		.int_grp	= 0x6a50,
@@ -89,7 +89,7 @@ We are currently working hard to find the cause, and it might be the same issue 
  	},
  	.qdma = {
  		.qtx_cfg	= 0x4400,
-@@ -1307,6 +1324,7 @@ static bool mtk_rx_get_desc(struct mtk_e
+@@ -1274,6 +1291,7 @@ static bool mtk_rx_get_desc(struct mtk_e
  	if (mtk_is_netsys_v3_or_greater(eth)) {
  		rxd->rxd5 = READ_ONCE(dma_rxd->rxd5);
  		rxd->rxd6 = READ_ONCE(dma_rxd->rxd6);
@@ -97,7 +97,7 @@ We are currently working hard to find the cause, and it might be the same issue 
  	}
  
  	return true;
-@@ -1877,47 +1895,9 @@ drop:
+@@ -1844,47 +1862,9 @@ drop:
  	return NETDEV_TX_OK;
  }
  
@@ -147,7 +147,7 @@ We are currently working hard to find the cause, and it might be the same issue 
  }
  
  static bool mtk_page_pool_enabled(struct mtk_eth *eth)
-@@ -1948,7 +1928,7 @@ static struct page_pool *mtk_create_page
+@@ -1915,7 +1895,7 @@ static struct page_pool *mtk_create_page
  		return pp;
  
  	err = __xdp_rxq_info_reg(xdp_q, &eth->dummy_dev, id,
@@ -156,7 +156,7 @@ We are currently working hard to find the cause, and it might be the same issue 
  	if (err < 0)
  		goto err_free_pp;
  
-@@ -2237,7 +2217,8 @@ static int mtk_poll_rx(struct napi_struc
+@@ -2204,7 +2184,8 @@ static int mtk_poll_rx(struct napi_struc
  		       struct mtk_eth *eth)
  {
  	struct dim_sample dim_sample = {};
@@ -166,7 +166,7 @@ We are currently working hard to find the cause, and it might be the same issue 
  	bool xdp_flush = false;
  	int idx;
  	struct sk_buff *skb;
-@@ -2248,16 +2229,15 @@ static int mtk_poll_rx(struct napi_struc
+@@ -2215,16 +2196,15 @@ static int mtk_poll_rx(struct napi_struc
  	dma_addr_t dma_addr = DMA_MAPPING_ERROR;
  	int ppe_idx = 0;
  
@@ -186,7 +186,7 @@ We are currently working hard to find the cause, and it might be the same issue 
  		idx = NEXT_DESP_IDX(ring->calc_idx, ring->dma_size);
  		rxd = ring->dma + idx * eth->soc->rx.desc_size;
  		data = ring->data[idx];
-@@ -2442,7 +2422,7 @@ rx_done:
+@@ -2409,7 +2389,7 @@ rx_done:
  		 * we continue
  		 */
  		wmb();
@@ -195,7 +195,7 @@ We are currently working hard to find the cause, and it might be the same issue 
  	}
  
  	eth->rx_packets += done;
-@@ -2651,7 +2631,9 @@ static int mtk_napi_tx(struct napi_struc
+@@ -2618,7 +2598,9 @@ static int mtk_napi_tx(struct napi_struc
  
  static int mtk_napi_rx(struct napi_struct *napi, int budget)
  {
@@ -206,7 +206,7 @@ We are currently working hard to find the cause, and it might be the same issue 
  	const struct mtk_reg_map *reg_map = eth->soc->reg_map;
  	int rx_done_total = 0;
  
-@@ -2660,7 +2642,7 @@ static int mtk_napi_rx(struct napi_struc
+@@ -2627,7 +2609,7 @@ static int mtk_napi_rx(struct napi_struc
  	do {
  		int rx_done;
  
@@ -215,7 +215,7 @@ We are currently working hard to find the cause, and it might be the same issue 
  			reg_map->pdma.irq_status);
  		rx_done = mtk_poll_rx(napi, budget - rx_done_total, eth);
  		rx_done_total += rx_done;
-@@ -2676,10 +2658,10 @@ static int mtk_napi_rx(struct napi_struc
+@@ -2643,10 +2625,10 @@ static int mtk_napi_rx(struct napi_struc
  			return budget;
  
  	} while (mtk_r32(eth, reg_map->pdma.irq_status) &
@@ -228,7 +228,7 @@ We are currently working hard to find the cause, and it might be the same issue 
  
  	return rx_done_total;
  }
-@@ -2883,6 +2865,7 @@ static int mtk_rx_alloc(struct mtk_eth *
+@@ -2850,6 +2832,7 @@ static int mtk_rx_alloc(struct mtk_eth *
  			    eth->soc->tx.desc_size * (ring_no + 1);
  		ring->phys = tx_ring->phys + tx_ring_size *
  			     eth->soc->tx.desc_size * (ring_no + 1);
@@ -236,7 +236,7 @@ We are currently working hard to find the cause, and it might be the same issue 
  	}
  
  	if (!ring->dma)
-@@ -2947,6 +2930,7 @@ static int mtk_rx_alloc(struct mtk_eth *
+@@ -2914,6 +2897,7 @@ static int mtk_rx_alloc(struct mtk_eth *
  	else
  		ring->crx_idx_reg = reg_map->pdma.pcrx_ptr +
  				    ring_no * MTK_QRX_OFFSET;
@@ -244,7 +244,7 @@ We are currently working hard to find the cause, and it might be the same issue 
  	/* make sure that all changes to the dma ring are flushed before we
  	 * continue
  	 */
-@@ -3016,6 +3000,7 @@ static void mtk_rx_clean(struct mtk_eth
+@@ -2983,6 +2967,7 @@ static void mtk_rx_clean(struct mtk_eth
  
  static int mtk_hwlro_rx_init(struct mtk_eth *eth)
  {
@@ -252,7 +252,7 @@ We are currently working hard to find the cause, and it might be the same issue 
  	int i;
  	u32 ring_ctrl_dw1 = 0, ring_ctrl_dw2 = 0, ring_ctrl_dw3 = 0;
  	u32 lro_ctrl_dw0 = 0, lro_ctrl_dw3 = 0;
-@@ -3076,6 +3061,7 @@ static int mtk_hwlro_rx_init(struct mtk_
+@@ -3043,6 +3028,7 @@ static int mtk_hwlro_rx_init(struct mtk_
  
  static void mtk_hwlro_rx_uninit(struct mtk_eth *eth)
  {
@@ -260,7 +260,7 @@ We are currently working hard to find the cause, and it might be the same issue 
  	int i;
  	u32 val;
  
-@@ -3102,6 +3088,7 @@ static void mtk_hwlro_rx_uninit(struct m
+@@ -3069,6 +3055,7 @@ static void mtk_hwlro_rx_uninit(struct m
  
  static void mtk_hwlro_val_ipaddr(struct mtk_eth *eth, int idx, __be32 ip)
  {
@@ -268,7 +268,7 @@ We are currently working hard to find the cause, and it might be the same issue 
  	u32 reg_val;
  
  	reg_val = mtk_r32(eth, MTK_LRO_CTRL_DW2_CFG(idx));
-@@ -3117,6 +3104,7 @@ static void mtk_hwlro_val_ipaddr(struct
+@@ -3084,6 +3071,7 @@ static void mtk_hwlro_val_ipaddr(struct
  
  static void mtk_hwlro_inval_ipaddr(struct mtk_eth *eth, int idx)
  {
@@ -276,7 +276,7 @@ We are currently working hard to find the cause, and it might be the same issue 
  	u32 reg_val;
  
  	reg_val = mtk_r32(eth, MTK_LRO_CTRL_DW2_CFG(idx));
-@@ -3252,6 +3240,122 @@ static int mtk_hwlro_get_fdir_all(struct
+@@ -3219,6 +3207,122 @@ static int mtk_hwlro_get_fdir_all(struct
  	return 0;
  }
  
@@ -399,7 +399,7 @@ We are currently working hard to find the cause, and it might be the same issue 
  static netdev_features_t mtk_fix_features(struct net_device *dev,
  					  netdev_features_t features)
  {
-@@ -3266,6 +3370,12 @@ static netdev_features_t mtk_fix_feature
+@@ -3233,6 +3337,12 @@ static netdev_features_t mtk_fix_feature
  		}
  	}
  
@@ -412,7 +412,7 @@ We are currently working hard to find the cause, and it might be the same issue 
  	return features;
  }
  
-@@ -3342,6 +3452,17 @@ static int mtk_dma_init(struct mtk_eth *
+@@ -3309,6 +3419,17 @@ static int mtk_dma_init(struct mtk_eth *
  			return err;
  	}
  
@@ -430,7 +430,7 @@ We are currently working hard to find the cause, and it might be the same issue 
  	if (MTK_HAS_CAPS(eth->soc->caps, MTK_QDMA)) {
  		/* Enable random early drop and set drop threshold
  		 * automatically
-@@ -3387,6 +3508,13 @@ static void mtk_dma_free(struct mtk_eth
+@@ -3354,6 +3475,13 @@ static void mtk_dma_free(struct mtk_eth
  			mtk_rx_clean(eth, &eth->rx_ring[i], false);
  	}
  
@@ -444,7 +444,7 @@ We are currently working hard to find the cause, and it might be the same issue 
  	for (i = 0; i < DIV_ROUND_UP(soc->tx.fq_dma_size, MTK_FQ_DMA_LENGTH); i++) {
  		kfree(eth->scratch_head[i]);
  		eth->scratch_head[i] = NULL;
-@@ -3420,14 +3548,22 @@ static void mtk_tx_timeout(struct net_de
+@@ -3387,14 +3515,22 @@ static void mtk_tx_timeout(struct net_de
  		schedule_work(&eth->pending_work);
  }
  
@@ -472,7 +472,7 @@ We are currently working hard to find the cause, and it might be the same issue 
  	}
  
  	return IRQ_HANDLED;
-@@ -3452,10 +3588,10 @@ static irqreturn_t mtk_handle_irq(int ir
+@@ -3419,10 +3555,10 @@ static irqreturn_t mtk_handle_irq(int ir
  	const struct mtk_reg_map *reg_map = eth->soc->reg_map;
  
  	if (mtk_r32(eth, reg_map->pdma.irq_mask) &
@@ -486,7 +486,7 @@ We are currently working hard to find the cause, and it might be the same issue 
  	}
  	if (mtk_r32(eth, reg_map->tx_irq_mask) & MTK_TX_DONE_INT) {
  		if (mtk_r32(eth, reg_map->tx_irq_status) & MTK_TX_DONE_INT)
-@@ -3465,6 +3601,18 @@ static irqreturn_t mtk_handle_irq(int ir
+@@ -3432,6 +3568,18 @@ static irqreturn_t mtk_handle_irq(int ir
  	return IRQ_HANDLED;
  }
  
@@ -505,7 +505,7 @@ We are currently working hard to find the cause, and it might be the same issue 
  #ifdef CONFIG_NET_POLL_CONTROLLER
  static void mtk_poll_controller(struct net_device *dev)
  {
-@@ -3472,10 +3620,10 @@ static void mtk_poll_controller(struct n
+@@ -3439,10 +3587,10 @@ static void mtk_poll_controller(struct n
  	struct mtk_eth *eth = mac->hw;
  
  	mtk_tx_irq_disable(eth, MTK_TX_DONE_INT);
@@ -519,7 +519,7 @@ We are currently working hard to find the cause, and it might be the same issue 
  }
  #endif
  
-@@ -3652,9 +3800,17 @@ static int mtk_open(struct net_device *d
+@@ -3622,9 +3770,17 @@ static int mtk_open(struct net_device *d
  		mtk_w32(eth, 0, MTK_RST_GL);
  
  		napi_enable(&eth->tx_napi);
@@ -539,7 +539,7 @@ We are currently working hard to find the cause, and it might be the same issue 
  		refcount_set(&eth->dma_refcnt, 1);
  	} else {
  		refcount_inc(&eth->dma_refcnt);
-@@ -3739,9 +3895,16 @@ static int mtk_stop(struct net_device *d
+@@ -3709,9 +3865,16 @@ static int mtk_stop(struct net_device *d
  		mtk_gdm_config(eth, i, MTK_GDMA_DROP_ALL);
  
  	mtk_tx_irq_disable(eth, MTK_TX_DONE_INT);
@@ -558,7 +558,7 @@ We are currently working hard to find the cause, and it might be the same issue 
  
  	cancel_work_sync(&eth->rx_dim.work);
  	cancel_work_sync(&eth->tx_dim.work);
-@@ -4163,6 +4326,25 @@ out:
+@@ -4086,6 +4249,25 @@ out:
  			      MTK_DMA_MONITOR_TIMEOUT);
  }
  
@@ -584,7 +584,7 @@ We are currently working hard to find the cause, and it might be the same issue 
  static int mtk_hw_init(struct mtk_eth *eth, bool reset)
  {
  	u32 dma_mask = ETHSYS_DMA_AG_MAP_PDMA | ETHSYS_DMA_AG_MAP_QDMA |
-@@ -4268,11 +4450,16 @@ static int mtk_hw_init(struct mtk_eth *e
+@@ -4187,11 +4369,16 @@ static int mtk_hw_init(struct mtk_eth *e
  	mtk_rx_irq_disable(eth, ~0);
  
  	/* FE int grouping */
@@ -604,8 +604,8 @@ We are currently working hard to find the cause, and it might be the same issue 
 +	}
  
  	if (mtk_is_netsys_v3_or_greater(eth)) {
- 		/* PSE dummy page mechanism */
-@@ -4711,6 +4898,8 @@ static void mtk_get_ethtool_stats(struct
+ 		/* PSE should not drop port1, port8 and port9 packets */
+@@ -4621,6 +4808,8 @@ static void mtk_get_ethtool_stats(struct
  static int mtk_get_rxnfc(struct net_device *dev, struct ethtool_rxnfc *cmd,
  			 u32 *rule_locs)
  {
@@ -614,7 +614,7 @@ We are currently working hard to find the cause, and it might be the same issue 
  	int ret = -EOPNOTSUPP;
  
  	switch (cmd->cmd) {
-@@ -4718,6 +4907,9 @@ static int mtk_get_rxnfc(struct net_devi
+@@ -4628,6 +4817,9 @@ static int mtk_get_rxnfc(struct net_devi
  		if (dev->hw_features & NETIF_F_LRO) {
  			cmd->data = MTK_MAX_RX_RING_NUM;
  			ret = 0;
@@ -624,7 +624,7 @@ We are currently working hard to find the cause, and it might be the same issue 
  		}
  		break;
  	case ETHTOOL_GRXCLSRLCNT:
-@@ -4778,6 +4970,72 @@ static int mtk_set_pauseparam(struct net
+@@ -4688,6 +4880,72 @@ static int mtk_set_pauseparam(struct net
  	return phylink_ethtool_set_pauseparam(mac->phylink, pause);
  }
  
@@ -697,7 +697,7 @@ We are currently working hard to find the cause, and it might be the same issue 
  static u16 mtk_select_queue(struct net_device *dev, struct sk_buff *skb,
  			    struct net_device *sb_dev)
  {
-@@ -4810,6 +5068,10 @@ static const struct ethtool_ops mtk_etht
+@@ -4720,6 +4978,10 @@ static const struct ethtool_ops mtk_etht
  	.set_pauseparam		= mtk_set_pauseparam,
  	.get_rxnfc		= mtk_get_rxnfc,
  	.set_rxnfc		= mtk_set_rxnfc,
@@ -708,7 +708,7 @@ We are currently working hard to find the cause, and it might be the same issue 
  };
  
  static const struct net_device_ops mtk_netdev_ops = {
-@@ -5166,7 +5428,7 @@ static int mtk_add_mac(struct mtk_eth *e
+@@ -4941,7 +5203,7 @@ static int mtk_add_mac(struct mtk_eth *e
  	eth->netdev[id]->features |= eth->soc->hw_features;
  	eth->netdev[id]->ethtool_ops = &mtk_ethtool_ops;
  
@@ -717,7 +717,7 @@ We are currently working hard to find the cause, and it might be the same issue 
  	eth->netdev[id]->dev.of_node = np;
  
  	if (MTK_HAS_CAPS(eth->soc->caps, MTK_SOC_MT7628))
-@@ -5418,12 +5680,20 @@ static int mtk_probe(struct platform_dev
+@@ -5193,12 +5455,20 @@ static int mtk_probe(struct platform_dev
  		}
  	}
  
@@ -742,8 +742,8 @@ We are currently working hard to find the cause, and it might be the same issue 
  			dev_err(&pdev->dev, "no IRQ%d resource found\n", i);
  			err = -ENXIO;
  			goto err_wed_exit;
-@@ -5509,23 +5779,51 @@ static int mtk_probe(struct platform_dev
- 		};
+@@ -5264,23 +5534,51 @@ static int mtk_probe(struct platform_dev
+ 			goto err_deinit_hw;
  	}
  
 +	err = mtk_napi_init(eth);
@@ -801,7 +801,7 @@ We are currently working hard to find the cause, and it might be the same issue 
  
  	/* No MT7628/88 support yet */
  	if (!MTK_HAS_CAPS(eth->soc->caps, MTK_SOC_MT7628)) {
-@@ -5567,7 +5865,7 @@ static int mtk_probe(struct platform_dev
+@@ -5321,7 +5619,7 @@ static int mtk_probe(struct platform_dev
  		} else
  			netif_info(eth, probe, eth->netdev[i],
  				   "mediatek frame engine at 0x%08lx, irq %d\n",
@@ -810,7 +810,7 @@ We are currently working hard to find the cause, and it might be the same issue 
  	}
  
  	/* we run 2 devices on the same DMA ring so we need a dummy device
-@@ -5577,7 +5875,13 @@ static int mtk_probe(struct platform_dev
+@@ -5331,7 +5629,13 @@ static int mtk_probe(struct platform_dev
  	eth->dummy_dev.threaded = 1;
  	strcpy(eth->dummy_dev.name, "mtk_eth");
  	netif_napi_add(&eth->dummy_dev, &eth->tx_napi, mtk_napi_tx);
@@ -825,7 +825,7 @@ We are currently working hard to find the cause, and it might be the same issue 
  
  	mtketh_debugfs_init(eth);
  	debug_proc_init(eth);
-@@ -5627,7 +5931,13 @@ static int mtk_remove(struct platform_de
+@@ -5381,7 +5685,13 @@ static int mtk_remove(struct platform_de
  	mtk_hw_deinit(eth);
  
  	netif_napi_del(&eth->tx_napi);
@@ -840,7 +840,7 @@ We are currently working hard to find the cause, and it might be the same issue 
  	mtk_cleanup(eth);
  	mtk_mdio_cleanup(eth);
  
-@@ -5641,6 +5951,7 @@ static const struct mtk_soc_data mt2701_
+@@ -5395,6 +5705,7 @@ static const struct mtk_soc_data mt2701_
  	.required_clks = MT7623_CLKS_BITMAP,
  	.required_pctl = true,
  	.version = 1,
@@ -848,7 +848,7 @@ We are currently working hard to find the cause, and it might be the same issue 
  	.tx = {
  		.desc_size = sizeof(struct mtk_tx_dma),
  		.dma_max_len = MTK_TX_DMA_BUF_LEN,
-@@ -5650,7 +5961,6 @@ static const struct mtk_soc_data mt2701_
+@@ -5404,7 +5715,6 @@ static const struct mtk_soc_data mt2701_
  	},
  	.rx = {
  		.desc_size = sizeof(struct mtk_rx_dma),
@@ -856,7 +856,7 @@ We are currently working hard to find the cause, and it might be the same issue 
  		.dma_l4_valid = RX_DMA_L4_VALID,
  		.dma_size = MTK_DMA_SIZE(2K),
  		.dma_max_len = MTK_TX_DMA_BUF_LEN,
-@@ -5669,6 +5979,7 @@ static const struct mtk_soc_data mt7621_
+@@ -5423,6 +5733,7 @@ static const struct mtk_soc_data mt7621_
  	.ppe_num = 1,
  	.hash_offset = 2,
  	.foe_entry_size = MTK_FOE_ENTRY_V1_SIZE,
@@ -864,7 +864,7 @@ We are currently working hard to find the cause, and it might be the same issue 
  	.tx = {
  		.desc_size = sizeof(struct mtk_tx_dma),
  		.dma_max_len = MTK_TX_DMA_BUF_LEN,
-@@ -5678,7 +5989,6 @@ static const struct mtk_soc_data mt7621_
+@@ -5432,7 +5743,6 @@ static const struct mtk_soc_data mt7621_
  	},
  	.rx = {
  		.desc_size = sizeof(struct mtk_rx_dma),
@@ -872,7 +872,7 @@ We are currently working hard to find the cause, and it might be the same issue 
  		.dma_l4_valid = RX_DMA_L4_VALID,
  		.dma_size = MTK_DMA_SIZE(2K),
  		.dma_max_len = MTK_TX_DMA_BUF_LEN,
-@@ -5699,6 +6009,7 @@ static const struct mtk_soc_data mt7622_
+@@ -5453,6 +5763,7 @@ static const struct mtk_soc_data mt7622_
  	.hash_offset = 2,
  	.has_accounting = true,
  	.foe_entry_size = MTK_FOE_ENTRY_V1_SIZE,
@@ -880,7 +880,7 @@ We are currently working hard to find the cause, and it might be the same issue 
  	.tx = {
  		.desc_size = sizeof(struct mtk_tx_dma),
  		.dma_max_len = MTK_TX_DMA_BUF_LEN,
-@@ -5708,7 +6019,6 @@ static const struct mtk_soc_data mt7622_
+@@ -5462,7 +5773,6 @@ static const struct mtk_soc_data mt7622_
  	},
  	.rx = {
  		.desc_size = sizeof(struct mtk_rx_dma),
@@ -888,7 +888,7 @@ We are currently working hard to find the cause, and it might be the same issue 
  		.dma_l4_valid = RX_DMA_L4_VALID,
  		.dma_size = MTK_DMA_SIZE(2K),
  		.dma_max_len = MTK_TX_DMA_BUF_LEN,
-@@ -5728,6 +6038,7 @@ static const struct mtk_soc_data mt7623_
+@@ -5482,6 +5792,7 @@ static const struct mtk_soc_data mt7623_
  	.hash_offset = 2,
  	.foe_entry_size = MTK_FOE_ENTRY_V1_SIZE,
  	.disable_pll_modes = true,
@@ -896,7 +896,7 @@ We are currently working hard to find the cause, and it might be the same issue 
  	.tx = {
  		.desc_size = sizeof(struct mtk_tx_dma),
  		.dma_max_len = MTK_TX_DMA_BUF_LEN,
-@@ -5737,7 +6048,6 @@ static const struct mtk_soc_data mt7623_
+@@ -5491,7 +5802,6 @@ static const struct mtk_soc_data mt7623_
  	},
  	.rx = {
  		.desc_size = sizeof(struct mtk_rx_dma),
@@ -904,7 +904,7 @@ We are currently working hard to find the cause, and it might be the same issue 
  		.dma_l4_valid = RX_DMA_L4_VALID,
  		.dma_size = MTK_DMA_SIZE(2K),
  		.dma_max_len = MTK_TX_DMA_BUF_LEN,
-@@ -5754,6 +6064,7 @@ static const struct mtk_soc_data mt7629_
+@@ -5508,6 +5818,7 @@ static const struct mtk_soc_data mt7629_
  	.required_pctl = false,
  	.has_accounting = true,
  	.version = 1,
@@ -912,7 +912,7 @@ We are currently working hard to find the cause, and it might be the same issue 
  	.tx = {
  		.desc_size = sizeof(struct mtk_tx_dma),
  		.dma_max_len = MTK_TX_DMA_BUF_LEN,
-@@ -5763,7 +6074,6 @@ static const struct mtk_soc_data mt7629_
+@@ -5517,7 +5828,6 @@ static const struct mtk_soc_data mt7629_
  	},
  	.rx = {
  		.desc_size = sizeof(struct mtk_rx_dma),
@@ -920,7 +920,7 @@ We are currently working hard to find the cause, and it might be the same issue 
  		.dma_l4_valid = RX_DMA_L4_VALID,
  		.dma_size = MTK_DMA_SIZE(2K),
  		.dma_max_len = MTK_TX_DMA_BUF_LEN,
-@@ -5784,6 +6094,7 @@ static const struct mtk_soc_data mt7981_
+@@ -5538,6 +5848,7 @@ static const struct mtk_soc_data mt7981_
  	.hash_offset = 4,
  	.has_accounting = true,
  	.foe_entry_size = MTK_FOE_ENTRY_V2_SIZE,
@@ -928,7 +928,7 @@ We are currently working hard to find the cause, and it might be the same issue 
  	.tx = {
  		.desc_size = sizeof(struct mtk_tx_dma_v2),
  		.dma_max_len = MTK_TX_DMA_BUF_LEN_V2,
-@@ -5793,7 +6104,6 @@ static const struct mtk_soc_data mt7981_
+@@ -5547,7 +5858,6 @@ static const struct mtk_soc_data mt7981_
  	},
  	.rx = {
  		.desc_size = sizeof(struct mtk_rx_dma),
@@ -936,7 +936,7 @@ We are currently working hard to find the cause, and it might be the same issue 
  		.dma_l4_valid = RX_DMA_L4_VALID_V2,
  		.dma_max_len = MTK_TX_DMA_BUF_LEN,
  		.dma_len_offset = 16,
-@@ -5814,6 +6124,7 @@ static const struct mtk_soc_data mt7986_
+@@ -5568,6 +5878,7 @@ static const struct mtk_soc_data mt7986_
  	.hash_offset = 4,
  	.has_accounting = true,
  	.foe_entry_size = MTK_FOE_ENTRY_V2_SIZE,
@@ -944,7 +944,7 @@ We are currently working hard to find the cause, and it might be the same issue 
  	.tx = {
  		.desc_size = sizeof(struct mtk_tx_dma_v2),
  		.dma_max_len = MTK_TX_DMA_BUF_LEN_V2,
-@@ -5823,7 +6134,6 @@ static const struct mtk_soc_data mt7986_
+@@ -5577,7 +5888,6 @@ static const struct mtk_soc_data mt7986_
  	},
  	.rx = {
  		.desc_size = sizeof(struct mtk_rx_dma),
@@ -952,7 +952,7 @@ We are currently working hard to find the cause, and it might be the same issue 
  		.dma_l4_valid = RX_DMA_L4_VALID_V2,
  		.dma_max_len = MTK_TX_DMA_BUF_LEN,
  		.dma_len_offset = 16,
-@@ -5844,6 +6154,7 @@ static const struct mtk_soc_data mt7988_
+@@ -5598,6 +5908,7 @@ static const struct mtk_soc_data mt7988_
  	.hash_offset = 4,
  	.has_accounting = true,
  	.foe_entry_size = MTK_FOE_ENTRY_V3_SIZE,
@@ -960,7 +960,7 @@ We are currently working hard to find the cause, and it might be the same issue 
  	.tx = {
  		.desc_size = sizeof(struct mtk_tx_dma_v2),
  		.dma_max_len = MTK_TX_DMA_BUF_LEN_V2,
-@@ -5853,7 +6164,6 @@ static const struct mtk_soc_data mt7988_
+@@ -5607,7 +5918,6 @@ static const struct mtk_soc_data mt7988_
  	},
  	.rx = {
  		.desc_size = sizeof(struct mtk_rx_dma_v2),
@@ -968,7 +968,7 @@ We are currently working hard to find the cause, and it might be the same issue 
  		.dma_l4_valid = RX_DMA_L4_VALID_V2,
  		.dma_max_len = MTK_TX_DMA_BUF_LEN_V2,
  		.dma_len_offset = 8,
-@@ -5868,6 +6178,7 @@ static const struct mtk_soc_data rt5350_
+@@ -5622,6 +5932,7 @@ static const struct mtk_soc_data rt5350_
  	.required_clks = MT7628_CLKS_BITMAP,
  	.required_pctl = false,
  	.version = 1,
@@ -976,7 +976,7 @@ We are currently working hard to find the cause, and it might be the same issue 
  	.tx = {
  		.desc_size = sizeof(struct mtk_tx_dma),
  		.dma_max_len = MTK_TX_DMA_BUF_LEN,
-@@ -5876,7 +6187,6 @@ static const struct mtk_soc_data rt5350_
+@@ -5630,7 +5941,6 @@ static const struct mtk_soc_data rt5350_
  	},
  	.rx = {
  		.desc_size = sizeof(struct mtk_rx_dma),
@@ -986,7 +986,7 @@ We are currently working hard to find the cause, and it might be the same issue 
  		.dma_len_offset = 16,
 --- a/drivers/net/ethernet/mediatek/mtk_eth_soc.h
 +++ b/drivers/net/ethernet/mediatek/mtk_eth_soc.h
-@@ -64,7 +64,7 @@
+@@ -63,7 +63,7 @@
  
  #define MTK_QRX_OFFSET		0x10
  
@@ -995,7 +995,7 @@ We are currently working hard to find the cause, and it might be the same issue 
  #define MTK_HW_LRO_DMA_SIZE	8
  
  #define	MTK_MAX_LRO_RX_LENGTH		(4096 * 3)
-@@ -77,6 +77,8 @@
+@@ -76,6 +76,8 @@
  #define	MTK_HW_LRO_BW_THRE		3000
  #define	MTK_HW_LRO_REPLACE_DELTA	1000
  #define	MTK_HW_LRO_SDL_REMAIN_ROOM	1522
@@ -1004,7 +1004,7 @@ We are currently working hard to find the cause, and it might be the same issue 
  
  /* Frame Engine Global Configuration */
  #define MTK_FE_GLO_CFG(x)	(((x) == MTK_GMAC3_ID) ? 0x24 : 0x00)
-@@ -98,6 +100,9 @@
+@@ -97,6 +99,9 @@
  #define MTK_GDM1_AF		BIT(28)
  #define MTK_GDM2_AF		BIT(29)
  
@@ -1014,7 +1014,7 @@ We are currently working hard to find the cause, and it might be the same issue 
  /* PDMA HW LRO Alter Flow Timer Register */
  #define MTK_PDMA_LRO_ALT_REFRESH_TIMER	0x1c
  
-@@ -183,7 +188,10 @@
+@@ -177,7 +182,10 @@
  
  /* PDMA HW LRO Control Registers */
  #define MTK_PDMA_LRO_CTRL_DW0	0x980
@@ -1025,7 +1025,7 @@ We are currently working hard to find the cause, and it might be the same issue 
  #define MTK_L3_CKS_UPD_EN		BIT(7)
  #define MTK_L3_CKS_UPD_EN_V2		BIT(19)
  #define MTK_LRO_ALT_PKT_CNT_MODE	BIT(21)
-@@ -209,6 +217,19 @@
+@@ -203,6 +211,19 @@
  /* PDMA HW LRO ALT Data Registers */
  #define MTK_LRO_ALT_DBG_DATA	0xc44
  
@@ -1045,7 +1045,7 @@ We are currently working hard to find the cause, and it might be the same issue 
  /* PDMA Global Configuration Register */
  #define MTK_PDMA_LRO_SDL	0x3000
  #define MTK_RX_CFG_SDL_OFFSET	16
-@@ -231,6 +252,9 @@
+@@ -225,6 +246,9 @@
  #define MTK_PDMA_DELAY_PINT_MASK	0x7f
  #define MTK_PDMA_DELAY_PTIME_MASK	0xff
  
@@ -1055,7 +1055,7 @@ We are currently working hard to find the cause, and it might be the same issue 
  /* PDMA HW LRO Alter Flow Delta Register */
  #define MTK_PDMA_LRO_ALT_SCORE_DELTA	0xa4c
  
-@@ -240,14 +264,12 @@
+@@ -234,14 +258,12 @@
  #define MTK_RING_MYIP_VLD		BIT(9)
  
  /* PDMA HW LRO Ring Control Registers */
@@ -1074,7 +1074,7 @@ We are currently working hard to find the cause, and it might be the same issue 
  #define MTK_RING_AUTO_LERAN_MODE	(3 << 6)
  #define MTK_RING_VLD			BIT(8)
  #define MTK_RING_MAX_AGG_TIME		((MTK_HW_LRO_AGG_TIME & 0xffff) << 10)
-@@ -335,7 +357,39 @@
+@@ -329,7 +351,39 @@
  #define FC_THRES_MIN		0x4444
  
  /* QDMA Interrupt Status Register */
@@ -1115,7 +1115,7 @@ We are currently working hard to find the cause, and it might be the same issue 
  #define MTK_TX_DONE_DLY		BIT(28)
  #define MTK_RX_DONE_INT3	BIT(19)
  #define MTK_RX_DONE_INT2	BIT(18)
-@@ -345,11 +399,8 @@
+@@ -339,11 +393,8 @@
  #define MTK_TX_DONE_INT2	BIT(2)
  #define MTK_TX_DONE_INT1	BIT(1)
  #define MTK_TX_DONE_INT0	BIT(0)
@@ -1127,7 +1127,7 @@ We are currently working hard to find the cause, and it might be the same issue 
  #define MTK_CDM_TXFIFO_RDY	BIT(7)
  
  /* QDMA Interrupt grouping registers */
-@@ -989,6 +1040,7 @@ struct mtk_tx_ring {
+@@ -981,6 +1032,7 @@ struct mtk_tx_ring {
  	struct mtk_tx_dma *dma_pdma;	/* For MT7628/88 PDMA handling */
  	dma_addr_t phys_pdma;
  	int cpu_idx;
@@ -1135,7 +1135,7 @@ We are currently working hard to find the cause, and it might be the same issue 
  };
  
  /* PDMA rx ring mode */
-@@ -1014,13 +1066,38 @@ struct mtk_rx_ring {
+@@ -1006,13 +1058,38 @@ struct mtk_rx_ring {
  	u16 buf_size;
  	u16 dma_size;
  	bool calc_idx_update;
@@ -1174,7 +1174,7 @@ We are currently working hard to find the cause, and it might be the same issue 
  enum mkt_eth_capabilities {
  	MTK_RGMII_BIT = 0,
  	MTK_TRGMII_BIT,
-@@ -1033,7 +1110,9 @@ enum mkt_eth_capabilities {
+@@ -1025,7 +1102,9 @@ enum mkt_eth_capabilities {
  	MTK_INFRA_BIT,
  	MTK_SHARED_SGMII_BIT,
  	MTK_HWLRO_BIT,
@@ -1184,7 +1184,7 @@ We are currently working hard to find the cause, and it might be the same issue 
  	MTK_TRGMII_MT7621_CLK_BIT,
  	MTK_QDMA_BIT,
  	MTK_SOC_MT7628_BIT,
-@@ -1080,7 +1159,9 @@ enum mkt_eth_capabilities {
+@@ -1072,7 +1151,9 @@ enum mkt_eth_capabilities {
  #define MTK_INFRA		BIT_ULL(MTK_INFRA_BIT)
  #define MTK_SHARED_SGMII	BIT_ULL(MTK_SHARED_SGMII_BIT)
  #define MTK_HWLRO		BIT_ULL(MTK_HWLRO_BIT)
@@ -1194,7 +1194,7 @@ We are currently working hard to find the cause, and it might be the same issue 
  #define MTK_TRGMII_MT7621_CLK	BIT_ULL(MTK_TRGMII_MT7621_CLK_BIT)
  #define MTK_QDMA		BIT_ULL(MTK_QDMA_BIT)
  #define MTK_SOC_MT7628		BIT_ULL(MTK_SOC_MT7628_BIT)
-@@ -1190,18 +1271,19 @@ enum mkt_eth_capabilities {
+@@ -1182,18 +1263,19 @@ enum mkt_eth_capabilities {
  #define MT7981_CAPS  (MTK_GMAC1_SGMII | MTK_GMAC2_SGMII | MTK_GMAC2_GEPHY | \
  		      MTK_MUX_GMAC12_TO_GEPHY_SGMII | MTK_QDMA | \
  		      MTK_MUX_U3_GMAC2_TO_QPHY | MTK_U3_COPHY_V2 | \
@@ -1217,7 +1217,7 @@ We are currently working hard to find the cause, and it might be the same issue 
  
  struct mtk_tx_dma_desc_info {
  	dma_addr_t	addr;
-@@ -1230,6 +1312,17 @@ struct mtk_reg_map {
+@@ -1222,6 +1304,17 @@ struct mtk_reg_map {
  		u32	irq_mask;	/* interrupt mask */
  		u32	adma_rx_dbg0;
  		u32	int_grp;
@@ -1235,7 +1235,7 @@ We are currently working hard to find the cause, and it might be the same issue 
  	} pdma;
  	struct {
  		u32	qtx_cfg;	/* tx queue configuration */
-@@ -1290,6 +1383,7 @@ struct mtk_reg_map {
+@@ -1282,6 +1375,7 @@ struct mtk_reg_map {
  struct mtk_soc_data {
  	const struct mtk_reg_map *reg_map;
  	u32             ana_rgc3;
@@ -1243,16 +1243,16 @@ We are currently working hard to find the cause, and it might be the same issue 
  	u64		caps;
  	u64		required_clks;
  	bool		required_pctl;
-@@ -1382,6 +1476,8 @@ struct mtk_eth {
+@@ -1373,6 +1467,8 @@ struct mtk_eth {
+ 	struct net_device		*netdev[MTK_MAX_DEVS];
  	struct mtk_mac			*mac[MTK_MAX_DEVS];
- 	struct mtk_mux			*mux[MTK_MAX_DEVS];
  	int				irq[3];
 +	int				irq_fe[MTK_FE_IRQ_NUM];
 +	int				irq_pdma[MTK_PDMA_IRQ_NUM];
  	u32				msg_enable;
  	unsigned long			sysclk;
  	struct regmap			*ethsys;
-@@ -1394,7 +1490,8 @@ struct mtk_eth {
+@@ -1385,7 +1481,8 @@ struct mtk_eth {
  	struct mtk_rx_ring		rx_ring[MTK_MAX_RX_RING_NUM];
  	struct mtk_rx_ring		rx_ring_qdma;
  	struct napi_struct		tx_napi;
