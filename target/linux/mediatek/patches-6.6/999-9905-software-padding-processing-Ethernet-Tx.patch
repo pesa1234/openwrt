@@ -1,0 +1,47 @@
+From 8a489674ad10eedf458cb533a91acf03cf37ae7b Mon Sep 17 00:00:00 2001
+From: developer <developer@mediatek.com>
+Date: Wed, 8 Feb 2023 15:18:10 +0800
+Subject: [PATCH] Add software padding processing in Ethernet Tx path.
+
+It's found that too-short packets would lead to
+switch Tx CRC error, followed by switch output
+queue stuck issue. So Ethernet driver should check
+if the packet is too short and conduct software
+padding when necessary.
+
+If without this patch, switch might encounter output
+queue stuck issue.
+
+Change-Id: Ibd94cbf3be0530d2b9ee61477b0362d099c47d8e
+Reviewed-on: https://gerrit.mediatek.inc/c/openwrt/feeds/mtk_openwrt_feeds/+/7109899
+---
+ drivers/net/ethernet/mediatek/mtk_eth_soc.c | 7 +++++++
+ drivers/net/ethernet/mediatek/mtk_eth_soc.h | 1 +
+ 2 files changed, 8 insertions(+)
+
+--- a/drivers/net/ethernet/mediatek/mtk_eth_soc.c
++++ b/drivers/net/ethernet/mediatek/mtk_eth_soc.c
+@@ -1631,6 +1631,13 @@ static int mtk_tx_map(struct sk_buff *sk
+ 	int queue = skb_get_queue_mapping(skb);
+ 	int k = 0;
+ 
++	if (skb->len < 32) {
++		if (skb_put_padto(skb, MTK_MIN_TX_LENGTH))
++			return -ENOMEM;
++
++		txd_info.size = skb_headlen(skb);
++	}
++
+ 	txq = netdev_get_tx_queue(dev, queue);
+ 	itxd = ring->next_free;
+ 	itxd_pdma = qdma_to_pdma(ring, itxd);
+--- a/drivers/net/ethernet/mediatek/mtk_eth_soc.h
++++ b/drivers/net/ethernet/mediatek/mtk_eth_soc.h
+@@ -33,6 +33,7 @@
+ #define MTK_MAX_RX_LENGTH_2K	2048
+ #define MTK_TX_DMA_BUF_LEN	0x3fff
+ #define MTK_TX_DMA_BUF_LEN_V2	0xffff
++#define MTK_MIN_TX_LENGTH	60
+ #define MTK_QDMA_RING_SIZE	2048
+ #define MTK_DMA_SIZE(x)		(SZ_##x)
+ #define MTK_FQ_DMA_HEAD		32

@@ -1,0 +1,40 @@
+From abd276fcd6cda1a10b6813a10cc9f8904b326f16 Mon Sep 17 00:00:00 2001
+From: developer <developer@mediatek.com>
+Date: Thu, 23 May 2024 20:59:57 +0800
+Subject: [PATCH] Fix software padding processing in Ethernet Tx path.
+
+It's found that 20bytes(LLC), 28bytes, and 36bytes(PPP LCP Configuration
+Ack) packets with additional 4bytes special tag for dsa driver would lead
+to switch Tx CRC error, followed by switch output queue stuck issue.
+Therefore, Ethernet driver check skb->len <= 40(36bytes PPP LCP + 4bytes
+special tag) and conduct software padding.
+
+Moreover, skb linearization should be checked again after conduct
+software padding.
+
+If without this patch, users might encounter problems when establishing
+a PPPoE tunnel.
+
+Change-Id: Id28fa3870dc9e905207d95634fe5cd692f363761
+Reviewed-on: https://gerrit.mediatek.inc/c/openwrt/feeds/mtk_openwrt_feeds/+/9129634
+
+frank-w: changed condition to MTK_MIN_TX_LENGTH
+---
+ drivers/net/ethernet/mediatek/mtk_eth_soc.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+--- a/drivers/net/ethernet/mediatek/mtk_eth_soc.c
++++ b/drivers/net/ethernet/mediatek/mtk_eth_soc.c
+@@ -1631,10 +1631,11 @@ static int mtk_tx_map(struct sk_buff *sk
+ 	int queue = skb_get_queue_mapping(skb);
+ 	int k = 0;
+ 
+-	if (skb->len < 32) {
++	if (skb->len <= MTK_MIN_TX_LENGTH) {
+ 		if (skb_put_padto(skb, MTK_MIN_TX_LENGTH))
+ 			return -ENOMEM;
+ 
++		txd_info.last = !skb_is_nonlinear(skb);
+ 		txd_info.size = skb_headlen(skb);
+ 	}
+ 
