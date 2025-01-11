@@ -4,7 +4,7 @@
  	path->dev = ctx->dev;
  	path->mtk_wdma.wdma_idx = wed->wdma_idx;
  	path->mtk_wdma.bss = mvif->mt76.idx;
--	path->mtk_wdma.wcid = is_mt7915(&dev->mt76) ? msta->wcid.idx : 0x3ff;
+-	path->mtk_wdma.wcid = is_mt7915(&dev->mt76) ? 0xff : 0x3ff;
 +	path->mtk_wdma.wcid = (is_mt7915(&dev->mt76) || test_bit(MT_WCID_FLAG_4ADDR, &msta->wcid.flags)) ? msta->wcid.idx : 0x3ff;
  	path->mtk_wdma.queue = phy != &dev->phy;
  

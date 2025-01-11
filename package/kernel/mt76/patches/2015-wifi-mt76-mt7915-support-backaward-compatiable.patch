@@ -26,5 +26,5 @@ Subject: [PATCH 2015/2015] wifi: mt76: mt7915: support backaward compatiable
 -		wed->wlan.wpdma_rx = res->start + MT_RXQ_WED_DATA_RING_BASE;
 +		wed->wlan.wpdma_rx[0] = res->start + MT_RXQ_WED_DATA_RING_BASE;
  	}
- 	wed->wlan.nbuf = MT7915_HW_TOKEN_SIZE;
- 	wed->wlan.tx_tbit[0] = is_mt7915(&dev->mt76) ? 4 : 30;
+ 
+ 	wed->wlan.nbuf = is_mt7915(&dev->mt76) ?
