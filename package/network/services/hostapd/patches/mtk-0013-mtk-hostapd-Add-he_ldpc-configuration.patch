@@ -14,7 +14,7 @@ Subject: [PATCH 13/54] mtk: hostapd: Add he_ldpc configuration
 
 --- a/hostapd/config_file.c
 +++ b/hostapd/config_file.c
-@@ -3816,6 +3816,8 @@ static int hostapd_config_fill(struct ho
+@@ -3814,6 +3814,8 @@ static int hostapd_config_fill(struct ho
  		conf->he_phy_capab.he_su_beamformee = atoi(pos);
  	} else if (os_strcmp(buf, "he_mu_beamformer") == 0) {
  		conf->he_phy_capab.he_mu_beamformer = atoi(pos);

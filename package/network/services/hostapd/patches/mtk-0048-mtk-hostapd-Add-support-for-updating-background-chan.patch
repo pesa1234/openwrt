@@ -212,7 +212,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  				 int cf1, int cf2, u32 state);
 --- a/src/ap/drv_callbacks.c
 +++ b/src/ap/drv_callbacks.c
-@@ -2300,6 +2300,18 @@ static void hostapd_event_dfs_cac_starte
+@@ -2305,6 +2305,18 @@ static void hostapd_event_dfs_cac_starte
  			      radar->cf1, radar->cf2);
  }
  
@@ -231,7 +231,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  static void hostapd_event_dfs_sta_cac_skipped(struct hostapd_data *hapd,
  					      struct dfs_event *radar)
  {
-@@ -2817,6 +2829,16 @@ void hostapd_wpa_event(void *ctx, enum w
+@@ -2822,6 +2834,16 @@ void hostapd_wpa_event(void *ctx, enum w
  		hapd = switch_link_hapd(hapd, data->dfs_event.link_id);
  		hostapd_event_dfs_nop_finished(hapd, &data->dfs_event);
  		break;
@@ -264,7 +264,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  	u16 hw_flags;
 --- a/src/drivers/driver.h
 +++ b/src/drivers/driver.h
-@@ -6062,6 +6062,18 @@ enum wpa_event_type {
+@@ -6095,6 +6095,18 @@ enum wpa_event_type {
  	 */
  	EVENT_DFS_STA_CAC_EXPIRED,
  

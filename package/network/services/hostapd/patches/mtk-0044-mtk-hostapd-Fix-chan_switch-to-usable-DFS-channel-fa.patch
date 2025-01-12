@@ -27,7 +27,7 @@ Signed-off-by: fancy.liu <fancy.liu@mediatek.com>
 
 --- a/src/ap/hostapd.c
 +++ b/src/ap/hostapd.c
-@@ -4709,6 +4709,9 @@ hostapd_switch_channel_fallback(struct h
+@@ -4730,6 +4730,9 @@ hostapd_switch_channel_fallback(struct h
  
  	iface->freq = freq_params->freq;
  	iface->conf->channel = freq_params->channel;

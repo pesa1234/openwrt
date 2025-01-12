@@ -22,7 +22,7 @@ control.
 
 --- a/hostapd/config_file.c
 +++ b/hostapd/config_file.c
-@@ -5265,6 +5265,16 @@ static int hostapd_config_fill(struct ho
+@@ -5271,6 +5271,16 @@ static int hostapd_config_fill(struct ho
  		u8 en = strtol(pos, NULL, 10);
  
  		conf->dfs_detect_mode = en;
@@ -53,7 +53,7 @@ control.
  }
 --- a/src/ap/ap_config.h
 +++ b/src/ap/ap_config.h
-@@ -1294,6 +1294,9 @@ struct hostapd_config {
+@@ -1299,6 +1299,9 @@ struct hostapd_config {
  	u8 three_wire_enable;
  	u8 ibf_enable;
  	u8 dfs_detect_mode;
@@ -65,7 +65,7 @@ control.
  enum three_wire_mode {
 --- a/src/ap/ap_drv_ops.c
 +++ b/src/ap/ap_drv_ops.c
-@@ -1374,4 +1374,12 @@ int hostapd_drv_ibf_dump(struct hostapd_
+@@ -1449,4 +1449,12 @@ int hostapd_drv_ibf_dump(struct hostapd_
  	if (!hapd->driver || !hapd->driver->ibf_dump)
  		return 0;
  	return hapd->driver->ibf_dump(hapd->drv_priv, ibf_enable);
@@ -82,7 +82,7 @@ control.
 +}
 --- a/src/ap/ap_drv_ops.h
 +++ b/src/ap/ap_drv_ops.h
-@@ -166,6 +166,7 @@ int hostapd_drv_mu_dump(struct hostapd_d
+@@ -167,6 +167,7 @@ int hostapd_drv_mu_dump(struct hostapd_d
  int hostapd_drv_three_wire_ctrl(struct hostapd_data *hapd);
  int hostapd_drv_ibf_ctrl(struct hostapd_data *hapd);
  int hostapd_drv_ibf_dump(struct hostapd_data *hapd, u8 *ibf_enable);
@@ -92,7 +92,7 @@ control.
  
 --- a/src/ap/hostapd.c
 +++ b/src/ap/hostapd.c
-@@ -2781,6 +2781,8 @@ dfs_offload:
+@@ -2802,6 +2802,8 @@ dfs_offload:
  		goto fail;
  	if (hostapd_drv_ibf_ctrl(hapd) < 0)
  		goto fail;
@@ -144,7 +144,7 @@ control.
  
 --- a/src/drivers/driver.h
 +++ b/src/drivers/driver.h
-@@ -5405,6 +5405,15 @@ struct wpa_driver_ops {
+@@ -5438,6 +5438,15 @@ struct wpa_driver_ops {
  	int (*ibf_dump)(void *priv, u8 *ibf_enable);
  
  	/**
@@ -176,7 +176,7 @@ control.
  static struct nl_sock * nl_create_handle(struct nl_cb *cb, const char *dbg)
  {
  	struct nl_sock *handle;
-@@ -15003,6 +15010,49 @@ fail:
+@@ -15261,6 +15268,49 @@ fail:
  	return -ENOBUFS;
  }
  
@@ -226,7 +226,7 @@ control.
  const struct wpa_driver_ops wpa_driver_nl80211_ops = {
  	.name = "nl80211",
  	.desc = "Linux nl80211/cfg80211",
-@@ -15179,6 +15229,7 @@ const struct wpa_driver_ops wpa_driver_n
+@@ -15440,6 +15490,7 @@ const struct wpa_driver_ops wpa_driver_n
  	.get_edcca = nl80211_get_edcca,
  	.three_wire_ctrl = nl80211_enable_three_wire,
  	.ibf_ctrl = nl80211_ibf_enable,
@@ -247,7 +247,7 @@ control.
  	u32 ignore_next_local_deauth;
 --- a/src/drivers/driver_nl80211_capa.c
 +++ b/src/drivers/driver_nl80211_capa.c
-@@ -1156,6 +1156,9 @@ static int wiphy_info_handler(struct nl_
+@@ -1160,6 +1160,9 @@ static int wiphy_info_handler(struct nl_
  				case MTK_NL80211_VENDOR_SUBCMD_IBF_CTRL:
  					drv->mtk_ibf_vendor_cmd_avail = 1;
  					break;

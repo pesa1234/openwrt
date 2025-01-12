@@ -18,7 +18,7 @@ Signed-off-by: Michael Lee <michael-cy.lee@mediatek.com>
 
 --- a/wpa_supplicant/driver_i.h
 +++ b/wpa_supplicant/driver_i.h
-@@ -324,6 +324,18 @@ static inline int wpa_drv_set_country(st
+@@ -332,6 +332,18 @@ static inline int wpa_drv_set_country(st
  	return 0;
  }
  
@@ -39,7 +39,7 @@ Signed-off-by: Michael Lee <michael-cy.lee@mediatek.com>
  				    unsigned int freq, unsigned int wait)
 --- a/wpa_supplicant/events.c
 +++ b/wpa_supplicant/events.c
-@@ -4250,6 +4250,20 @@ out:
+@@ -4286,6 +4286,20 @@ out:
  	return wpa_sm_set_mlo_params(wpa_s->wpa, &wpa_mlo);
  }
  
@@ -60,7 +60,7 @@ Signed-off-by: Michael Lee <michael-cy.lee@mediatek.com>
  
  static void wpa_supplicant_event_assoc(struct wpa_supplicant *wpa_s,
  				       union wpa_event_data *data)
-@@ -4579,6 +4593,8 @@ static void wpa_supplicant_event_assoc(s
+@@ -4615,6 +4629,8 @@ static void wpa_supplicant_event_assoc(s
  
  	if (wpa_s->current_ssid && wpa_s->current_ssid->enable_4addr_mode)
  		wpa_supplicant_set_4addr_mode(wpa_s);
