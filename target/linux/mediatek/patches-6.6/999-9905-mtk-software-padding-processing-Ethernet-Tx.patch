@@ -21,7 +21,7 @@ Reviewed-on: https://gerrit.mediatek.inc/c/openwrt/feeds/mtk_openwrt_feeds/+/710
 
 --- a/drivers/net/ethernet/mediatek/mtk_eth_soc.c
 +++ b/drivers/net/ethernet/mediatek/mtk_eth_soc.c
-@@ -1598,6 +1598,13 @@ static int mtk_tx_map(struct sk_buff *sk
+@@ -1589,6 +1589,13 @@ static int mtk_tx_map(struct sk_buff *sk
  	int queue = skb_get_queue_mapping(skb);
  	int k = 0;
  
