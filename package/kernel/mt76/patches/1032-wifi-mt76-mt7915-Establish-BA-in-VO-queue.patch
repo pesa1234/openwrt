@@ -9,7 +9,7 @@ Subject: [PATCH 1032/1051] wifi: mt76: mt7915: Establish BA in VO queue
 
 --- a/mt76_connac_mac.c
 +++ b/mt76_connac_mac.c
-@@ -1159,8 +1159,6 @@ void mt76_connac2_tx_check_aggr(struct i
+@@ -1162,8 +1162,6 @@ void mt76_connac2_tx_check_aggr(struct i
  		return;
  
  	tid = le32_get_bits(txwi[1], MT_TXD1_TID);

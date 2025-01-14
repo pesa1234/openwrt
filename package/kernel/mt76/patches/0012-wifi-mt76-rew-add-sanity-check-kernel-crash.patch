@@ -10,7 +10,7 @@ Subject: [PATCH] mt76: add sanity check to prevent kernel crash
 
 --- a/mac80211.c
 +++ b/mac80211.c
-@@ -1592,8 +1592,14 @@ int mt76_sta_state(struct ieee80211_hw *
+@@ -1593,8 +1593,14 @@ int mt76_sta_state(struct ieee80211_hw *
  		return mt76_sta_add(phy, vif, sta);
  
  	if (old_state == IEEE80211_STA_NONE &&

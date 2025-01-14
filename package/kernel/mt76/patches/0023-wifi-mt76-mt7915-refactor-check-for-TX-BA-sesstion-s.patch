@@ -30,7 +30,7 @@ Signed-off-by: Rex Lu <rex.lu@mediatek.com>
  	u8 hw_key_idx2;
 --- a/mt76_connac_mac.c
 +++ b/mt76_connac_mac.c
-@@ -486,6 +486,34 @@ mt76_connac2_mac_write_txwi_80211(struct
+@@ -489,6 +489,34 @@ mt76_connac2_mac_write_txwi_80211(struct
  	}
  }
  
@@ -65,7 +65,7 @@ Signed-off-by: Rex Lu <rex.lu@mediatek.com>
  void mt76_connac2_mac_write_txwi(struct mt76_dev *dev, __le32 *txwi,
  				 struct sk_buff *skb, struct mt76_wcid *wcid,
  				 struct ieee80211_key_conf *key, int pid,
-@@ -628,14 +656,8 @@ bool mt76_connac2_mac_fill_txs(struct mt
+@@ -631,14 +659,8 @@ bool mt76_connac2_mac_fill_txs(struct mt
  			le32_get_bits(txs_data[7], MT_TXS7_MPDU_RETRY_CNT);
  
  		if (wcid->sta) {
@@ -82,7 +82,7 @@ Signed-off-by: Rex Lu <rex.lu@mediatek.com>
  		}
  	}
  
-@@ -1145,8 +1167,7 @@ void mt76_connac2_tx_check_aggr(struct i
+@@ -1148,8 +1170,7 @@ void mt76_connac2_tx_check_aggr(struct i
  		return;
  
  	wcid = (struct mt76_wcid *)sta->drv_priv;
