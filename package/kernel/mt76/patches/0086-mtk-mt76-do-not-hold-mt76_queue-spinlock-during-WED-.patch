@@ -1,0 +1,62 @@
+From f84a4bc0b94ec677b9f5024bd826f63408a24c65 Mon Sep 17 00:00:00 2001
+From: Shayne Chen <shayne.chen@mediatek.com>
+Date: Thu, 9 Jan 2025 00:02:42 +0800
+Subject: [PATCH 86/86] mtk: mt76: do not hold mt76_queue spinlock during WED
+ dma init
+
+During dma init or reset stage, rx napi is disabled, so there's no need to
+hold the spinlock while doing queue init, which is also time-consuming.
+Change to use the corresponding lock-free API.
+
+Signed-off-by: Shayne Chen <shayne.chen@mediatek.com>
+---
+ dma.c | 7 +++----
+ dma.h | 2 ++
+ wed.c | 4 ++--
+ 3 files changed, 7 insertions(+), 6 deletions(-)
+
+--- a/dma.c
++++ b/dma.c
+@@ -631,9 +631,8 @@ free_skb:
+ 	return ret;
+ }
+ 
+-static int
+-mt76_dma_rx_fill_buf(struct mt76_dev *dev, struct mt76_queue *q,
+-		     bool allow_direct)
++int mt76_dma_rx_fill_buf(struct mt76_dev *dev, struct mt76_queue *q,
++			 bool allow_direct)
+ {
+ 	int len = SKB_WITH_OVERHEAD(q->buf_size);
+ 	int frames = 0;
+--- a/dma.h
++++ b/dma.h
+@@ -81,6 +81,8 @@ void mt76_dma_attach(struct mt76_dev *de
+ void mt76_dma_cleanup(struct mt76_dev *dev);
+ int mt76_dma_rx_fill(struct mt76_dev *dev, struct mt76_queue *q,
+ 		     bool allow_direct);
++int mt76_dma_rx_fill_buf(struct mt76_dev *dev, struct mt76_queue *q,
++			 bool allow_direct);
+ void __mt76_dma_queue_reset(struct mt76_dev *dev, struct mt76_queue *q,
+ 			    bool reset_idx);
+ void mt76_dma_queue_reset(struct mt76_dev *dev, struct mt76_queue *q);
+--- a/wed.c
++++ b/wed.c
+@@ -123,7 +123,7 @@ int mt76_wed_dma_setup(struct mt76_dev *
+ 		/* WED txfree queue needs ring to be initialized before setup */
+ 		q->flags = 0;
+ 		mt76_dma_queue_reset(dev, q);
+-		mt76_dma_rx_fill(dev, q, false);
++		mt76_dma_rx_fill_buf(dev, q, false);
+ 
+ 		ret = mtk_wed_device_txfree_ring_setup(q->wed, q->regs);
+ 		if (!ret)
+@@ -152,7 +152,7 @@ int mt76_wed_dma_setup(struct mt76_dev *
+ 	case MT76_WED_RRO_Q_IND:
+ 		q->flags &= ~MT_QFLAG_WED;
+ 		mt76_dma_queue_reset(dev, q);
+-		mt76_dma_rx_fill(dev, q, false);
++		mt76_dma_rx_fill_buf(dev, q, false);
+ 		mtk_wed_device_ind_rx_ring_setup(q->wed, q->regs);
+ 		break;
+ 	default:
