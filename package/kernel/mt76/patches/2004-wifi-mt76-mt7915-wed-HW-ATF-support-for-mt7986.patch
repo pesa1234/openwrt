@@ -513,7 +513,7 @@ Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
  	return ret;
  }
  
-@@ -832,6 +836,7 @@ int mt7915_mac_sta_add(struct mt76_dev *
+@@ -828,6 +832,7 @@ int mt7915_mac_sta_add(struct mt76_dev *
  	struct mt7915_sta *msta = (struct mt7915_sta *)sta->drv_priv;
  	struct mt7915_vif *mvif = (struct mt7915_vif *)vif->drv_priv;
  	bool ext_phy = mvif->phy != &dev->phy;
@@ -521,7 +521,7 @@ Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
  	int idx;
  
  	idx = mt76_wcid_alloc(dev->mt76.wcid_mask, MT7915_WTBL_STA);
-@@ -850,6 +855,15 @@ int mt7915_mac_sta_add(struct mt76_dev *
+@@ -846,6 +851,15 @@ int mt7915_mac_sta_add(struct mt76_dev *
  	mt7915_mac_wtbl_update(dev, idx,
  			       MT_WTBL_UPDATE_ADM_COUNT_CLEAR);
  	mt7915_mcu_add_sta(dev, vif, sta, CONN_STATE_DISCONNECT, true);

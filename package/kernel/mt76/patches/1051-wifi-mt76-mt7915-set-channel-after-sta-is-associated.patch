@@ -17,7 +17,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
 
 --- a/mt7915/main.c
 +++ b/mt7915/main.c
-@@ -800,6 +800,31 @@ out:
+@@ -796,6 +796,31 @@ out:
  	return ret;
  }
  
@@ -49,7 +49,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  int mt7915_mac_sta_add(struct mt76_dev *mdev, struct ieee80211_vif *vif,
  		       struct ieee80211_sta *sta)
  {
-@@ -1930,6 +1955,7 @@ const struct ieee80211_ops mt7915_ops =
+@@ -1874,6 +1899,7 @@ const struct ieee80211_ops mt7915_ops =
  	.set_sar_specs = mt7915_set_sar_specs,
  	.channel_switch_beacon = mt7915_channel_switch_beacon,
  	.post_channel_switch = mt7915_post_channel_switch,

@@ -64,7 +64,7 @@ Signed-off-by: Sujuan Chen <sujuan.chen@mediatek.com>
  static void
 --- a/mt7915/main.c
 +++ b/mt7915/main.c
-@@ -1898,14 +1898,14 @@ mt7915_net_fill_forward_path(struct ieee
+@@ -1842,14 +1842,14 @@ mt7915_net_fill_forward_path(struct ieee
  	if (!mtk_wed_device_active(wed))
  		return -ENODEV;
  

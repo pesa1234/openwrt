@@ -11,7 +11,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
 
 --- a/mt7915/main.c
 +++ b/mt7915/main.c
-@@ -737,6 +737,27 @@ mt7915_channel_switch_beacon(struct ieee
+@@ -733,6 +733,27 @@ mt7915_channel_switch_beacon(struct ieee
  	mutex_unlock(&dev->mt76.mutex);
  }
  
@@ -39,7 +39,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  int mt7915_mac_sta_add(struct mt76_dev *mdev, struct ieee80211_vif *vif,
  		       struct ieee80211_sta *sta)
  {
-@@ -1788,6 +1809,7 @@ const struct ieee80211_ops mt7915_ops =
+@@ -1732,6 +1753,7 @@ const struct ieee80211_ops mt7915_ops =
  	.get_txpower = mt76_get_txpower,
  	.set_sar_specs = mt7915_set_sar_specs,
  	.channel_switch_beacon = mt7915_channel_switch_beacon,

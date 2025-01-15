@@ -48,7 +48,7 @@ Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
  	mt7915_mac_wtbl_update(dev, idx,
  			       MT_WTBL_UPDATE_ADM_COUNT_CLEAR);
  
-@@ -1688,6 +1694,56 @@ mt7915_set_frag_threshold(struct ieee802
+@@ -1632,6 +1638,56 @@ mt7915_set_frag_threshold(struct ieee802
  }
  
  static int
@@ -105,7 +105,7 @@ Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
  mt7915_set_radar_background(struct ieee80211_hw *hw,
  			    struct cfg80211_chan_def *chandef)
  {
-@@ -1829,6 +1885,7 @@ const struct ieee80211_ops mt7915_ops =
+@@ -1773,6 +1829,7 @@ const struct ieee80211_ops mt7915_ops =
  	.add_twt_setup = mt7915_mac_add_twt_setup,
  	.twt_teardown_request = mt7915_twt_teardown_request,
  	.set_frag_threshold = mt7915_set_frag_threshold,
