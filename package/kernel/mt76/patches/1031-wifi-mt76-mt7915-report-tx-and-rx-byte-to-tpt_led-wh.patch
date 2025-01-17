@@ -12,7 +12,7 @@ Signed-off-by: Yi-Chia Hsieh <yi-chia.hsieh@mediatek.com>
 
 --- a/mt76_connac_mac.c
 +++ b/mt76_connac_mac.c
-@@ -647,9 +647,15 @@ bool mt76_connac2_mac_fill_txs(struct mt
+@@ -644,9 +644,15 @@ bool mt76_connac2_mac_fill_txs(struct mt
  	u32 txrate, txs, mode, stbc;
  
  	txs = le32_to_cpu(txs_data[0]);
@@ -28,7 +28,7 @@ Signed-off-by: Yi-Chia Hsieh <yi-chia.hsieh@mediatek.com>
  		stats->tx_bytes +=
  			le32_get_bits(txs_data[5], MT_TXS5_MPDU_TX_BYTE) -
  			le32_get_bits(txs_data[7], MT_TXS7_MPDU_RETRY_BYTE);
-@@ -687,10 +693,6 @@ bool mt76_connac2_mac_fill_txs(struct mt
+@@ -684,10 +690,6 @@ bool mt76_connac2_mac_fill_txs(struct mt
  		cck = true;
  		fallthrough;
  	case MT_PHY_TYPE_OFDM:
@@ -41,7 +41,7 @@ Signed-off-by: Yi-Chia Hsieh <yi-chia.hsieh@mediatek.com>
  		else if (mphy->chandef.chan->band == NL80211_BAND_6GHZ)
 --- a/mt7915/mmio.c
 +++ b/mt7915/mmio.c
-@@ -590,6 +590,7 @@ static void mt7915_mmio_wed_update_rx_st
+@@ -588,6 +588,7 @@ static void mt7915_mmio_wed_update_rx_st
  	int idx = le16_to_cpu(stats->wlan_idx);
  	struct mt7915_dev *dev;
  	struct mt76_wcid *wcid;
@@ -49,7 +49,7 @@ Signed-off-by: Yi-Chia Hsieh <yi-chia.hsieh@mediatek.com>
  
  	dev = container_of(wed, struct mt7915_dev, mt76.mmio.wed);
  
-@@ -600,6 +601,10 @@ static void mt7915_mmio_wed_update_rx_st
+@@ -598,6 +599,10 @@ static void mt7915_mmio_wed_update_rx_st
  
  	wcid = rcu_dereference(dev->mt76.wcid[idx]);
  	if (wcid) {

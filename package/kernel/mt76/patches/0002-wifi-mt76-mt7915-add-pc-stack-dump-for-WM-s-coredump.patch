@@ -1,18 +1,19 @@
-From fc2e7f5745752912872c9648619bc7e677aa5063 Mon Sep 17 00:00:00 2001
+From c680e5830a6f55b930c2e2e6fdd47f7c957fb656 Mon Sep 17 00:00:00 2001
 From: Bo Jiao <Bo.Jiao@mediatek.com>
 Date: Mon, 22 May 2023 13:49:37 +0800
-Subject: [PATCH] wifi: mt76: mt7915: add pc stack dump for WM's coredump.
+Subject: [PATCH 02/21] wifi: mt76: mt7915: add pc stack dump for WM's
+ coredump.
 
 Signed-off-by: Bo Jiao <Bo.Jiao@mediatek.com>
 ---
  mt76.h            |  11 +++
  mt76_connac_mcu.c |   9 +++
- mt7915/coredump.c | 171 ++++++++++++++++++++++++++++++++--------------
- mt7915/coredump.h |  34 ++++++---
+ mt7915/coredump.c | 169 +++++++++++++++++++++++++++++++---------------
+ mt7915/coredump.h |  34 +++++++---
  mt7915/mac.c      |  33 ++++++---
  mt7915/mt7915.h   |   2 +-
  mt7915/regs.h     |  20 ++++++
- 7 files changed, 209 insertions(+), 71 deletions(-)
+ 7 files changed, 207 insertions(+), 71 deletions(-)
 
 --- a/mt76.h
 +++ b/mt76.h
@@ -25,7 +26,7 @@ Signed-off-by: Bo Jiao <Bo.Jiao@mediatek.com>
  #define MT_QFLAG_WED_RING	GENMASK(1, 0)
  #define MT_QFLAG_WED_TYPE	GENMASK(4, 2)
  #define MT_QFLAG_WED		BIT(5)
-@@ -69,6 +71,12 @@ enum mt76_bus_type {
+@@ -67,6 +69,12 @@ enum mt76_bus_type {
  	MT76_BUS_SDIO,
  };
  
@@ -38,7 +39,7 @@ Signed-off-by: Bo Jiao <Bo.Jiao@mediatek.com>
  enum mt76_wed_type {
  	MT76_WED_Q_TX,
  	MT76_WED_Q_TXFREE,
-@@ -889,6 +897,9 @@ struct mt76_dev {
+@@ -857,6 +865,9 @@ struct mt76_dev {
  	struct device *dma_dev;
  
  	struct mt76_mcu mcu;
@@ -50,7 +51,7 @@ Signed-off-by: Bo Jiao <Bo.Jiao@mediatek.com>
  	struct net_device tx_napi_dev;
 --- a/mt76_connac_mcu.c
 +++ b/mt76_connac_mcu.c
-@@ -2966,6 +2966,9 @@ int mt76_connac2_load_ram(struct mt76_de
+@@ -2962,6 +2962,9 @@ int mt76_connac2_load_ram(struct mt76_de
  		goto out;
  	}
  
@@ -60,7 +61,7 @@ Signed-off-by: Bo Jiao <Bo.Jiao@mediatek.com>
  	snprintf(dev->hw->wiphy->fw_version,
  		 sizeof(dev->hw->wiphy->fw_version),
  		 "%.10s-%.15s", hdr->fw_ver, hdr->build_date);
-@@ -2995,6 +2998,9 @@ int mt76_connac2_load_ram(struct mt76_de
+@@ -2991,6 +2994,9 @@ int mt76_connac2_load_ram(struct mt76_de
  		goto out;
  	}
  
@@ -70,7 +71,7 @@ Signed-off-by: Bo Jiao <Bo.Jiao@mediatek.com>
  	snprintf(dev->hw->wiphy->fw_version,
  		 sizeof(dev->hw->wiphy->fw_version),
  		 "%.10s-%.15s", hdr->fw_ver, hdr->build_date);
-@@ -3065,6 +3071,9 @@ int mt76_connac2_load_patch(struct mt76_
+@@ -3061,6 +3067,9 @@ int mt76_connac2_load_patch(struct mt76_
  	dev_info(dev->dev, "HW/SW Version: 0x%x, Build Time: %.16s\n",
  		 be32_to_cpu(hdr->hw_sw_ver), hdr->build_date);
  
@@ -206,7 +207,11 @@ Signed-off-by: Bo Jiao <Bo.Jiao@mediatek.com>
 +		mt76_clear(dev, MT_MCU_WM_EXCP_PC_CTRL, BIT(0));
 +		mt76_clear(dev, MT_MCU_WM_EXCP_LR_CTRL, BIT(0));
 +	}
-+
+ 
+-	oldest = (u32)mt76_get_field(dev, 0x89050200, GENMASK(20, 16)) + 2;
+-	for (i = 0; i < 16; i++) {
+-		idx = ((oldest + 2 * i + 1) % 32);
+-		dump->call_stack[i] = mt76_rr(dev, 0x89050204 + idx * 4);
 +	/* read PC log */
 +	dump->pc_dbg_ctrl = mt76_rr(dev, MT_MCU_WM_EXCP_PC_CTRL);
 +	dump->pc_cur_idx = FIELD_GET(MT_MCU_WM_EXCP_PC_CTRL_IDX_STATUS,
@@ -215,11 +220,7 @@ Signed-off-by: Bo Jiao <Bo.Jiao@mediatek.com>
 +		reg = MT_MCU_WM_EXCP_PC_LOG + i * 4;
 +		dump->pc_stack[i] = mt76_rr(dev, reg);
 +	}
- 
--	oldest = (u32)mt76_get_field(dev, 0x89050200, GENMASK(20, 16)) + 2;
--	for (i = 0; i < 16; i++) {
--		idx = ((oldest + 2 * i + 1) % 32);
--		dump->call_stack[i] = mt76_rr(dev, 0x89050204 + idx * 4);
++
 +	/* read LR log */
 +	dump->lr_dbg_ctrl = mt76_rr(dev, MT_MCU_WM_EXCP_LR_CTRL);
 +	dump->lr_cur_idx = FIELD_GET(MT_MCU_WM_EXCP_LR_CTRL_IDX_STATUS,
@@ -383,7 +384,7 @@ Signed-off-by: Bo Jiao <Bo.Jiao@mediatek.com>
  		}
  	}
  
-@@ -399,13 +458,19 @@ int mt7915_coredump_register(struct mt79
+@@ -399,13 +458,17 @@ int mt7915_coredump_register(struct mt79
  
  void mt7915_coredump_unregister(struct mt7915_dev *dev)
  {
@@ -393,20 +394,18 @@ Signed-off-by: Bo Jiao <Bo.Jiao@mediatek.com>
 -		dev->coredump.crash_data->memdump_buf_len = 0;
 -	}
 +	int i;
-+	struct mt7915_crash_data *crash_data;
-+
-+	for (i = 0; i < __MT76_RAM_TYPE_MAX; i++) {
-+		crash_data = dev->coredump.crash_data[i];
-+
-+		if (!crash_data)
-+			continue;
  
 -	vfree(dev->coredump.crash_data);
 -	dev->coredump.crash_data = NULL;
-+		if (crash_data->memdump_buf)
-+			vfree(crash_data->memdump_buf);
++	for (i = 0; i < __MT76_RAM_TYPE_MAX; i++) {
++		if (dev->coredump.crash_data[i]->memdump_buf) {
++			vfree(dev->coredump.crash_data[i]->memdump_buf);
++			dev->coredump.crash_data[i]->memdump_buf = NULL;
++			dev->coredump.crash_data[i]->memdump_buf_len = 0;
++		}
 +
-+		vfree(crash_data);
++		vfree(dev->coredump.crash_data[i]);
++		dev->coredump.crash_data[i] = NULL;
 +	}
  }
  
@@ -510,7 +509,7 @@ Signed-off-by: Bo Jiao <Bo.Jiao@mediatek.com>
  }
 --- a/mt7915/mac.c
 +++ b/mt7915/mac.c
-@@ -1603,28 +1603,31 @@ void mt7915_mac_reset_work(struct work_s
+@@ -1608,28 +1608,31 @@ void mt7915_mac_reset_work(struct work_s
  }
  
  /* firmware coredump */
@@ -548,7 +547,7 @@ Signed-off-by: Bo Jiao <Bo.Jiao@mediatek.com>
  	if (!mem_region || !crash_data->memdump_buf_len) {
  		mutex_unlock(&dev->dump_mutex);
  		goto skip_memdump;
-@@ -1634,6 +1637,9 @@ void mt7915_mac_dump_work(struct work_st
+@@ -1639,6 +1642,9 @@ void mt7915_mac_dump_work(struct work_st
  	buf_len = crash_data->memdump_buf_len;
  
  	/* dumping memory content... */
@@ -558,7 +557,7 @@ Signed-off-by: Bo Jiao <Bo.Jiao@mediatek.com>
  	memset(buf, 0, buf_len);
  	for (i = 0; i < num; i++) {
  		if (mem_region->len > buf_len) {
-@@ -1651,6 +1657,7 @@ void mt7915_mac_dump_work(struct work_st
+@@ -1656,6 +1662,7 @@ void mt7915_mac_dump_work(struct work_st
  		mt7915_memcpy_fromio(dev, buf, mem_region->start,
  				     mem_region->len);
  
@@ -566,7 +565,7 @@ Signed-off-by: Bo Jiao <Bo.Jiao@mediatek.com>
  		hdr->start = mem_region->start;
  		hdr->len = mem_region->len;
  
-@@ -1667,8 +1674,18 @@ void mt7915_mac_dump_work(struct work_st
+@@ -1672,8 +1679,18 @@ void mt7915_mac_dump_work(struct work_st
  	mutex_unlock(&dev->dump_mutex);
  
  skip_memdump:
@@ -589,7 +588,7 @@ Signed-off-by: Bo Jiao <Bo.Jiao@mediatek.com>
  
 --- a/mt7915/mt7915.h
 +++ b/mt7915/mt7915.h
-@@ -282,7 +282,7 @@ struct mt7915_dev {
+@@ -287,7 +287,7 @@ struct mt7915_dev {
  	struct mutex dump_mutex;
  #ifdef CONFIG_DEV_COREDUMP
  	struct {
@@ -600,7 +599,7 @@ Signed-off-by: Bo Jiao <Bo.Jiao@mediatek.com>
  
 --- a/mt7915/regs.h
 +++ b/mt7915/regs.h
-@@ -1226,4 +1226,24 @@ enum offs_rev {
+@@ -1219,4 +1219,24 @@ enum offs_rev {
  #define MT_MCU_WM_CIRQ_EINT_MASK_CLR_ADDR	MT_MCU_WM_CIRQ(0x108)
  #define MT_MCU_WM_CIRQ_EINT_SOFT_ADDR		MT_MCU_WM_CIRQ(0x118)
  

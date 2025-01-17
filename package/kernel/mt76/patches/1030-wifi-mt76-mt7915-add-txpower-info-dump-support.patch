@@ -115,7 +115,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  	debugfs_create_file("rf_regval", 0600, dir, dev, &fops_rf_regval);
 --- a/mt7915/mcu.c
 +++ b/mt7915/mcu.c
-@@ -3657,6 +3657,8 @@ int mt7915_mcu_get_txpower_sku(struct mt
+@@ -3652,6 +3652,8 @@ int mt7915_mcu_get_txpower_sku(struct mt
  			txpower[i] = res[i][req.band_idx];
  	} else if (category == TX_POWER_INFO_PATH) {
  		memcpy(txpower, skb->data + 4, len);
@@ -126,7 +126,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  	dev_kfree_skb(skb);
 --- a/mt7915/mcu.h
 +++ b/mt7915/mcu.h
-@@ -470,7 +470,8 @@ enum {
+@@ -525,7 +525,8 @@ enum {
  };
  
  enum {

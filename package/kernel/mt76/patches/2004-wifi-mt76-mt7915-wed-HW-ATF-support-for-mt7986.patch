@@ -17,15 +17,15 @@ Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
 
 --- a/mt76_connac_mcu.h
 +++ b/mt76_connac_mcu.h
-@@ -1227,6 +1227,7 @@ enum {
- 	MCU_EXT_CMD_THERMAL_CTRL = 0x2c,
+@@ -1226,6 +1226,7 @@ enum {
+ 	MCU_EXT_CMD_GET_TX_STAT = 0x30,
  	MCU_EXT_CMD_WTBL_UPDATE = 0x32,
  	MCU_EXT_CMD_SET_DRR_CTRL = 0x36,
 +	MCU_EXT_CMD_SET_FEATURE_CTRL = 0x38,
  	MCU_EXT_CMD_SET_RDD_CTRL = 0x3a,
  	MCU_EXT_CMD_ATE_CTRL = 0x3d,
  	MCU_EXT_CMD_PROTECT_CTRL = 0x3e,
-@@ -1236,6 +1237,7 @@ enum {
+@@ -1235,6 +1236,7 @@ enum {
  	MCU_EXT_CMD_MUAR_UPDATE = 0x48,
  	MCU_EXT_CMD_BCN_OFFLOAD = 0x49,
  	MCU_EXT_CMD_RX_AIRTIME_CTRL = 0x4a,
@@ -46,7 +46,7 @@ Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
  /** global debugfs **/
  
  struct hw_queue_map {
-@@ -223,6 +227,361 @@ static const struct file_operations mt79
+@@ -223,6 +227,358 @@ static const struct file_operations mt79
  	.llseek = default_llseek,
  };
  
@@ -71,13 +71,10 @@ Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
 +			  "vow_sta_dwrr_quantum_id=<wlanidx>-<WMM AC>-<Qid>\n"
 +			  "vow_dwrr_max_wait_time=<time> 256us\n"
 +			  "======== Debug =============\n"
-+			  "vow_show_en=<0/1> 0:disable, 1:enable\n"
++			  "vow_show_en=<0/1> 0:dieable, 1:enable\n"
 +			  "vow_show_sta=<STA num>\n"
 +			  "show_vow_info\n"
-+			  "show_vow_sta_conf=<STA num> 0:all\n"
-+			  "======= Send command example =======\n"
-+			  "echo 'show_vow_info' > /sys/kernel/debug/ieee80211/phy0/mt76/vow\n"
-+			  "================================================================\n");
++			  "show_vow_sta_conf=<STA num> 0:all\n");
 +	ret = simple_read_from_buffer(user_buf, count, ppos, buff, desc);
 +	kfree(buff);
 +	return ret;
@@ -242,7 +239,7 @@ Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
 +static int mt7915_set_show_vow_info(struct mt7915_dev *dev)
 +{
 +	dev_info(dev->mt76.dev, "====== VOW Control Information ======\n");
-+	dev_info(dev->mt76.dev, "ATF Enable: %d\n",
++	dev_info(dev->mt76.dev, "ATF Enbale: %d\n",
 +                 dev->vow_cfg.vow_atf_en);
 +	dev_info(dev->mt76.dev, "WATF Enable: %d\n",
 +                 dev->vow_cfg.vow_watf_en);
@@ -408,7 +405,7 @@ Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
  static int
  mt7915_radar_trigger(void *data, u64 val)
  {
-@@ -1531,6 +1890,7 @@ int mt7915_init_debugfs(struct mt7915_ph
+@@ -1531,6 +1887,7 @@ int mt7915_init_debugfs(struct mt7915_ph
  	debugfs_create_devm_seqfile(dev->mt76.dev, "twt_stats", dir,
  				    mt7915_twt_stats);
  	debugfs_create_file("rf_regval", 0600, dir, dev, &fops_rf_regval);
@@ -418,7 +415,7 @@ Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
  		debugfs_create_u32("dfs_hw_pattern", 0400, dir,
 --- a/mt7915/init.c
 +++ b/mt7915/init.c
-@@ -607,9 +607,64 @@ mt7915_init_led_mux(struct mt7915_dev *d
+@@ -598,9 +598,64 @@ mt7915_init_led_mux(struct mt7915_dev *d
  	}
  }
  
@@ -466,7 +463,7 @@ Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
 +void mt7915_vow_init_sta_bss_grp(struct mt7915_sta *sta)
 +{
 +	const u8 hw_bssid_num = HW_BSSID_MAX + 1;
-+	struct mt76_vif_link *vif = &sta->vif->mt76;
++	struct mt76_vif *vif = &sta->vif->mt76;
 +
 +	if (vif->omac_idx < hw_bssid_num)
 +		sta->vow_sta_cfg.bss_grp_idx = vif->band_idx * hw_bssid_num + vif->omac_idx;
@@ -483,7 +480,7 @@ Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
  
  	/* config pse qid6 wfdma port selection */
  	if (!is_mt7915(&dev->mt76) && dev->hif2)
-@@ -628,6 +683,9 @@ void mt7915_mac_init(struct mt7915_dev *
+@@ -619,6 +674,9 @@ void mt7915_mac_init(struct mt7915_dev *
  		mt7915_mac_init_band(dev, i);
  
  	mt7915_init_led_mux(dev);
@@ -503,7 +500,7 @@ Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
  	struct mt76_txq *mtxq;
  	bool ext_phy = phy != &dev->phy;
  	int idx, i, ret = 0;
-@@ -297,6 +298,9 @@ int mt7915_init_vif(struct mt7915_phy *p
+@@ -301,6 +302,9 @@ int mt7915_init_vif(struct mt7915_phy *p
  	mt7915_mcu_add_sta(dev, vif, NULL, CONN_STATE_PORT_SECURE, true);
  	rcu_assign_pointer(dev->mt76.wcid[idx], &mvif->sta.wcid);
  
@@ -513,7 +510,7 @@ Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
  	return ret;
  }
  
-@@ -828,6 +832,7 @@ int mt7915_mac_sta_add(struct mt76_dev *
+@@ -832,6 +836,7 @@ int mt7915_mac_sta_add(struct mt76_dev *
  	struct mt7915_sta *msta = (struct mt7915_sta *)sta->drv_priv;
  	struct mt7915_vif *mvif = (struct mt7915_vif *)vif->drv_priv;
  	bool ext_phy = mvif->phy != &dev->phy;
@@ -521,7 +518,7 @@ Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
  	int idx;
  
  	idx = mt76_wcid_alloc(dev->mt76.wcid_mask, MT7915_WTBL_STA);
-@@ -846,6 +851,15 @@ int mt7915_mac_sta_add(struct mt76_dev *
+@@ -851,6 +856,15 @@ int mt7915_mac_sta_add(struct mt76_dev *
  	mt7915_mac_wtbl_update(dev, idx,
  			       MT_WTBL_UPDATE_ADM_COUNT_CLEAR);
  	mt7915_mcu_add_sta(dev, vif, sta, CONN_STATE_DISCONNECT, true);
@@ -568,7 +565,7 @@ Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
  	ret = mt7915_mcu_add_group(dev, vif, sta);
  	if (ret) {
  		dev_kfree_skb(skb);
-@@ -3824,6 +3824,169 @@ int mt7915_mcu_set_ser(struct mt7915_dev
+@@ -3819,6 +3819,169 @@ int mt7915_mcu_set_ser(struct mt7915_dev
  				 &req, sizeof(req), false);
  }
  
@@ -799,7 +796,7 @@ Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
  struct mt7915_sta {
  	struct mt76_wcid wcid; /* must be first */
  
-@@ -161,6 +213,7 @@ struct mt7915_sta {
+@@ -162,6 +214,7 @@ struct mt7915_sta {
  		u8 flowid_mask;
  		struct mt7915_twt_flow flow[MT7915_MAX_STA_TWT_AGRT];
  	} twt;
@@ -807,7 +804,7 @@ Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
  };
  
  struct mt7915_vif_cap {
-@@ -503,6 +556,8 @@ struct mt7915_dev {
+@@ -508,6 +561,8 @@ struct mt7915_dev {
  #endif
  
  	struct delayed_work scs_work;
@@ -816,7 +813,7 @@ Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
  
  	bool wmm_pbc_enable;
  	struct work_struct wmm_pbc_work;
-@@ -539,6 +594,15 @@ enum mt7915_rdd_cmd {
+@@ -544,6 +599,15 @@ enum mt7915_rdd_cmd {
  	RDD_IRQ_OFF,
  };
  
@@ -832,7 +829,7 @@ Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
  static inline struct mt7915_phy *
  mt7915_hw_phy(struct ieee80211_hw *hw)
  {
-@@ -667,6 +731,11 @@ int mt7915_mcu_set_mac(struct mt7915_dev
+@@ -672,6 +736,11 @@ int mt7915_mcu_set_mac(struct mt7915_dev
  int mt7915_mcu_set_test_param(struct mt7915_dev *dev, u8 param, bool test_mode,
  			      u8 en);
  int mt7915_mcu_set_ser(struct mt7915_dev *dev, u8 action, u8 set, u8 band);

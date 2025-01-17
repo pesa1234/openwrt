@@ -14,7 +14,7 @@ Signed-off-by: Peter Chiu <chui-hao.chiu@mediatek.com>
 
 --- a/mt7915/mac.c
 +++ b/mt7915/mac.c
-@@ -948,6 +948,9 @@ mt7915_mac_tx_free(struct mt7915_dev *de
+@@ -933,6 +933,9 @@ mt7915_mac_tx_free(struct mt7915_dev *de
  			u16 idx;
  
  			idx = FIELD_GET(MT_TX_FREE_WLAN_ID, info);

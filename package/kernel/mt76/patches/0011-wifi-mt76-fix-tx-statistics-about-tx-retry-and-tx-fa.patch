@@ -14,7 +14,7 @@ Signed-off-by: Peter Chiu <chui-hao.chiu@mediatek.com>
 
 --- a/mt76_connac_mac.c
 +++ b/mt76_connac_mac.c
-@@ -739,9 +739,6 @@ bool mt76_connac2_mac_add_txs_skb(struct
+@@ -736,9 +736,6 @@ bool mt76_connac2_mac_add_txs_skb(struct
  	struct sk_buff_head list;
  	struct sk_buff *skb;
  
@@ -26,7 +26,7 @@ Signed-off-by: Peter Chiu <chui-hao.chiu@mediatek.com>
  	if (skb) {
 --- a/mt7915/mac.c
 +++ b/mt7915/mac.c
-@@ -1024,7 +1024,7 @@ static void mt7915_mac_add_txs(struct mt
+@@ -1021,7 +1021,7 @@ static void mt7915_mac_add_txs(struct mt
  
  	msta = container_of(wcid, struct mt7915_sta, wcid);
  

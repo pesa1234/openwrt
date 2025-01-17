@@ -11,7 +11,7 @@ Signed-off-by: Michael-CY Lee <michael-cy.lee@mediatek.com>
 
 --- a/mt76_connac_mac.c
 +++ b/mt76_connac_mac.c
-@@ -400,6 +400,8 @@ mt76_connac2_mac_write_txwi_80211(struct
+@@ -397,6 +397,8 @@ mt76_connac2_mac_write_txwi_80211(struct
  				  struct sk_buff *skb,
  				  struct ieee80211_key_conf *key)
  {
@@ -20,7 +20,7 @@ Signed-off-by: Michael-CY Lee <michael-cy.lee@mediatek.com>
  	struct ieee80211_hdr *hdr = (struct ieee80211_hdr *)skb->data;
  	struct ieee80211_mgmt *mgmt = (struct ieee80211_mgmt *)skb->data;
  	struct ieee80211_tx_info *info = IEEE80211_SKB_CB(skb);
-@@ -410,6 +412,14 @@ mt76_connac2_mac_write_txwi_80211(struct
+@@ -407,6 +409,14 @@ mt76_connac2_mac_write_txwi_80211(struct
  	u8 fc_type, fc_stype;
  	u32 val;
  

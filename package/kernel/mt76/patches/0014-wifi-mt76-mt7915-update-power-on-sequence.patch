@@ -14,7 +14,7 @@ Signed-off-by: Peter Chiu <chui-hao.chiu@mediatek.com>
 
 --- a/mt7915/mt7915.h
 +++ b/mt7915/mt7915.h
-@@ -325,6 +325,7 @@ struct mt7915_dev {
+@@ -330,6 +330,7 @@ struct mt7915_dev {
  
  	bool wmm_pbc_enable;
  	struct work_struct wmm_pbc_work;
@@ -24,7 +24,7 @@ Signed-off-by: Peter Chiu <chui-hao.chiu@mediatek.com>
  enum {
 --- a/mt7915/regs.h
 +++ b/mt7915/regs.h
-@@ -782,6 +782,7 @@ enum offs_rev {
+@@ -775,6 +775,7 @@ enum offs_rev {
  #define MT_TOP_RGU_SYSRAM_PDN		(MT_TOP_RGU_BASE + 0x050)
  #define MT_TOP_RGU_SYSRAM_SLP		(MT_TOP_RGU_BASE + 0x054)
  #define MT_TOP_WFSYS_PWR		(MT_TOP_RGU_BASE + 0x010)
@@ -32,7 +32,7 @@ Signed-off-by: Peter Chiu <chui-hao.chiu@mediatek.com>
  #define MT_TOP_PWR_EN_MASK		BIT(7)
  #define MT_TOP_PWR_ACK_MASK		BIT(6)
  #define MT_TOP_PWR_KEY_MASK		GENMASK(31, 16)
-@@ -893,6 +894,7 @@ enum offs_rev {
+@@ -886,6 +887,7 @@ enum offs_rev {
  #define MT_ADIE_SLP_CTRL(_band, ofs)	(MT_ADIE_SLP_CTRL_BASE(_band) + (ofs))
  
  #define MT_ADIE_SLP_CTRL_CK0(_band)	MT_ADIE_SLP_CTRL(_band, 0x120)

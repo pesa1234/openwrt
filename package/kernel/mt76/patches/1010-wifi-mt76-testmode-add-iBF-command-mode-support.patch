@@ -160,7 +160,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  			if (nla_len(cur) != 2 ||
 --- a/testmode.h
 +++ b/testmode.h
-@@ -289,8 +289,10 @@ enum mt76_testmode_txbf_act {
+@@ -283,8 +283,10 @@ enum mt76_testmode_txbf_act {
  	MT76_TM_TXBF_ACT_TX_PREP,
  	MT76_TM_TXBF_ACT_IBF_PROF_UPDATE,
  	MT76_TM_TXBF_ACT_EBF_PROF_UPDATE,

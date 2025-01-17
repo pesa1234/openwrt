@@ -11,7 +11,7 @@ Signed-off-by: Rex Lu <rex.lu@mediatek.com>
 
 --- a/mt76.h
 +++ b/mt76.h
-@@ -348,6 +348,7 @@ DECLARE_EWMA(signal, 10, 8);
+@@ -350,6 +350,7 @@ DECLARE_EWMA(signal, 10, 8);
  #define MT_WCID_TX_INFO_TXPWR_ADJ	GENMASK(25, 18)
  #define MT_WCID_TX_INFO_SET		BIT(31)
  
@@ -19,7 +19,7 @@ Signed-off-by: Rex Lu <rex.lu@mediatek.com>
  struct mt76_wcid {
  	struct mt76_rx_tid __rcu *aggr[IEEE80211_NUM_TIDS];
  
-@@ -359,7 +360,7 @@ struct mt76_wcid {
+@@ -361,7 +362,7 @@ struct mt76_wcid {
  
  	struct rate_info rate;
  	unsigned long ampdu_state;
@@ -30,7 +30,7 @@ Signed-off-by: Rex Lu <rex.lu@mediatek.com>
  	u8 hw_key_idx2;
 --- a/mt76_connac_mac.c
 +++ b/mt76_connac_mac.c
-@@ -489,6 +489,34 @@ mt76_connac2_mac_write_txwi_80211(struct
+@@ -486,6 +486,34 @@ mt76_connac2_mac_write_txwi_80211(struct
  	}
  }
  
@@ -65,7 +65,7 @@ Signed-off-by: Rex Lu <rex.lu@mediatek.com>
  void mt76_connac2_mac_write_txwi(struct mt76_dev *dev, __le32 *txwi,
  				 struct sk_buff *skb, struct mt76_wcid *wcid,
  				 struct ieee80211_key_conf *key, int pid,
-@@ -631,14 +659,8 @@ bool mt76_connac2_mac_fill_txs(struct mt
+@@ -628,14 +656,8 @@ bool mt76_connac2_mac_fill_txs(struct mt
  			le32_get_bits(txs_data[7], MT_TXS7_MPDU_RETRY_CNT);
  
  		if (wcid->sta) {
@@ -82,7 +82,7 @@ Signed-off-by: Rex Lu <rex.lu@mediatek.com>
  		}
  	}
  
-@@ -1148,8 +1170,7 @@ void mt76_connac2_tx_check_aggr(struct i
+@@ -1145,8 +1167,7 @@ void mt76_connac2_tx_check_aggr(struct i
  		return;
  
  	wcid = (struct mt76_wcid *)sta->drv_priv;

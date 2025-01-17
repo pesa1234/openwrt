@@ -34,7 +34,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  out_put_node:
 --- a/mt76.h
 +++ b/mt76.h
-@@ -742,6 +742,7 @@ struct mt76_testmode_ops {
+@@ -732,6 +732,7 @@ struct mt76_testmode_ops {
  			  enum mt76_testmode_state new_state);
  	int (*dump_stats)(struct mt76_phy *phy, struct sk_buff *msg);
  	int (*set_eeprom)(struct mt76_phy *phy, u32 offset, u8 *val, u8 action);
@@ -66,7 +66,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  		mt7915_mcu_rx_bss_acq_pkt_cnt(dev, skb);
 --- a/mt7915/mt7915.h
 +++ b/mt7915/mt7915.h
-@@ -669,6 +669,7 @@ int mt7915_mcu_fw_dbg_ctrl(struct mt7915
+@@ -675,6 +675,7 @@ int mt7915_mcu_fw_dbg_ctrl(struct mt7915
  void mt7915_mcu_rx_event(struct mt7915_dev *dev, struct sk_buff *skb);
  void mt7915_mcu_exit(struct mt7915_dev *dev);
  int mt7915_tm_txbf_status_read(struct mt7915_dev *dev, struct sk_buff *skb);
@@ -654,7 +654,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
   *
   * @MT76_TM_ATTR_SKU_EN: config txpower sku is enabled or disabled in testmode (u8)
   * @MT76_TM_ATTR_TX_COUNT: configured number of frames to send when setting
-@@ -44,6 +45,11 @@
+@@ -41,6 +42,11 @@
   *
   * @MT76_TM_ATTR_STATS: statistics (nested, see &enum mt76_testmode_stats_attr)
   *
@@ -666,7 +666,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
   * @MT76_TM_ATTR_TX_SPE_IDX: tx spatial extension index (u8)
   *
   * @MT76_TM_ATTR_TX_DUTY_CYCLE: packet tx duty cycle (u8)
-@@ -71,6 +77,7 @@ enum mt76_testmode_attr {
+@@ -68,6 +74,7 @@ enum mt76_testmode_attr {
  
  	MT76_TM_ATTR_MTD_PART,
  	MT76_TM_ATTR_MTD_OFFSET,
@@ -674,7 +674,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  
  	MT76_TM_ATTR_SKU_EN,
  	MT76_TM_ATTR_TX_COUNT,
-@@ -93,6 +100,8 @@ enum mt76_testmode_attr {
+@@ -87,6 +94,8 @@ enum mt76_testmode_attr {
  	MT76_TM_ATTR_FREQ_OFFSET,
  
  	MT76_TM_ATTR_STATS,
@@ -683,7 +683,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  
  	MT76_TM_ATTR_TX_SPE_IDX,
  
-@@ -194,6 +203,14 @@ enum mt76_testmode_state {
+@@ -188,6 +197,14 @@ enum mt76_testmode_state {
  	MT76_TM_STATE_TX_FRAMES,
  	MT76_TM_STATE_RX_FRAMES,
  	MT76_TM_STATE_TX_CONT,

@@ -30,7 +30,7 @@ Signed-off-by: Howard Hsu <howard-yh.hsu@mediatek.com>
 
 --- a/mt76.h
 +++ b/mt76.h
-@@ -318,6 +318,7 @@ struct mt76_sta_stats {
+@@ -320,6 +320,7 @@ struct mt76_sta_stats {
  	u64 tx_nss[4];		/* 1, 2, 3, 4 */
  	u64 tx_mcs[16];		/* mcs idx */
  	u64 tx_bytes;
@@ -38,7 +38,7 @@ Signed-off-by: Howard Hsu <howard-yh.hsu@mediatek.com>
  	/* WED TX */
  	u32 tx_packets;		/* unit: MSDU */
  	u32 tx_retries;
-@@ -327,6 +328,7 @@ struct mt76_sta_stats {
+@@ -329,6 +330,7 @@ struct mt76_sta_stats {
  	u32 rx_packets;
  	u32 rx_errors;
  	u32 rx_drops;
@@ -48,7 +48,7 @@ Signed-off-by: Howard Hsu <howard-yh.hsu@mediatek.com>
  enum mt76_wcid_flags {
 --- a/mt76_connac_mcu.h
 +++ b/mt76_connac_mcu.h
-@@ -1255,6 +1255,7 @@ enum {
+@@ -1254,6 +1254,7 @@ enum {
  	MCU_EXT_CMD_SET_RDD_PATTERN = 0x7d,
  	MCU_EXT_CMD_MWDS_SUPPORT = 0x80,
  	MCU_EXT_CMD_SET_SER_TRIGGER = 0x81,
@@ -58,8 +58,8 @@ Signed-off-by: Howard Hsu <howard-yh.hsu@mediatek.com>
  	MCU_EXT_CMD_OFFCH_SCAN_CTRL = 0x9a,
 --- a/mt7915/init.c
 +++ b/mt7915/init.c
-@@ -1245,6 +1245,7 @@ int mt7915_register_device(struct mt7915
- 	dev->mt76.phy.priv = &dev->phy;
+@@ -1240,6 +1240,7 @@ int mt7915_register_device(struct mt7915
+ 	spin_lock_init(&dev->phy.stats_lock);
  	INIT_WORK(&dev->rc_work, mt7915_mac_sta_rc_work);
  	INIT_DELAYED_WORK(&dev->mphy.mac_work, mt7915_mac_work);
 +	INIT_DELAYED_WORK(&dev->scs_work, mt7915_mcu_scs_sta_poll);
@@ -68,7 +68,7 @@ Signed-off-by: Howard Hsu <howard-yh.hsu@mediatek.com>
  
 --- a/mt7915/mac.c
 +++ b/mt7915/mac.c
-@@ -1452,6 +1452,8 @@ mt7915_mac_full_reset(struct mt7915_dev
+@@ -1457,6 +1457,8 @@ mt7915_mac_full_reset(struct mt7915_dev
  	if (ext_phy)
  		cancel_delayed_work_sync(&ext_phy->mac_work);
  
@@ -77,7 +77,7 @@ Signed-off-by: Howard Hsu <howard-yh.hsu@mediatek.com>
  	mutex_lock(&dev->mt76.mutex);
  	for (i = 0; i < 10; i++) {
  		if (!mt7915_mac_restart(dev))
-@@ -1541,7 +1543,7 @@ void mt7915_mac_reset_work(struct work_s
+@@ -1546,7 +1548,7 @@ void mt7915_mac_reset_work(struct work_s
  	}
  
  	mutex_lock(&dev->mt76.mutex);
@@ -86,7 +86,7 @@ Signed-off-by: Howard Hsu <howard-yh.hsu@mediatek.com>
  	mt76_worker_disable(&dev->mt76.tx_worker);
  	mt76_for_each_q_rx(&dev->mt76, i)
  		napi_disable(&dev->mt76.napi[i]);
-@@ -1605,6 +1607,10 @@ void mt7915_mac_reset_work(struct work_s
+@@ -1610,6 +1612,10 @@ void mt7915_mac_reset_work(struct work_s
  					     &phy2->mt76->mac_work,
  					     MT7915_WATCHDOG_TIME);
  
@@ -134,7 +134,7 @@ Signed-off-by: Howard Hsu <howard-yh.hsu@mediatek.com>
  	}
 --- a/mt7915/mcu.c
 +++ b/mt7915/mcu.c
-@@ -5111,3 +5111,121 @@ int mt7915_mcu_sw_aci_set(struct mt7915_
+@@ -5267,3 +5267,121 @@ int mt7915_mcu_sw_aci_set(struct mt7915_
  	return mt76_mcu_send_msg(&dev->mt76, MCU_EXT_CMD(SWLNA_ACI_CTRL), &req,
  				 sizeof(req), NULL);
  }
@@ -258,7 +258,7 @@ Signed-off-by: Howard Hsu <howard-yh.hsu@mediatek.com>
 +}
 --- a/mt7915/mcu.h
 +++ b/mt7915/mcu.h
-@@ -1141,4 +1141,8 @@ struct mt7915_mcu_edcca_info {
+@@ -1200,4 +1200,8 @@ struct mt7915_mcu_edcca_info {
  };
  #endif
  
@@ -269,7 +269,7 @@ Signed-off-by: Howard Hsu <howard-yh.hsu@mediatek.com>
  #endif
 --- a/mt7915/mt7915.h
 +++ b/mt7915/mt7915.h
-@@ -286,6 +286,15 @@ struct mt7915_air_monitor_ctrl {
+@@ -287,6 +287,15 @@ struct mt7915_air_monitor_ctrl {
  };
  #endif
  
@@ -285,7 +285,7 @@ Signed-off-by: Howard Hsu <howard-yh.hsu@mediatek.com>
  struct mt7915_phy {
  	struct mt76_phy *mt76;
  	struct mt7915_dev *dev;
-@@ -360,6 +369,7 @@ struct mt7915_phy {
+@@ -365,6 +374,7 @@ struct mt7915_phy {
  
  	struct mt7915_air_monitor_ctrl amnt_ctrl;
  #endif
@@ -293,7 +293,7 @@ Signed-off-by: Howard Hsu <howard-yh.hsu@mediatek.com>
  };
  
  #ifdef MTK_DEBUG
-@@ -492,6 +502,8 @@ struct mt7915_dev {
+@@ -497,6 +507,8 @@ struct mt7915_dev {
  	} adie[ADIE_MAX_CNT];
  #endif
  
@@ -302,7 +302,7 @@ Signed-off-by: Howard Hsu <howard-yh.hsu@mediatek.com>
  	bool wmm_pbc_enable;
  	struct work_struct wmm_pbc_work;
  	u32 adie_type;
-@@ -819,6 +831,8 @@ int mt7915_mcu_get_edcca(struct mt7915_p
+@@ -825,6 +837,8 @@ int mt7915_mcu_get_edcca(struct mt7915_p
  int mt7915_mcu_sw_aci_set(struct mt7915_dev *dev, bool val);
  int mt7915_mcu_ipi_hist_ctrl(struct mt7915_phy *phy, void *data, u8 cmd, bool wait_resp);
  int mt7915_mcu_ipi_hist_scan(struct mt7915_phy *phy, void *data, u8 mode, bool wait_resp);

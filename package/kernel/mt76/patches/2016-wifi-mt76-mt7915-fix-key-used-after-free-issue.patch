@@ -13,7 +13,7 @@ Signed-off-by: Michael-CY Lee <michael-cy.lee@mediatek.com>
 
 --- a/mt76_connac_mac.c
 +++ b/mt76_connac_mac.c
-@@ -448,8 +448,7 @@ mt76_connac2_mac_write_txwi_80211(struct
+@@ -445,8 +445,7 @@ mt76_connac2_mac_write_txwi_80211(struct
  	      FIELD_PREP(MT_TXD2_SUB_TYPE, fc_stype) |
  	      FIELD_PREP(MT_TXD2_MULTICAST, multicast);
  

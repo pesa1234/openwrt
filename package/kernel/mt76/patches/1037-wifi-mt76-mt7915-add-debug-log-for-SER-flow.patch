@@ -10,7 +10,7 @@ Signed-off-by: Bo Jiao <Bo.Jiao@mediatek.com>
 
 --- a/mt7915/mac.c
 +++ b/mt7915/mac.c
-@@ -1524,6 +1524,9 @@ void mt7915_mac_reset_work(struct work_s
+@@ -1529,6 +1529,9 @@ void mt7915_mac_reset_work(struct work_s
  	if (!(READ_ONCE(dev->recovery.state) & MT_MCU_CMD_STOP_DMA))
  		return;
  
@@ -20,7 +20,7 @@ Signed-off-by: Bo Jiao <Bo.Jiao@mediatek.com>
  	ieee80211_stop_queues(mt76_hw(dev));
  	if (ext_phy)
  		ieee80211_stop_queues(ext_phy->hw);
-@@ -1601,6 +1604,9 @@ void mt7915_mac_reset_work(struct work_s
+@@ -1606,6 +1609,9 @@ void mt7915_mac_reset_work(struct work_s
  		ieee80211_queue_delayed_work(ext_phy->hw,
  					     &phy2->mt76->mac_work,
  					     MT7915_WATCHDOG_TIME);
@@ -30,7 +30,7 @@ Signed-off-by: Bo Jiao <Bo.Jiao@mediatek.com>
  }
  
  /* firmware coredump */
-@@ -1716,6 +1722,9 @@ void mt7915_coredump(struct mt7915_dev *
+@@ -1721,6 +1727,9 @@ void mt7915_coredump(struct mt7915_dev *
  
  void mt7915_reset(struct mt7915_dev *dev)
  {
