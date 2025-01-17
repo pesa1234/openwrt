@@ -1,0 +1,20 @@
+--- a/drivers/net/ethernet/mediatek/mtk_eth_soc.c
++++ b/drivers/net/ethernet/mediatek/mtk_eth_soc.c
+@@ -5523,7 +5523,7 @@ static const struct mtk_soc_data mt7981_
+ 	.rx = {
+ 		.desc_size = sizeof(struct mtk_rx_dma),
+ 		.irq_done_mask = MTK_RX_DONE_INT,
+-		.dma_l4_valid = RX_DMA_L4_VALID_V2,
++		.dma_l4_valid = RX_DMA_L4_VALID,
+ 		.dma_max_len = MTK_TX_DMA_BUF_LEN,
+ 		.dma_len_offset = 16,
+ 		.dma_size = MTK_DMA_SIZE(512),
+@@ -5553,7 +5553,7 @@ static const struct mtk_soc_data mt7986_
+ 	.rx = {
+ 		.desc_size = sizeof(struct mtk_rx_dma),
+ 		.irq_done_mask = MTK_RX_DONE_INT,
+-		.dma_l4_valid = RX_DMA_L4_VALID_V2,
++		.dma_l4_valid = RX_DMA_L4_VALID,
+ 		.dma_max_len = MTK_TX_DMA_BUF_LEN,
+ 		.dma_len_offset = 16,
+ 		.dma_size = MTK_DMA_SIZE(1K),
