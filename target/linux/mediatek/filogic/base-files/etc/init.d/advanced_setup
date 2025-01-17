@@ -546,49 +546,25 @@ set_smp_affinity()
 	done
 }
 
-enable-HQoS()
-{
-	mtkutil_enable=$(uci get mtkhnat.global.enable)
-	hqos_enable=$(uci get mtkhnat.global.hqos)
-	if [ $mtkutil_enable == 1 ]; then
-		if [ $hqos_enable == 1 ]; then
-			/sbin/mtkhnat
-			logger -s "smp_affinity: mtkhnat_util is enabled and active"
-		fi
-	fi
-	
+
+logger -s "smp_affinity: # RPS and AFFINITY Setting"
+logger -s "smp_affinity: # NUM_OF_CPU=$NUM_OF_CPU"
+VAR_PREFIX="autogen"
+get_if_info
+setup_model
+set_rps_cpu_bitmap
+set_rps_cpus $DEFAULT_RPS
+set_smp_affinity
+#end of file
 }
 
-usb-setup()
-{
-	usb2=$(uci get advanced.@defaults[0].usb_2)
-	if [ $usb2 == 1 ]; then
-		logger -t adv-log "USB Speed set to 2.0"
-		echo 1 > /sys/bus/usb/devices/usb2/2-0:1.0/usb2-port1/disable
-	elif [ $usb2 == 0 ]; then
-		logger -t adv-log "USB Speed set to 3.0"
-		echo 0 > /sys/bus/usb/devices/usb2/2-0:1.0/usb2-port1/disable
+p-steer(){
+	p-steer=$(uci get network.globals.packet_steering)
+	if [ ! -z $p-steer ]; then
+		smp-mt76
+	else
+		logger -s "smp_affinity: Only run packet steering"
 	fi
-	
-}
-
-hw-atf-setup()
-{
-		atf=$(uci get advanced.@defaults[0].atf_enable)
-		hwatf=$(uci get advanced.@defaults[0].hw_atf_enable)
-		if [ $atf == 1 ]; then
-			echo 'vow_atf_en=1' > /sys/kernel/debug/ieee80211/phy0/mt76/vow
-		elif [ $atf == 0 ]; then
-			echo 'vow_atf_en=0' > /sys/kernel/debug/ieee80211/phy0/mt76/vow
-		fi
-		
-		if [ $hwatf == 1 ]; then
-			echo 'vow_watf_en=1' > /sys/kernel/debug/ieee80211/phy0/mt76/vow
-		elif [ $hwatf == 0 ]; then
-			echo 'vow_watf_en=0' > /sys/kernel/debug/ieee80211/phy0/mt76/vow
-		fi
-		logger -t adv-log "HW-ATF Settings:"
-		echo 'show_vow_info' > /sys/kernel/debug/ieee80211/phy0/mt76/vow
 }
 
 mtk-offloading()
@@ -619,22 +595,55 @@ mtk-offloading()
 	fi
 }
 
+hw-atf-setup()
+{
+		atf=$(uci get advanced.@defaults[0].atf_enable)
+		hwatf=$(uci get advanced.@defaults[0].hw_atf_enable)
+		if [ $atf == 1 ]; then
+			echo 'vow_atf_en=1' > /sys/kernel/debug/ieee80211/phy0/mt76/vow
+		elif [ $atf == 0 ]; then
+			echo 'vow_atf_en=0' > /sys/kernel/debug/ieee80211/phy0/mt76/vow
+		fi
+		
+		if [ $hwatf == 1 ]; then
+			echo 'vow_watf_en=1' > /sys/kernel/debug/ieee80211/phy0/mt76/vow
+		elif [ $hwatf == 0 ]; then
+			echo 'vow_watf_en=0' > /sys/kernel/debug/ieee80211/phy0/mt76/vow
+		fi
+		logger -t adv-log "HW-ATF Settings:"
+		echo 'show_vow_info' > /sys/kernel/debug/ieee80211/phy0/mt76/vow
+}
 
-logger -s "smp_affinity: # RPS and AFFINITY Setting"
-logger -s "smp_affinity: # NUM_OF_CPU=$NUM_OF_CPU"
-VAR_PREFIX="autogen"
-get_if_info
-setup_model
-set_rps_cpu_bitmap
-set_rps_cpus $DEFAULT_RPS
-set_smp_affinity
-#end of file
+enable-HQoS()
+{
+	mtkutil_enable=$(uci get mtkhnat.global.enable)
+	hqos_enable=$(uci get mtkhnat.global.hqos)
+	if [ $mtkutil_enable == 1 ]; then
+		if [ $hqos_enable == 1 ]; then
+			/sbin/mtkhnat
+			logger -s "smp_affinity: mtkhnat_util is enabled and active"
+		fi
+	fi
+	
+}
+
+usb-setup()
+{
+	usb2=$(uci get advanced.@defaults[0].usb_2)
+	if [ $usb2 == 1 ]; then
+		logger -t adv-log "USB Speed set to 2.0"
+		echo 1 > /sys/bus/usb/devices/usb2/2-0:1.0/usb2-port1/disable
+	elif [ $usb2 == 0 ]; then
+		logger -t adv-log "USB Speed set to 3.0"
+		echo 0 > /sys/bus/usb/devices/usb2/2-0:1.0/usb2-port1/disable
+	fi
+	
 }
 
 start() {
-	smp-mt76
+	p-steer
 	enable-HQoS
 	usb-setup
 	hw-atf-setup
-	mtk-offloading
+	#mtk-offloading #### do not run - hardware flow offloading and bridger works better
 }
