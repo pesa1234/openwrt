@@ -1,7 +1,8 @@
-From 695e63f81f817c302e4594e44b49e1f7a8c7969c Mon Sep 17 00:00:00 2001
+From c1d65b45eb1de2828304b381b1a655d3a52d4978 Mon Sep 17 00:00:00 2001
 From: Michael-CY Lee <michael-cy.lee@mediatek.com>
 Date: Fri, 1 Sep 2023 15:31:24 +0800
-Subject: [PATCH 38/54] mtk: hostapd: avoid color switch when beacon is not set
+Subject: [PATCH 042/149] mtk: hostapd: avoid color switch when beacon is not
+ set
 
 Signed-off-by: Michael-CY Lee <michael-cy.lee@mediatek.com>
 ---
@@ -10,7 +11,7 @@ Signed-off-by: Michael-CY Lee <michael-cy.lee@mediatek.com>
 
 --- a/src/ap/hostapd.c
 +++ b/src/ap/hostapd.c
-@@ -4879,7 +4879,7 @@ void hostapd_switch_color(struct hostapd
+@@ -4881,7 +4881,7 @@ void hostapd_switch_color(struct hostapd
  {
  	struct os_reltime now;
  

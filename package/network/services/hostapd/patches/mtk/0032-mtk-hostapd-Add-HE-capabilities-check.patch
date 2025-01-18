@@ -1,11 +1,8 @@
-From 1468c2bb212faf091cb4a0c0ba1394722eb2c94e Mon Sep 17 00:00:00 2001
+From 21ea3442d6405f0442c9b6a78fdfdc2f98096363 Mon Sep 17 00:00:00 2001
 From: MeiChia Chiu <meichia.chiu@mediatek.com>
 Date: Fri, 9 Jun 2023 09:03:05 +0800
-Subject: [PATCH 26/54] mtk: hostapd: Add HE capabilities check
+Subject: [PATCH 032/149] mtk: hostapd: Add HE capabilities check
 
-Add HE capabilities check.
-Since "HE capabilities" check has been removed by driver,
-add the support for "HE capabilities" check in hostapd.
 ---
  src/ap/hw_features.c | 26 ++++++++++++++++++++++++++
  1 file changed, 26 insertions(+)

@@ -1,7 +1,7 @@
-From 6d57a4121c23048f3473991435aa8673b51763ad Mon Sep 17 00:00:00 2001
+From f67eb982b547f681031d0c01865906193ae80b05 Mon Sep 17 00:00:00 2001
 From: MeiChia Chiu <meichia.chiu@mediatek.com>
 Date: Thu, 12 Jan 2023 15:18:19 +0800
-Subject: [PATCH 13/54] mtk: hostapd: Add he_ldpc configuration
+Subject: [PATCH 021/149] mtk: hostapd: Add he_ldpc configuration
 
 ---
  hostapd/config_file.c        | 2 ++

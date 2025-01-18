@@ -1,8 +1,8 @@
-From 765215ac465b90e20c52dd48d51859d849834c80 Mon Sep 17 00:00:00 2001
+From cbef173b08c4e3c82aa1f1802122647d8fde74dd Mon Sep 17 00:00:00 2001
 From: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
 Date: Tue, 8 Aug 2023 19:21:41 +0800
-Subject: [PATCH 33/54] mtk: hostapd: add back ht vht cap missing field before
- dfs channel fallback
+Subject: [PATCH 038/149] mtk: hostapd: add back ht vht cap missing field
+ before dfs channel fallback
 
 hostapd_event_ch_switch would set / clear ht_capab and vht_capab, based
 on the bandwidth of switched channel.
@@ -23,7 +23,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
 
 --- a/src/ap/hostapd.c
 +++ b/src/ap/hostapd.c
-@@ -4721,6 +4721,13 @@ hostapd_switch_channel_fallback(struct h
+@@ -4723,6 +4723,13 @@ hostapd_switch_channel_fallback(struct h
  		break;
  	}
  

@@ -1,8 +1,8 @@
-From 7a02e5965652229833be92a9bd8f675e2015144a Mon Sep 17 00:00:00 2001
+From 20dcc2223a0ad4d9d68eea1e30186f640f572783 Mon Sep 17 00:00:00 2001
 From: Michael Lee <michael-cy.lee@mediatek.com>
 Date: Fri, 7 Jul 2023 17:16:11 +0800
-Subject: [PATCH 37/54] mtk: hostapd: Set STA TX queue parameters configuration
- after association
+Subject: [PATCH 041/149] mtk: hostapd: Set STA TX queue parameters
+ configuration after association
 
 This patch adds the way for wpa_supplicant to set driver's TX queue
 parameters.

@@ -1,10 +1,12 @@
-From 8e8590fe62c5b1c9daceb7588798a96b95df6039 Mon Sep 17 00:00:00 2001
+From 70d737a81e3a3fec7e5fa3ae896812062e642faf Mon Sep 17 00:00:00 2001
 From: MeiChia Chiu <meichia.chiu@mediatek.com>
 Date: Fri, 14 Jul 2023 17:19:13 +0800
-Subject: [PATCH 30/54] mtk: hostapd: Update parameter_set_count in MU EDCA IE
+Subject: [PATCH 036/149] mtk: hostapd: Update parameter_set_count in MU EDCA
+ IE
 
 without this patch, MU EDCA Parameter update count not equal to
 WMM Parameter set count.
+
 ---
  src/ap/ieee802_11_he.c | 3 +++
  1 file changed, 3 insertions(+)

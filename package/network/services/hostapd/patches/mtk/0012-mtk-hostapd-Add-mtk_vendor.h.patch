@@ -1,7 +1,7 @@
-From 2bba6f165367d21c44cb4da8b74904ecee956d55 Mon Sep 17 00:00:00 2001
+From 7a144bdb62852293a6ff5bcc762ef5b2dc8d5561 Mon Sep 17 00:00:00 2001
 From: Howard Hsu <howard-yh.hsu@mediatek.com>
 Date: Mon, 30 May 2022 15:04:57 +0800
-Subject: [PATCH 04/54] mtk: hostapd: Add mtk_vendor.h
+Subject: [PATCH 012/149] mtk: hostapd: Add mtk_vendor.h
 
 ---
  src/common/mtk_vendor.h | 197 ++++++++++++++++++++++++++++++++++++++++

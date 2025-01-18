@@ -1,12 +1,12 @@
-From 23191149c4b3be30766166cd68db4beb6d57af78 Mon Sep 17 00:00:00 2001
+From 79d67e10d0c8db8939639b778ac9d46361f8182e Mon Sep 17 00:00:00 2001
 From: mtk27835 <shurong.wen@mediatek.com>
 Date: Wed, 7 Sep 2022 14:41:51 -0700
-Subject: [PATCH 08/54] mtk: hostapd: Add hostapd iBF control
+Subject: [PATCH 016/149] mtk: hostapd: Add hostapd iBF control
 
 Signed-off-by: mtk27835 <shurong.wen@mediatek.com>
 ---
  hostapd/config_file.c             |   3 +
- hostapd/ctrl_iface.c              |  26 +++++++
+ hostapd/ctrl_iface.c              |  26 ++++++++
  hostapd/hostapd_cli.c             |   9 +++
  src/ap/ap_config.c                |   1 +
  src/ap/ap_config.h                |   2 +
@@ -15,10 +15,10 @@ Signed-off-by: mtk27835 <shurong.wen@mediatek.com>
  src/ap/hostapd.c                  |   2 +
  src/common/mtk_vendor.h           |  35 +++++++++-
  src/drivers/driver.h              |  19 ++++++
- src/drivers/driver_nl80211.c      | 108 ++++++++++++++++++++++++++++++
+ src/drivers/driver_nl80211.c      | 107 ++++++++++++++++++++++++++++++
  src/drivers/driver_nl80211.h      |   1 +
  src/drivers/driver_nl80211_capa.c |   3 +
- 13 files changed, 224 insertions(+), 1 deletion(-)
+ 13 files changed, 223 insertions(+), 1 deletion(-)
 
 --- a/hostapd/config_file.c
 +++ b/hostapd/config_file.c
@@ -34,7 +34,7 @@ Signed-off-by: mtk27835 <shurong.wen@mediatek.com>
  			   "Line %d: unknown configuration item '%s'",
 --- a/hostapd/ctrl_iface.c
 +++ b/hostapd/ctrl_iface.c
-@@ -4241,6 +4241,30 @@ hostapd_ctrl_iface_get_mu(struct hostapd
+@@ -4240,6 +4240,30 @@ hostapd_ctrl_iface_get_mu(struct hostapd
  }
  
  
@@ -65,7 +65,7 @@ Signed-off-by: mtk27835 <shurong.wen@mediatek.com>
  static int hostapd_ctrl_iface_receive_process(struct hostapd_data *hapd,
  					      char *buf, char *reply,
  					      int reply_size,
-@@ -4860,6 +4884,8 @@ static int hostapd_ctrl_iface_receive_pr
+@@ -4859,6 +4883,8 @@ static int hostapd_ctrl_iface_receive_pr
  							  reply_size);
  	} else if (os_strncmp(buf, "GET_MU", 6) == 0) {
  		reply_len = hostapd_ctrl_iface_get_mu(hapd, reply, reply_size);
@@ -101,14 +101,14 @@ Signed-off-by: mtk27835 <shurong.wen@mediatek.com>
  
 --- a/src/ap/ap_config.c
 +++ b/src/ap/ap_config.c
-@@ -310,6 +310,7 @@ struct hostapd_config * hostapd_config_d
+@@ -308,6 +308,7 @@ struct hostapd_config * hostapd_config_d
  	conf->edcca_enable = EDCCA_MODE_AUTO;
  	conf->edcca_compensation = EDCCA_DEFAULT_COMPENSATION;
  	conf->three_wire_enable = THREE_WIRE_MODE_DISABLE;
 +	conf->ibf_enable = IBF_DEFAULT_ENABLE;
  
- 	return conf;
- }
+ 	hostapd_set_and_check_bw320_offset(conf, 0);
+ 
 --- a/src/ap/ap_config.h
 +++ b/src/ap/ap_config.h
 @@ -1296,6 +1296,7 @@ struct hostapd_config {
@@ -119,7 +119,7 @@ Signed-off-by: mtk27835 <shurong.wen@mediatek.com>
  };
  
  enum three_wire_mode {
-@@ -1459,6 +1460,7 @@ hostapd_set_and_check_bw320_offset(struc
+@@ -1460,6 +1461,7 @@ hostapd_set_and_check_bw320_offset(struc
  #endif /* CONFIG_IEEE80211BE */
  }
  
@@ -129,7 +129,7 @@ Signed-off-by: mtk27835 <shurong.wen@mediatek.com>
  struct hostapd_config * hostapd_config_defaults(void);
 --- a/src/ap/ap_drv_ops.c
 +++ b/src/ap/ap_drv_ops.c
-@@ -1436,3 +1436,17 @@ int hostapd_drv_three_wire_ctrl(struct h
+@@ -1438,3 +1438,17 @@ int hostapd_drv_three_wire_ctrl(struct h
  	}
  	return hapd->driver->three_wire_ctrl(hapd->drv_priv, hapd->iconf->three_wire_enable);
  }
@@ -235,12 +235,10 @@ Signed-off-by: mtk27835 <shurong.wen@mediatek.com>
  };
  
  #define HE_MAC_CAPAB_0		0
-@@ -5416,7 +5421,21 @@ struct wpa_driver_ops {
- 	 * @three_wire_enable: three_wire_ctrl mode
+@@ -5429,6 +5434,20 @@ struct wpa_driver_ops {
  	 *
  	 */
--	 int (*three_wire_ctrl)(void *priv, u8 three_wire_enable); 
-+	 int (*three_wire_ctrl)(void *priv, u8 three_wire_enable);
+ 	 int (*three_wire_ctrl)(void *priv, u8 three_wire_enable);
 +
 +	/**
 +	 * ibf_ctrl - ctrl disable/enable for ibf
@@ -255,13 +253,13 @@ Signed-off-by: mtk27835 <shurong.wen@mediatek.com>
 +	 *
 +	 */
 +	int (*ibf_dump)(void *priv, u8 *ibf_enable);
+ };
  
- 	/**
- 	 * get_multi_hw_info - Get multiple underlying hardware information
+ /**
 --- a/src/drivers/driver_nl80211.c
 +++ b/src/drivers/driver_nl80211.c
-@@ -15147,6 +15147,47 @@ static int nl80211_enable_three_wire(voi
- 	return ret;
+@@ -15158,6 +15158,111 @@ wpa_driver_get_multi_hw_info(void *priv,
+ 	return nl80211_get_multi_hw_info(bss, num_multi_hws);
  }
  
 +static int nl80211_ibf_enable(void *priv, u8 ibf_enable)
@@ -305,13 +303,6 @@ Signed-off-by: mtk27835 <shurong.wen@mediatek.com>
 +	return -ENOBUFS;
 +}
 +
- static struct hostapd_multi_hw_info *
- wpa_driver_get_multi_hw_info(void *priv, unsigned int *num_multi_hws)
- {
-@@ -15155,6 +15196,71 @@ wpa_driver_get_multi_hw_info(void *priv,
- 	return nl80211_get_multi_hw_info(bss, num_multi_hws);
- }
- 
 +static int ibf_dump_handler(struct nl_msg *msg, void *arg)
 +{
 +	u8 *ibf_enable = (u8 *) arg;
@@ -376,17 +367,15 @@ Signed-off-by: mtk27835 <shurong.wen@mediatek.com>
 +	nlmsg_free(msg);
 +	return -ENOBUFS;
 +}
-+
+ 
  const struct wpa_driver_ops wpa_driver_nl80211_ops = {
  	.name = "nl80211",
- 	.desc = "Linux nl80211/cfg80211",
-@@ -15333,5 +15439,7 @@ const struct wpa_driver_ops wpa_driver_n
+@@ -15338,4 +15443,6 @@ const struct wpa_driver_ops wpa_driver_n
  	.configure_edcca_threshold = nl80211_configure_edcca_threshold,
  	.get_edcca = nl80211_get_edcca,
  	.three_wire_ctrl = nl80211_enable_three_wire,
 +	.ibf_ctrl = nl80211_ibf_enable,
-+	.ibf_dump = nl80211_ibf_dump,	
- 	.get_multi_hw_info = wpa_driver_get_multi_hw_info,
++	.ibf_dump = nl80211_ibf_dump,
  };
 --- a/src/drivers/driver_nl80211.h
 +++ b/src/drivers/driver_nl80211.h

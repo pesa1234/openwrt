@@ -1,7 +1,7 @@
-From 022b58d6277d12517ada28d8b5581a75e501d779 Mon Sep 17 00:00:00 2001
+From 84ad9ab22b73e80f9e9a40e25f392eb5e2f7973c Mon Sep 17 00:00:00 2001
 From: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
 Date: Fri, 2 Sep 2022 01:03:23 +0800
-Subject: [PATCH 07/54] mtk: hostapd: Add three wire PTA ctrl hostapd vendor
+Subject: [PATCH 015/149] mtk: hostapd: Add three wire PTA ctrl hostapd vendor
  command
 
 Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
@@ -24,7 +24,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
 @@ -5258,6 +5258,10 @@ static int hostapd_config_fill(struct ho
  			return 1;
  		}
- 		conf->edcca_compensation = (s8) val;	
+ 		conf->edcca_compensation = (s8) val;
 +	} else if (os_strcmp(buf, "three_wire_enable") == 0) {
 +		u8 en = atoi(pos);
 +
@@ -34,14 +34,14 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  			   "Line %d: unknown configuration item '%s'",
 --- a/src/ap/ap_config.c
 +++ b/src/ap/ap_config.c
-@@ -309,6 +309,7 @@ struct hostapd_config * hostapd_config_d
+@@ -307,6 +307,7 @@ struct hostapd_config * hostapd_config_d
  
  	conf->edcca_enable = EDCCA_MODE_AUTO;
  	conf->edcca_compensation = EDCCA_DEFAULT_COMPENSATION;
 +	conf->three_wire_enable = THREE_WIRE_MODE_DISABLE;
  
- 	return conf;
- }
+ 	hostapd_set_and_check_bw320_offset(conf, 0);
+ 
 --- a/src/ap/ap_config.h
 +++ b/src/ap/ap_config.h
 @@ -1295,6 +1295,19 @@ struct hostapd_config {
@@ -66,7 +66,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  enum edcca_mode {
 --- a/src/ap/ap_drv_ops.c
 +++ b/src/ap/ap_drv_ops.c
-@@ -1425,3 +1425,14 @@ int hostapd_drv_mu_dump(struct hostapd_d
+@@ -1427,3 +1427,14 @@ int hostapd_drv_mu_dump(struct hostapd_d
  		return 0;
  	return hapd->driver->mu_dump(hapd->drv_priv, mu_onoff);
  }
@@ -136,24 +136,24 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  
 --- a/src/drivers/driver.h
 +++ b/src/drivers/driver.h
-@@ -5409,6 +5409,14 @@ struct wpa_driver_ops {
+@@ -5421,6 +5421,14 @@ struct wpa_driver_ops {
  	 */
  	 int (*mu_ctrl)(void *priv, u8 mu_onoff);
  	 int (*mu_dump)(void *priv, u8 *mu_onoff);
-+	 
++
 +	/**
 +	 * three_wire_ctrl - set three_wire_ctrl mode
 +	 * @priv: Private driver interface data
 +	 * @three_wire_enable: three_wire_ctrl mode
 +	 *
 +	 */
-+	 int (*three_wire_ctrl)(void *priv, u8 three_wire_enable); 
++	 int (*three_wire_ctrl)(void *priv, u8 three_wire_enable);
+ };
  
- 	/**
- 	 * get_multi_hw_info - Get multiple underlying hardware information
+ /**
 --- a/src/drivers/driver_nl80211.c
 +++ b/src/drivers/driver_nl80211.c
-@@ -15114,6 +15114,39 @@ static int nl80211_get_edcca(void *priv,
+@@ -15117,6 +15117,38 @@ static int nl80211_get_edcca(void *priv,
  	return ret;
  }
  
@@ -189,24 +189,14 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
 +	}
 +	return ret;
 +}
-+
+ 
  static struct hostapd_multi_hw_info *
  wpa_driver_get_multi_hw_info(void *priv, unsigned int *num_multi_hws)
- {
-@@ -15122,7 +15155,6 @@ wpa_driver_get_multi_hw_info(void *priv,
- 	return nl80211_get_multi_hw_info(bss, num_multi_hws);
- }
- 
--
- const struct wpa_driver_ops wpa_driver_nl80211_ops = {
- 	.name = "nl80211",
- 	.desc = "Linux nl80211/cfg80211",
-@@ -15300,5 +15332,6 @@ const struct wpa_driver_ops wpa_driver_n
+@@ -15305,4 +15337,5 @@ const struct wpa_driver_ops wpa_driver_n
  	.configure_edcca_enable = nl80211_configure_edcca_enable,
  	.configure_edcca_threshold = nl80211_configure_edcca_threshold,
  	.get_edcca = nl80211_get_edcca,
 +	.three_wire_ctrl = nl80211_enable_three_wire,
- 	.get_multi_hw_info = wpa_driver_get_multi_hw_info,
  };
 --- a/src/drivers/driver_nl80211.h
 +++ b/src/drivers/driver_nl80211.h

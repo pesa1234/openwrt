@@ -1,8 +1,8 @@
-From ded7bc8b684fa76874abc1ba47f59ecdf7126bdb Mon Sep 17 00:00:00 2001
+From a32a9a0077d57aea6c76309ebc4d221acb5a2251 Mon Sep 17 00:00:00 2001
 From: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
 Date: Mon, 20 Feb 2023 11:01:18 +0800
-Subject: [PATCH 16/28] hostapd: mtk: Fix sending wrong VHT operation IE in CSA
- while using ZWDFS
+Subject: [PATCH 023/149] mtk: hostapd: Fix sending wrong VHT operation IE in
+ CSA while using ZWDFS
 
 Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
 ---

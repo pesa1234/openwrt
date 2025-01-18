@@ -22,10 +22,10 @@ control.
 
 --- a/hostapd/config_file.c
 +++ b/hostapd/config_file.c
-@@ -5271,6 +5271,16 @@ static int hostapd_config_fill(struct ho
- 		u8 en = strtol(pos, NULL, 10);
- 
- 		conf->dfs_detect_mode = en;
+@@ -5276,6 +5276,16 @@ static int hostapd_config_fill(struct ho
+ 			return 1;
+ 		}
+ 		conf->amsdu = val;
 +	} else if (os_strcmp(buf, "lpi_enable") == 0) {
 +		u8 en = strtol(pos, NULL, 10);
 +
@@ -39,62 +39,11 @@ control.
  	} else {
  		wpa_printf(MSG_ERROR,
  			   "Line %d: unknown configuration item '%s'",
---- a/src/ap/ap_config.c
-+++ b/src/ap/ap_config.c
-@@ -312,6 +312,9 @@ struct hostapd_config * hostapd_config_d
- 	conf->edcca_compensation = EDCCA_DEFAULT_COMPENSATION;
- 	conf->three_wire_enable = THREE_WIRE_MODE_DISABLE;
- 	conf->ibf_enable = IBF_DEFAULT_ENABLE;
-+	conf->lpi_enable = 0;
-+	conf->sku_idx = 0;
-+	conf->beacon_dup = 1;	
- 
- 	return conf;
- }
---- a/src/ap/ap_config.h
-+++ b/src/ap/ap_config.h
-@@ -1299,6 +1299,9 @@ struct hostapd_config {
- 	u8 three_wire_enable;
- 	u8 ibf_enable;
- 	u8 dfs_detect_mode;
-+	u8 lpi_enable;
-+	u8 sku_idx;
-+	u8 beacon_dup;	
- };
- 
- enum three_wire_mode {
---- a/src/ap/ap_drv_ops.c
-+++ b/src/ap/ap_drv_ops.c
-@@ -1449,4 +1449,12 @@ int hostapd_drv_ibf_dump(struct hostapd_
- 	if (!hapd->driver || !hapd->driver->ibf_dump)
- 		return 0;
- 	return hapd->driver->ibf_dump(hapd->drv_priv, ibf_enable);
--}
-\ No newline at end of file
-+}
-+
-+int hostapd_drv_txpower_ctrl(struct hostapd_data *hapd)
-+{
-+	if (!hapd->driver || !hapd->driver->txpower_ctrl)
-+		return 0;
-+	return hapd->driver->txpower_ctrl(hapd->drv_priv, hapd->iconf->lpi_enable,
-+					  hapd->iconf->sku_idx, hapd->iconf->beacon_dup);
-+}
---- a/src/ap/ap_drv_ops.h
-+++ b/src/ap/ap_drv_ops.h
-@@ -167,6 +167,7 @@ int hostapd_drv_mu_dump(struct hostapd_d
- int hostapd_drv_three_wire_ctrl(struct hostapd_data *hapd);
- int hostapd_drv_ibf_ctrl(struct hostapd_data *hapd);
- int hostapd_drv_ibf_dump(struct hostapd_data *hapd, u8 *ibf_enable);
-+int hostapd_drv_txpower_ctrl(struct hostapd_data *hapd);
- 
- #include "drivers/driver.h"
- 
 --- a/src/ap/hostapd.c
 +++ b/src/ap/hostapd.c
-@@ -2802,6 +2802,8 @@ dfs_offload:
+@@ -2804,6 +2804,8 @@ dfs_offload:
  		goto fail;
- 	if (hostapd_drv_ibf_ctrl(hapd) < 0)
+ 	if (hostapd_drv_amsdu_ctrl(hapd) < 0)
  		goto fail;
 +	if (hostapd_drv_txpower_ctrl(hapd) < 0)
 +		goto fail;	
@@ -122,7 +71,7 @@ control.
  };
  
  enum mtk_vendor_attr_edcca_ctrl {
-@@ -242,6 +243,19 @@ ibf_dump_policy[NUM_MTK_VENDOR_ATTRS_IBF
+@@ -256,6 +257,19 @@ ibf_dump_policy[NUM_MTK_VENDOR_ATTRS_IBF
  };
  
  
@@ -144,8 +93,8 @@ control.
  
 --- a/src/drivers/driver.h
 +++ b/src/drivers/driver.h
-@@ -5438,6 +5438,15 @@ struct wpa_driver_ops {
- 	int (*ibf_dump)(void *priv, u8 *ibf_enable);
+@@ -5403,6 +5403,15 @@ struct wpa_driver_ops {
+ #endif /* CONFIG_TESTING_OPTIONS */
  
  	/**
 +	* txpower_ctrl - ctrl txpower operation
@@ -176,7 +125,7 @@ control.
  static struct nl_sock * nl_create_handle(struct nl_cb *cb, const char *dbg)
  {
  	struct nl_sock *handle;
-@@ -15261,6 +15268,49 @@ fail:
+@@ -15376,6 +15383,49 @@ fail:
  	return -ENOBUFS;
  }
  
@@ -226,30 +175,19 @@ control.
  const struct wpa_driver_ops wpa_driver_nl80211_ops = {
  	.name = "nl80211",
  	.desc = "Linux nl80211/cfg80211",
-@@ -15440,6 +15490,7 @@ const struct wpa_driver_ops wpa_driver_n
- 	.get_edcca = nl80211_get_edcca,
+@@ -15557,6 +15607,7 @@ const struct wpa_driver_ops wpa_driver_n
  	.three_wire_ctrl = nl80211_enable_three_wire,
  	.ibf_ctrl = nl80211_ibf_enable,
--	.ibf_dump = nl80211_ibf_dump,	
-+	.ibf_dump = nl80211_ibf_dump,
-+	.txpower_ctrl = nl80211_txpower_ctrl,	
- 	.get_multi_hw_info = wpa_driver_get_multi_hw_info,
+ 	.ibf_dump = nl80211_ibf_dump,
++	.txpower_ctrl = nl80211_txpower_ctrl,
+ 	.amsdu_ctrl = nl80211_enable_amsdu,
+ 	.amsdu_dump = nl80211_dump_amsdu,
  };
---- a/src/drivers/driver_nl80211.h
-+++ b/src/drivers/driver_nl80211.h
-@@ -205,6 +205,7 @@ struct wpa_driver_nl80211_data {
- 	unsigned int mtk_mu_vendor_cmd_avail:1;
- 	unsigned int mtk_3wire_vendor_cmd_avail:1;
- 	unsigned int mtk_ibf_vendor_cmd_avail:1;
-+	unsigned int mtk_txpower_vendor_cmd_avail:1;
- 
- 	u32 ignore_next_local_disconnect;
- 	u32 ignore_next_local_deauth;
 --- a/src/drivers/driver_nl80211_capa.c
 +++ b/src/drivers/driver_nl80211_capa.c
-@@ -1160,6 +1160,9 @@ static int wiphy_info_handler(struct nl_
- 				case MTK_NL80211_VENDOR_SUBCMD_IBF_CTRL:
- 					drv->mtk_ibf_vendor_cmd_avail = 1;
+@@ -1163,6 +1163,9 @@ static int wiphy_info_handler(struct nl_
+ 				case MTK_NL80211_VENDOR_SUBCMD_WIRELESS_CTRL:
+ 					drv->mtk_wireless_vendor_cmd_avail = 1;
  					break;
 +				case MTK_NL80211_VENDOR_SUBCMD_TXPOWER_CTRL:
 +					drv->mtk_txpower_vendor_cmd_avail = 1;
@@ -257,3 +195,64 @@ control.
  				}
  			}
  
+--- a/src/ap/ap_config.c
++++ b/src/ap/ap_config.c
+@@ -310,6 +310,9 @@ struct hostapd_config * hostapd_config_d
+ 	conf->edcca_compensation = EDCCA_DEFAULT_COMPENSATION;
+ 	conf->three_wire_enable = THREE_WIRE_MODE_DISABLE;
+ 	conf->ibf_enable = IBF_DEFAULT_ENABLE;
++	conf->lpi_enable = 0;
++	conf->sku_idx = 0;
++	conf->beacon_dup = 0;
+ 	conf->amsdu = 1;
+ 
+ 	hostapd_set_and_check_bw320_offset(conf, 0);
+--- a/src/ap/ap_config.h
++++ b/src/ap/ap_config.h
+@@ -1299,6 +1299,9 @@ struct hostapd_config {
+ 	u8 three_wire_enable;
+ 	u8 ibf_enable;
+ 	u8 amsdu;
++	u8 lpi_enable;
++	u8 sku_idx;
++	u8 beacon_dup;	
+ };
+ 
+ enum three_wire_mode {
+--- a/src/ap/ap_drv_ops.h
++++ b/src/ap/ap_drv_ops.h
+@@ -167,6 +167,7 @@ int hostapd_drv_mu_dump(struct hostapd_d
+ int hostapd_drv_three_wire_ctrl(struct hostapd_data *hapd);
+ int hostapd_drv_ibf_ctrl(struct hostapd_data *hapd);
+ int hostapd_drv_ibf_dump(struct hostapd_data *hapd, u8 *ibf_enable);
++int hostapd_drv_txpower_ctrl(struct hostapd_data *hapd);
+ int hostapd_drv_amsdu_ctrl(struct hostapd_data *hapd);
+ int hostapd_drv_amsdu_dump(struct hostapd_data *hapd, u8 *amsdu);
+ 
+--- a/src/drivers/driver_nl80211.h
++++ b/src/drivers/driver_nl80211.h
+@@ -205,6 +205,7 @@ struct wpa_driver_nl80211_data {
+ 	unsigned int mtk_mu_vendor_cmd_avail:1;
+ 	unsigned int mtk_3wire_vendor_cmd_avail:1;
+ 	unsigned int mtk_ibf_vendor_cmd_avail:1;
++	unsigned int mtk_txpower_vendor_cmd_avail:1;
+ 	unsigned int mtk_wireless_vendor_cmd_avail:1;
+ 
+ 	u32 ignore_next_local_disconnect;
+--- a/src/ap/ap_drv_ops.c
++++ b/src/ap/ap_drv_ops.c
+@@ -1465,4 +1465,12 @@ int hostapd_drv_amsdu_dump(struct hostap
+ 	if (!hapd->driver || !hapd->driver->amsdu_dump)
+ 		return 0;
+ 	return hapd->driver->amsdu_dump(hapd->drv_priv, amsdu);
+-}
+\ No newline at end of file
++}
++
++int hostapd_drv_txpower_ctrl(struct hostapd_data *hapd)
++{
++	if (!hapd->driver || !hapd->driver->txpower_ctrl)
++		return 0;
++	return hapd->driver->txpower_ctrl(hapd->drv_priv, hapd->iconf->lpi_enable,
++					  hapd->iconf->sku_idx, hapd->iconf->beacon_dup);
++}

@@ -1,7 +1,7 @@
-From a8d74e867652c6feda7332ee2cb40611635179f0 Mon Sep 17 00:00:00 2001
+From fd72b361f3092390f0b3f7758f6a7b1d9b5fddcf Mon Sep 17 00:00:00 2001
 From: Michael Lee <michael-cy.lee@mediatek.com>
 Date: Tue, 11 Jul 2023 14:17:43 +0800
-Subject: [PATCH 36/54] mtk: hostapd: Set WMM and TX queue parameters for
+Subject: [PATCH 040/149] mtk: hostapd: Set WMM and TX queue parameters for
  wpa_supplicant
 
 Since most of the time, wpa_supplicant will be used to setup an STA
