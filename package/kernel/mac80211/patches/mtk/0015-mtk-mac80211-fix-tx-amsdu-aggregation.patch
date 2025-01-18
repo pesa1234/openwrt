@@ -1,7 +1,7 @@
-From 500f2f8a8f6690f496f35da6b75ab559298f4403 Mon Sep 17 00:00:00 2001
+From 89a9822baa7059c76daef9da0b91efa1ad366cb2 Mon Sep 17 00:00:00 2001
 From: TomLiu <tomml.liu@mediatek.com>
 Date: Wed, 14 Dec 2022 00:26:50 -0800
-Subject: [PATCH 08/37] mtk: mac80211: fix tx amsdu aggregation
+Subject: [PATCH 15/87] mtk: mac80211: fix tx amsdu aggregation
 
 ---
  include/net/mac80211.h | 7 +++++++

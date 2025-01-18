@@ -1,7 +1,7 @@
-From e95e57878ced57d49e5aefe777f8922761d2f8f1 Mon Sep 17 00:00:00 2001
+From 75fd9196eb0ba9c9f94a345188dedf23f13d016b Mon Sep 17 00:00:00 2001
 From: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
 Date: Thu, 27 Jul 2023 10:25:59 +0800
-Subject: [PATCH 17/37] mtk: cfg80211: fix early return in
+Subject: [PATCH 22/87] mtk: cfg80211: fix early return in
  cfg80211_stop_background_radar_detection
 
 Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>

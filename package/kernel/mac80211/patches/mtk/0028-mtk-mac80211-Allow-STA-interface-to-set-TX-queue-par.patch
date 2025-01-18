@@ -1,7 +1,7 @@
-From bfe137c0bceae36a34e766d2623893c4b1cbdd53 Mon Sep 17 00:00:00 2001
+From bec53952a550197c018150070d53e0b90fe8643e Mon Sep 17 00:00:00 2001
 From: Michael Lee <michael-cy.lee@mediatek.com>
 Date: Fri, 7 Jul 2023 17:17:30 +0800
-Subject: [PATCH 30/61] mtk: mac80211: Allow STA interface to set TX queue
+Subject: [PATCH 28/87] mtk: mac80211: Allow STA interface to set TX queue
  parameters
 
 Signed-off-by: Michael Lee <michael-cy.lee@mediatek.com>

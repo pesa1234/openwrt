@@ -1,7 +1,7 @@
-From 618d7f6ad1b398bc21258559c80928febba3dfac Mon Sep 17 00:00:00 2001
+From fd546eaf99cea2bb6185c8df8c919077f13dadc7 Mon Sep 17 00:00:00 2001
 From: "fancy.liu" <fancy.liu@mediatek.com>
 Date: Wed, 29 Nov 2023 13:51:13 +0800
-Subject: [PATCH 34/37] mtk: mac80211: ACS channel time is reset by ch_restore
+Subject: [PATCH 33/87] mtk: mac80211: ACS channel time is reset by ch_restore
 
 Issue:
 There's a chance that the channel time for duty channel is zero in ACS
@@ -25,12 +25,12 @@ scan done and before restore to duty channel.
 Signed-off-by: fancy.liu <fancy.liu@mediatek.com>
 ---
  include/net/mac80211.h | 7 +++++++
- net/mac80211/util.c    | 9 +++++++++
- 2 files changed, 16 insertions(+)
+ net/mac80211/util.c    | 8 ++++++++
+ 2 files changed, 15 insertions(+)
 
 --- a/include/net/mac80211.h
 +++ b/include/net/mac80211.h
-@@ -7731,4 +7731,11 @@ int ieee80211_emulate_switch_vif_chanctx
+@@ -7722,4 +7722,11 @@ int ieee80211_emulate_switch_vif_chanctx
  					 int n_vifs,
  					 enum ieee80211_chanctx_switch_mode mode);
  
@@ -44,7 +44,7 @@ Signed-off-by: fancy.liu <fancy.liu@mediatek.com>
  #endif /* MAC80211_H */
 --- a/net/mac80211/util.c
 +++ b/net/mac80211/util.c
-@@ -4453,3 +4453,12 @@ void ieee80211_clear_tpe(struct ieee8021
+@@ -4453,3 +4453,11 @@ void ieee80211_clear_tpe(struct ieee8021
  		       sizeof(tpe->psd_reg_client[i].power));
  	}
  }
@@ -56,4 +56,3 @@ Signed-off-by: fancy.liu <fancy.liu@mediatek.com>
 +	return local->scanning;
 +}
 +EXPORT_SYMBOL(ieee80211_get_scanning);
-+

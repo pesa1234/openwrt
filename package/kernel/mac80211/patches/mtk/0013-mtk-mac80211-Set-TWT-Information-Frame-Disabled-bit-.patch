@@ -1,7 +1,7 @@
-From a00c69d75f0ed444651391781f46351ea1417779 Mon Sep 17 00:00:00 2001
+From 9d54213b95786fffd65d5f867129c0778b3c249a Mon Sep 17 00:00:00 2001
 From: Howard Hsu <howard-yh.hsu@mediatek.com>
 Date: Tue, 4 Oct 2022 10:47:05 +0800
-Subject: [PATCH 06/37] mtk: mac80211: Set TWT Information Frame Disabled bit
+Subject: [PATCH 13/87] mtk: mac80211: Set TWT Information Frame Disabled bit
  as 1.
 
 This modification means that current implementation do not support twt information frame.

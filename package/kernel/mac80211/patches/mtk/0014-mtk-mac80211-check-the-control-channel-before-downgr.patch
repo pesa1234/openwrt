@@ -1,7 +1,7 @@
-From 32cfa2d7e115d5cdeeb130fbec61a248e9fe3676 Mon Sep 17 00:00:00 2001
+From a4c81abaea95bfaa27133566fad91744aa8c4939 Mon Sep 17 00:00:00 2001
 From: Evelyn Tsai <evelyn.tsai@mediatek.com>
 Date: Fri, 16 Dec 2022 03:31:06 +0800
-Subject: [PATCH 13/61] mtk: mac80211: check the control channel before
+Subject: [PATCH 14/87] mtk: mac80211: check the control channel before
  downgrading the bandwidth
 
 ---

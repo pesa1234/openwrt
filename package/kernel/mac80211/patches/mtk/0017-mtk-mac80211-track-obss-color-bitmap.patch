@@ -1,18 +1,19 @@
-From c4919b0d1dd5c92c081852be3ef37511f0406475 Mon Sep 17 00:00:00 2001
+From 7ca58a08f937bd0ba29e925c130d10a2f5dd0659 Mon Sep 17 00:00:00 2001
 From: Yi-Chia Hsieh <yi-chia.hsieh@mediatek.com>
 Date: Mon, 13 Mar 2023 05:23:37 +0800
-Subject: [PATCH 11/37] mtk: mac80211: track obss color bitmap
+Subject: [PATCH 17/87] mtk: mac80211: track obss color bitmap
 
 Track OBSS BSS color when receive their beacon.
 
 Adding 2 tracepoint for debug, usage:
 echo 1 > /sys/kernel/debug/tracing/events/mac80211/bss_color_bitmap/enable
 echo 1 > /sys/kernel/debug/tracing/events/mac80211/bss_color_collision/enable
+
 ---
  include/net/mac80211.h |  1 +
  net/mac80211/rx.c      |  6 +++++-
- net/mac80211/trace.h   | 21 +++++++++++++++++++++
- 3 files changed, 27 insertions(+), 1 deletion(-)
+ net/mac80211/trace.h   | 20 ++++++++++++++++++++
+ 3 files changed, 26 insertions(+), 1 deletion(-)
 
 --- a/include/net/mac80211.h
 +++ b/include/net/mac80211.h
@@ -26,15 +27,14 @@ echo 1 > /sys/kernel/debug/tracing/events/mac80211/bss_color_collision/enable
  	struct cfg80211_bitrate_mask beacon_tx_rate;
 --- a/net/mac80211/rx.c
 +++ b/net/mac80211/rx.c
-@@ -3400,9 +3400,14 @@ ieee80211_rx_check_bss_color_collision(s
+@@ -3400,9 +3400,13 @@ ieee80211_rx_check_bss_color_collision(s
  
  		color = le32_get_bits(he_oper->he_oper_params,
  				      IEEE80211_HE_OPERATION_BSS_COLOR_MASK);
-+				      
++
 +		bss_conf->used_color_bitmap |= BIT_ULL(color);
 +
 +		// trace_bss_color_bitmap(color, bss_conf->used_color_bitmap);
-+		
  		if (color == bss_conf->he_bss_color.color)
  			ieee80211_obss_color_collision_notify(&rx->sdata->vif,
 -							      BIT_ULL(color),

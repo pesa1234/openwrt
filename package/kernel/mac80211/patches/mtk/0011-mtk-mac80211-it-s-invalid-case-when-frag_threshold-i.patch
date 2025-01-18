@@ -1,7 +1,7 @@
-From 5a633b424cf49f50e211aa89712150028532407f Mon Sep 17 00:00:00 2001
+From 82c5d06bc1f070d4532574c66159e8db988a2f7c Mon Sep 17 00:00:00 2001
 From: Bo Jiao <Bo.Jiao@mediatek.com>
 Date: Fri, 1 Apr 2022 09:15:21 +0800
-Subject: [PATCH 03/37] mtk: mac80211: it's invalid case when frag_threshold is
+Subject: [PATCH 11/87] mtk: mac80211: it's invalid case when frag_threshold is
  greater than 2346
 
 Signed-off-by: Bo Jiao <Bo.Jiao@mediatek.com>

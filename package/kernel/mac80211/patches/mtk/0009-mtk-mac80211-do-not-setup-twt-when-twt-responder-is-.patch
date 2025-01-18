@@ -1,7 +1,7 @@
-From 45ed016428208e89e136b5af7e50bec57d63fdf6 Mon Sep 17 00:00:00 2001
+From 6bbbfbea08588d47b91ce7be845b41da2b4b9af2 Mon Sep 17 00:00:00 2001
 From: Peter Chiu <chui-hao.chiu@mediatek.com>
 Date: Tue, 18 Jan 2022 20:29:44 +0800
-Subject: [PATCH 01/37] mtk: mac80211: do not setup twt when twt responder is
+Subject: [PATCH 09/87] mtk: mac80211: do not setup twt when twt responder is
  false
 
 ---

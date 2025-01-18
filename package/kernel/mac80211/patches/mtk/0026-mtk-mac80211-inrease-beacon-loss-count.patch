@@ -1,9 +1,9 @@
-From 2733993c8fb2e6392cddd718c1b95164c49af642 Mon Sep 17 00:00:00 2001
+From 33b70718df93d99864043ba197a95267d12354d6 Mon Sep 17 00:00:00 2001
 From: Amit Khatri <amit.khatri@mediatek.com>
 Date: Thu, 6 Apr 2023 21:37:33 +0800
-Subject: [PATCH 26/37] mtk: mac80211: inrease beacon loss count
+Subject: [PATCH 26/87] mtk: mac80211: inrease beacon loss count
 
-as per eagle code beacone loss time out is
+as per mt7996 code beacone loss time out is
 4 seconds.
 in 2G connection getting beacon loss logs in routed client
 scenario.
@@ -22,7 +22,7 @@ Signed-off-by: Amit Khatri <amit.khatri@mediatek.com>
   * default to what we want.
   */
 -static int beacon_loss_count = 7;
-+static int beacon_loss_count = 40;
++static int beacon_loss_count = 20;
  module_param(beacon_loss_count, int, 0644);
  MODULE_PARM_DESC(beacon_loss_count,
  		 "Number of beacon intervals before we decide beacon was lost.");

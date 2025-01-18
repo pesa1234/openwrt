@@ -1,7 +1,7 @@
-From ef1f8c941108eca2665a6caff0cd016c36584d76 Mon Sep 17 00:00:00 2001
+From 8bdd4e02f47c71491ae4d58d0138bbe520e0e545 Mon Sep 17 00:00:00 2001
 From: Yi-Chia Hsieh <yi-chia.hsieh@mediatek.com>
 Date: Fri, 23 Jun 2023 05:53:50 +0800
-Subject: [PATCH 29/37] mtk: mac80211: export ieee80211_tpt_led_trig_tx/rx for
+Subject: [PATCH 29/87] mtk: mac80211: export ieee80211_tpt_led_trig_tx/rx for
  driver
 
 Whenever the H/W path is enabled and traffic is in the binding state,
@@ -106,7 +106,7 @@ Signed-off-by: Yi-Chia Hsieh <yi-chia.hsieh@mediatek.com>
 -}
 --- a/net/mac80211/rx.c
 +++ b/net/mac80211/rx.c
-@@ -5469,7 +5469,7 @@ void ieee80211_rx_list(struct ieee80211_
+@@ -5468,7 +5468,7 @@ void ieee80211_rx_list(struct ieee80211_
  	if (skb) {
  		if ((status->flag & RX_FLAG_8023) ||
  			ieee80211_is_data_present(hdr->frame_control))
