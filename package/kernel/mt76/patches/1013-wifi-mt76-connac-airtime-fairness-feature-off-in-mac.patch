@@ -1,0 +1,20 @@
+From 9e7d1c03b7944cd7a0641c68c9515f400e662451 Mon Sep 17 00:00:00 2001
+From: Evelyn Tsai <evelyn.tsai@mediatek.com>
+Date: Fri, 6 May 2022 15:58:42 +0800
+Subject: [PATCH 1013/1052] wifi: mt76: connac: airtime fairness feature off in
+ mac80211
+
+---
+ mac80211.c | 1 -
+ 1 file changed, 1 deletion(-)
+
+--- a/mac80211.c
++++ b/mac80211.c
+@@ -451,7 +451,6 @@ mt76_phy_init(struct mt76_phy *phy, stru
+ 			WIPHY_FLAG_AP_UAPSD;
+ 
+ 	wiphy_ext_feature_set(wiphy, NL80211_EXT_FEATURE_CQM_RSSI_LIST);
+-	wiphy_ext_feature_set(wiphy, NL80211_EXT_FEATURE_AIRTIME_FAIRNESS);
+ 	wiphy_ext_feature_set(wiphy, NL80211_EXT_FEATURE_AQL);
+ 
+ 	wiphy->available_antennas_tx = phy->antenna_mask;
