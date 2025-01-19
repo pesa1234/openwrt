@@ -14,7 +14,7 @@ Subject: [PATCH 021/149] mtk: hostapd: Add he_ldpc configuration
 
 --- a/hostapd/config_file.c
 +++ b/hostapd/config_file.c
-@@ -3814,6 +3814,8 @@ static int hostapd_config_fill(struct ho
+@@ -3816,6 +3816,8 @@ static int hostapd_config_fill(struct ho
  		conf->he_phy_capab.he_su_beamformee = atoi(pos);
  	} else if (os_strcmp(buf, "he_mu_beamformer") == 0) {
  		conf->he_phy_capab.he_mu_beamformer = atoi(pos);
@@ -75,7 +75,7 @@ Subject: [PATCH 021/149] mtk: hostapd: Add he_ldpc configuration
  			HE_PHYCAP_SU_BEAMFORMER_CAPAB;
 --- a/src/common/ieee802_11_defs.h
 +++ b/src/common/ieee802_11_defs.h
-@@ -2500,6 +2500,9 @@ struct ieee80211_spatial_reuse {
+@@ -2499,6 +2499,9 @@ struct ieee80211_spatial_reuse {
  #define HE_PHYCAP_CHANNEL_WIDTH_SET_160MHZ_IN_5G	((u8) BIT(3))
  #define HE_PHYCAP_CHANNEL_WIDTH_SET_80PLUS80MHZ_IN_5G	((u8) BIT(4))
  

@@ -15,7 +15,7 @@ Signed-off-by: Michael Lee <michael-cy.lee@mediatek.com>
 
 --- a/wpa_supplicant/config.c
 +++ b/wpa_supplicant/config.c
-@@ -4736,19 +4736,19 @@ struct wpa_config * wpa_config_alloc_emp
+@@ -4723,19 +4723,19 @@ struct wpa_config * wpa_config_alloc_emp
  	const struct hostapd_wmm_ac_params ac_bk =
  		{ aCWmin, aCWmax, 7, 0, 0 }; /* background traffic */
  	const struct hostapd_wmm_ac_params ac_be =

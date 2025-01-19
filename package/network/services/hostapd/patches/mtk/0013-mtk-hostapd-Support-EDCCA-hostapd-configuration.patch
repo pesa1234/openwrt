@@ -22,7 +22,7 @@ edcca_enable and edcca_compensation and implement edcca related handlers.
 
 --- a/hostapd/config_file.c
 +++ b/hostapd/config_file.c
-@@ -5215,6 +5215,40 @@ static int hostapd_config_fill(struct ho
+@@ -5209,6 +5209,40 @@ static int hostapd_config_fill(struct ho
  		os_strlcpy(bss->apup_peer_ifname_prefix,
  		           pos, sizeof(bss->apup_peer_ifname_prefix));
  #endif // def CONFIG_APUP
@@ -85,7 +85,7 @@ edcca_enable and edcca_compensation and implement edcca related handlers.
  static int hostapd_ctrl_iface_wps_get_status(struct hostapd_data *hapd,
  					     char *buf, size_t buflen)
  {
-@@ -3762,6 +3775,111 @@ static int hostapd_ctrl_iface_link_remov
+@@ -3732,6 +3745,111 @@ static int hostapd_ctrl_iface_link_remov
  #endif /* CONFIG_TESTING_OPTIONS */
  #endif /* CONFIG_IEEE80211BE */
  
@@ -197,7 +197,7 @@ edcca_enable and edcca_compensation and implement edcca related handlers.
  
  #ifdef CONFIG_NAN_USD
  
-@@ -4669,6 +4787,12 @@ static int hostapd_ctrl_iface_receive_pr
+@@ -4636,6 +4754,12 @@ static int hostapd_ctrl_iface_receive_pr
  			reply_len = -1;
  #endif /* CONFIG_TESTING_OPTIONS */
  #endif /* CONFIG_IEEE80211BE */
@@ -232,16 +232,16 @@ edcca_enable and edcca_compensation and implement edcca related handlers.
  
 --- a/src/ap/ap_config.h
 +++ b/src/ap/ap_config.h
-@@ -1290,8 +1290,39 @@ struct hostapd_config {
+@@ -1286,8 +1286,38 @@ struct hostapd_config {
  
- 	bool channel_usage;
- 	bool peer_to_peer_twt;
-+
+ 	/* Whether to enable TWT responder in HT and VHT modes */
+ 	bool ht_vht_twt_responder;
++	
 +	u8 edcca_enable;
 +	s8 edcca_compensation;
 +	int *edcca_threshold;
-+};
-+
+ };
+ 
 +enum edcca_mode {
 +	EDCCA_MODE_FORCE_DISABLE = 0,
 +	EDCCA_MODE_AUTO = 1,
@@ -261,22 +261,21 @@ edcca_enable and edcca_compensation and implement edcca related handlers.
 +	EDCCA_CTRL_GET_EN,
 +	EDCCA_CTRL_GET_THRES,
 +	EDCCA_CTRL_NUM,
- };
- 
++};
++
 +#define EDCCA_DEFAULT_COMPENSATION -6
 +#define EDCCA_MIN_COMPENSATION -126
 +#define EDCCA_MAX_COMPENSATION 126
 +#define EDCCA_MIN_CONFIG_THRES -126
 +#define EDCCA_MAX_CONFIG_THRES 0
-+
  
  static inline enum oper_chan_width
  hostapd_get_oper_chwidth(struct hostapd_config *conf)
 --- a/src/ap/ap_drv_ops.c
 +++ b/src/ap/ap_drv_ops.c
-@@ -1388,3 +1388,28 @@ int hostapd_add_pmkid(struct hostapd_dat
+@@ -1301,3 +1301,28 @@ hostapd_get_multi_hw_info(struct hostapd
  
- 	return hostapd_drv_add_pmkid(hapd, &params);
+ 	return hapd->driver->get_multi_hw_info(hapd->drv_priv, num_multi_hws);
  }
 +
 +
@@ -305,7 +304,7 @@ edcca_enable and edcca_compensation and implement edcca related handlers.
 +}
 --- a/src/ap/ap_drv_ops.h
 +++ b/src/ap/ap_drv_ops.h
-@@ -158,6 +158,10 @@ int hostapd_drv_set_secure_ranging_ctx(s
+@@ -157,6 +157,10 @@ int hostapd_drv_set_secure_ranging_ctx(s
  				       u8 ltf_keyseed_len,
  				       const u8 *ltf_keyseed, u32 action);
  
@@ -318,7 +317,7 @@ edcca_enable and edcca_compensation and implement edcca related handlers.
  
 --- a/src/ap/hostapd.c
 +++ b/src/ap/hostapd.c
-@@ -2790,6 +2790,13 @@ dfs_offload:
+@@ -2769,6 +2769,13 @@ dfs_offload:
  	}
  #endif /* CONFIG_MESH */
  
@@ -365,7 +364,7 @@ edcca_enable and edcca_compensation and implement edcca related handlers.
  	[MTK_VENDOR_ATTR_EDCCA_CTRL_PRI20_VAL] = { .type = NLA_U8 },
 --- a/src/drivers/driver.h
 +++ b/src/drivers/driver.h
-@@ -5403,6 +5403,11 @@ struct wpa_driver_ops {
+@@ -5366,6 +5366,11 @@ struct wpa_driver_ops {
  	 */
  	struct hostapd_multi_hw_info *
  	(*get_multi_hw_info)(void *priv, unsigned int *num_multi_hws);
@@ -388,7 +387,7 @@ edcca_enable and edcca_compensation and implement edcca related handlers.
  
  
  #ifndef NETLINK_CAP_ACK
-@@ -14839,6 +14841,174 @@ static int testing_nl80211_radio_disable
+@@ -14559,6 +14561,174 @@ static int testing_nl80211_radio_disable
  
  #endif /* CONFIG_TESTING_OPTIONS */
  
@@ -563,7 +562,7 @@ edcca_enable and edcca_compensation and implement edcca related handlers.
  
  static struct hostapd_multi_hw_info *
  wpa_driver_get_multi_hw_info(void *priv, unsigned int *num_multi_hws)
-@@ -15021,4 +15191,8 @@ const struct wpa_driver_ops wpa_driver_n
+@@ -14738,4 +14908,8 @@ const struct wpa_driver_ops wpa_driver_n
  	.radio_disable = testing_nl80211_radio_disable,
  #endif /* CONFIG_TESTING_OPTIONS */
  	.get_multi_hw_info = wpa_driver_get_multi_hw_info,
@@ -592,7 +591,7 @@ edcca_enable and edcca_compensation and implement edcca related handlers.
  
  
  static int protocol_feature_handler(struct nl_msg *msg, void *arg)
-@@ -1145,6 +1146,12 @@ static int wiphy_info_handler(struct nl_
+@@ -1141,6 +1142,12 @@ static int wiphy_info_handler(struct nl_
  					break;
  				}
  #endif /* CONFIG_DRIVER_NL80211_BRCM */

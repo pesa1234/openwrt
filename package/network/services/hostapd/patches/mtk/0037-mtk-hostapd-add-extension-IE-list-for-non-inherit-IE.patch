@@ -18,7 +18,7 @@ Signed-off-by: mtk20656 <chank.chen@mediatek.com>
 
 --- a/src/ap/ieee802_11.c
 +++ b/src/ap/ieee802_11.c
-@@ -8337,7 +8337,7 @@ static size_t hostapd_eid_mbssid_elem_le
+@@ -8214,7 +8214,7 @@ static size_t hostapd_eid_mbssid_elem_le
  		else if (hapd->conf->xrates_supported)
  			ie_count++;
  		if (ie_count)

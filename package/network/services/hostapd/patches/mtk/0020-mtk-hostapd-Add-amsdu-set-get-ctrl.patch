@@ -21,7 +21,7 @@ Subject: [PATCH 020/149] mtk: hostapd: Add amsdu set get ctrl
 
 --- a/hostapd/config_file.c
 +++ b/hostapd/config_file.c
-@@ -5265,6 +5265,15 @@ static int hostapd_config_fill(struct ho
+@@ -5259,6 +5259,15 @@ static int hostapd_config_fill(struct ho
  	} else if (os_strcmp(buf, "ibf_enable") == 0) { /*ibf setting is per device*/
  		int val = atoi(pos);
  		conf->ibf_enable = !!val;
@@ -39,7 +39,7 @@ Subject: [PATCH 020/149] mtk: hostapd: Add amsdu set get ctrl
  			   "Line %d: unknown configuration item '%s'",
 --- a/hostapd/ctrl_iface.c
 +++ b/hostapd/ctrl_iface.c
-@@ -4264,6 +4264,30 @@ hostapd_ctrl_iface_get_ibf(struct hostap
+@@ -4234,6 +4234,30 @@ hostapd_ctrl_iface_get_ibf(struct hostap
  }
  
  
@@ -70,12 +70,12 @@ Subject: [PATCH 020/149] mtk: hostapd: Add amsdu set get ctrl
  static int hostapd_ctrl_iface_receive_process(struct hostapd_data *hapd,
  					      char *buf, char *reply,
  					      int reply_size,
-@@ -4885,6 +4909,8 @@ static int hostapd_ctrl_iface_receive_pr
+@@ -4852,6 +4876,8 @@ static int hostapd_ctrl_iface_receive_pr
  		reply_len = hostapd_ctrl_iface_get_mu(hapd, reply, reply_size);
  	} else if (os_strncmp(buf, "GET_IBF", 7) == 0) {
  		reply_len = hostapd_ctrl_iface_get_ibf(hapd, reply, reply_size);
 +	} else if (os_strncmp(buf, "GET_AMSDU", 9) == 0) {
-+		reply_len = hostapd_ctrl_iface_get_amsdu(hapd, reply, reply_size);	
++		reply_len = hostapd_ctrl_iface_get_amsdu(hapd, reply, reply_size);
  	} else {
  		os_memcpy(reply, "UNKNOWN COMMAND\n", 16);
  		reply_len = 16;
@@ -116,7 +116,7 @@ Subject: [PATCH 020/149] mtk: hostapd: Add amsdu set get ctrl
  
 --- a/src/ap/ap_drv_ops.c
 +++ b/src/ap/ap_drv_ops.c
-@@ -1451,4 +1451,18 @@ int hostapd_drv_ibf_dump(struct hostapd_
+@@ -1364,4 +1364,18 @@ int hostapd_drv_ibf_dump(struct hostapd_
  	if (!hapd->driver || !hapd->driver->ibf_dump)
  		return 0;
  	return hapd->driver->ibf_dump(hapd->drv_priv, ibf_enable);
@@ -138,7 +138,7 @@ Subject: [PATCH 020/149] mtk: hostapd: Add amsdu set get ctrl
 \ No newline at end of file
 --- a/src/ap/ap_drv_ops.h
 +++ b/src/ap/ap_drv_ops.h
-@@ -167,6 +167,8 @@ int hostapd_drv_mu_dump(struct hostapd_d
+@@ -166,6 +166,8 @@ int hostapd_drv_mu_dump(struct hostapd_d
  int hostapd_drv_three_wire_ctrl(struct hostapd_data *hapd);
  int hostapd_drv_ibf_ctrl(struct hostapd_data *hapd);
  int hostapd_drv_ibf_dump(struct hostapd_data *hapd, u8 *ibf_enable);
@@ -149,7 +149,7 @@ Subject: [PATCH 020/149] mtk: hostapd: Add amsdu set get ctrl
  
 --- a/src/ap/hostapd.c
 +++ b/src/ap/hostapd.c
-@@ -2802,6 +2802,8 @@ dfs_offload:
+@@ -2781,6 +2781,8 @@ dfs_offload:
  		goto fail;
  	if (hostapd_drv_ibf_ctrl(hapd) < 0)
  		goto fail;
@@ -193,7 +193,7 @@ Subject: [PATCH 020/149] mtk: hostapd: Add amsdu set get ctrl
  
 --- a/src/drivers/driver.h
 +++ b/src/drivers/driver.h
-@@ -5448,6 +5448,15 @@ struct wpa_driver_ops {
+@@ -5411,6 +5411,15 @@ struct wpa_driver_ops {
  	 *
  	 */
  	int (*ibf_dump)(void *priv, u8 *ibf_enable);
@@ -211,7 +211,7 @@ Subject: [PATCH 020/149] mtk: hostapd: Add amsdu set get ctrl
  /**
 --- a/src/drivers/driver_nl80211.c
 +++ b/src/drivers/driver_nl80211.c
-@@ -15264,6 +15264,118 @@ fail:
+@@ -14984,6 +14984,118 @@ fail:
  	return -ENOBUFS;
  }
  
@@ -330,7 +330,7 @@ Subject: [PATCH 020/149] mtk: hostapd: Add amsdu set get ctrl
  const struct wpa_driver_ops wpa_driver_nl80211_ops = {
  	.name = "nl80211",
  	.desc = "Linux nl80211/cfg80211",
-@@ -15445,4 +15557,6 @@ const struct wpa_driver_ops wpa_driver_n
+@@ -15162,4 +15274,6 @@ const struct wpa_driver_ops wpa_driver_n
  	.three_wire_ctrl = nl80211_enable_three_wire,
  	.ibf_ctrl = nl80211_ibf_enable,
  	.ibf_dump = nl80211_ibf_dump,
@@ -349,7 +349,7 @@ Subject: [PATCH 020/149] mtk: hostapd: Add amsdu set get ctrl
  	u32 ignore_next_local_deauth;
 --- a/src/drivers/driver_nl80211_capa.c
 +++ b/src/drivers/driver_nl80211_capa.c
-@@ -1160,6 +1160,9 @@ static int wiphy_info_handler(struct nl_
+@@ -1156,6 +1156,9 @@ static int wiphy_info_handler(struct nl_
  				case MTK_NL80211_VENDOR_SUBCMD_IBF_CTRL:
  					drv->mtk_ibf_vendor_cmd_avail = 1;
  					break;
@@ -361,7 +361,7 @@ Subject: [PATCH 020/149] mtk: hostapd: Add amsdu set get ctrl
  
 --- a/src/ap/ap_config.h
 +++ b/src/ap/ap_config.h
-@@ -1297,6 +1297,7 @@ struct hostapd_config {
+@@ -1293,6 +1293,7 @@ struct hostapd_config {
  	int *edcca_threshold;
  	u8 three_wire_enable;
  	u8 ibf_enable;

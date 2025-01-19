@@ -9,7 +9,7 @@ Subject: [PATCH 032/149] mtk: hostapd: Add HE capabilities check
 
 --- a/src/ap/hw_features.c
 +++ b/src/ap/hw_features.c
-@@ -731,6 +731,32 @@ static int ieee80211ac_supported_vht_cap
+@@ -742,6 +742,32 @@ static int ieee80211ac_supported_vht_cap
  #ifdef CONFIG_IEEE80211AX
  static int ieee80211ax_supported_he_capab(struct hostapd_iface *iface)
  {

@@ -15,7 +15,7 @@ Signed-off-by: Michael-CY Lee <michael-cy.lee@mediatek.com>
 
 --- a/src/ap/ieee802_11.c
 +++ b/src/ap/ieee802_11.c
-@@ -5109,7 +5109,8 @@ static u16 send_assoc_resp(struct hostap
+@@ -5057,7 +5057,8 @@ static u16 send_assoc_resp(struct hostap
  #endif /* CONFIG_IEEE80211AC */
  
  #ifdef CONFIG_IEEE80211AX
