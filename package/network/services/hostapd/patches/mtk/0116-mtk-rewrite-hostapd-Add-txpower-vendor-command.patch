@@ -22,7 +22,7 @@ control.
 
 --- a/hostapd/config_file.c
 +++ b/hostapd/config_file.c
-@@ -5270,6 +5270,16 @@ static int hostapd_config_fill(struct ho
+@@ -5268,6 +5268,16 @@ static int hostapd_config_fill(struct ho
  			return 1;
  		}
  		conf->amsdu = val;
@@ -71,7 +71,7 @@ control.
  };
  
  enum mtk_vendor_attr_edcca_ctrl {
-@@ -256,6 +257,19 @@ ibf_dump_policy[NUM_MTK_VENDOR_ATTRS_IBF
+@@ -255,6 +256,19 @@ ibf_dump_policy[NUM_MTK_VENDOR_ATTRS_IBF
  };
  
  
@@ -125,7 +125,7 @@ control.
  static struct nl_sock * nl_create_handle(struct nl_cb *cb, const char *dbg)
  {
  	struct nl_sock *handle;
-@@ -15096,6 +15103,49 @@ fail:
+@@ -15087,6 +15094,49 @@ fail:
  	return -ENOBUFS;
  }
  
@@ -175,7 +175,7 @@ control.
  const struct wpa_driver_ops wpa_driver_nl80211_ops = {
  	.name = "nl80211",
  	.desc = "Linux nl80211/cfg80211",
-@@ -15274,6 +15324,7 @@ const struct wpa_driver_ops wpa_driver_n
+@@ -15265,6 +15315,7 @@ const struct wpa_driver_ops wpa_driver_n
  	.three_wire_ctrl = nl80211_enable_three_wire,
  	.ibf_ctrl = nl80211_ibf_enable,
  	.ibf_dump = nl80211_ibf_dump,
@@ -209,7 +209,7 @@ control.
  	hostapd_set_and_check_bw320_offset(conf, 0);
 --- a/src/ap/ap_config.h
 +++ b/src/ap/ap_config.h
-@@ -1295,6 +1295,9 @@ struct hostapd_config {
+@@ -1294,6 +1294,9 @@ struct hostapd_config {
  	u8 three_wire_enable;
  	u8 ibf_enable;
  	u8 amsdu;
@@ -221,7 +221,7 @@ control.
  enum three_wire_mode {
 --- a/src/ap/ap_drv_ops.h
 +++ b/src/ap/ap_drv_ops.h
-@@ -166,6 +166,7 @@ int hostapd_drv_mu_dump(struct hostapd_d
+@@ -165,6 +165,7 @@ int hostapd_drv_mu_dump(struct hostapd_d
  int hostapd_drv_three_wire_ctrl(struct hostapd_data *hapd);
  int hostapd_drv_ibf_ctrl(struct hostapd_data *hapd);
  int hostapd_drv_ibf_dump(struct hostapd_data *hapd, u8 *ibf_enable);
@@ -241,7 +241,7 @@ control.
  	u32 ignore_next_local_disconnect;
 --- a/src/ap/ap_drv_ops.c
 +++ b/src/ap/ap_drv_ops.c
-@@ -1378,4 +1378,12 @@ int hostapd_drv_amsdu_dump(struct hostap
+@@ -1377,4 +1377,12 @@ int hostapd_drv_amsdu_dump(struct hostap
  	if (!hapd->driver || !hapd->driver->amsdu_dump)
  		return 0;
  	return hapd->driver->amsdu_dump(hapd->drv_priv, amsdu);

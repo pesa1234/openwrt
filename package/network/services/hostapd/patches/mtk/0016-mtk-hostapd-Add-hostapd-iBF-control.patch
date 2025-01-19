@@ -22,7 +22,7 @@ Signed-off-by: mtk27835 <shurong.wen@mediatek.com>
 
 --- a/hostapd/config_file.c
 +++ b/hostapd/config_file.c
-@@ -5256,6 +5256,9 @@ static int hostapd_config_fill(struct ho
+@@ -5254,6 +5254,9 @@ static int hostapd_config_fill(struct ho
  		u8 en = atoi(pos);
  
  		conf->three_wire_enable = en;
@@ -34,7 +34,7 @@ Signed-off-by: mtk27835 <shurong.wen@mediatek.com>
  			   "Line %d: unknown configuration item '%s'",
 --- a/hostapd/ctrl_iface.c
 +++ b/hostapd/ctrl_iface.c
-@@ -4210,6 +4210,30 @@ hostapd_ctrl_iface_get_mu(struct hostapd
+@@ -4211,6 +4211,30 @@ hostapd_ctrl_iface_get_mu(struct hostapd
  }
  
  
@@ -65,7 +65,7 @@ Signed-off-by: mtk27835 <shurong.wen@mediatek.com>
  static int hostapd_ctrl_iface_receive_process(struct hostapd_data *hapd,
  					      char *buf, char *reply,
  					      int reply_size,
-@@ -4826,6 +4850,8 @@ static int hostapd_ctrl_iface_receive_pr
+@@ -4827,6 +4851,8 @@ static int hostapd_ctrl_iface_receive_pr
  							  reply_size);
  	} else if (os_strncmp(buf, "GET_MU", 6) == 0) {
  		reply_len = hostapd_ctrl_iface_get_mu(hapd, reply, reply_size);
@@ -111,7 +111,7 @@ Signed-off-by: mtk27835 <shurong.wen@mediatek.com>
  
 --- a/src/ap/ap_config.h
 +++ b/src/ap/ap_config.h
-@@ -1292,6 +1292,7 @@ struct hostapd_config {
+@@ -1291,6 +1291,7 @@ struct hostapd_config {
  	s8 edcca_compensation;
  	int *edcca_threshold;
  	u8 three_wire_enable;
@@ -119,7 +119,7 @@ Signed-off-by: mtk27835 <shurong.wen@mediatek.com>
  };
  
  enum three_wire_mode {
-@@ -1455,6 +1456,7 @@ hostapd_set_and_check_bw320_offset(struc
+@@ -1453,6 +1454,7 @@ hostapd_set_and_check_bw320_offset(struc
  #endif /* CONFIG_IEEE80211BE */
  }
  
@@ -129,7 +129,7 @@ Signed-off-by: mtk27835 <shurong.wen@mediatek.com>
  struct hostapd_config * hostapd_config_defaults(void);
 --- a/src/ap/ap_drv_ops.c
 +++ b/src/ap/ap_drv_ops.c
-@@ -1351,3 +1351,17 @@ int hostapd_drv_three_wire_ctrl(struct h
+@@ -1350,3 +1350,17 @@ int hostapd_drv_three_wire_ctrl(struct h
  	}
  	return hapd->driver->three_wire_ctrl(hapd->drv_priv, hapd->iconf->three_wire_enable);
  }
@@ -150,7 +150,7 @@ Signed-off-by: mtk27835 <shurong.wen@mediatek.com>
 \ No newline at end of file
 --- a/src/ap/ap_drv_ops.h
 +++ b/src/ap/ap_drv_ops.h
-@@ -164,6 +164,8 @@ int hostapd_drv_get_edcca(struct hostapd
+@@ -163,6 +163,8 @@ int hostapd_drv_get_edcca(struct hostapd
  int hostapd_drv_mu_ctrl(struct hostapd_data *hapd);
  int hostapd_drv_mu_dump(struct hostapd_data *hapd, u8 *mu_onoff);
  int hostapd_drv_three_wire_ctrl(struct hostapd_data *hapd);
@@ -182,7 +182,7 @@ Signed-off-by: mtk27835 <shurong.wen@mediatek.com>
  };
  
  enum mtk_vendor_attr_edcca_ctrl {
-@@ -207,6 +208,38 @@ enum mtk_vendor_attr_mu_ctrl {
+@@ -206,6 +207,38 @@ enum mtk_vendor_attr_mu_ctrl {
  		NUM_MTK_VENDOR_ATTRS_MU_CTRL - 1
  };
  
@@ -235,7 +235,7 @@ Signed-off-by: mtk27835 <shurong.wen@mediatek.com>
  };
  
  #define HE_MAC_CAPAB_0		0
-@@ -5392,6 +5397,20 @@ struct wpa_driver_ops {
+@@ -5391,6 +5396,20 @@ struct wpa_driver_ops {
  	 *
  	 */
  	 int (*three_wire_ctrl)(void *priv, u8 three_wire_enable);
@@ -258,8 +258,8 @@ Signed-off-by: mtk27835 <shurong.wen@mediatek.com>
  /**
 --- a/src/drivers/driver_nl80211.c
 +++ b/src/drivers/driver_nl80211.c
-@@ -14878,6 +14878,111 @@ wpa_driver_get_multi_hw_info(void *priv,
- 	return nl80211_get_multi_hw_info(bss, num_multi_hws);
+@@ -14869,6 +14869,112 @@ static int nl80211_enable_three_wire(voi
+ 	return ret;
  }
  
 +static int nl80211_ibf_enable(void *priv, u8 ibf_enable)
@@ -367,10 +367,11 @@ Signed-off-by: mtk27835 <shurong.wen@mediatek.com>
 +	nlmsg_free(msg);
 +	return -ENOBUFS;
 +}
- 
++
  const struct wpa_driver_ops wpa_driver_nl80211_ops = {
  	.name = "nl80211",
-@@ -15055,4 +15160,6 @@ const struct wpa_driver_ops wpa_driver_n
+ 	.desc = "Linux nl80211/cfg80211",
+@@ -15045,4 +15151,6 @@ const struct wpa_driver_ops wpa_driver_n
  	.configure_edcca_threshold = nl80211_configure_edcca_threshold,
  	.get_edcca = nl80211_get_edcca,
  	.three_wire_ctrl = nl80211_enable_three_wire,

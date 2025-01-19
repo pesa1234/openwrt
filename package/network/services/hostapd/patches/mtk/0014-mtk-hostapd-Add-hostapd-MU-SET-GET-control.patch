@@ -39,8 +39,8 @@ Subject: [PATCH 014/149] mtk: hostapd: Add hostapd MU SET/GET control
  		bss->max_listen_interval = atoi(pos);
 --- a/hostapd/ctrl_iface.c
 +++ b/hostapd/ctrl_iface.c
-@@ -4149,6 +4149,67 @@ fail:
- #endif /* CONFIG_NAN_USD */
+@@ -4150,6 +4150,67 @@ hostapd_ctrl_iface_get_edcca(struct host
+ }
  
  
 +static int
@@ -107,7 +107,7 @@ Subject: [PATCH 014/149] mtk: hostapd: Add hostapd MU SET/GET control
  static int hostapd_ctrl_iface_receive_process(struct hostapd_data *hapd,
  					      char *buf, char *reply,
  					      int reply_size,
-@@ -4760,6 +4821,11 @@ static int hostapd_ctrl_iface_receive_pr
+@@ -4761,6 +4822,11 @@ static int hostapd_ctrl_iface_receive_pr
  	} else if (os_strncmp(buf, "GET_EDCCA ", 10) == 0) {
  		reply_len = hostapd_ctrl_iface_get_edcca(hapd, buf+10, reply,
  							  reply_size);
@@ -175,7 +175,7 @@ Subject: [PATCH 014/149] mtk: hostapd: Add hostapd MU SET/GET control
  	/* VHT enable/disable config from CHAN_SWITCH */
 --- a/src/ap/ap_drv_ops.c
 +++ b/src/ap/ap_drv_ops.c
-@@ -1326,3 +1326,17 @@ int hostapd_drv_get_edcca(struct hostapd
+@@ -1325,3 +1325,17 @@ int hostapd_drv_get_edcca(struct hostapd
  		return 0;
  	return hapd->driver->get_edcca(hapd->drv_priv, mode, value);
  }
@@ -195,7 +195,7 @@ Subject: [PATCH 014/149] mtk: hostapd: Add hostapd MU SET/GET control
 +}
 --- a/src/ap/ap_drv_ops.h
 +++ b/src/ap/ap_drv_ops.h
-@@ -161,6 +161,8 @@ int hostapd_drv_configure_edcca_enable(s
+@@ -160,6 +160,8 @@ int hostapd_drv_configure_edcca_enable(s
  int hostapd_drv_configure_edcca_threshold(struct hostapd_data *hapd,
  					  const int *threshold);
  int hostapd_drv_get_edcca(struct hostapd_data *hapd, const u8 mode, u8 *value);
@@ -226,7 +226,7 @@ Subject: [PATCH 014/149] mtk: hostapd: Add hostapd MU SET/GET control
  	MTK_NL80211_VENDOR_SUBCMD_EDCCA_CTRL = 0xc7,
  };
  
-@@ -177,6 +179,19 @@ enum mtk_vendor_attr_rfeature_ctrl {
+@@ -176,6 +178,19 @@ enum mtk_vendor_attr_rfeature_ctrl {
  		NUM_MTK_VENDOR_ATTRS_RFEATURE_CTRL - 1
  };
  
@@ -260,7 +260,7 @@ Subject: [PATCH 014/149] mtk: hostapd: Add hostapd MU SET/GET control
  };
  
  #define HE_MAC_CAPAB_0		0
-@@ -5371,6 +5376,14 @@ struct wpa_driver_ops {
+@@ -5370,6 +5375,14 @@ struct wpa_driver_ops {
  				  const s8 edcca_compensation);
  	int (*configure_edcca_threshold)(void *priv, const int *threshold);
  	int (*get_edcca)(void *priv, const u8 mode, u8 *value);
@@ -277,7 +277,7 @@ Subject: [PATCH 014/149] mtk: hostapd: Add hostapd MU SET/GET control
  /**
 --- a/src/drivers/driver_nl80211.c
 +++ b/src/drivers/driver_nl80211.c
-@@ -14393,6 +14393,114 @@ fail:
+@@ -14392,6 +14392,114 @@ fail:
  }
  
  
@@ -392,7 +392,7 @@ Subject: [PATCH 014/149] mtk: hostapd: Add hostapd MU SET/GET control
  #ifdef CONFIG_DPP
  static int nl80211_dpp_listen(void *priv, bool enable)
  {
-@@ -14893,6 +15001,8 @@ const struct wpa_driver_ops wpa_driver_n
+@@ -14882,6 +14990,8 @@ const struct wpa_driver_ops wpa_driver_n
  	.update_connect_params = nl80211_update_connection_params,
  	.send_external_auth_status = nl80211_send_external_auth_status,
  	.set_4addr_mode = nl80211_set_4addr_mode,
@@ -414,7 +414,7 @@ Subject: [PATCH 014/149] mtk: hostapd: Add hostapd MU SET/GET control
 --- a/src/drivers/driver_nl80211_capa.c
 +++ b/src/drivers/driver_nl80211_capa.c
 @@ -1147,6 +1147,9 @@ static int wiphy_info_handler(struct nl_
- 				case MTK_NL80211_VENDOR_SUBCMD_EDCCA_CTRL:
+ 				case MTK_NL80211_VENDOR_SUBCMD_EDCCA_CTRL :
  					drv->mtk_edcca_vendor_cmd_avail = 1;
  					break;
 +				case MTK_NL80211_VENDOR_SUBCMD_MU_CTRL :
