@@ -22,7 +22,7 @@ Signed-off-by: Chen Minqiang <ptpt52@gmail.com>
 
 --- a/mt7915/init.c
 +++ b/mt7915/init.c
-@@ -735,16 +735,18 @@ mt7915_register_ext_phy(struct mt7915_de
+@@ -744,16 +744,18 @@ mt7915_register_ext_phy(struct mt7915_de
  
  	memcpy(mphy->macaddr, dev->mt76.eeprom.data + MT_EE_MAC_ADDR2,
  	       ETH_ALEN);
