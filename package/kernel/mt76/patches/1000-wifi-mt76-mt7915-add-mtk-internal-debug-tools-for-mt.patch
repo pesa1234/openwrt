@@ -250,7 +250,7 @@ Subject: [PATCH 01/70] wifi: mt76: mt7915: add mtk internal debug tools for
  	if (hdr_trans && ieee80211_has_morefrags(fc)) {
  		struct ieee80211_vif *vif;
  		int err;
-@@ -793,6 +801,12 @@ int mt7915_tx_prepare_skb(struct mt76_de
+@@ -804,6 +812,12 @@ int mt7915_tx_prepare_skb(struct mt76_de
  	tx_info->buf[1].skip_unmap = true;
  	tx_info->nbuf = MT_CT_DMA_BUF_NUM;
  
@@ -391,7 +391,7 @@ Subject: [PATCH 01/70] wifi: mt76: mt7915: add mtk internal debug tools for
  #define MT7915_MAX_INTERFACES		19
  #define MT7915_WTBL_SIZE		288
  #define MT7916_WTBL_SIZE		544
-@@ -248,6 +249,14 @@ struct mt7915_phy {
+@@ -249,6 +250,14 @@ struct mt7915_phy {
  #endif
  };
  
@@ -406,7 +406,7 @@ Subject: [PATCH 01/70] wifi: mt76: mt7915: add mtk internal debug tools for
  struct mt7915_dev {
  	union { /* must be first */
  		struct mt76_dev mt76;
-@@ -331,6 +340,33 @@ struct mt7915_dev {
+@@ -332,6 +341,33 @@ struct mt7915_dev {
  	void __iomem *dcm;
  	void __iomem *sku;
  
@@ -440,7 +440,7 @@ Subject: [PATCH 01/70] wifi: mt76: mt7915: add mtk internal debug tools for
  	bool wmm_pbc_enable;
  	struct work_struct wmm_pbc_work;
  	u32 adie_type;
-@@ -616,4 +652,24 @@ void mt7915_sta_add_debugfs(struct ieee8
+@@ -617,4 +653,24 @@ void mt7915_sta_add_debugfs(struct ieee8
  int mt7915_mmio_wed_init(struct mt7915_dev *dev, void *pdev_ptr,
  			 bool pci, int *irq);
  

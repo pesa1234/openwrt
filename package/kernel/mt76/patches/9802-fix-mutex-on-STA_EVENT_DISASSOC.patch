@@ -1,6 +1,6 @@
 --- a/mt7915/main.c
 +++ b/mt7915/main.c
-@@ -900,8 +900,11 @@ int mt7915_mac_sta_event(struct mt76_dev
+@@ -901,8 +901,11 @@ int mt7915_mac_sta_event(struct mt76_dev
  		return mt7915_mcu_add_sta(dev, vif, sta, CONN_STATE_PORT_SECURE, false);
  
  	case MT76_STA_EVENT_DISASSOC:

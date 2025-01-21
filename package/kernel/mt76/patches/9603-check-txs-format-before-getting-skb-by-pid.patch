@@ -11,7 +11,7 @@ status to mac80211.
 
 --- a/mt76_connac_mac.c
 +++ b/mt76_connac_mac.c
-@@ -772,10 +772,13 @@ bool mt76_connac2_mac_add_txs_skb(struct
+@@ -747,10 +747,13 @@ bool mt76_connac2_mac_add_txs_skb(struct
  				  int pid, __le32 *txs_data)
  {
  	struct sk_buff_head list;
