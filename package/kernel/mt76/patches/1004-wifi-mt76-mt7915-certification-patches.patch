@@ -17,14 +17,14 @@ Subject: [PATCH 1004/1051] wifi: mt76: mt7915: certification patches
 
 --- a/mt76_connac_mcu.h
 +++ b/mt76_connac_mcu.h
-@@ -1264,6 +1264,7 @@ enum {
+@@ -1265,6 +1265,7 @@ enum {
  	/* for vendor csi and air monitor */
  	MCU_EXT_CMD_SMESH_CTRL = 0xae,
  	MCU_EXT_CMD_SET_QOS_MAP = 0xb4,
 +	MCU_EXT_CMD_CERT_CFG = 0xb7,
+ 	MCU_EXT_CMD_WF_RF_PIN_CTRL = 0xbd,
  	MCU_EXT_CMD_CSI_CTRL = 0xc2,
  };
- 
 --- a/mt7915/mac.c
 +++ b/mt7915/mac.c
 @@ -8,6 +8,7 @@
@@ -35,8 +35,8 @@ Subject: [PATCH 1004/1051] wifi: mt76: mt7915: certification patches
  
  #define to_rssi(field, rcpi)	((FIELD_GET(field, rcpi) - 220) / 2)
  
-@@ -1977,6 +1978,21 @@ static void mt7915_mac_sta_stats_work(st
- 	spin_unlock_bh(&phy->stats_lock);
+@@ -1940,6 +1941,21 @@ static void mt7915_mac_severe_check(stru
+ 	phy->trb_ts = trb;
  }
  
 +#ifdef CONFIG_MTK_VENDOR
@@ -57,7 +57,7 @@ Subject: [PATCH 1004/1051] wifi: mt76: mt7915: certification patches
  void mt7915_mac_sta_rc_work(struct work_struct *work)
  {
  	struct mt7915_dev *dev = container_of(work, struct mt7915_dev, rc_work);
-@@ -1999,6 +2015,13 @@ void mt7915_mac_sta_rc_work(struct work_
+@@ -1962,6 +1978,13 @@ void mt7915_mac_sta_rc_work(struct work_
  		sta = container_of((void *)msta, struct ieee80211_sta, drv_priv);
  		vif = container_of((void *)msta->vif, struct ieee80211_vif, drv_priv);
  
@@ -73,7 +73,7 @@ Subject: [PATCH 1004/1051] wifi: mt76: mt7915: certification patches
  			       IEEE80211_RC_BW_CHANGED))
 --- a/mt7915/main.c
 +++ b/mt7915/main.c
-@@ -808,6 +808,10 @@ int mt7915_mac_sta_event(struct mt76_dev
+@@ -858,6 +858,10 @@ int mt7915_mac_sta_event(struct mt76_dev
  	struct mt7915_dev *dev = container_of(mdev, struct mt7915_dev, mt76);
  	struct mt7915_sta *msta = (struct mt7915_sta *)sta->drv_priv;
  	struct mt7915_vif *mvif = (struct mt7915_vif *)vif->drv_priv;
@@ -84,7 +84,7 @@ Subject: [PATCH 1004/1051] wifi: mt76: mt7915: certification patches
  	int i, ret;
  	u32 addr;
  
-@@ -827,6 +831,11 @@ int mt7915_mac_sta_event(struct mt76_dev
+@@ -877,6 +881,11 @@ int mt7915_mac_sta_event(struct mt76_dev
  		ret = mt7915_mcu_add_rate_ctrl(dev, vif, sta, false);
  		if (ret)
  			return ret;
@@ -98,7 +98,7 @@ Subject: [PATCH 1004/1051] wifi: mt76: mt7915: certification patches
  		msta->wcid.sta = 1;
 --- a/mt7915/mcu.c
 +++ b/mt7915/mcu.c
-@@ -4439,6 +4439,472 @@ mt7915_mcu_report_csi(struct mt7915_dev
+@@ -4283,6 +4283,472 @@ mt7915_mcu_report_csi(struct mt7915_dev
  
  	return 0;
  }
@@ -573,7 +573,7 @@ Subject: [PATCH 1004/1051] wifi: mt76: mt7915: certification patches
  #ifdef MTK_DEBUG
 --- a/mt7915/mcu.h
 +++ b/mt7915/mcu.h
-@@ -486,10 +486,14 @@ enum {
+@@ -431,10 +431,14 @@ enum {
  	RATE_PARAM_FIXED = 3,
  	RATE_PARAM_MMPS_UPDATE = 5,
  	RATE_PARAM_FIXED_HE_LTF = 7,
@@ -589,7 +589,7 @@ Subject: [PATCH 1004/1051] wifi: mt76: mt7915: certification patches
  };
  
  #define RATE_CFG_MCS			GENMASK(3, 0)
-@@ -501,6 +505,9 @@ enum {
+@@ -446,6 +450,9 @@ enum {
  #define RATE_CFG_PHY_TYPE		GENMASK(27, 24)
  #define RATE_CFG_HE_LTF			GENMASK(31, 28)
  
@@ -599,7 +599,7 @@ Subject: [PATCH 1004/1051] wifi: mt76: mt7915: certification patches
  enum {
  	TX_POWER_LIMIT_ENABLE,
  	TX_POWER_LIMIT_TABLE = 0x4,
-@@ -683,5 +690,203 @@ enum CSI_CHAIN_TYPE {
+@@ -624,5 +631,203 @@ enum CSI_CHAIN_TYPE {
  #define OFDMA_UL                       BIT(1)
  #define MUMIMO_DL                      BIT(2)
  #define MUMIMO_UL                      BIT(3)
@@ -805,7 +805,7 @@ Subject: [PATCH 1004/1051] wifi: mt76: mt7915: certification patches
  #endif
 --- a/mt7915/mt7915.h
 +++ b/mt7915/mt7915.h
-@@ -756,6 +756,19 @@ int mt7915_mmio_wed_init(struct mt7915_d
+@@ -749,6 +749,19 @@ int mt7915_mmio_wed_init(struct mt7915_d
  			 bool pci, int *irq);
  
  #ifdef CONFIG_MTK_VENDOR

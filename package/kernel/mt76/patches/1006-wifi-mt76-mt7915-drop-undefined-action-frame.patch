@@ -9,7 +9,7 @@ Subject: [PATCH 1006/1051] wifi: mt76: mt7915: drop undefined action frame
 
 --- a/mt7915/mac.c
 +++ b/mt7915/mac.c
-@@ -744,6 +744,8 @@ int mt7915_tx_prepare_skb(struct mt76_de
+@@ -760,6 +760,8 @@ int mt7915_tx_prepare_skb(struct mt76_de
  			  struct mt76_tx_info *tx_info)
  {
  	struct ieee80211_hdr *hdr = (struct ieee80211_hdr *)tx_info->skb->data;
@@ -18,7 +18,7 @@ Subject: [PATCH 1006/1051] wifi: mt76: mt7915: drop undefined action frame
  	struct mt7915_dev *dev = container_of(mdev, struct mt7915_dev, mt76);
  	struct ieee80211_tx_info *info = IEEE80211_SKB_CB(tx_info->skb);
  	struct ieee80211_key_conf *key = info->control.hw_key;
-@@ -775,6 +777,10 @@ int mt7915_tx_prepare_skb(struct mt76_de
+@@ -780,6 +782,10 @@ int mt7915_tx_prepare_skb(struct mt76_de
  	t = (struct mt76_txwi_cache *)(txwi + mdev->drv->txwi_size);
  	t->skb = tx_info->skb;
  

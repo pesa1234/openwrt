@@ -51,7 +51,7 @@ Signed-off-by: Shayne Chen <shayne.chen@mediatek.com>
  {
 --- a/mt76.h
 +++ b/mt76.h
-@@ -1007,6 +1007,9 @@ struct mt76_dev {
+@@ -1048,6 +1048,9 @@ struct mt76_dev {
  		struct mt76_usb usb;
  		struct mt76_sdio sdio;
  	};
@@ -61,7 +61,7 @@ Signed-off-by: Shayne Chen <shayne.chen@mediatek.com>
  };
  
  /* per-phy stats.  */
-@@ -1271,6 +1274,7 @@ void mt76_eeprom_override(struct mt76_ph
+@@ -1322,6 +1325,7 @@ void mt76_eeprom_override(struct mt76_ph
  int mt76_get_of_data_from_mtd(struct mt76_dev *dev, void *eep, int offset, int len);
  int mt76_get_of_data_from_nvmem(struct mt76_dev *dev, void *eep,
  				const char *cell_name, int len);
@@ -213,7 +213,7 @@ Signed-off-by: Shayne Chen <shayne.chen@mediatek.com>
  {
 --- a/mt7915/mt7915.h
 +++ b/mt7915/mt7915.h
-@@ -419,6 +419,8 @@ struct mt7915_dev {
+@@ -413,6 +413,8 @@ struct mt7915_dev {
  
  	bool dbdc_support;
  	bool flash_mode;
@@ -222,7 +222,7 @@ Signed-off-by: Shayne Chen <shayne.chen@mediatek.com>
  	bool muru_debug;
  	bool ibf;
  
-@@ -809,6 +811,7 @@ void mt7915_dump_tmac_info(u8 *tmac_info
+@@ -802,6 +804,7 @@ void mt7915_dump_tmac_info(u8 *tmac_info
  int mt7915_mcu_set_txpower_level(struct mt7915_phy *phy, u8 drop_level);
  void mt7915_packet_log_to_host(struct mt7915_dev *dev, const void *data, int len, int type, int des_len);
  int mt7915_mcu_set_amsdu_algo(struct mt7915_dev *dev, u16 wcid, u8 enable);

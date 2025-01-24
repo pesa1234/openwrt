@@ -18,7 +18,7 @@ Signed-off-by: MeiChia Chiu <meichia.chiu@mediatek.com>
 
 --- a/mt7915/main.c
 +++ b/mt7915/main.c
-@@ -1187,6 +1187,12 @@ static void mt7915_sta_rc_update(struct
+@@ -1234,6 +1234,12 @@ static void mt7915_sta_rc_update(struct
  
  	if (!msta->wcid.sta)
  		return;

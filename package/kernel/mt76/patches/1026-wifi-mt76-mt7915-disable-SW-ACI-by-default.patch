@@ -38,7 +38,7 @@ SW-ACI feature is disable by default.
  	if (phy != &dev->phy) {
 --- a/mt7915/mcu.c
 +++ b/mt7915/mcu.c
-@@ -5250,3 +5250,18 @@ int mt7915_mcu_get_edcca(struct mt7915_p
+@@ -5094,3 +5094,18 @@ int mt7915_mcu_get_edcca(struct mt7915_p
  
  	return 0;
  }
@@ -59,7 +59,7 @@ SW-ACI feature is disable by default.
 +}
 --- a/mt7915/mt7915.h
 +++ b/mt7915/mt7915.h
-@@ -807,6 +807,7 @@ int mt7915_vendor_amnt_sta_remove(struct
+@@ -800,6 +800,7 @@ int mt7915_vendor_amnt_sta_remove(struct
  #endif
  int mt7915_mcu_set_edcca(struct mt7915_phy *phy, int mode, u8 *value, s8 compensation);
  int mt7915_mcu_get_edcca(struct mt7915_phy *phy, u8 mode, s8 *value);

@@ -10,7 +10,7 @@ Subject: [PATCH 1013/1052] wifi: mt76: connac: airtime fairness feature off in
 
 --- a/mac80211.c
 +++ b/mac80211.c
-@@ -451,7 +451,6 @@ mt76_phy_init(struct mt76_phy *phy, stru
+@@ -458,7 +458,6 @@ mt76_phy_init(struct mt76_phy *phy, stru
  			WIPHY_FLAG_AP_UAPSD;
  
  	wiphy_ext_feature_set(wiphy, NL80211_EXT_FEATURE_CQM_RSSI_LIST);
