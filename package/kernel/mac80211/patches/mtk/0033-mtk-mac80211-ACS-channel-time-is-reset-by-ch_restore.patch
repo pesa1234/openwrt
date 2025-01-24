@@ -30,7 +30,7 @@ Signed-off-by: fancy.liu <fancy.liu@mediatek.com>
 
 --- a/include/net/mac80211.h
 +++ b/include/net/mac80211.h
-@@ -7699,4 +7699,11 @@ int ieee80211_emulate_switch_vif_chanctx
+@@ -7728,4 +7728,11 @@ int ieee80211_emulate_switch_vif_chanctx
  					 int n_vifs,
  					 enum ieee80211_chanctx_switch_mode mode);
  
@@ -44,7 +44,7 @@ Signed-off-by: fancy.liu <fancy.liu@mediatek.com>
  #endif /* MAC80211_H */
 --- a/net/mac80211/util.c
 +++ b/net/mac80211/util.c
-@@ -4454,3 +4454,11 @@ void ieee80211_clear_tpe(struct ieee8021
+@@ -4453,3 +4453,11 @@ void ieee80211_clear_tpe(struct ieee8021
  		       sizeof(tpe->psd_reg_client[i].power));
  	}
  }

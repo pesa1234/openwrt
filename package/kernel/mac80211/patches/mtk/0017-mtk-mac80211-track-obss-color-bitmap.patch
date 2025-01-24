@@ -44,7 +44,7 @@ echo 1 > /sys/kernel/debug/tracing/events/mac80211/bss_color_collision/enable
  }
 --- a/net/mac80211/trace.h
 +++ b/net/mac80211/trace.h
-@@ -3154,6 +3154,28 @@ TRACE_EVENT(drv_neg_ttlm_res,
+@@ -3160,6 +3160,28 @@ TRACE_EVENT(drv_neg_ttlm_res,
  		  LOCAL_PR_ARG, VIF_PR_ARG, __entry->res
  	)
  );
