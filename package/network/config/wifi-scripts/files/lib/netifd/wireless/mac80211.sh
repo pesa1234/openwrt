@@ -499,6 +499,21 @@ mac80211_hostapd_setup_base() {
 			he_twt_responder=0
 			append base_cfg "he_twt_responder=$he_twt_responder" "$N"
 		fi
+		
+		if [ -n "$edcca_enable" ]; then
+			append base_cfg "edcca_enable=$edcca_enable" "$N"
+		fi
+		
+		if [ -n "$edcca_compensation" ]; then
+			append base_cfg "edcca_compensation=$edcca_compensation" "$N"
+		fi
+		
+		if [ -n "$edcca_threshold" ]; then
+			append base_cfg "edcca_threshold=$edcca_threshold" "$N"
+		else
+			edcca_threshold="-60 -55 -50"
+			append base_cfg "edcca_threshold=$edcca_threshold" "$N"
+		fi
 
 		if [ "$he_bss_color_enabled" -gt 0 ]; then
 			append base_cfg "he_bss_color=$he_bss_color" "$N"
