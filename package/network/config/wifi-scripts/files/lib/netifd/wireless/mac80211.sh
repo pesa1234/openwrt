@@ -500,18 +500,21 @@ mac80211_hostapd_setup_base() {
 			append base_cfg "he_twt_responder=$he_twt_responder" "$N"
 		fi
 		
+		edcca_enable=$(uci get advanced.@edcca[0].edcca_enable 2>/dev/null || echo "1")
 		if [ -n "$edcca_enable" ]; then
 			append base_cfg "edcca_enable=$edcca_enable" "$N"
 		fi
 		
+		edcca_compensation=$(uci get advanced.@edcca[0].compensation 2>/dev/null || echo "-6")
 		if [ -n "$edcca_compensation" ]; then
 			append base_cfg "edcca_compensation=$edcca_compensation" "$N"
 		fi
 		
+		thres_0=$(uci get advanced.@edcca[0].thres_0 2>/dev/null || echo "-60")
+		thres_1=$(uci get advanced.@edcca[0].thres_1 2>/dev/null || echo "-62")
+		thres_2=$(uci get advanced.@edcca[0].thres_2 2>/dev/null || echo "-59")
+		edcca_threshold="${thres_0} ${thres_1} ${thres_2}"
 		if [ -n "$edcca_threshold" ]; then
-			append base_cfg "edcca_threshold=$edcca_threshold" "$N"
-		else
-			edcca_threshold="-60 -55 -50"
 			append base_cfg "edcca_threshold=$edcca_threshold" "$N"
 		fi
 
