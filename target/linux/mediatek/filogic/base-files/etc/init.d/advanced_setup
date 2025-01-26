@@ -558,15 +558,6 @@ set_smp_affinity
 #end of file
 }
 
-p-steer(){
-	p-steer=$(uci get network.globals.packet_steering)
-	if [ ! -z $p-steer ]; then
-		smp-mt76
-	else
-		logger -s "smp_affinity: Only run packet steering"
-	fi
-}
-
 mtk-offloading()
 {
 	mtk_offloading_enable=$(uci get advanced.@defaults[0].mtk_offloading_enable)
@@ -648,7 +639,7 @@ usb-setup()
 }
 
 start() {
-	p-steer
+	smp-mt76
 	enable-HQoS
 	usb-setup
 	hw-atf-setup
