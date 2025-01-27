@@ -112,7 +112,7 @@ Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
  
 --- a/mt7915/main.c
 +++ b/mt7915/main.c
-@@ -786,7 +786,6 @@ int mt7915_mac_sta_add(struct mt76_dev *
+@@ -796,7 +796,6 @@ int mt7915_mac_sta_add(struct mt76_dev *
  	msta->wcid.sta_disabled = 1;
  	msta->wcid.idx = idx;
  	msta->wcid.phy_idx = ext_phy;

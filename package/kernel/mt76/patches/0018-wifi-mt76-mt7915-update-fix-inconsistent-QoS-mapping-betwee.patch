@@ -35,7 +35,7 @@ Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
  
  	mutex_lock(&dev->mt76.mutex);
  
-@@ -257,6 +257,12 @@ static int mt7915_add_interface(struct i
+@@ -257,6 +257,22 @@ static int mt7915_add_interface(struct i
  	mvif->sta.wcid.tx_info |= MT_WCID_TX_INFO_SET;
  	mt76_wcid_init(&mvif->sta.wcid, phy->mt76->band_idx);
  
@@ -44,11 +44,21 @@ Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
 +	 */
 +	for (i = 0; i < IP_DSCP_NUM; ++i)
 +		mvif->qos_map[i] = i >> 3;
++	
++	/* Recommended QoS map, defined in section 4 of RFC8325.
++	 * Used in cfg80211_classify8021d since kernel v6.8.
++	 */
++	mvif->qos_map[10] = mvif->qos_map[12] = mvif->qos_map[14] = mvif->qos_map[16] = 0;
++	mvif->qos_map[18] = mvif->qos_map[20] = mvif->qos_map[22] = 3;
++	mvif->qos_map[24] = 4;
++	mvif->qos_map[40] = 5;
++	mvif->qos_map[44] = mvif->qos_map[46] = 6;
++	mvif->qos_map[48] = 7;
 +
  	mt7915_mac_wtbl_update(dev, idx,
  			       MT_WTBL_UPDATE_ADM_COUNT_CLEAR);
  
-@@ -1688,6 +1694,56 @@ mt7915_set_frag_threshold(struct ieee802
+@@ -1688,6 +1704,66 @@ mt7915_set_frag_threshold(struct ieee802
  }
  
  static int
@@ -79,6 +89,16 @@ Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
 +		 */
 +		for (i = 0; i < IP_DSCP_NUM; ++i)
 +			req.qos_map[i] = i >> 3;
++			
++		/* Recommended QoS map, defined in section 4 of RFC8325.
++		* Used in cfg80211_classify8021d since kernel v6.8.
++	 	*/
++		req.qos_map[10] = req.qos_map[12] = req.qos_map[14] = req.qos_map[16] = 0;
++		req.qos_map[18] = req.qos_map[20] = req.qos_map[22] = 3;
++		req.qos_map[24] = 4;
++		req.qos_map[40] = 5;
++		req.qos_map[44] = req.qos_map[46] = 6;
++		req.qos_map[48] = 7;
 +
 +		/* User-defined QoS map */
 +		for (i = 0; i < IEEE80211_NUM_UPS; ++i) {
@@ -105,7 +125,7 @@ Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
  mt7915_set_radar_background(struct ieee80211_hw *hw,
  			    struct cfg80211_chan_def *chandef)
  {
-@@ -1829,6 +1885,7 @@ const struct ieee80211_ops mt7915_ops =
+@@ -1829,6 +1905,7 @@ const struct ieee80211_ops mt7915_ops =
  	.add_twt_setup = mt7915_mac_add_twt_setup,
  	.twt_teardown_request = mt7915_twt_teardown_request,
  	.set_frag_threshold = mt7915_set_frag_threshold,

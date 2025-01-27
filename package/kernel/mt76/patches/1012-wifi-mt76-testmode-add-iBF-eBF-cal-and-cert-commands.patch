@@ -147,7 +147,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  	}
  
  	INIT_LIST_HEAD(&mvif->sta.rc_list);
-@@ -288,7 +277,26 @@ static int mt7915_add_interface(struct i
+@@ -298,7 +287,26 @@ static int mt7915_add_interface(struct i
  	mt7915_mcu_add_sta(dev, vif, NULL, CONN_STATE_PORT_SECURE, true);
  	rcu_assign_pointer(dev->mt76.wcid[idx], &mvif->sta.wcid);
  

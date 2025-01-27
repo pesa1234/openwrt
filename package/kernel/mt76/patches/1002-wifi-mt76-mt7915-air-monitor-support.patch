@@ -38,7 +38,7 @@ Subject: [PATCH] wifi: mt76: mt7915: air monitor support
  		mt7915_wed_check_ppe(dev, &dev->mt76.q_rx[q], msta, skb,
 --- a/mt7915/main.c
 +++ b/mt7915/main.c
-@@ -857,6 +857,7 @@ int mt7915_mac_sta_event(struct mt76_dev
+@@ -867,6 +867,7 @@ int mt7915_mac_sta_event(struct mt76_dev
  {
  	struct mt7915_dev *dev = container_of(mdev, struct mt7915_dev, mt76);
  	struct mt7915_sta *msta = (struct mt7915_sta *)sta->drv_priv;
@@ -46,7 +46,7 @@ Subject: [PATCH] wifi: mt76: mt7915: air monitor support
  	int i, ret;
  	u32 addr;
  
-@@ -868,6 +869,10 @@ int mt7915_mac_sta_event(struct mt76_dev
+@@ -878,6 +879,10 @@ int mt7915_mac_sta_event(struct mt76_dev
  
  		addr = mt7915_mac_wtbl_lmac_addr(dev, msta->wcid.idx, 30);
  		mt76_rmw_field(dev, addr, GENMASK(7, 0), 0xa0);
