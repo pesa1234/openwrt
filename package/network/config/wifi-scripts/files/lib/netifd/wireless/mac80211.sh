@@ -205,6 +205,10 @@ mac80211_hostapd_setup_base() {
 
 			set_default ht_coex 0
 			append base_cfg "ht_coex=$ht_coex" "$N"
+			[ "$ht_coex" -eq 1 ] && {
+			set_default obss_interval 300
+			append base_cfg "obss_interval=$obss_interval" "$N"
+			}
 
 			json_get_vars \
 				ldpc:1 \
@@ -467,7 +471,7 @@ mac80211_hostapd_setup_base() {
 			he_spr_sr_control:3 \
 			he_spr_psr_enabled:0 \
 			he_spr_non_srg_obss_pd_max_offset:0 \
-			he_bss_color:128 \
+			he_bss_color \
 			he_bss_color_enabled:1
 
 		he_phy_cap=$(iw phy "$phy" info | sed -n '/HE Iftypes: .*AP/,$p' | awk -F "[()]" '/HE PHY Capabilities/ { print $2 }' | head -1)
@@ -519,6 +523,10 @@ mac80211_hostapd_setup_base() {
 		fi
 
 		if [ "$he_bss_color_enabled" -gt 0 ]; then
+			if !([ "$he_bss_color" -gt 0 ] && [ "$he_bss_color" -le 64 ]); then
+				rand=$(head -n 1 /dev/urandom | tr -dc 0-9 | head -c 2)
+				he_bss_color=$((rand % 63 + 1))
+			fi
 			append base_cfg "he_bss_color=$he_bss_color" "$N"
 			[ "$he_spr_non_srg_obss_pd_max_offset" -gt 0 ] && { \
 				append base_cfg "he_spr_non_srg_obss_pd_max_offset=$he_spr_non_srg_obss_pd_max_offset" "$N"
