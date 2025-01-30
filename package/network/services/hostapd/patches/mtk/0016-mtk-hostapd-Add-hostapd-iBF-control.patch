@@ -182,7 +182,7 @@ Signed-off-by: mtk27835 <shurong.wen@mediatek.com>
  };
  
  enum mtk_vendor_attr_edcca_ctrl {
-@@ -206,6 +207,38 @@ enum mtk_vendor_attr_mu_ctrl {
+@@ -207,6 +208,38 @@ enum mtk_vendor_attr_mu_ctrl {
  		NUM_MTK_VENDOR_ATTRS_MU_CTRL - 1
  };
  

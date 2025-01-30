@@ -178,7 +178,7 @@ Signed-off-by: Yi-Chia Hsieh <yi-chia.hsieh@mediatek.com>
  };
  
  enum mtk_vendor_attr_edcca_ctrl {
-@@ -254,6 +255,16 @@ ibf_dump_policy[NUM_MTK_VENDOR_ATTRS_IBF
+@@ -255,6 +256,16 @@ ibf_dump_policy[NUM_MTK_VENDOR_ATTRS_IBF
  	[MTK_VENDOR_ATTR_IBF_DUMP_ENABLE] = { .type = NLA_U8 },
  };
  

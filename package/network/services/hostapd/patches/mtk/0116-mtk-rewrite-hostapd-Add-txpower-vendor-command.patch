@@ -71,7 +71,7 @@ control.
  };
  
  enum mtk_vendor_attr_edcca_ctrl {
-@@ -266,6 +267,19 @@ enum mtk_vendor_attr_bss_color_ctrl {
+@@ -267,6 +268,19 @@ enum mtk_vendor_attr_bss_color_ctrl {
  		NUM_MTK_VENDOR_ATTRS_BSS_COLOR_CTRL - 1
  };
  

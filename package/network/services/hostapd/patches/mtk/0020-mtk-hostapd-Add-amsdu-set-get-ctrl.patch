@@ -167,8 +167,8 @@ Subject: [PATCH 020/149] mtk: hostapd: Add amsdu set get ctrl
 -	MTK_VENDOR_ATTR_WIRELESS_CTRL_AMPDU,
  	MTK_VENDOR_ATTR_WIRELESS_CTRL_AMSDU,
  	MTK_VENDOR_ATTR_WIRELESS_CTRL_CERT,
- 
-@@ -179,6 +178,22 @@ enum mtk_vendor_attr_wireless_ctrl {
+ 	MTK_VENDOR_ATTR_WIRELESS_CTRL_RTS_SIGTA,
+@@ -180,6 +179,22 @@ enum mtk_vendor_attr_wireless_ctrl {
  		NUM_MTK_VENDOR_ATTRS_WIRELESS_CTRL - 1
  };
  
