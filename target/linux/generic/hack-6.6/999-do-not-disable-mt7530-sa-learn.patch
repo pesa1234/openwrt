@@ -1,0 +1,52 @@
+--- a/drivers/net/dsa/mt7530.c
++++ b/drivers/net/dsa/mt7530.c
+@@ -1369,11 +1369,11 @@ mt7530_port_bridge_flags(struct dsa_swit
+ 			 struct netlink_ext_ack *extack)
+ {
+ 	struct mt7530_priv *priv = ds->priv;
+-
++#if 0
+ 	if (flags.mask & BR_LEARNING)
+ 		mt7530_rmw(priv, MT7530_PSC_P(port), SA_DIS,
+ 			   flags.val & BR_LEARNING ? 0 : SA_DIS);
+-
++#endif
+ 	if (flags.mask & BR_FLOOD)
+ 		mt7530_rmw(priv, MT753X_MFC, UNU_FFP(BIT(port)),
+ 			   flags.val & BR_FLOOD ? UNU_FFP(BIT(port)) : 0);
+@@ -2350,7 +2350,7 @@ mt7530_setup(struct dsa_switch *ds)
+ 		return -EINVAL;
+ 	}
+ 
+-	ds->assisted_learning_on_cpu_port = true;
++	//ds->assisted_learning_on_cpu_port = true;
+ 	ds->mtu_enforcement_ingress = true;
+ 
+ 	if (priv->id == ID_MT7530) {
+@@ -2446,7 +2446,7 @@ mt7530_setup(struct dsa_switch *ds)
+ 			   PCR_MATRIX_CLR);
+ 
+ 		/* Disable learning by default on all ports */
+-		mt7530_set(priv, MT7530_PSC_P(i), SA_DIS);
++		//mt7530_set(priv, MT7530_PSC_P(i), SA_DIS);
+ 
+ 		if (dsa_is_cpu_port(ds, i)) {
+ 			mt753x_cpu_port_enable(ds, i);
+@@ -2558,7 +2558,7 @@ mt7531_setup_common(struct dsa_switch *d
+ 			   PCR_MATRIX_CLR);
+ 
+ 		/* Disable learning by default on all ports */
+-		mt7530_set(priv, MT7530_PSC_P(i), SA_DIS);
++		//mt7530_set(priv, MT7530_PSC_P(i), SA_DIS);
+ 
+ 		mt7530_set(priv, MT7531_DBG_CNT(i), MT7531_DIS_CLR);
+ 
+@@ -2686,7 +2686,7 @@ mt7531_setup(struct dsa_switch *ds)
+ 	if (ret)
+ 		return ret;
+ 
+-	ds->assisted_learning_on_cpu_port = true;
++	//ds->assisted_learning_on_cpu_port = true;
+ 	ds->mtu_enforcement_ingress = true;
+ 
+ 	return 0;
