@@ -1,0 +1,105 @@
+From ddf61fb2c9dcc5c4187b03c29f4ff128d6440d96 Mon Sep 17 00:00:00 2001
+From: Peter Chiu <chui-hao.chiu@mediatek.com>
+Date: Tue, 21 Jan 2025 16:37:58 +0800
+Subject: [PATCH] wifi: mt76: mt7915: add debugfs knob to control ps thershold
+
+---
+ mt76_connac_mcu.c    |  4 +++-
+ mt76_connac_mcu.h    |  1 +
+ mt7915/mcu.c         | 22 ++++++++++++++++++++++
+ mt7915/mt7915.h      |  1 +
+ mt7915/mtk_debugfs.c | 15 +++++++++++++++
+ 5 files changed, 42 insertions(+), 1 deletion(-)
+
+--- a/mt76_connac_mcu.c
++++ b/mt76_connac_mcu.c
+@@ -3198,7 +3198,9 @@ int mt76_connac2_mcu_fill_message(struct
+ 		mcu_txd->set_query = MCU_Q_NA;
+ 	}
+ 
+-	if (cmd & __MCU_CMD_FIELD_WA)
++	if (cmd == MCU_EXT_CMD(PS_CTRL))
++		mcu_txd->s2d_index = MCU_S2D_H2CN;
++	else if (cmd & __MCU_CMD_FIELD_WA)
+ 		mcu_txd->s2d_index = MCU_S2D_H2C;
+ 	else
+ 		mcu_txd->s2d_index = MCU_S2D_H2N;
+--- a/mt76_connac_mcu.h
++++ b/mt76_connac_mcu.h
+@@ -1214,6 +1214,7 @@ enum {
+ 	MCU_EXT_CMD_ID_RADIO_ON_OFF_CTRL = 0x05,
+ 	MCU_EXT_CMD_PM_STATE_CTRL = 0x07,
+ 	MCU_EXT_CMD_CHANNEL_SWITCH = 0x08,
++	MCU_EXT_CMD_PS_CTRL = 0x0f,
+ 	MCU_EXT_CMD_SET_TX_POWER_CTRL = 0x11,
+ 	MCU_EXT_CMD_FW_LOG_2_HOST = 0x13,
+ 	MCU_EXT_CMD_TXBF_ACTION = 0x1e,
+--- a/mt7915/mcu.c
++++ b/mt7915/mcu.c
+@@ -5507,3 +5507,25 @@ int mt7915_mcu_thermal_debug(struct mt79
+ 	return mt76_mcu_send_msg(&dev->mt76, MCU_EXT_CMD(THERMAL_DEBUG), &req,
+ 				 sizeof(req), true);
+ }
++
++int mt7915_mcu_set_ps_ctrl(struct mt7915_dev *dev, u16 threshold)
++{
++	struct {
++		__le16 per_sta_threshold;
++		__le16 flush_threshold;
++		u8 enable;
++		u8 rsv[3];
++	} req = {
++		.enable = true,
++		.per_sta_threshold = cpu_to_le16(threshold),
++	};
++	u16 thresh = dev->mt76.token_size;
++
++	if (mtk_wed_device_active(&dev->mt76.mmio.wed))
++		thresh += dev->mt76.mmio.wed.wlan.nbuf;
++
++	req.flush_threshold = cpu_to_le16(thresh * 4 / 5);
++
++	return mt76_mcu_send_msg(&dev->mt76, MCU_EXT_CMD(PS_CTRL), &req,
++				 sizeof(req), true);
++}
+--- a/mt7915/mt7915.h
++++ b/mt7915/mt7915.h
+@@ -905,6 +905,7 @@ int mt7915_mcu_ipi_hist_scan(struct mt79
+ int mt7915_mcu_set_scs_en(struct mt7915_phy *phy, u8 enable);
+ void mt7915_mcu_scs_sta_poll(struct work_struct *work);
+ int mt7915_mcu_thermal_debug(struct mt7915_dev *dev, u8 mode, u8 action);
++int mt7915_mcu_set_ps_ctrl(struct mt7915_dev *dev, u16 threshold);
+ 
+ #ifdef MTK_DEBUG
+ int mt7915_mtk_init_debugfs(struct mt7915_phy *phy, struct dentry *dir);
+--- a/mt7915/mtk_debugfs.c
++++ b/mt7915/mtk_debugfs.c
+@@ -3977,6 +3977,20 @@ mt7915_thermal_recal_set(void *data, u64
+ 
+ DEFINE_DEBUGFS_ATTRIBUTE(fops_thermal_recal, NULL,
+ 			 mt7915_thermal_recal_set, "%llu\n");
++			 
++static int
++mt7915_ps_ctrl_set(void *data, u64 val)
++{
++	struct mt7915_dev *dev = data;
++
++	if (val > 0xffff)
++		return -EINVAL;
++
++	return mt7915_mcu_set_ps_ctrl(dev, val);
++}
++
++DEFINE_DEBUGFS_ATTRIBUTE(fops_ps_ctrl, NULL,
++			 mt7915_ps_ctrl_set, "%llu\n");
+ 
+ int mt7915_mtk_init_debugfs(struct mt7915_phy *phy, struct dentry *dir)
+ {
+@@ -4074,6 +4088,7 @@ int mt7915_mtk_init_debugfs(struct mt791
+ 				    
+ 	debugfs_create_file("scs_enable", 0200, dir, phy, &fops_scs_enable);
+ 	debugfs_create_file("thermal_recal", 0200, dir, dev, &fops_thermal_recal);
++	debugfs_create_file("ps_ctrl", 0200, dir, dev, &fops_ps_ctrl);
+ 
+ 	return 0;
+ }
