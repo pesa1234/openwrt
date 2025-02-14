@@ -132,7 +132,7 @@ Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
  	struct {
 --- a/tx.c
 +++ b/tx.c
-@@ -136,9 +136,8 @@ mt76_tx_status_skb_add(struct mt76_dev *
+@@ -137,9 +137,8 @@ mt76_tx_status_skb_add(struct mt76_dev *
  
  	if (!(info->flags & (IEEE80211_TX_CTL_REQ_TX_STATUS |
  			     IEEE80211_TX_CTL_RATE_CTRL_PROBE))) {
