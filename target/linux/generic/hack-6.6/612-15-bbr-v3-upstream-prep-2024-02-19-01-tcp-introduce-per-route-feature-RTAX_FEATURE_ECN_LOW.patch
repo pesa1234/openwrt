@@ -84,7 +84,7 @@ Change-Id: I6bc06e9c6cb426fbae7243fc71c9a8c18175f5d3
  
 --- a/net/ipv4/tcp_output.c
 +++ b/net/ipv4/tcp_output.c
-@@ -334,10 +334,9 @@ static void tcp_ecn_send_syn(struct sock
+@@ -337,10 +337,9 @@ static void tcp_ecn_send_syn(struct sock
  	bool bpf_needs_ecn = tcp_bpf_ca_needs_ecn(sk);
  	bool use_ecn = READ_ONCE(sock_net(sk)->ipv4.sysctl_tcp_ecn) == 1 ||
  		tcp_ca_needs_ecn(sk) || bpf_needs_ecn;
@@ -96,7 +96,7 @@ Change-Id: I6bc06e9c6cb426fbae7243fc71c9a8c18175f5d3
  		if (dst && dst_feature(dst, RTAX_FEATURE_ECN))
  			use_ecn = true;
  	}
-@@ -349,6 +348,9 @@ static void tcp_ecn_send_syn(struct sock
+@@ -352,6 +351,9 @@ static void tcp_ecn_send_syn(struct sock
  		tp->ecn_flags = TCP_ECN_OK;
  		if (tcp_ca_needs_ecn(sk) || bpf_needs_ecn)
  			INET_ECN_xmit(sk);

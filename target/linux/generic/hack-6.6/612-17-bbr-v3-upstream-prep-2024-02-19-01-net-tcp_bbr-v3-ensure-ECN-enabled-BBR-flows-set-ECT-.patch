@@ -46,7 +46,7 @@ Change-Id: I8b048eaab35e136fe6501ef6cd89fd9faa15e6d2
  /* BBR marks the current round trip as a loss round. */
 --- a/net/ipv4/tcp_output.c
 +++ b/net/ipv4/tcp_output.c
-@@ -388,7 +388,8 @@ static void tcp_ecn_send(struct sock *sk
+@@ -391,7 +391,8 @@ static void tcp_ecn_send(struct sock *sk
  				th->cwr = 1;
  				skb_shinfo(skb)->gso_type |= SKB_GSO_TCP_ECN;
  			}

@@ -55,7 +55,7 @@ Change-Id: I7314047d0ff14dd261a04b1969a46dc658c8836a
  			    struct rate_sample *rs);
 --- a/net/ipv4/tcp_output.c
 +++ b/net/ipv4/tcp_output.c
-@@ -2701,6 +2701,7 @@ static bool tcp_write_xmit(struct sock *
+@@ -2706,6 +2706,7 @@ static bool tcp_write_xmit(struct sock *
  			skb_set_delivery_time(skb, tp->tcp_wstamp_ns, true);
  			list_move_tail(&skb->tcp_tsorted_anchor, &tp->tsorted_sent_queue);
  			tcp_init_tso_segs(skb, mss_now);

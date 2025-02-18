@@ -96,7 +96,7 @@ Change-Id: Ic8ccfdbe4010ee8d4bf6a6334c48a2fceb2171ea
  };
 --- a/net/ipv4/tcp_output.c
 +++ b/net/ipv4/tcp_output.c
-@@ -2022,13 +2022,12 @@ static u32 tcp_tso_autosize(const struct
+@@ -2027,13 +2027,12 @@ static u32 tcp_tso_autosize(const struct
  static u32 tcp_tso_segs(struct sock *sk, unsigned int mss_now)
  {
  	const struct tcp_congestion_ops *ca_ops = inet_csk(sk)->icsk_ca_ops;
