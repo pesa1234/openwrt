@@ -523,7 +523,7 @@ mac80211_hostapd_setup_base() {
 
 		if [ "$he_bss_color_enabled" -gt 0 ]; then
 			if !([ "$he_bss_color" -gt 0 ] && [ "$he_bss_color" -le 64 ]); then
-				rand=$(head -n 1 /dev/urandom | tr -dc 0-9 | head -c 2)
+				rand=$(head -n 1 /dev/urandom | tr -dc 0-9 | head -c 2 | sed 's/^0*//')
 				he_bss_color=$((rand % 63 + 1))
 			fi
 			append base_cfg "he_bss_color=$he_bss_color" "$N"
