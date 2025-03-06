@@ -152,7 +152,7 @@ Change-Id: I125cf26ba2a7a686f2fa5e87f4c2afceb65f7a05
  #define ICSK_TIME_RETRANS	1	/* Retransmit timer */
 --- a/include/net/tcp.h
 +++ b/include/net/tcp.h
-@@ -2272,7 +2272,7 @@ struct tcp_plb_state {
+@@ -2289,7 +2289,7 @@ struct tcp_plb_state {
  	u8	consec_cong_rounds:5, /* consecutive congested rounds */
  		unused:3;
  	u32	pause_until; /* jiffies32 when PLB can resume rerouting */

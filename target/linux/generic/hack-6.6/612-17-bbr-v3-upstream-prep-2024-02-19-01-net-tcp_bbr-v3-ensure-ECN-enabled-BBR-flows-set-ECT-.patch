@@ -24,7 +24,7 @@ Change-Id: I8b048eaab35e136fe6501ef6cd89fd9faa15e6d2
 
 --- a/include/net/tcp.h
 +++ b/include/net/tcp.h
-@@ -373,6 +373,7 @@ static inline void tcp_dec_quickack_mode
+@@ -374,6 +374,7 @@ static inline void tcp_dec_quickack_mode
  #define	TCP_ECN_DEMAND_CWR	4
  #define	TCP_ECN_SEEN		8
  #define	TCP_ECN_LOW		16

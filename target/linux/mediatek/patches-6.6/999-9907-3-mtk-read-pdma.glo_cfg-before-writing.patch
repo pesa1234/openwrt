@@ -10,7 +10,7 @@ now i have ~5.5Gbit/s
 
 --- a/drivers/net/ethernet/mediatek/mtk_eth_soc.c
 +++ b/drivers/net/ethernet/mediatek/mtk_eth_soc.c
-@@ -3581,8 +3581,9 @@ static int mtk_start_dma(struct mtk_eth
+@@ -3594,8 +3594,9 @@ static int mtk_start_dma(struct mtk_eth
  		}
  		mtk_w32(eth, val, reg_map->qdma.glo_cfg);
  
