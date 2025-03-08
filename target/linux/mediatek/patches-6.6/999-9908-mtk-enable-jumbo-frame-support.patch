@@ -181,16 +181,16 @@ Subject: [PATCH] net: mediatek: Add jumbo frame support
  static void mtk_hw_dump_reg(struct mtk_eth *eth, char *name, u32 offset, u32 range)
  {
  	u32 cur = offset;
-@@ -4376,8 +4398,6 @@ static int mtk_hw_init(struct mtk_eth *e
- 			continue;
+@@ -4377,8 +4399,6 @@ static int mtk_hw_init(struct mtk_eth *e
  
  		mtk_w32(eth, MAC_MCR_FORCE_LINK_DOWN, MTK_MAC_MCR(i));
+ 		mtk_w32(eth, FIELD_PREP(MAC_EEE_LPI_TXIDLE_THD, 1), MTK_MAC_EEECR(i));
 -		mtk_set_mcr_max_rx(netdev_priv(dev),
 -				   dev->mtu + MTK_RX_ETH_HLEN);
  	}
  
  	/* Indicates CDM to parse the MTK special tag from CPU
-@@ -4502,11 +4522,40 @@ static void mtk_uninit(struct net_device
+@@ -4503,11 +4523,40 @@ static void mtk_uninit(struct net_device
  	mtk_rx_irq_disable(eth, ~0);
  }
  
@@ -231,7 +231,7 @@ Subject: [PATCH] net: mediatek: Add jumbo frame support
  
  	if (rcu_access_pointer(eth->prog) &&
  	    length > MTK_PP_MAX_BUF_SIZE) {
-@@ -4514,6 +4563,27 @@ static int mtk_change_mtu(struct net_dev
+@@ -4515,6 +4564,27 @@ static int mtk_change_mtu(struct net_dev
  		return -EINVAL;
  	}
  
@@ -259,7 +259,7 @@ Subject: [PATCH] net: mediatek: Add jumbo frame support
  	mtk_set_mcr_max_rx(mac, length);
  	dev->mtu = new_mtu;
  
-@@ -5288,6 +5358,8 @@ static int mtk_add_mac(struct mtk_eth *e
+@@ -5289,6 +5359,8 @@ static int mtk_add_mac(struct mtk_eth *e
  
  	if (MTK_HAS_CAPS(eth->soc->caps, MTK_SOC_MT7628))
  		eth->netdev[id]->max_mtu = MTK_MAX_RX_LENGTH - MTK_RX_ETH_HLEN;
