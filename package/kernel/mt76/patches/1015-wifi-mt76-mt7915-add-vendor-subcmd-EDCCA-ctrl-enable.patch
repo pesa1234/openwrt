@@ -116,7 +116,7 @@ Subject: [PATCH] wifi: mt76: mt7915: add vendor subcmd EDCCA ctrl
 +}
 --- a/mt7915/mcu.h
 +++ b/mt7915/mcu.h
-@@ -1069,6 +1069,27 @@ enum {
+@@ -1057,6 +1057,27 @@ enum {
     MURU_DL_INIT,
     MURU_UL_INIT,
  };

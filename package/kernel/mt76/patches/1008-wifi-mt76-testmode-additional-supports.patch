@@ -150,7 +150,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  	u32 tx_pending;
  	u32 tx_queued;
  	u16 tx_queued_limit;
-@@ -1426,6 +1465,68 @@ static inline bool mt76_testmode_enabled
+@@ -1427,6 +1466,68 @@ static inline bool mt76_testmode_enabled
  #endif
  }
  
@@ -219,7 +219,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  static inline bool mt76_is_testmode_skb(struct mt76_dev *dev,
  					struct sk_buff *skb,
  					struct ieee80211_hw **hw)
-@@ -1436,7 +1537,8 @@ static inline bool mt76_is_testmode_skb(
+@@ -1437,7 +1538,8 @@ static inline bool mt76_is_testmode_skb(
  	for (i = 0; i < ARRAY_SIZE(dev->phys); i++) {
  		struct mt76_phy *phy = dev->phys[i];
  
@@ -229,7 +229,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  			*hw = dev->phys[i]->hw;
  			return true;
  		}
-@@ -1565,7 +1667,8 @@ int mt76_testmode_cmd(struct ieee80211_h
+@@ -1568,7 +1670,8 @@ int mt76_testmode_cmd(struct ieee80211_h
  int mt76_testmode_dump(struct ieee80211_hw *hw, struct sk_buff *skb,
  		       struct netlink_callback *cb, void *data, int len);
  int mt76_testmode_set_state(struct mt76_phy *phy, enum mt76_testmode_state state);
@@ -368,7 +368,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  #endif
  }
  
-@@ -1365,7 +1389,7 @@ mt7915_mac_restart(struct mt7915_dev *de
+@@ -1370,7 +1394,7 @@ mt7915_mac_restart(struct mt7915_dev *de
  		goto out;
  
  	/* set the necessary init items */
@@ -468,7 +468,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  	MT_BF_TYPE_UPDATE = 20,
  	MT_BF_MODULE_UPDATE = 25
  };
-@@ -728,10 +739,20 @@ struct mt7915_muru {
+@@ -716,10 +727,20 @@ struct mt7915_muru {
  #define MURU_OFDMA_SCH_TYPE_UL          BIT(1)
  
  /* Common Config */

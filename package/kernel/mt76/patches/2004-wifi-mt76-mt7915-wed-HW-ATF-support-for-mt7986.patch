@@ -408,7 +408,7 @@ Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
  static int
  mt7915_radar_trigger(void *data, u64 val)
  {
-@@ -1531,6 +1890,7 @@ int mt7915_init_debugfs(struct mt7915_ph
+@@ -1532,6 +1891,7 @@ int mt7915_init_debugfs(struct mt7915_ph
  	debugfs_create_devm_seqfile(dev->mt76.dev, "twt_stats", dir,
  				    mt7915_twt_stats);
  	debugfs_create_file("rf_regval", 0600, dir, dev, &fops_rf_regval);
@@ -568,7 +568,7 @@ Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
  	ret = mt7915_mcu_add_group(dev, vif, sta);
  	if (ret) {
  		dev_kfree_skb(skb);
-@@ -3824,6 +3824,169 @@ int mt7915_mcu_set_ser(struct mt7915_dev
+@@ -3823,6 +3823,169 @@ int mt7915_mcu_set_ser(struct mt7915_dev
  				 &req, sizeof(req), false);
  }
  

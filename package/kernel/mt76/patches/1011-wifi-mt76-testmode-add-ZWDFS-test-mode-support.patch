@@ -134,7 +134,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
 +}
 --- a/mt7915/mcu.h
 +++ b/mt7915/mcu.h
-@@ -639,6 +639,52 @@ enum CSI_CHAIN_TYPE {
+@@ -627,6 +627,52 @@ enum CSI_CHAIN_TYPE {
  };
  #endif
  

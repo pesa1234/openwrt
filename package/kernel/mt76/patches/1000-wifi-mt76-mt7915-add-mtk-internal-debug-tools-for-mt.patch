@@ -68,7 +68,7 @@ Subject: [PATCH 01/70] wifi: mt76: mt7915: add mtk internal debug tools for
  
  /** global debugfs **/
  
-@@ -496,6 +499,9 @@ mt7915_fw_debug_wm_set(void *data, u64 v
+@@ -497,6 +500,9 @@ mt7915_fw_debug_wm_set(void *data, u64 v
  	int ret;
  
  	dev->fw.debug_wm = val ? MCU_FW_LOG_TO_HOST : 0;
@@ -78,7 +78,7 @@ Subject: [PATCH 01/70] wifi: mt76: mt7915: add mtk internal debug tools for
  
  	if (dev->fw.debug_bin)
  		val = 16;
-@@ -520,6 +526,9 @@ mt7915_fw_debug_wm_set(void *data, u64 v
+@@ -521,6 +527,9 @@ mt7915_fw_debug_wm_set(void *data, u64 v
  		if (ret)
  			goto out;
  	}
@@ -88,7 +88,7 @@ Subject: [PATCH 01/70] wifi: mt76: mt7915: add mtk internal debug tools for
  
  	/* WM CPU info record control */
  	mt76_clear(dev, MT_CPU_UTIL_CTRL, BIT(0));
-@@ -528,6 +537,12 @@ mt7915_fw_debug_wm_set(void *data, u64 v
+@@ -529,6 +538,12 @@ mt7915_fw_debug_wm_set(void *data, u64 v
  	mt76_wr(dev, MT_MCU_WM_CIRQ_IRQ_MASK_CLR_ADDR, BIT(5));
  	mt76_wr(dev, MT_MCU_WM_CIRQ_IRQ_SOFT_ADDR, BIT(5));
  
@@ -101,7 +101,7 @@ Subject: [PATCH 01/70] wifi: mt76: mt7915: add mtk internal debug tools for
  out:
  	if (ret)
  		dev->fw.debug_wm = 0;
-@@ -540,7 +555,11 @@ mt7915_fw_debug_wm_get(void *data, u64 *
+@@ -541,7 +556,11 @@ mt7915_fw_debug_wm_get(void *data, u64 *
  {
  	struct mt7915_dev *dev = data;
  
@@ -114,7 +114,7 @@ Subject: [PATCH 01/70] wifi: mt76: mt7915: add mtk internal debug tools for
  
  	return 0;
  }
-@@ -615,16 +634,30 @@ mt7915_fw_debug_bin_set(void *data, u64
+@@ -616,16 +635,30 @@ mt7915_fw_debug_bin_set(void *data, u64
  	};
  	struct mt7915_dev *dev = data;
  
@@ -148,7 +148,7 @@ Subject: [PATCH 01/70] wifi: mt76: mt7915: add mtk internal debug tools for
  	return mt7915_fw_debug_wm_set(dev, dev->fw.debug_wm);
  }
  
-@@ -1254,6 +1287,11 @@ int mt7915_init_debugfs(struct mt7915_ph
+@@ -1255,6 +1288,11 @@ int mt7915_init_debugfs(struct mt7915_ph
  	if (!ext_phy)
  		dev->debugfs_dir = dir;
  
@@ -160,7 +160,7 @@ Subject: [PATCH 01/70] wifi: mt76: mt7915: add mtk internal debug tools for
  	return 0;
  }
  
-@@ -1266,6 +1304,12 @@ mt7915_debugfs_write_fwlog(struct mt7915
+@@ -1267,6 +1305,12 @@ mt7915_debugfs_write_fwlog(struct mt7915
  	void *dest;
  
  	spin_lock_irqsave(&lock, flags);
@@ -173,7 +173,7 @@ Subject: [PATCH 01/70] wifi: mt76: mt7915: add mtk internal debug tools for
  	dest = relay_reserve(dev->relay_fwlog, hdrlen + len + 4);
  	if (dest) {
  		*(u32 *)dest = hdrlen + len;
-@@ -1294,17 +1338,50 @@ void mt7915_debugfs_rx_fw_monitor(struct
+@@ -1295,17 +1339,50 @@ void mt7915_debugfs_rx_fw_monitor(struct
  		.msg_type = cpu_to_le16(PKT_TYPE_RX_FW_MONITOR),
  	};
  

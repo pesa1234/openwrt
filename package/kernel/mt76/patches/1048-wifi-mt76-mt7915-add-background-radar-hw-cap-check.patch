@@ -13,7 +13,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
 
 --- a/mt7915/debugfs.c
 +++ b/mt7915/debugfs.c
-@@ -459,6 +459,11 @@ mt7915_rdd_monitor(struct seq_file *s, v
+@@ -460,6 +460,11 @@ mt7915_rdd_monitor(struct seq_file *s, v
  
  	mutex_lock(&dev->mt76.mutex);
  

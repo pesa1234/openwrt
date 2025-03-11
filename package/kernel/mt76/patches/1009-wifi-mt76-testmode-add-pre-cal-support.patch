@@ -19,16 +19,19 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
 
 --- a/eeprom.c
 +++ b/eeprom.c
-@@ -94,8 +94,10 @@ int mt76_get_of_data_from_mtd(struct mt7
+@@ -94,12 +94,10 @@ int mt76_get_of_data_from_mtd(struct mt7
  	}
  
  #ifdef CONFIG_NL80211_TESTMODE
 -	dev->test_mtd.name = devm_kstrdup(dev->dev, part, GFP_KERNEL);
--	dev->test_mtd.offset = offset;
+-	if (!dev->test_mtd.name) {
+-		ret = -ENOMEM;
+-		goto out_put_node;
 +	if (len == dev->eeprom.size) {
 +		dev->test_mtd.name = devm_kstrdup(dev->dev, part, GFP_KERNEL);
 +		dev->test_mtd.offset = offset;
-+	}
+ 	}
+-	dev->test_mtd.offset = offset;
  #endif
  
  out_put_node:

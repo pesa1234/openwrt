@@ -35,7 +35,7 @@ Subject: [PATCH 1004/1051] wifi: mt76: mt7915: certification patches
  
  #define to_rssi(field, rcpi)	((FIELD_GET(field, rcpi) - 220) / 2)
  
-@@ -1940,6 +1941,21 @@ static void mt7915_mac_severe_check(stru
+@@ -1949,6 +1950,21 @@ static void mt7915_mac_severe_check(stru
  	phy->trb_ts = trb;
  }
  
@@ -57,7 +57,7 @@ Subject: [PATCH 1004/1051] wifi: mt76: mt7915: certification patches
  void mt7915_mac_sta_rc_work(struct work_struct *work)
  {
  	struct mt7915_dev *dev = container_of(work, struct mt7915_dev, rc_work);
-@@ -1962,6 +1978,13 @@ void mt7915_mac_sta_rc_work(struct work_
+@@ -1971,6 +1987,13 @@ void mt7915_mac_sta_rc_work(struct work_
  		sta = container_of((void *)msta, struct ieee80211_sta, drv_priv);
  		vif = container_of((void *)msta->vif, struct ieee80211_vif, drv_priv);
  
@@ -599,7 +599,7 @@ Subject: [PATCH 1004/1051] wifi: mt76: mt7915: certification patches
  enum {
  	TX_POWER_LIMIT_ENABLE,
  	TX_POWER_LIMIT_TABLE = 0x4,
-@@ -624,5 +631,203 @@ enum CSI_CHAIN_TYPE {
+@@ -612,5 +619,203 @@ enum CSI_CHAIN_TYPE {
  #define OFDMA_UL                       BIT(1)
  #define MUMIMO_DL                      BIT(2)
  #define MUMIMO_UL                      BIT(3)

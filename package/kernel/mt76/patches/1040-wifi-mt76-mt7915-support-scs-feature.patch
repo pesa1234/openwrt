@@ -68,7 +68,7 @@ Signed-off-by: Howard Hsu <howard-yh.hsu@mediatek.com>
  
 --- a/mt7915/mac.c
 +++ b/mt7915/mac.c
-@@ -1452,6 +1452,8 @@ mt7915_mac_full_reset(struct mt7915_dev
+@@ -1458,6 +1458,8 @@ mt7915_mac_full_reset(struct mt7915_dev
  	if (ext_phy)
  		cancel_delayed_work_sync(&ext_phy->mac_work);
  
@@ -77,7 +77,7 @@ Signed-off-by: Howard Hsu <howard-yh.hsu@mediatek.com>
  	mutex_lock(&dev->mt76.mutex);
  	for (i = 0; i < 10; i++) {
  		if (!mt7915_mac_restart(dev))
-@@ -1541,7 +1543,7 @@ void mt7915_mac_reset_work(struct work_s
+@@ -1547,7 +1549,7 @@ void mt7915_mac_reset_work(struct work_s
  	}
  
  	mutex_lock(&dev->mt76.mutex);
@@ -86,7 +86,7 @@ Signed-off-by: Howard Hsu <howard-yh.hsu@mediatek.com>
  	mt76_worker_disable(&dev->mt76.tx_worker);
  	mt76_for_each_q_rx(&dev->mt76, i)
  		napi_disable(&dev->mt76.napi[i]);
-@@ -1605,6 +1607,10 @@ void mt7915_mac_reset_work(struct work_s
+@@ -1614,6 +1616,10 @@ void mt7915_mac_reset_work(struct work_s
  					     &phy2->mt76->mac_work,
  					     MT7915_WATCHDOG_TIME);
  
@@ -134,7 +134,7 @@ Signed-off-by: Howard Hsu <howard-yh.hsu@mediatek.com>
  	}
 --- a/mt7915/mcu.c
 +++ b/mt7915/mcu.c
-@@ -5111,3 +5111,121 @@ int mt7915_mcu_sw_aci_set(struct mt7915_
+@@ -5110,3 +5110,121 @@ int mt7915_mcu_sw_aci_set(struct mt7915_
  	return mt76_mcu_send_msg(&dev->mt76, MCU_EXT_CMD(SWLNA_ACI_CTRL), &req,
  				 sizeof(req), NULL);
  }
@@ -258,7 +258,7 @@ Signed-off-by: Howard Hsu <howard-yh.hsu@mediatek.com>
 +}
 --- a/mt7915/mcu.h
 +++ b/mt7915/mcu.h
-@@ -1141,4 +1141,8 @@ struct mt7915_mcu_edcca_info {
+@@ -1129,4 +1129,8 @@ struct mt7915_mcu_edcca_info {
  };
  #endif
  

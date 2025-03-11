@@ -11,7 +11,7 @@ Subject: [PATCH 04/21] wifi: mt76: mt7915: fix txpower issues
 
 --- a/eeprom.c
 +++ b/eeprom.c
-@@ -358,7 +358,7 @@ s8 mt76_get_rate_power_limits(struct mt7
+@@ -362,7 +362,7 @@ s8 mt76_get_rate_power_limits(struct mt7
  	u32 ru_rates = ARRAY_SIZE(dest->ru[0]);
  	char band;
  	size_t len;
@@ -22,7 +22,7 @@ Subject: [PATCH 04/21] wifi: mt76: mt7915: fix txpower issues
  	if (!mcs_rates)
 --- a/mt7915/debugfs.c
 +++ b/mt7915/debugfs.c
-@@ -951,9 +951,9 @@ mt7915_xmit_queues_show(struct seq_file
+@@ -952,9 +952,9 @@ mt7915_xmit_queues_show(struct seq_file
  
  DEFINE_SHOW_ATTRIBUTE(mt7915_xmit_queues);
  
@@ -34,7 +34,7 @@ Subject: [PATCH 04/21] wifi: mt76: mt7915: fix txpower issues
  	for (i = 0; i < mt7915_sku_group_len[SKU_##rate]; i++, offs++)		\
  		len += scnprintf(buf + len, sz - len, " %6d", txpwr[offs]);	\
  	len += scnprintf(buf + len, sz - len, "\n");				\
-@@ -995,43 +995,47 @@ mt7915_rate_txpower_get(struct file *fil
+@@ -996,43 +996,47 @@ mt7915_rate_txpower_get(struct file *fil
  	len += scnprintf(buf + len, sz - len,
  			 "\nPhy%d Tx power table (channel %d)\n",
  			 phy != &dev->phy, phy->mt76->chandef.chan->hw_value);
