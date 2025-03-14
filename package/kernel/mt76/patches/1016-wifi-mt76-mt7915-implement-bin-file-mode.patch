@@ -61,7 +61,7 @@ Signed-off-by: Shayne Chen <shayne.chen@mediatek.com>
  };
  
  /* per-phy stats.  */
-@@ -1324,6 +1327,7 @@ void mt76_eeprom_override(struct mt76_ph
+@@ -1326,6 +1329,7 @@ void mt76_eeprom_override(struct mt76_ph
  int mt76_get_of_data_from_mtd(struct mt76_dev *dev, void *eep, int offset, int len);
  int mt76_get_of_data_from_nvmem(struct mt76_dev *dev, void *eep,
  				const char *cell_name, int len);

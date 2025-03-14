@@ -47,7 +47,7 @@ Signed-off-by: Peter Chiu <chui-hao.chiu@mediatek.com>
  
  	spinlock_t rx_token_lock;
  	struct idr rx_token;
-@@ -1790,7 +1795,8 @@ static inline bool mt76_queue_is_wed_rx(
+@@ -1792,7 +1797,8 @@ static inline bool mt76_queue_is_wed_rx(
  
  struct mt76_txwi_cache *
  mt76_token_release(struct mt76_dev *dev, int token, bool *wake);
@@ -159,7 +159,7 @@ Signed-off-by: Peter Chiu <chui-hao.chiu@mediatek.com>
  	if (ret)
 --- a/mt7996/mac.c
 +++ b/mt7996/mac.c
-@@ -946,6 +946,7 @@ int mt7996_tx_prepare_skb(struct mt76_de
+@@ -959,6 +959,7 @@ int mt7996_tx_prepare_skb(struct mt76_de
  	struct mt76_txwi_cache *t;
  	int id, i, pid, nbuf = tx_info->nbuf - 1;
  	bool is_8023 = info->flags & IEEE80211_TX_CTL_HW_80211_ENCAP;
@@ -167,7 +167,7 @@ Signed-off-by: Peter Chiu <chui-hao.chiu@mediatek.com>
  	u8 *txwi = (u8 *)txwi_ptr;
  
  	if (unlikely(tx_info->skb->len <= ETH_HLEN))
-@@ -957,7 +958,7 @@ int mt7996_tx_prepare_skb(struct mt76_de
+@@ -970,7 +971,7 @@ int mt7996_tx_prepare_skb(struct mt76_de
  	t = (struct mt76_txwi_cache *)(txwi + mdev->drv->txwi_size);
  	t->skb = tx_info->skb;
  
