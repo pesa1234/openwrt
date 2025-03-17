@@ -41,7 +41,7 @@
  
  		mt7530_set(priv, MT7531_DBG_CNT(i), MT7531_DIS_CLR);
  
-@@ -2686,7 +2686,7 @@ mt7531_setup(struct dsa_switch *ds)
+@@ -2682,7 +2682,7 @@ mt7531_setup(struct dsa_switch *ds)
  	if (ret)
  		return ret;
  
