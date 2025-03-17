@@ -32,7 +32,7 @@ Change-Id: I6bc06e9c6cb426fbae7243fc71c9a8c18175f5d3
 
 --- a/include/net/tcp.h
 +++ b/include/net/tcp.h
-@@ -373,6 +373,7 @@ static inline void tcp_dec_quickack_mode
+@@ -372,6 +372,7 @@ static inline void tcp_dec_quickack_mode
  #define	TCP_ECN_QUEUE_CWR	2
  #define	TCP_ECN_DEMAND_CWR	4
  #define	TCP_ECN_SEEN		8
@@ -40,7 +40,7 @@ Change-Id: I6bc06e9c6cb426fbae7243fc71c9a8c18175f5d3
  
  enum tcp_tw_status {
  	TCP_TW_SUCCESS = 0,
-@@ -741,6 +742,15 @@ static inline void tcp_fast_path_check(s
+@@ -724,6 +725,15 @@ static inline void tcp_fast_path_check(s
  		tcp_fast_path_on(tp);
  }
  

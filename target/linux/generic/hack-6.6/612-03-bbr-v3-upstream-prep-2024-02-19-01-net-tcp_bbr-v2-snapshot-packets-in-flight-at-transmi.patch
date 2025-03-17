@@ -26,7 +26,7 @@ Change-Id: I7314047d0ff14dd261a04b1969a46dc658c8836a
 
 --- a/include/net/tcp.h
 +++ b/include/net/tcp.h
-@@ -922,6 +922,10 @@ struct tcp_skb_cb {
+@@ -905,6 +905,10 @@ struct tcp_skb_cb {
  			u32 first_tx_mstamp;
  			/* when we reached the "delivered" count */
  			u32 delivered_mstamp;
@@ -37,7 +37,7 @@ Change-Id: I7314047d0ff14dd261a04b1969a46dc658c8836a
  		} tx;   /* only used for outgoing skbs */
  		union {
  			struct inet_skb_parm	h4;
-@@ -1069,6 +1073,7 @@ struct rate_sample {
+@@ -1052,6 +1056,7 @@ struct rate_sample {
  	u64  prior_mstamp; /* starting timestamp for interval */
  	u32  prior_delivered;	/* tp->delivered at "prior_mstamp" */
  	u32  prior_delivered_ce;/* tp->delivered_ce at "prior_mstamp" */
@@ -45,7 +45,7 @@ Change-Id: I7314047d0ff14dd261a04b1969a46dc658c8836a
  	s32  delivered;		/* number of packets delivered over interval */
  	s32  delivered_ce;	/* number of packets delivered w/ CE marks*/
  	long interval_us;	/* time for tp->delivered to incr "delivered" */
-@@ -1191,6 +1196,7 @@ static inline void tcp_ca_event(struct s
+@@ -1174,6 +1179,7 @@ static inline void tcp_ca_event(struct s
  void tcp_set_ca_state(struct sock *sk, const u8 ca_state);
  
  /* From tcp_rate.c */

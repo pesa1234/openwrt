@@ -26,7 +26,7 @@ Change-Id: I08d8d8c7e8780e6e37df54038ee50301ac5a0320
   * Sender's congestion state indicating normal or abnormal situations
 --- a/net/ipv4/tcp.c
 +++ b/net/ipv4/tcp.c
-@@ -3810,6 +3810,8 @@ void tcp_get_info(struct sock *sk, struc
+@@ -3791,6 +3791,8 @@ void tcp_get_info(struct sock *sk, struc
  		info->tcpi_options |= TCPI_OPT_ECN;
  	if (tp->ecn_flags & TCP_ECN_SEEN)
  		info->tcpi_options |= TCPI_OPT_ECN_SEEN;

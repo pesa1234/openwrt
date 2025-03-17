@@ -24,7 +24,7 @@ Change-Id: Ieba72332b401b329bff5a641d2b2043a3fb8f632
 
 --- a/include/net/tcp.h
 +++ b/include/net/tcp.h
-@@ -1030,6 +1030,7 @@ enum tcp_ca_event {
+@@ -1013,6 +1013,7 @@ enum tcp_ca_event {
  	CA_EVENT_LOSS,		/* loss timeout */
  	CA_EVENT_ECN_NO_CE,	/* ECT set, but not CE marked */
  	CA_EVENT_ECN_IS_CE,	/* received CE marked IP packet */
@@ -34,7 +34,7 @@ Change-Id: Ieba72332b401b329bff5a641d2b2043a3fb8f632
  /* Information about inbound ACK, passed to cong_ops->in_ack_event() */
 --- a/net/ipv4/tcp_input.c
 +++ b/net/ipv4/tcp_input.c
-@@ -3819,6 +3819,7 @@ static void tcp_process_tlp_ack(struct s
+@@ -3813,6 +3813,7 @@ static void tcp_process_tlp_ack(struct s
  		/* ACK advances: there was a loss, so reduce cwnd. Reset
  		 * tlp_high_seq in tcp_init_cwnd_reduction()
  		 */
