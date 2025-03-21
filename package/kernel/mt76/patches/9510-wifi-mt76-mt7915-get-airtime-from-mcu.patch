@@ -189,7 +189,7 @@ Subject: [PATCH] [mt76] mt7915 MCU event airtime
  		 * the MAC work of the first band running.
 --- a/mt7915/mcu.c
 +++ b/mt7915/mcu.c
-@@ -479,6 +479,104 @@ mt7915_mcu_rx_bss_acq_pkt_cnt(struct mt7
+@@ -494,6 +494,104 @@ mt7915_mcu_rx_bss_acq_pkt_cnt(struct mt7
  }
  
  static void
@@ -294,7 +294,7 @@ Subject: [PATCH] [mt76] mt7915 MCU event airtime
  mt7915_mcu_rx_ext_event(struct mt7915_dev *dev, struct sk_buff *skb)
  {
  	struct mt76_connac2_mcu_rxd *rxd;
-@@ -518,6 +616,9 @@ mt7915_mcu_rx_ext_event(struct mt7915_de
+@@ -533,6 +631,9 @@ mt7915_mcu_rx_ext_event(struct mt7915_de
  	case MCU_EXT_EVENT_BSS_ACQ_PKT_CNT:
  		mt7915_mcu_rx_bss_acq_pkt_cnt(dev, skb);
  		break;
@@ -304,7 +304,7 @@ Subject: [PATCH] [mt76] mt7915 MCU event airtime
  	default:
  		break;
  	}
-@@ -550,6 +651,7 @@ void mt7915_mcu_rx_event(struct mt7915_d
+@@ -565,6 +666,7 @@ void mt7915_mcu_rx_event(struct mt7915_d
  	     rxd->ext_eid == MCU_EXT_EVENT_PS_SYNC ||
  	     rxd->ext_eid == MCU_EXT_EVENT_BCC_NOTIFY ||
  	     rxd->ext_eid == MCU_EXT_EVENT_BF_STATUS_READ ||
@@ -312,7 +312,7 @@ Subject: [PATCH] [mt76] mt7915 MCU event airtime
  	     !rxd->seq) &&
  	     !(rxd->eid == MCU_CMD_EXT_CID &&
  	       rxd->ext_eid == MCU_EXT_EVENT_WA_TX_STAT))
-@@ -5506,3 +5608,16 @@ int mt7915_mcu_thermal_debug(struct mt79
+@@ -5523,3 +5625,16 @@ int mt7915_mcu_thermal_debug(struct mt79
  	return mt76_mcu_send_msg(&dev->mt76, MCU_EXT_CMD(THERMAL_DEBUG), &req,
  				 sizeof(req), true);
  }
@@ -356,7 +356,7 @@ Subject: [PATCH] [mt76] mt7915 MCU event airtime
  					 sizeof(struct bss_info_bcn) +	\
 --- a/mt7915/mt7915.h
 +++ b/mt7915/mt7915.h
-@@ -753,6 +753,7 @@ int mt7915_mcu_set_thermal_throttling(st
+@@ -763,6 +763,7 @@ int mt7915_mcu_set_thermal_throttling(st
  int mt7915_mcu_set_thermal_protect(struct mt7915_phy *phy);
  int mt7915_mcu_get_rx_rate(struct mt7915_phy *phy, struct ieee80211_vif *vif,
  			   struct ieee80211_sta *sta, struct rate_info *rate);

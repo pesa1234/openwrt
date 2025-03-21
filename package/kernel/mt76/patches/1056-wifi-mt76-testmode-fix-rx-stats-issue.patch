@@ -104,7 +104,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  	dev_kfree_skb(skb);
 --- a/mt7915/mt7915.h
 +++ b/mt7915/mt7915.h
-@@ -335,16 +335,7 @@ struct mt7915_phy {
+@@ -333,16 +333,7 @@ struct mt7915_phy {
  #ifdef CONFIG_NL80211_TESTMODE
  	struct {
  		u32 *reg_backup;
