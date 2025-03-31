@@ -42,7 +42,7 @@ frank-w: changed condition to MTK_MIN_TX_LENGTH
 
 --- a/drivers/net/ethernet/mediatek/mtk_eth_soc.c
 +++ b/drivers/net/ethernet/mediatek/mtk_eth_soc.c
-@@ -1640,6 +1640,14 @@ static int mtk_tx_map(struct sk_buff *sk
+@@ -1650,6 +1650,14 @@ static int mtk_tx_map(struct sk_buff *sk
  	int queue = skb_get_queue_mapping(skb);
  	int k = 0;
  
