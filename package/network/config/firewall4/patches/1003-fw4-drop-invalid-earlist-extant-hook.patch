@@ -1,0 +1,31 @@
+From 40c208999fcabd604f2c9f8cbdb11e4e444f1fde Mon Sep 17 00:00:00 2001
+From: Andris PE <neandris@gmail.com>
+Date: Sun, 16 Mar 2025 13:40:01 +0000
+Subject: [PATCH] Drop invalid packets at earliest extant hook
+
+---
+ root/usr/share/firewall4/templates/ruleset.uc | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+--- a/root/usr/share/firewall4/templates/ruleset.uc
++++ b/root/usr/share/firewall4/templates/ruleset.uc
+@@ -184,9 +184,6 @@ table inet fw4 {
+ 
+ 	chain prerouting {
+ 		type filter hook prerouting priority filter; policy accept;
+-{% if (fw4.default_option("drop_invalid")): %}
+-		ct state invalid drop comment "!fw4: Drop packets in invalid flow state"
+-{% endif %}
+ {% for (let zone in fw4.zones()): %}
+ {%  if (zone.dflags.helper): %}
+ {%   for (let rule in zone.match_rules): %}
+@@ -427,6 +424,9 @@ table inet fw4 {
+ 
+ 	chain mangle_prerouting {
+ 		type filter hook prerouting priority mangle; policy accept;
++{% if (fw4.default_option("drop_invalid")): %}
++		ct state invalid drop comment "!fw4: Drop packets in invalid flow state"
++{% endif %}
+ {% fw4.includes('chain-prepend', 'mangle_prerouting') %}
+ {% for (let rule in fw4.rules("mangle_prerouting")): %}
+ 		{%+ include("rule.uc", { fw4, zone: null, rule }) %}
