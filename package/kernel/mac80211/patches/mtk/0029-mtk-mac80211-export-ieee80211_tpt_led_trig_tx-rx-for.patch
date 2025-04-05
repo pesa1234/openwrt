@@ -117,7 +117,7 @@ Signed-off-by: Yi-Chia Hsieh <yi-chia.hsieh@mediatek.com>
  			__ieee80211_rx_handle_8023(hw, pubsta, skb, list);
 --- a/net/mac80211/tx.c
 +++ b/net/mac80211/tx.c
-@@ -4347,7 +4347,7 @@ void __ieee80211_subif_start_xmit(struct
+@@ -4340,7 +4340,7 @@ void __ieee80211_subif_start_xmit(struct
  	len = 0;
   out:
  	if (len)
@@ -126,7 +126,7 @@ Signed-off-by: Yi-Chia Hsieh <yi-chia.hsieh@mediatek.com>
  	rcu_read_unlock();
  }
  
-@@ -4678,7 +4678,7 @@ static void ieee80211_8023_xmit(struct i
+@@ -4671,7 +4671,7 @@ static void ieee80211_8023_xmit(struct i
  	sta->deflink.tx_stats.packets[queue] += skbs;
  	sta->deflink.tx_stats.bytes[queue] += len;
  

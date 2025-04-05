@@ -30,7 +30,7 @@ Signed-off-by: fancy.liu <fancy.liu@mediatek.com>
 
 --- a/include/net/mac80211.h
 +++ b/include/net/mac80211.h
-@@ -7731,4 +7731,11 @@ int ieee80211_emulate_switch_vif_chanctx
+@@ -7715,4 +7715,11 @@ int ieee80211_emulate_switch_vif_chanctx
  					 int n_vifs,
  					 enum ieee80211_chanctx_switch_mode mode);
  
