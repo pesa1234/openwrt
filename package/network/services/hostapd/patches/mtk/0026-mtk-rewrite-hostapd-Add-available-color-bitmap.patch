@@ -18,7 +18,7 @@ Signed-off-by: Yi-Chia Hsieh <yi-chia.hsieh@mediatek.com>
 
 --- a/hostapd/ctrl_iface.c
 +++ b/hostapd/ctrl_iface.c
-@@ -4288,6 +4288,76 @@ hostapd_ctrl_iface_get_amsdu(struct host
+@@ -4264,6 +4264,76 @@ hostapd_ctrl_iface_get_amsdu(struct host
  	return ret;
  }
  
@@ -95,7 +95,7 @@ Signed-off-by: Yi-Chia Hsieh <yi-chia.hsieh@mediatek.com>
  
  static int hostapd_ctrl_iface_receive_process(struct hostapd_data *hapd,
  					      char *buf, char *reply,
-@@ -4912,6 +4982,10 @@ static int hostapd_ctrl_iface_receive_pr
+@@ -4885,6 +4955,10 @@ static int hostapd_ctrl_iface_receive_pr
  		reply_len = hostapd_ctrl_iface_get_ibf(hapd, reply, reply_size);
  	} else if (os_strncmp(buf, "GET_AMSDU", 9) == 0) {
  		reply_len = hostapd_ctrl_iface_get_amsdu(hapd, reply, reply_size);
@@ -142,7 +142,7 @@ Signed-off-by: Yi-Chia Hsieh <yi-chia.hsieh@mediatek.com>
  	  "<driver sub command> [<hex formatted data>] = send driver command data" },
 --- a/src/ap/ap_drv_ops.c
 +++ b/src/ap/ap_drv_ops.c
-@@ -1466,4 +1466,12 @@ int hostapd_drv_amsdu_dump(struct hostap
+@@ -1489,4 +1489,12 @@ int hostapd_drv_amsdu_dump(struct hostap
  	if (!hapd->driver || !hapd->driver->amsdu_dump)
  		return 0;
  	return hapd->driver->amsdu_dump(hapd->drv_priv, amsdu);
@@ -197,7 +197,7 @@ Signed-off-by: Yi-Chia Hsieh <yi-chia.hsieh@mediatek.com>
  #define ETH_ALEN 6
 --- a/src/drivers/driver.h
 +++ b/src/drivers/driver.h
-@@ -5517,6 +5517,14 @@ struct wpa_driver_ops {
+@@ -5531,6 +5531,14 @@ struct wpa_driver_ops {
  	 */
  	int (*amsdu_ctrl)(void *priv, u8 amsdu);
  	int (*amsdu_dump)(void *priv, u8 *amsdu);
@@ -214,7 +214,7 @@ Signed-off-by: Yi-Chia Hsieh <yi-chia.hsieh@mediatek.com>
  /**
 --- a/src/drivers/driver_nl80211.c
 +++ b/src/drivers/driver_nl80211.c
-@@ -14766,6 +14766,71 @@ static int nl80211_dpp_listen(void *priv
+@@ -14665,6 +14665,71 @@ static int nl80211_dpp_listen(void *priv
  }
  #endif /* CONFIG_DPP */
  
@@ -286,7 +286,7 @@ Signed-off-by: Yi-Chia Hsieh <yi-chia.hsieh@mediatek.com>
  
  static int nl80211_link_add(void *priv, u8 link_id, const u8 *addr,
  			    void *bss_ctx)
-@@ -15634,4 +15699,5 @@ const struct wpa_driver_ops wpa_driver_n
+@@ -15533,4 +15598,5 @@ const struct wpa_driver_ops wpa_driver_n
  	.ibf_dump = nl80211_ibf_dump,
  	.amsdu_ctrl = nl80211_enable_amsdu,
  	.amsdu_dump = nl80211_dump_amsdu,
@@ -294,7 +294,7 @@ Signed-off-by: Yi-Chia Hsieh <yi-chia.hsieh@mediatek.com>
  };
 --- a/src/drivers/driver_nl80211.h
 +++ b/src/drivers/driver_nl80211.h
-@@ -206,6 +206,7 @@ struct wpa_driver_nl80211_data {
+@@ -201,6 +201,7 @@ struct wpa_driver_nl80211_data {
  	unsigned int mtk_3wire_vendor_cmd_avail:1;
  	unsigned int mtk_ibf_vendor_cmd_avail:1;
  	unsigned int mtk_wireless_vendor_cmd_avail:1;
@@ -304,7 +304,7 @@ Signed-off-by: Yi-Chia Hsieh <yi-chia.hsieh@mediatek.com>
  
 --- a/src/drivers/driver_nl80211_capa.c
 +++ b/src/drivers/driver_nl80211_capa.c
-@@ -1167,6 +1167,9 @@ static int wiphy_info_handler(struct nl_
+@@ -1164,6 +1164,9 @@ static int wiphy_info_handler(struct nl_
  				case MTK_NL80211_VENDOR_SUBCMD_WIRELESS_CTRL:
  					drv->mtk_wireless_vendor_cmd_avail = 1;
  					break;

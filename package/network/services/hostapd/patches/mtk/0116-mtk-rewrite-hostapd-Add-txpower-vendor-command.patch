@@ -22,7 +22,7 @@ control.
 
 --- a/hostapd/config_file.c
 +++ b/hostapd/config_file.c
-@@ -5284,6 +5284,16 @@ static int hostapd_config_fill(struct ho
+@@ -5024,6 +5024,16 @@ static int hostapd_config_fill(struct ho
  			return 1;
  		}
  		conf->amsdu = val;
@@ -93,7 +93,7 @@ control.
  
 --- a/src/drivers/driver.h
 +++ b/src/drivers/driver.h
-@@ -5464,6 +5464,15 @@ struct wpa_driver_ops {
+@@ -5478,6 +5478,15 @@ struct wpa_driver_ops {
  #endif /* CONFIG_TESTING_OPTIONS */
  
  	/**
@@ -125,7 +125,7 @@ control.
  static struct nl_sock * nl_create_handle(struct nl_cb *cb, const char *dbg)
  {
  	struct nl_sock *handle;
-@@ -15516,6 +15523,49 @@ fail:
+@@ -15415,6 +15422,49 @@ fail:
  	return -ENOBUFS;
  }
  
@@ -175,7 +175,7 @@ control.
  const struct wpa_driver_ops wpa_driver_nl80211_ops = {
  	.name = "nl80211",
  	.desc = "Linux nl80211/cfg80211",
-@@ -15697,6 +15747,7 @@ const struct wpa_driver_ops wpa_driver_n
+@@ -15596,6 +15646,7 @@ const struct wpa_driver_ops wpa_driver_n
  	.three_wire_ctrl = nl80211_enable_three_wire,
  	.ibf_ctrl = nl80211_ibf_enable,
  	.ibf_dump = nl80211_ibf_dump,
@@ -185,7 +185,7 @@ control.
  	.get_aval_color_bmp = nl80211_get_aval_color_bmp,
 --- a/src/drivers/driver_nl80211_capa.c
 +++ b/src/drivers/driver_nl80211_capa.c
-@@ -1170,6 +1170,9 @@ static int wiphy_info_handler(struct nl_
+@@ -1167,6 +1167,9 @@ static int wiphy_info_handler(struct nl_
  				case MTK_NL80211_VENDOR_SUBCMD_BSS_COLOR_CTRL :
  					drv->mtk_bss_color_vendor_cmd_avail = 1;
  					break;
@@ -209,7 +209,7 @@ control.
  	hostapd_set_and_check_bw320_offset(conf, 0);
 --- a/src/ap/ap_config.h
 +++ b/src/ap/ap_config.h
-@@ -1303,6 +1303,9 @@ struct hostapd_config {
+@@ -1283,6 +1283,9 @@ struct hostapd_config {
  	u8 three_wire_enable;
  	u8 ibf_enable;
  	u8 amsdu;
@@ -231,7 +231,7 @@ control.
  int hostapd_drv_get_aval_bss_color_bmp(struct hostapd_data *hapd,
 --- a/src/drivers/driver_nl80211.h
 +++ b/src/drivers/driver_nl80211.h
-@@ -205,6 +205,7 @@ struct wpa_driver_nl80211_data {
+@@ -200,6 +200,7 @@ struct wpa_driver_nl80211_data {
  	unsigned int mtk_mu_vendor_cmd_avail:1;
  	unsigned int mtk_3wire_vendor_cmd_avail:1;
  	unsigned int mtk_ibf_vendor_cmd_avail:1;
@@ -241,7 +241,7 @@ control.
  
 --- a/src/ap/ap_drv_ops.c
 +++ b/src/ap/ap_drv_ops.c
-@@ -1475,3 +1475,11 @@ int hostapd_drv_get_aval_bss_color_bmp(s
+@@ -1498,3 +1498,11 @@ int hostapd_drv_get_aval_bss_color_bmp(s
  		return 0;
  	return hapd->driver->get_aval_color_bmp(hapd->drv_priv, aval_color_bmp);
  }

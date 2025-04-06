@@ -23,7 +23,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
 
 --- a/src/ap/hostapd.c
 +++ b/src/ap/hostapd.c
-@@ -4723,6 +4723,13 @@ hostapd_switch_channel_fallback(struct h
+@@ -4755,6 +4755,13 @@ hostapd_switch_channel_fallback(struct h
  		break;
  	}
  

@@ -21,7 +21,7 @@ Subject: [PATCH 014/149] mtk: hostapd: Add hostapd MU SET/GET control
 
 --- a/hostapd/config_file.c
 +++ b/hostapd/config_file.c
-@@ -3994,6 +3994,15 @@ static int hostapd_config_fill(struct ho
+@@ -3765,6 +3765,15 @@ static int hostapd_config_fill(struct ho
  		bss->mbssid_index = atoi(pos);
  	} else if (os_strcmp(buf, "mbssid_max") == 0) {
  		conf->mbssid_max = atoi(pos);
@@ -39,7 +39,7 @@ Subject: [PATCH 014/149] mtk: hostapd: Add hostapd MU SET/GET control
  		bss->max_listen_interval = atoi(pos);
 --- a/hostapd/ctrl_iface.c
 +++ b/hostapd/ctrl_iface.c
-@@ -4180,6 +4180,67 @@ hostapd_ctrl_iface_get_edcca(struct host
+@@ -4156,6 +4156,67 @@ hostapd_ctrl_iface_get_edcca(struct host
  }
  
  
@@ -107,7 +107,7 @@ Subject: [PATCH 014/149] mtk: hostapd: Add hostapd MU SET/GET control
  static int hostapd_ctrl_iface_receive_process(struct hostapd_data *hapd,
  					      char *buf, char *reply,
  					      int reply_size,
-@@ -4794,6 +4855,11 @@ static int hostapd_ctrl_iface_receive_pr
+@@ -4767,6 +4828,11 @@ static int hostapd_ctrl_iface_receive_pr
  	} else if (os_strncmp(buf, "GET_EDCCA ", 10) == 0) {
  		reply_len = hostapd_ctrl_iface_get_edcca(hapd, buf+10, reply,
  							  reply_size);
@@ -165,7 +165,7 @@ Subject: [PATCH 014/149] mtk: hostapd: Add hostapd MU SET/GET control
  	/* The third octet of the country string uses an ASCII space character
 --- a/src/ap/ap_config.h
 +++ b/src/ap/ap_config.h
-@@ -1238,6 +1238,7 @@ struct hostapd_config {
+@@ -1218,6 +1218,7 @@ struct hostapd_config {
  	int reg_def_cli_eirp;
  
  	bool require_he;
@@ -175,7 +175,7 @@ Subject: [PATCH 014/149] mtk: hostapd: Add hostapd MU SET/GET control
  	/* VHT enable/disable config from CHAN_SWITCH */
 --- a/src/ap/ap_drv_ops.c
 +++ b/src/ap/ap_drv_ops.c
-@@ -1414,3 +1414,17 @@ int hostapd_drv_get_edcca(struct hostapd
+@@ -1437,3 +1437,17 @@ int hostapd_drv_get_edcca(struct hostapd
  		return 0;
  	return hapd->driver->get_edcca(hapd->drv_priv, mode, value);
  }
@@ -248,7 +248,7 @@ Subject: [PATCH 014/149] mtk: hostapd: Add hostapd MU SET/GET control
  
 --- a/src/drivers/driver.h
 +++ b/src/drivers/driver.h
-@@ -180,6 +180,11 @@ struct hostapd_channel_data {
+@@ -186,6 +186,11 @@ struct hostapd_channel_data {
  	 * punct_bitmap - RU puncturing bitmap
  	 */
  	u16 punct_bitmap;
@@ -260,7 +260,7 @@ Subject: [PATCH 014/149] mtk: hostapd: Add hostapd MU SET/GET control
  };
  
  #define HE_MAC_CAPAB_0		0
-@@ -5468,6 +5473,14 @@ struct wpa_driver_ops {
+@@ -5482,6 +5487,14 @@ struct wpa_driver_ops {
  				  const s8 edcca_compensation);
  	int (*configure_edcca_threshold)(void *priv, const int *threshold);
  	int (*get_edcca)(void *priv, const u8 mode, u8 *value);
@@ -277,7 +277,7 @@ Subject: [PATCH 014/149] mtk: hostapd: Add hostapd MU SET/GET control
  /**
 --- a/src/drivers/driver_nl80211.c
 +++ b/src/drivers/driver_nl80211.c
-@@ -14637,6 +14637,114 @@ fail:
+@@ -14536,6 +14536,114 @@ fail:
  }
  
  
@@ -392,7 +392,7 @@ Subject: [PATCH 014/149] mtk: hostapd: Add hostapd MU SET/GET control
  #ifdef CONFIG_DPP
  static int nl80211_dpp_listen(void *priv, bool enable)
  {
-@@ -15248,6 +15356,8 @@ const struct wpa_driver_ops wpa_driver_n
+@@ -15147,6 +15255,8 @@ const struct wpa_driver_ops wpa_driver_n
  	.update_connect_params = nl80211_update_connection_params,
  	.send_external_auth_status = nl80211_send_external_auth_status,
  	.set_4addr_mode = nl80211_set_4addr_mode,
@@ -403,7 +403,7 @@ Subject: [PATCH 014/149] mtk: hostapd: Add hostapd MU SET/GET control
  #endif /* CONFIG_DPP */
 --- a/src/drivers/driver_nl80211.h
 +++ b/src/drivers/driver_nl80211.h
-@@ -202,6 +202,7 @@ struct wpa_driver_nl80211_data {
+@@ -197,6 +197,7 @@ struct wpa_driver_nl80211_data {
  	unsigned int qca_ap_allowed_freqs:1;
  	unsigned int connect_ext_vendor_cmd_avail:1;
  	unsigned int mtk_edcca_vendor_cmd_avail:1;
@@ -413,7 +413,7 @@ Subject: [PATCH 014/149] mtk: hostapd: Add hostapd MU SET/GET control
  
 --- a/src/drivers/driver_nl80211_capa.c
 +++ b/src/drivers/driver_nl80211_capa.c
-@@ -1155,6 +1155,9 @@ static int wiphy_info_handler(struct nl_
+@@ -1152,6 +1152,9 @@ static int wiphy_info_handler(struct nl_
  				case MTK_NL80211_VENDOR_SUBCMD_EDCCA_CTRL :
  					drv->mtk_edcca_vendor_cmd_avail = 1;
  					break;

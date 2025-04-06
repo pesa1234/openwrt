@@ -22,7 +22,7 @@ Signed-off-by: mtk27835 <shurong.wen@mediatek.com>
 
 --- a/hostapd/config_file.c
 +++ b/hostapd/config_file.c
-@@ -5270,6 +5270,9 @@ static int hostapd_config_fill(struct ho
+@@ -5010,6 +5010,9 @@ static int hostapd_config_fill(struct ho
  		u8 en = atoi(pos);
  
  		conf->three_wire_enable = en;
@@ -34,7 +34,7 @@ Signed-off-by: mtk27835 <shurong.wen@mediatek.com>
  			   "Line %d: unknown configuration item '%s'",
 --- a/hostapd/ctrl_iface.c
 +++ b/hostapd/ctrl_iface.c
-@@ -4241,6 +4241,30 @@ hostapd_ctrl_iface_get_mu(struct hostapd
+@@ -4217,6 +4217,30 @@ hostapd_ctrl_iface_get_mu(struct hostapd
  }
  
  
@@ -65,7 +65,7 @@ Signed-off-by: mtk27835 <shurong.wen@mediatek.com>
  static int hostapd_ctrl_iface_receive_process(struct hostapd_data *hapd,
  					      char *buf, char *reply,
  					      int reply_size,
-@@ -4860,6 +4884,8 @@ static int hostapd_ctrl_iface_receive_pr
+@@ -4833,6 +4857,8 @@ static int hostapd_ctrl_iface_receive_pr
  							  reply_size);
  	} else if (os_strncmp(buf, "GET_MU", 6) == 0) {
  		reply_len = hostapd_ctrl_iface_get_mu(hapd, reply, reply_size);
@@ -111,7 +111,7 @@ Signed-off-by: mtk27835 <shurong.wen@mediatek.com>
  
 --- a/src/ap/ap_config.h
 +++ b/src/ap/ap_config.h
-@@ -1300,6 +1300,7 @@ struct hostapd_config {
+@@ -1280,6 +1280,7 @@ struct hostapd_config {
  	s8 edcca_compensation;
  	int *edcca_threshold;
  	u8 three_wire_enable;
@@ -119,7 +119,7 @@ Signed-off-by: mtk27835 <shurong.wen@mediatek.com>
  };
  
  enum three_wire_mode {
-@@ -1462,6 +1463,7 @@ hostapd_set_and_check_bw320_offset(struc
+@@ -1442,6 +1443,7 @@ hostapd_set_and_check_bw320_offset(struc
  #endif /* CONFIG_IEEE80211BE */
  }
  
@@ -129,7 +129,7 @@ Signed-off-by: mtk27835 <shurong.wen@mediatek.com>
  struct hostapd_config * hostapd_config_defaults(void);
 --- a/src/ap/ap_drv_ops.c
 +++ b/src/ap/ap_drv_ops.c
-@@ -1439,3 +1439,17 @@ int hostapd_drv_three_wire_ctrl(struct h
+@@ -1462,3 +1462,17 @@ int hostapd_drv_three_wire_ctrl(struct h
  	}
  	return hapd->driver->three_wire_ctrl(hapd->drv_priv, hapd->iconf->three_wire_enable);
  }
@@ -223,7 +223,7 @@ Signed-off-by: mtk27835 <shurong.wen@mediatek.com>
  #define ETH_ALEN 6
 --- a/src/drivers/driver.h
 +++ b/src/drivers/driver.h
-@@ -185,6 +185,11 @@ struct hostapd_channel_data {
+@@ -191,6 +191,11 @@ struct hostapd_channel_data {
  	 * mu onoff=<val> (bitmap- UL MU-MIMO(bit3), DL MU-MIMO(bit2), UL OFDMA(bit1), DL OFDMA(bit0))
  	 */
  	u8 mu_onoff;
@@ -235,7 +235,7 @@ Signed-off-by: mtk27835 <shurong.wen@mediatek.com>
  };
  
  #define HE_MAC_CAPAB_0		0
-@@ -5489,6 +5494,20 @@ struct wpa_driver_ops {
+@@ -5503,6 +5508,20 @@ struct wpa_driver_ops {
  	 *
  	 */
  	 int (*three_wire_ctrl)(void *priv, u8 three_wire_enable);
@@ -258,7 +258,7 @@ Signed-off-by: mtk27835 <shurong.wen@mediatek.com>
  /**
 --- a/src/drivers/driver_nl80211.c
 +++ b/src/drivers/driver_nl80211.c
-@@ -15233,6 +15233,112 @@ static int nl80211_enable_three_wire(voi
+@@ -15132,6 +15132,112 @@ static int nl80211_enable_three_wire(voi
  	return ret;
  }
  
@@ -371,7 +371,7 @@ Signed-off-by: mtk27835 <shurong.wen@mediatek.com>
  const struct wpa_driver_ops wpa_driver_nl80211_ops = {
  	.name = "nl80211",
  	.desc = "Linux nl80211/cfg80211",
-@@ -15412,4 +15518,6 @@ const struct wpa_driver_ops wpa_driver_n
+@@ -15311,4 +15417,6 @@ const struct wpa_driver_ops wpa_driver_n
  	.configure_edcca_threshold = nl80211_configure_edcca_threshold,
  	.get_edcca = nl80211_get_edcca,
  	.three_wire_ctrl = nl80211_enable_three_wire,
@@ -380,7 +380,7 @@ Signed-off-by: mtk27835 <shurong.wen@mediatek.com>
  };
 --- a/src/drivers/driver_nl80211.h
 +++ b/src/drivers/driver_nl80211.h
-@@ -204,6 +204,7 @@ struct wpa_driver_nl80211_data {
+@@ -199,6 +199,7 @@ struct wpa_driver_nl80211_data {
  	unsigned int mtk_edcca_vendor_cmd_avail:1;
  	unsigned int mtk_mu_vendor_cmd_avail:1;
  	unsigned int mtk_3wire_vendor_cmd_avail:1;
@@ -390,7 +390,7 @@ Signed-off-by: mtk27835 <shurong.wen@mediatek.com>
  
 --- a/src/drivers/driver_nl80211_capa.c
 +++ b/src/drivers/driver_nl80211_capa.c
-@@ -1161,6 +1161,9 @@ static int wiphy_info_handler(struct nl_
+@@ -1158,6 +1158,9 @@ static int wiphy_info_handler(struct nl_
  				case MTK_NL80211_VENDOR_SUBCMD_3WIRE_CTRL :
  					drv->mtk_3wire_vendor_cmd_avail = 1;
  					break;
