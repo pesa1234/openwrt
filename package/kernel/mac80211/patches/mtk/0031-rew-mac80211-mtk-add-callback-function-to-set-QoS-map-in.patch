@@ -70,7 +70,7 @@ Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
  #endif /* __MAC80211_DRIVER_OPS */
 --- a/net/mac80211/trace.h
 +++ b/net/mac80211/trace.h
-@@ -3182,6 +3182,12 @@ TRACE_EVENT(bss_color_bitmap,
+@@ -3185,6 +3185,12 @@ TRACE_EVENT(bss_color_bitmap,
  	)
  );
  
