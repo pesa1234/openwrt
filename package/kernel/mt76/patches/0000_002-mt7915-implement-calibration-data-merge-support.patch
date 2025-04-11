@@ -218,7 +218,7 @@ Signed-off-by: Felix Fietkau <nbd@nbd.name>
  	       ETH_ALEN);
 --- a/mt7915/eeprom.h
 +++ b/mt7915/eeprom.h
-@@ -68,6 +68,8 @@ enum mt7915_eeprom_field {
+@@ -69,6 +69,8 @@ enum mt7915_eeprom_field {
  #define MT_EE_RATE_DELTA_SIGN			BIT(6)
  #define MT_EE_RATE_DELTA_EN			BIT(7)
  

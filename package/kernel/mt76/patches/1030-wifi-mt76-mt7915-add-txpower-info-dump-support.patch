@@ -12,7 +12,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
 
 --- a/mt7915/debugfs.c
 +++ b/mt7915/debugfs.c
-@@ -1261,6 +1261,91 @@ mt7915_txpower_path_show(struct seq_file
+@@ -1281,6 +1281,91 @@ mt7915_txpower_path_show(struct seq_file
  DEFINE_SHOW_ATTRIBUTE(mt7915_txpower_path);
  
  static int
@@ -104,7 +104,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  mt7915_twt_stats(struct seq_file *s, void *data)
  {
  	struct mt7915_dev *dev = dev_get_drvdata(s->private);
-@@ -1394,6 +1479,8 @@ int mt7915_init_debugfs(struct mt7915_ph
+@@ -1414,6 +1499,8 @@ int mt7915_init_debugfs(struct mt7915_ph
  			    &mt7915_txpower_fops);
  	debugfs_create_file("txpower_path", 0400, dir, phy,
  			    &mt7915_txpower_path_fops);
@@ -115,7 +115,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  	debugfs_create_file("rf_regval", 0600, dir, dev, &fops_rf_regval);
 --- a/mt7915/mcu.c
 +++ b/mt7915/mcu.c
-@@ -3656,6 +3656,8 @@ int mt7915_mcu_get_txpower_sku(struct mt
+@@ -3677,6 +3677,8 @@ int mt7915_mcu_get_txpower_sku(struct mt
  			txpower[i] = res[i][req.band_idx];
  	} else if (category == TX_POWER_INFO_PATH) {
  		memcpy(txpower, skb->data + 4, len);

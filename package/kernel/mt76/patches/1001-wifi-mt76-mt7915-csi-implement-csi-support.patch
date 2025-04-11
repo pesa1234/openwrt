@@ -28,7 +28,7 @@ Subject: [PATCH 1001/1052] wifi: mt76: mt7915: csi: implement csi support
  };
  
  /* unified event table */
-@@ -1263,6 +1264,7 @@ enum {
+@@ -1264,6 +1265,7 @@ enum {
  	MCU_EXT_CMD_PHY_STAT_INFO = 0xad,
  	MCU_EXT_CMD_SET_QOS_MAP = 0xb4,
  	MCU_EXT_CMD_WF_RF_PIN_CTRL = 0xbd,
@@ -53,7 +53,7 @@ Subject: [PATCH 1001/1052] wifi: mt76: mt7915: csi: implement csi support
  mt7915e-$(CONFIG_MT798X_WMAC) += soc.o
 --- a/mt7915/debugfs.c
 +++ b/mt7915/debugfs.c
-@@ -1242,6 +1242,51 @@ mt7915_rf_regval_set(void *data, u64 val
+@@ -1262,6 +1262,51 @@ mt7915_rf_regval_set(void *data, u64 val
  DEFINE_DEBUGFS_ATTRIBUTE(fops_rf_regval, mt7915_rf_regval_get,
  			 mt7915_rf_regval_set, "0x%08llx\n");
  
@@ -105,7 +105,7 @@ Subject: [PATCH 1001/1052] wifi: mt76: mt7915: csi: implement csi support
  int mt7915_init_debugfs(struct mt7915_phy *phy)
  {
  	struct mt7915_dev *dev = phy->dev;
-@@ -1284,6 +1329,9 @@ int mt7915_init_debugfs(struct mt7915_ph
+@@ -1304,6 +1349,9 @@ int mt7915_init_debugfs(struct mt7915_ph
  		debugfs_create_devm_seqfile(dev->mt76.dev, "rdd_monitor", dir,
  					    mt7915_rdd_monitor);
  	}
@@ -117,7 +117,7 @@ Subject: [PATCH 1001/1052] wifi: mt76: mt7915: csi: implement csi support
  		dev->debugfs_dir = dir;
 --- a/mt7915/init.c
 +++ b/mt7915/init.c
-@@ -679,6 +679,14 @@ mt7915_register_ext_phy(struct mt7915_de
+@@ -680,6 +680,14 @@ mt7915_register_ext_phy(struct mt7915_de
  	/* init wiphy according to mphy and phy */
  	mt7915_init_wiphy(phy);
  
@@ -132,7 +132,7 @@ Subject: [PATCH 1001/1052] wifi: mt76: mt7915: csi: implement csi support
  	ret = mt76_register_phy(mphy, true, mt76_rates,
  				ARRAY_SIZE(mt76_rates));
  	if (ret)
-@@ -1157,6 +1165,28 @@ void mt7915_set_stream_he_caps(struct mt
+@@ -1158,6 +1166,28 @@ void mt7915_set_stream_he_caps(struct mt
  	}
  }
  
@@ -161,7 +161,7 @@ Subject: [PATCH 1001/1052] wifi: mt76: mt7915: csi: implement csi support
  static void mt7915_unregister_ext_phy(struct mt7915_dev *dev)
  {
  	struct mt7915_phy *phy = mt7915_ext_phy(dev);
-@@ -1165,6 +1195,10 @@ static void mt7915_unregister_ext_phy(st
+@@ -1166,6 +1196,10 @@ static void mt7915_unregister_ext_phy(st
  	if (!phy)
  		return;
  
@@ -172,7 +172,7 @@ Subject: [PATCH 1001/1052] wifi: mt76: mt7915: csi: implement csi support
  	mt7915_unregister_thermal(phy);
  	mt76_unregister_phy(mphy);
  	ieee80211_free_hw(mphy->hw);
-@@ -1177,6 +1211,10 @@ static void mt7915_stop_hardware(struct
+@@ -1178,6 +1212,10 @@ static void mt7915_stop_hardware(struct
  	mt7915_dma_cleanup(dev);
  	tasklet_disable(&dev->mt76.irq_tasklet);
  
@@ -183,7 +183,7 @@ Subject: [PATCH 1001/1052] wifi: mt76: mt7915: csi: implement csi support
  	if (is_mt798x(&dev->mt76))
  		mt7986_wmac_disable(dev);
  }
-@@ -1219,6 +1257,14 @@ int mt7915_register_device(struct mt7915
+@@ -1220,6 +1258,14 @@ int mt7915_register_device(struct mt7915
  	dev->mt76.test_ops = &mt7915_testmode_ops;
  #endif
  
@@ -235,7 +235,7 @@ Subject: [PATCH 1001/1052] wifi: mt76: mt7915: csi: implement csi support
  static u8
  mt7915_mcu_get_sta_nss(u16 mcs_map)
  {
-@@ -490,6 +494,11 @@ mt7915_mcu_rx_ext_event(struct mt7915_de
+@@ -508,6 +512,11 @@ mt7915_mcu_rx_ext_event(struct mt7915_de
  	case MCU_EXT_EVENT_FW_LOG_2_HOST:
  		mt7915_mcu_rx_log_message(dev, skb);
  		break;
@@ -247,7 +247,7 @@ Subject: [PATCH 1001/1052] wifi: mt76: mt7915: csi: implement csi support
  	case MCU_EXT_EVENT_BCC_NOTIFY:
  		mt7915_mcu_rx_bcc_notify(dev, skb);
  		break;
-@@ -4076,6 +4085,200 @@ out:
+@@ -4097,6 +4106,200 @@ out:
  	return ret;
  }
  
@@ -588,7 +588,7 @@ Subject: [PATCH 1001/1052] wifi: mt76: mt7915: csi: implement csi support
  struct mt7915_phy {
  	struct mt76_phy *mt76;
  	struct mt7915_dev *dev;
-@@ -242,6 +293,25 @@ struct mt7915_phy {
+@@ -240,6 +291,25 @@ struct mt7915_phy {
  		u8 spe_idx;
  	} test;
  #endif
@@ -614,7 +614,7 @@ Subject: [PATCH 1001/1052] wifi: mt76: mt7915: csi: implement csi support
  };
  
  #ifdef MTK_DEBUG
-@@ -646,6 +716,14 @@ void mt7915_sta_add_debugfs(struct ieee8
+@@ -657,6 +727,14 @@ void mt7915_sta_add_debugfs(struct ieee8
  int mt7915_mmio_wed_init(struct mt7915_dev *dev, void *pdev_ptr,
  			 bool pci, int *irq);
  

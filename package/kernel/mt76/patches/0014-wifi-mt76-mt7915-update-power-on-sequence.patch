@@ -14,7 +14,7 @@ Signed-off-by: Peter Chiu <chui-hao.chiu@mediatek.com>
 
 --- a/mt7915/mt7915.h
 +++ b/mt7915/mt7915.h
-@@ -325,6 +325,7 @@ struct mt7915_dev {
+@@ -323,6 +323,7 @@ struct mt7915_dev {
  
  	bool wmm_pbc_enable;
  	struct work_struct wmm_pbc_work;

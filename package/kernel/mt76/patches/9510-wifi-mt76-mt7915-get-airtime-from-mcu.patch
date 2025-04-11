@@ -21,7 +21,7 @@ Subject: [PATCH] [mt76] mt7915 MCU event airtime
  	MCU_EXT_EVENT_CSI_REPORT = 0xc2,
  };
  
-@@ -1272,6 +1273,7 @@ enum {
+@@ -1273,6 +1274,7 @@ enum {
  	MCU_EXT_CMD_PHY_STAT_INFO = 0xad,
  	/* for vendor csi and air monitor */
  	MCU_EXT_CMD_SMESH_CTRL = 0xae,
@@ -29,7 +29,7 @@ Subject: [PATCH] [mt76] mt7915 MCU event airtime
  	MCU_EXT_CMD_RX_STAT_USER_CTRL = 0xb3,
  	MCU_EXT_CMD_SET_QOS_MAP = 0xb4,
  	MCU_EXT_CMD_SET_CFG = 0xb7,
-@@ -1283,6 +1285,16 @@ enum {
+@@ -1284,6 +1286,16 @@ enum {
  	MCU_EXT_CMD_LPI_CTRL = 0xc8,
  };
  
@@ -46,7 +46,7 @@ Subject: [PATCH] [mt76] mt7915 MCU event airtime
  enum {
  	MCU_UNI_CMD_DEV_INFO_UPDATE = 0x01,
  	MCU_UNI_CMD_BSS_INFO_UPDATE = 0x02,
-@@ -1405,11 +1417,23 @@ enum {
+@@ -1408,11 +1420,23 @@ enum {
  	UNI_OFFLOAD_OFFLOAD_BMC_RPY_DETECT,
  };
  
@@ -312,7 +312,7 @@ Subject: [PATCH] [mt76] mt7915 MCU event airtime
  	     !rxd->seq) &&
  	     !(rxd->eid == MCU_CMD_EXT_CID &&
  	       rxd->ext_eid == MCU_EXT_EVENT_WA_TX_STAT))
-@@ -5523,3 +5625,16 @@ int mt7915_mcu_thermal_debug(struct mt79
+@@ -5524,3 +5626,16 @@ int mt7915_mcu_thermal_debug(struct mt79
  	return mt76_mcu_send_msg(&dev->mt76, MCU_EXT_CMD(THERMAL_DEBUG), &req,
  				 sizeof(req), true);
  }

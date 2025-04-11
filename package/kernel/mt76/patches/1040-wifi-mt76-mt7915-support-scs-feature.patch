@@ -48,7 +48,7 @@ Signed-off-by: Howard Hsu <howard-yh.hsu@mediatek.com>
  enum mt76_wcid_flags {
 --- a/mt76_connac_mcu.h
 +++ b/mt76_connac_mcu.h
-@@ -1255,6 +1255,7 @@ enum {
+@@ -1256,6 +1256,7 @@ enum {
  	MCU_EXT_CMD_SET_RDD_PATTERN = 0x7d,
  	MCU_EXT_CMD_MWDS_SUPPORT = 0x80,
  	MCU_EXT_CMD_SET_SER_TRIGGER = 0x81,
@@ -58,7 +58,7 @@ Signed-off-by: Howard Hsu <howard-yh.hsu@mediatek.com>
  	MCU_EXT_CMD_OFFCH_SCAN_CTRL = 0x9a,
 --- a/mt7915/init.c
 +++ b/mt7915/init.c
-@@ -1245,6 +1245,7 @@ int mt7915_register_device(struct mt7915
+@@ -1246,6 +1246,7 @@ int mt7915_register_device(struct mt7915
  	dev->mt76.phy.priv = &dev->phy;
  	INIT_WORK(&dev->rc_work, mt7915_mac_sta_rc_work);
  	INIT_DELAYED_WORK(&dev->mphy.mac_work, mt7915_mac_work);
@@ -134,7 +134,7 @@ Signed-off-by: Howard Hsu <howard-yh.hsu@mediatek.com>
  	}
 --- a/mt7915/mcu.c
 +++ b/mt7915/mcu.c
-@@ -5110,3 +5110,121 @@ int mt7915_mcu_sw_aci_set(struct mt7915_
+@@ -5131,3 +5131,121 @@ int mt7915_mcu_sw_aci_set(struct mt7915_
  	return mt76_mcu_send_msg(&dev->mt76, MCU_EXT_CMD(SWLNA_ACI_CTRL), &req,
  				 sizeof(req), NULL);
  }
@@ -285,7 +285,7 @@ Signed-off-by: Howard Hsu <howard-yh.hsu@mediatek.com>
  struct mt7915_phy {
  	struct mt76_phy *mt76;
  	struct mt7915_dev *dev;
-@@ -360,6 +369,7 @@ struct mt7915_phy {
+@@ -358,6 +367,7 @@ struct mt7915_phy {
  
  	struct mt7915_air_monitor_ctrl amnt_ctrl;
  #endif
@@ -293,7 +293,7 @@ Signed-off-by: Howard Hsu <howard-yh.hsu@mediatek.com>
  };
  
  #ifdef MTK_DEBUG
-@@ -492,6 +502,8 @@ struct mt7915_dev {
+@@ -490,6 +500,8 @@ struct mt7915_dev {
  	} adie[ADIE_MAX_CNT];
  #endif
  
@@ -302,7 +302,7 @@ Signed-off-by: Howard Hsu <howard-yh.hsu@mediatek.com>
  	bool wmm_pbc_enable;
  	struct work_struct wmm_pbc_work;
  	u32 adie_type;
-@@ -819,6 +831,8 @@ int mt7915_mcu_get_edcca(struct mt7915_p
+@@ -830,6 +842,8 @@ int mt7915_mcu_get_edcca(struct mt7915_p
  int mt7915_mcu_sw_aci_set(struct mt7915_dev *dev, bool val);
  int mt7915_mcu_ipi_hist_ctrl(struct mt7915_phy *phy, void *data, u8 cmd, bool wait_resp);
  int mt7915_mcu_ipi_hist_scan(struct mt7915_phy *phy, void *data, u8 mode, bool wait_resp);

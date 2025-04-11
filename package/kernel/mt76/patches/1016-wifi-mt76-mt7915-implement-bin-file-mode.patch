@@ -142,14 +142,15 @@ Signed-off-by: Shayne Chen <shayne.chen@mediatek.com>
  		return ret;
  
 -	if (ret)
+-		dev->flash_mode = true;
 +	if (ret) {
- 		dev->flash_mode = true;
++ 		dev->flash_mode = true;
 +		dev->eeprom_mode = FLASH_MODE;
 +		}
 +	else {
 +		dev->eeprom_mode = EFUSE_MODE;
 +	}
- 
+ 	
  	mt7915_eeprom_load_efuse(dev);
  
 @@ -434,6 +472,7 @@ static int mt7915_apply_cal_free_data(st
@@ -197,7 +198,7 @@ Signed-off-by: Shayne Chen <shayne.chen@mediatek.com>
  			return ret;
 --- a/mt7915/eeprom.h
 +++ b/mt7915/eeprom.h
-@@ -111,6 +111,13 @@ enum mt7915_sku_rate_group {
+@@ -112,6 +112,13 @@ enum mt7915_sku_rate_group {
  	MAX_SKU_RATE_GROUP_NUM,
  };
  
@@ -213,7 +214,7 @@ Signed-off-by: Shayne Chen <shayne.chen@mediatek.com>
  {
 --- a/mt7915/mt7915.h
 +++ b/mt7915/mt7915.h
-@@ -413,6 +413,8 @@ struct mt7915_dev {
+@@ -411,6 +411,8 @@ struct mt7915_dev {
  
  	bool dbdc_support;
  	bool flash_mode;
@@ -222,7 +223,7 @@ Signed-off-by: Shayne Chen <shayne.chen@mediatek.com>
  	bool muru_debug;
  	bool ibf;
  
-@@ -802,6 +804,7 @@ void mt7915_dump_tmac_info(u8 *tmac_info
+@@ -813,6 +815,7 @@ void mt7915_dump_tmac_info(u8 *tmac_info
  int mt7915_mcu_set_txpower_level(struct mt7915_phy *phy, u8 drop_level);
  void mt7915_packet_log_to_host(struct mt7915_dev *dev, const void *data, int len, int type, int des_len);
  int mt7915_mcu_set_amsdu_algo(struct mt7915_dev *dev, u16 wcid, u8 enable);

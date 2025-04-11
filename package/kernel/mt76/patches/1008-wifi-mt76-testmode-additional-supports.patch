@@ -241,7 +241,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  {
 --- a/mt76_connac_mcu.c
 +++ b/mt76_connac_mcu.c
-@@ -403,6 +403,7 @@ void mt76_connac_mcu_sta_basic_tlv(struc
+@@ -402,6 +402,7 @@ void mt76_connac_mcu_sta_basic_tlv(struc
  	switch (vif->type) {
  	case NL80211_IFTYPE_MESH_POINT:
  	case NL80211_IFTYPE_AP:
@@ -249,7 +249,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  		if (vif->p2p && !is_mt7921(dev))
  			conn_type = CONNECTION_P2P_GC;
  		else
-@@ -584,6 +585,9 @@ void mt76_connac_mcu_wtbl_generic_tlv(st
+@@ -583,6 +584,9 @@ void mt76_connac_mcu_wtbl_generic_tlv(st
  	rx->rca2 = 1;
  	rx->rv = 1;
  
@@ -269,7 +269,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  	MCU_EXT_EVENT_RDD_REPORT = 0x3a,
  	MCU_EXT_EVENT_CSA_NOTIFY = 0x4f,
  	MCU_EXT_EVENT_BSS_ACQ_PKT_CNT = 0x52,
-@@ -1265,6 +1266,7 @@ enum {
+@@ -1266,6 +1267,7 @@ enum {
  	MCU_EXT_CMD_PHY_STAT_INFO = 0xad,
  	/* for vendor csi and air monitor */
  	MCU_EXT_CMD_SMESH_CTRL = 0xae,
@@ -279,7 +279,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  	MCU_EXT_CMD_WF_RF_PIN_CTRL = 0xbd,
 --- a/mt7915/init.c
 +++ b/mt7915/init.c
-@@ -711,7 +711,7 @@ static void mt7915_init_work(struct work
+@@ -712,7 +712,7 @@ static void mt7915_init_work(struct work
  	struct mt7915_dev *dev = container_of(work, struct mt7915_dev,
  				 init_work);
  
@@ -390,7 +390,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  
 --- a/mt7915/mcu.c
 +++ b/mt7915/mcu.c
-@@ -502,6 +502,11 @@ mt7915_mcu_rx_ext_event(struct mt7915_de
+@@ -520,6 +520,11 @@ mt7915_mcu_rx_ext_event(struct mt7915_de
  	case MCU_EXT_EVENT_BCC_NOTIFY:
  		mt7915_mcu_rx_bcc_notify(dev, skb);
  		break;
@@ -402,7 +402,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  	case MCU_EXT_EVENT_BSS_ACQ_PKT_CNT:
  		mt7915_mcu_rx_bss_acq_pkt_cnt(dev, skb);
  		break;
-@@ -536,6 +541,7 @@ void mt7915_mcu_rx_event(struct mt7915_d
+@@ -554,6 +559,7 @@ void mt7915_mcu_rx_event(struct mt7915_d
  	     rxd->ext_eid == MCU_EXT_EVENT_ASSERT_DUMP ||
  	     rxd->ext_eid == MCU_EXT_EVENT_PS_SYNC ||
  	     rxd->ext_eid == MCU_EXT_EVENT_BCC_NOTIFY ||
@@ -410,7 +410,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  	     !rxd->seq) &&
  	     !(rxd->eid == MCU_CMD_EXT_CID &&
  	       rxd->ext_eid == MCU_EXT_EVENT_WA_TX_STAT))
-@@ -2889,7 +2895,8 @@ int mt7915_mcu_set_chan_info(struct mt79
+@@ -2909,7 +2915,8 @@ int mt7915_mcu_set_chan_info(struct mt79
  	}
  #endif
  
@@ -420,7 +420,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  		req.tx_path_num = fls(phy->mt76->antenna_mask);
  
  	if (phy->mt76->hw->conf.flags & IEEE80211_CONF_MONITOR)
-@@ -2957,14 +2964,14 @@ static int mt7915_mcu_set_eeprom_flash(s
+@@ -2977,14 +2984,14 @@ static int mt7915_mcu_set_eeprom_flash(s
  	return 0;
  }
  
@@ -513,7 +513,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  	[AGG_ACR0]		= 0x054,
 --- a/mt7915/mt7915.h
 +++ b/mt7915/mt7915.h
-@@ -316,11 +316,15 @@ struct mt7915_phy {
+@@ -314,11 +314,15 @@ struct mt7915_phy {
  
  		s32 last_freq_offset;
  		u8 last_rcpi[4];
@@ -529,7 +529,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  	} test;
  #endif
  
-@@ -437,6 +441,14 @@ struct mt7915_dev {
+@@ -435,6 +439,14 @@ struct mt7915_dev {
  	void __iomem *dcm;
  	void __iomem *sku;
  
@@ -544,7 +544,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  #ifdef MTK_DEBUG
  	u16 wlan_idx;
  	struct {
-@@ -617,7 +629,7 @@ int mt7915_mcu_set_fixed_rate_ctrl(struc
+@@ -628,7 +640,7 @@ int mt7915_mcu_set_fixed_rate_ctrl(struc
  				   struct ieee80211_vif *vif,
  				   struct ieee80211_sta *sta,
  				   void *data, u32 field);
@@ -553,7 +553,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  int mt7915_mcu_get_eeprom(struct mt7915_dev *dev, u8 *buf, u32 offset);
  int mt7915_mcu_get_eeprom_free_block(struct mt7915_dev *dev, u8 *block_num);
  int mt7915_mcu_set_mac(struct mt7915_dev *dev, int band, bool enable,
-@@ -656,6 +668,7 @@ int mt7915_mcu_fw_log_2_host(struct mt79
+@@ -667,6 +679,7 @@ int mt7915_mcu_fw_log_2_host(struct mt79
  int mt7915_mcu_fw_dbg_ctrl(struct mt7915_dev *dev, u32 module, u8 level);
  void mt7915_mcu_rx_event(struct mt7915_dev *dev, struct sk_buff *skb);
  void mt7915_mcu_exit(struct mt7915_dev *dev);

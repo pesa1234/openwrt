@@ -46,7 +46,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  	u32 tx_queued;
 --- a/mt76_connac_mcu.c
 +++ b/mt76_connac_mcu.c
-@@ -2747,6 +2747,7 @@ int mt76_connac_mcu_bss_basic_tlv(struct
+@@ -2746,6 +2746,7 @@ int mt76_connac_mcu_bss_basic_tlv(struct
  	u32 type = vif->p2p ? NETWORK_P2P : NETWORK_INFRA;
  	struct bss_info_basic *bss;
  	struct tlv *tlv;
@@ -54,7 +54,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  
  	tlv = mt76_connac_mcu_add_tlv(skb, BSS_INFO_BASIC, sizeof(*bss));
  	bss = (struct bss_info_basic *)tlv;
-@@ -2806,6 +2807,8 @@ int mt76_connac_mcu_bss_basic_tlv(struct
+@@ -2805,6 +2806,8 @@ int mt76_connac_mcu_bss_basic_tlv(struct
  		bss->dtim_period = vif->bss_conf.dtim_period;
  		bss->phy_mode = mt76_connac_get_phy_mode(phy, vif,
  							 chandef->chan->band, NULL);
@@ -177,7 +177,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  	return ret;
 --- a/mt7915/mcu.c
 +++ b/mt7915/mcu.c
-@@ -502,10 +502,12 @@ mt7915_mcu_rx_ext_event(struct mt7915_de
+@@ -520,10 +520,12 @@ mt7915_mcu_rx_ext_event(struct mt7915_de
  	case MCU_EXT_EVENT_BCC_NOTIFY:
  		mt7915_mcu_rx_bcc_notify(dev, skb);
  		break;
@@ -192,7 +192,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  	case MCU_EXT_EVENT_RF_TEST:
  		mt7915_tm_rf_test_event(dev, skb);
  		break;
-@@ -797,11 +799,22 @@ int mt7915_mcu_add_bss_info(struct mt791
+@@ -815,11 +817,22 @@ int mt7915_mcu_add_bss_info(struct mt791
  	if (enable)
  		mt76_connac_mcu_bss_omac_tlv(skb, vif);
  
@@ -218,7 +218,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  
  	if (enable) {
  		mt7915_mcu_bss_rfch_tlv(skb, vif, phy);
-@@ -3621,6 +3634,7 @@ int mt7915_mcu_set_ser(struct mt7915_dev
+@@ -3642,6 +3655,7 @@ int mt7915_mcu_set_ser(struct mt7915_dev
  
  int mt7915_mcu_set_txbf(struct mt7915_dev *dev, u8 action)
  {
@@ -226,7 +226,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  	struct {
  		u8 action;
  		union {
-@@ -3647,7 +3661,6 @@ int mt7915_mcu_set_txbf(struct mt7915_de
+@@ -3668,7 +3682,6 @@ int mt7915_mcu_set_txbf(struct mt7915_de
  		.action = action,
  	};
  
@@ -234,7 +234,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  	switch (action) {
  	case MT_BF_SOUNDING_ON:
  		req.snd.snd_mode = MT_BF_PROCESSING;
-@@ -4725,6 +4738,9 @@ int mt7915_mcu_set_txbf_sound_info(struc
+@@ -4746,6 +4759,9 @@ int mt7915_mcu_set_txbf_sound_info(struc
  		req.he_opt = v2;
  		req.glo_opt = v3;
  		break;
@@ -456,7 +456,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  	[AGG_AWSCR0]		= 0x030,
 --- a/mt7915/mt7915.h
 +++ b/mt7915/mt7915.h
-@@ -324,7 +324,6 @@ struct mt7915_phy {
+@@ -322,7 +322,6 @@ struct mt7915_phy {
  
  		u8 spe_idx;
  
@@ -464,7 +464,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  		bool bf_ever_en;
  	} test;
  #endif
-@@ -442,7 +441,7 @@ struct mt7915_dev {
+@@ -440,7 +439,7 @@ struct mt7915_dev {
  	void __iomem *dcm;
  	void __iomem *sku;
  
@@ -473,7 +473,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  	struct {
  		void *txbf_phase_cal;
  		void *txbf_pfmu_data;
-@@ -590,6 +589,7 @@ int mt7915_dma_reset(struct mt7915_dev *
+@@ -601,6 +600,7 @@ int mt7915_dma_reset(struct mt7915_dev *
  int mt7915_dma_start(struct mt7915_dev *dev, bool reset, bool wed_reset);
  int mt7915_txbf_init(struct mt7915_dev *dev);
  void mt7915_init_txpower(struct mt7915_phy *phy);
@@ -481,7 +481,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  void mt7915_reset(struct mt7915_dev *dev);
  int mt7915_run(struct ieee80211_hw *hw);
  int mt7915_mcu_init(struct mt7915_dev *dev);
-@@ -669,10 +669,12 @@ int mt7915_mcu_fw_log_2_host(struct mt79
+@@ -680,10 +680,12 @@ int mt7915_mcu_fw_log_2_host(struct mt79
  int mt7915_mcu_fw_dbg_ctrl(struct mt7915_dev *dev, u32 module, u8 level);
  void mt7915_mcu_rx_event(struct mt7915_dev *dev, struct sk_buff *skb);
  void mt7915_mcu_exit(struct mt7915_dev *dev);
@@ -496,7 +496,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  static inline u16 mt7915_wtbl_size(struct mt7915_dev *dev)
  {
  	return is_mt7915(&dev->mt76) ? MT7915_WTBL_SIZE : MT7916_WTBL_SIZE;
-@@ -810,4 +812,10 @@ enum {
+@@ -821,4 +823,10 @@ enum {
  
  #endif
  

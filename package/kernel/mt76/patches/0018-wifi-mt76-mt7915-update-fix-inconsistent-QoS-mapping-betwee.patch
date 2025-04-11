@@ -16,7 +16,7 @@ Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
 
 --- a/mt76_connac_mcu.h
 +++ b/mt76_connac_mcu.h
-@@ -1255,6 +1255,7 @@ enum {
+@@ -1256,6 +1256,7 @@ enum {
  	MCU_EXT_CMD_GROUP_PRE_CAL_INFO = 0xab,
  	MCU_EXT_CMD_DPD_PRE_CAL_INFO = 0xac,
  	MCU_EXT_CMD_PHY_STAT_INFO = 0xad,
@@ -58,7 +58,7 @@ Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
  	mt7915_mac_wtbl_update(dev, idx,
  			       MT_WTBL_UPDATE_ADM_COUNT_CLEAR);
  
-@@ -1688,6 +1704,66 @@ mt7915_set_frag_threshold(struct ieee802
+@@ -1689,6 +1705,66 @@ mt7915_set_frag_threshold(struct ieee802
  }
  
  static int
@@ -125,7 +125,7 @@ Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
  mt7915_set_radar_background(struct ieee80211_hw *hw,
  			    struct cfg80211_chan_def *chandef)
  {
-@@ -1829,6 +1905,7 @@ const struct ieee80211_ops mt7915_ops =
+@@ -1830,6 +1906,7 @@ const struct ieee80211_ops mt7915_ops =
  	.add_twt_setup = mt7915_mac_add_twt_setup,
  	.twt_teardown_request = mt7915_twt_teardown_request,
  	.set_frag_threshold = mt7915_set_frag_threshold,

@@ -14,7 +14,7 @@ Subject: [PATCH] wifi: mt76: mt7915: air monitor support
 
 --- a/mt76_connac_mcu.h
 +++ b/mt76_connac_mcu.h
-@@ -1262,6 +1262,8 @@ enum {
+@@ -1263,6 +1263,8 @@ enum {
  	MCU_EXT_CMD_GROUP_PRE_CAL_INFO = 0xab,
  	MCU_EXT_CMD_DPD_PRE_CAL_INFO = 0xac,
  	MCU_EXT_CMD_PHY_STAT_INFO = 0xad,
@@ -101,7 +101,7 @@ Subject: [PATCH] wifi: mt76: mt7915: air monitor support
  #endif
  
  struct mt7915_phy {
-@@ -311,6 +339,8 @@ struct mt7915_phy {
+@@ -309,6 +337,8 @@ struct mt7915_phy {
  		u32 interval;
  		u32 last_record;
  	} csi;
@@ -110,7 +110,7 @@ Subject: [PATCH] wifi: mt76: mt7915: air monitor support
  #endif
  };
  
-@@ -722,6 +752,9 @@ int mt7915_mcu_set_csi(struct mt7915_phy
+@@ -733,6 +763,9 @@ int mt7915_mcu_set_csi(struct mt7915_phy
  		       u8 cfg, u8 v1, u32 v2, u8 *mac_addr, u32 sta_interval);
  struct csi_mac_filter *mt7915_csi_mac_filter_find(struct mt7915_phy *phy, u8 *addr);
  void mt7915_csi_mac_filter_clear(struct mt7915_phy *phy);
