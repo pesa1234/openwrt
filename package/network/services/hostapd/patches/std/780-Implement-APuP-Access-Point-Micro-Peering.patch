@@ -373,7 +373,7 @@ Hotfix-by: Sebastian Gottschall https://github.com/mirror/dd-wrt/commit/0c3001a6
  
  #ifdef CONFIG_FILS
  static struct wpabuf *
-@@ -3814,8 +3817,8 @@ static u16 check_multi_ap(struct hostapd
+@@ -3820,8 +3823,8 @@ static u16 check_multi_ap(struct hostapd
  }
  
  
@@ -384,7 +384,7 @@ Hotfix-by: Sebastian Gottschall https://github.com/mirror/dd-wrt/commit/0c3001a6
  {
  	/* Supported rates not used in IEEE 802.11ad/DMG */
  	if (hapd->iface->current_mode &&
-@@ -4257,7 +4260,7 @@ static int __check_assoc_ies(struct host
+@@ -4263,7 +4266,7 @@ static int __check_assoc_ies(struct host
  			       elems->ext_capab_len);
  	if (resp != WLAN_STATUS_SUCCESS)
  		return resp;
@@ -393,7 +393,7 @@ Hotfix-by: Sebastian Gottschall https://github.com/mirror/dd-wrt/commit/0c3001a6
  	if (resp != WLAN_STATUS_SUCCESS)
  		return resp;
  
-@@ -6306,6 +6309,11 @@ static void handle_beacon(struct hostapd
+@@ -6314,6 +6317,11 @@ static void handle_beacon(struct hostapd
  				      0);
  
  	ap_list_process_beacon(hapd->iface, mgmt, &elems, fi);
@@ -429,7 +429,7 @@ Hotfix-by: Sebastian Gottschall https://github.com/mirror/dd-wrt/commit/0c3001a6
  	 * send_action - Transmit an Action frame
 --- a/src/drivers/driver_nl80211.c
 +++ b/src/drivers/driver_nl80211.c
-@@ -8610,25 +8610,15 @@ static int have_ifidx(struct wpa_driver_
+@@ -8611,25 +8611,15 @@ static int have_ifidx(struct wpa_driver_
  
  
  static int i802_set_wds_sta(void *priv, const u8 *addr, int aid, int val,
