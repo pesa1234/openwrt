@@ -1,0 +1,34 @@
+From 049908a3c155518083483e2db9142b2c410df9de Mon Sep 17 00:00:00 2001
+From: Bo-Cun Chen <bc-bocun.chen@mediatek.com>
+Date: Fri, 11 Apr 2025 22:15:19 +0800
+Subject: [PATCH] net: ethernet: mtk_eth_soc: correct the max weight of the
+ queue limit for 100Mbps
+
+Without this patch, the maximum weight of the queue limit will be
+incorrect when linked at 100Mbps.
+
+Signed-off-by: Bo-Cun Chen <bc-bocun.chen@mediatek.com>
+---
+ drivers/net/ethernet/mediatek/mtk_eth_soc.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+--- a/drivers/net/ethernet/mediatek/mtk_eth_soc.c
++++ b/drivers/net/ethernet/mediatek/mtk_eth_soc.c
+@@ -850,7 +850,7 @@ static void mtk_set_queue_speed(struct m
+ 		case SPEED_100:
+ 			val |= MTK_QTX_SCH_MAX_RATE_EN |
+ 			       FIELD_PREP(MTK_QTX_SCH_MAX_RATE_MAN, 103) |
+-			       FIELD_PREP(MTK_QTX_SCH_MAX_RATE_EXP, 3);
++			       FIELD_PREP(MTK_QTX_SCH_MAX_RATE_EXP, 3) |
+ 			       FIELD_PREP(MTK_QTX_SCH_MAX_RATE_WEIGHT, 1);
+ 			break;
+ 		case SPEED_1000:
+@@ -873,7 +873,7 @@ static void mtk_set_queue_speed(struct m
+ 		case SPEED_100:
+ 			val |= MTK_QTX_SCH_MAX_RATE_EN |
+ 			       FIELD_PREP(MTK_QTX_SCH_MAX_RATE_MAN, 1) |
+-			       FIELD_PREP(MTK_QTX_SCH_MAX_RATE_EXP, 5);
++			       FIELD_PREP(MTK_QTX_SCH_MAX_RATE_EXP, 5) |
+ 			       FIELD_PREP(MTK_QTX_SCH_MAX_RATE_WEIGHT, 1);
+ 			break;
+ 		case SPEED_1000:
