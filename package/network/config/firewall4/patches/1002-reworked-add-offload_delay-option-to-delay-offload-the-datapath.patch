@@ -4,7 +4,7 @@
 
 --- a/root/usr/share/firewall4/templates/ruleset.uc
 +++ b/root/usr/share/firewall4/templates/ruleset.uc
-@@ -215,6 +215,9 @@ table inet fw4 {
+@@ -212,6 +212,9 @@ table inet fw4 {
  
  {% if (length(flowtable_devices) > 0): %}
  	chain handle_offload {

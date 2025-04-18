@@ -1,0 +1,35 @@
+From d4d7578a76e6f9d9f20e9187c6a885747033bc37 Mon Sep 17 00:00:00 2001
+From: Andris PE <neandris@gmail.com>
+Date: Tue, 23 Jul 2024 21:44:29 +0300
+Subject: [PATCH] Cosmetic fix - use readback/kernel.org syntax ipo nftables
+ wiki
+
+Suggested by forums user kvic in
+https://forum.openwrt.org/t/first-rule-in-chain-input-output-for-firewall4/204723
+---
+ root/usr/share/firewall4/templates/ruleset.uc | 2 +-
+ tests/01_configuration/01_ruleset             | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+--- a/root/usr/share/firewall4/templates/ruleset.uc
++++ b/root/usr/share/firewall4/templates/ruleset.uc
+@@ -217,7 +217,7 @@ table inet fw4 {
+ 
+ {% if (length(flowtable_devices) > 0): %}
+ 	chain handle_offload {
+-		flow offload @ft accept
++		flow add @ft accept
+ 		accept
+ 	}
+ 
+--- a/tests/01_configuration/01_ruleset
++++ b/tests/01_configuration/01_ruleset
+@@ -150,7 +150,7 @@ table inet fw4 {
+ 	}
+ 
+ 	chain handle_offload {
+-		flow offload @ft accept
++		flow add @ft accept
+ 		accept
+ 	}
+ 

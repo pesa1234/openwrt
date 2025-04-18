@@ -19,7 +19,7 @@ Subject: [PATCH] Drop invalid packets at earliest extant hook
  {% for (let zone in fw4.zones()): %}
  {%  if (zone.dflags.helper): %}
  {%   for (let rule in zone.match_rules): %}
-@@ -427,6 +424,9 @@ table inet fw4 {
+@@ -424,6 +421,9 @@ table inet fw4 {
  
  	chain mangle_prerouting {
  		type filter hook prerouting priority mangle; policy accept;
