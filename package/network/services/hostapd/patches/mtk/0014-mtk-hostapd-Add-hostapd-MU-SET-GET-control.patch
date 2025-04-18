@@ -175,7 +175,7 @@ Subject: [PATCH 014/149] mtk: hostapd: Add hostapd MU SET/GET control
  	/* VHT enable/disable config from CHAN_SWITCH */
 --- a/src/ap/ap_drv_ops.c
 +++ b/src/ap/ap_drv_ops.c
-@@ -1437,3 +1437,17 @@ int hostapd_drv_get_edcca(struct hostapd
+@@ -1443,3 +1443,17 @@ int hostapd_drv_get_edcca(struct hostapd
  		return 0;
  	return hapd->driver->get_edcca(hapd->drv_priv, mode, value);
  }

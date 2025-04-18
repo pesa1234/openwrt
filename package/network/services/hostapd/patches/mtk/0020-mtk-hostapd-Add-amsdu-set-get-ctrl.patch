@@ -116,7 +116,7 @@ Subject: [PATCH 020/149] mtk: hostapd: Add amsdu set get ctrl
  
 --- a/src/ap/ap_drv_ops.c
 +++ b/src/ap/ap_drv_ops.c
-@@ -1475,4 +1475,18 @@ int hostapd_drv_ibf_dump(struct hostapd_
+@@ -1481,4 +1481,18 @@ int hostapd_drv_ibf_dump(struct hostapd_
  	if (!hapd->driver || !hapd->driver->ibf_dump)
  		return 0;
  	return hapd->driver->ibf_dump(hapd->drv_priv, ibf_enable);

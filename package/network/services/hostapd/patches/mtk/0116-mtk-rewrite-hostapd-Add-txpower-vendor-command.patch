@@ -241,7 +241,7 @@ control.
  
 --- a/src/ap/ap_drv_ops.c
 +++ b/src/ap/ap_drv_ops.c
-@@ -1498,3 +1498,11 @@ int hostapd_drv_get_aval_bss_color_bmp(s
+@@ -1504,3 +1504,11 @@ int hostapd_drv_get_aval_bss_color_bmp(s
  		return 0;
  	return hapd->driver->get_aval_color_bmp(hapd->drv_priv, aval_color_bmp);
  }

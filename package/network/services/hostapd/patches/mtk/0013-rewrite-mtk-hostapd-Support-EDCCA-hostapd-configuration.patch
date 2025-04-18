@@ -230,7 +230,7 @@ edcca_enable and edcca_compensation and implement edcca related handlers.
  
 --- a/src/ap/ap_drv_ops.c
 +++ b/src/ap/ap_drv_ops.c
-@@ -1413,3 +1413,27 @@ int hostapd_add_pmkid(struct hostapd_dat
+@@ -1419,3 +1419,27 @@ int hostapd_add_pmkid(struct hostapd_dat
  
  	return hostapd_drv_add_pmkid(hapd, &params);
  }
