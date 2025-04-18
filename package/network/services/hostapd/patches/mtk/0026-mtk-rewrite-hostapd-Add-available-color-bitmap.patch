@@ -142,7 +142,7 @@ Signed-off-by: Yi-Chia Hsieh <yi-chia.hsieh@mediatek.com>
  	  "<driver sub command> [<hex formatted data>] = send driver command data" },
 --- a/src/ap/ap_drv_ops.c
 +++ b/src/ap/ap_drv_ops.c
-@@ -1489,4 +1489,12 @@ int hostapd_drv_amsdu_dump(struct hostap
+@@ -1495,4 +1495,12 @@ int hostapd_drv_amsdu_dump(struct hostap
  	if (!hapd->driver || !hapd->driver->amsdu_dump)
  		return 0;
  	return hapd->driver->amsdu_dump(hapd->drv_priv, amsdu);

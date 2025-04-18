@@ -1,0 +1,24 @@
+--- a/src/ap/ap_drv_ops.c
++++ b/src/ap/ap_drv_ops.c
+@@ -1175,12 +1175,18 @@ void hostapd_get_hw_mode_any_channels(st
+ {
+ 	int i;
+ 	bool is_no_ir = false;
+-	bool allow_6g_acs = hostapd_config_check_bss_6g(hapd->conf) &&
+-		(hapd->iface->conf->ieee80211ax ||
+-		 hapd->iface->conf->ieee80211be);
++	bool allow_6g_acs_is_valid = false;
++	bool allow_6g_acs;
+ 
+ 	for (i = 0; i < mode->num_channels; i++) {
+ 		struct hostapd_channel_data *chan = &mode->channels[i];
++		
++		if (!allow_6g_acs_is_valid && is_6ghz_freq(chan->freq)) {
++			allow_6g_acs = hostapd_config_check_bss_6g(hapd->conf) &&
++				(hapd->iface->conf->ieee80211ax ||
++				 hapd->iface->conf->ieee80211be);
++			allow_6g_acs_is_valid = true;
++		}
+ 
+ 		if (!acs_ch_list_all &&
+ 		    (hapd->iface->conf->acs_freq_list.num &&
