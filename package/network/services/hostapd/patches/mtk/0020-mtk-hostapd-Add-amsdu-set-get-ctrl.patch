@@ -211,7 +211,7 @@ Subject: [PATCH 020/149] mtk: hostapd: Add amsdu set get ctrl
  /**
 --- a/src/drivers/driver_nl80211.c
 +++ b/src/drivers/driver_nl80211.c
-@@ -15261,6 +15261,118 @@ fail:
+@@ -15268,6 +15268,118 @@ fail:
  	return -ENOBUFS;
  }
  
@@ -330,7 +330,7 @@ Subject: [PATCH 020/149] mtk: hostapd: Add amsdu set get ctrl
  const struct wpa_driver_ops wpa_driver_nl80211_ops = {
  	.name = "nl80211",
  	.desc = "Linux nl80211/cfg80211",
-@@ -15442,4 +15554,6 @@ const struct wpa_driver_ops wpa_driver_n
+@@ -15449,4 +15561,6 @@ const struct wpa_driver_ops wpa_driver_n
  	.three_wire_ctrl = nl80211_enable_three_wire,
  	.ibf_ctrl = nl80211_ibf_enable,
  	.ibf_dump = nl80211_ibf_dump,
