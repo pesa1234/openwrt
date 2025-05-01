@@ -1,5 +1,5 @@
 REQUIRE_IMAGE_METADATA=1
-RAMFS_COPY_BIN='fitblk'
+RAMFS_COPY_BIN='fitblk fit_check_sign'
 
 asus_initial_setup()
 {
@@ -118,6 +118,7 @@ platform_do_upgrade() {
 		CI_ROOTPART="rootfs"
 		emmc_do_upgrade "$1"
 		;;
+	asus,rt-ax52|\
 	asus,rt-ax59u|\
 	asus,tuf-ax4200|\
 	asus,tuf-ax6000|\
@@ -192,22 +193,40 @@ PART_NAME=firmware
 
 platform_check_image() {
 	local board=$(board_name)
-	local magic="$(get_magic_long "$1")"
 
 	[ "$#" -gt 1 ] && return 1
 
 	case "$board" in
+	abt,asr3000|\
 	asus,zenwifi-bt8-ubootmod|\
 	bananapi,bpi-r3|\
 	bananapi,bpi-r3-mini|\
 	bananapi,bpi-r4|\
 	bananapi,bpi-r4-poe|\
-	cmcc,rax3000m)
-		[ "$magic" != "d00dfeed" ] && {
-			echo "Invalid image type."
-			return 1
-		}
-		return 0
+	cmcc,a10-ubootmod|\
+	cmcc,rax3000m|\
+	gatonetworks,gdsp|\
+	h3c,magic-nx30-pro|\
+	jcg,q30-pro|\
+	jdcloud,re-cp-03|\
+	mediatek,mt7981-rfb|\
+	mediatek,mt7988a-rfb|\
+	mercusys,mr90x-v1-ubi|\
+	nokia,ea0326gmp|\
+	openwrt,one|\
+	netcore,n60|\
+	qihoo,360t7|\
+	routerich,ax3000-ubootmod|\
+	tplink,tl-xdr4288|\
+	tplink,tl-xdr6086|\
+	tplink,tl-xdr6088|\
+	tplink,tl-xtr8488|\
+	xiaomi,mi-router-ax3000t-ubootmod|\
+	xiaomi,redmi-router-ax6000-ubootmod|\
+	xiaomi,mi-router-wr30u-ubootmod|\
+	zyxel,ex5601-t0-ubootmod)
+		fit_check_image "$1"
+		return $?
 		;;
 	nradio,c8-668gl)
 		# tar magic `ustar`
@@ -268,6 +287,7 @@ platform_pre_upgrade() {
 	local board=$(board_name)
 
 	case "$board" in
+	asus,rt-ax52|\
 	asus,rt-ax59u|\
 	asus,tuf-ax4200|\
 	asus,tuf-ax6000|\

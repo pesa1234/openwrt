@@ -749,7 +749,8 @@ define Device/tplink_archer-mr200-v6
   TPLINK_HWID := 0x20000006
   TPLINK_HWREV := 0x6
   TPLINK_HWREVADD := 0x6
-  DEVICE_PACKAGES := kmod-mt76x0e uqmi kmod-usb2 kmod-usb-serial-option
+  DEVICE_PACKAGES := kmod-mt7615e kmod-mt7663-firmware-ap \
+	kmod-usb2 kmod-usb-serial-option uqmi
   KERNEL := kernel-bin | append-dtb | lzma -d22
   KERNEL_INITRAMFS := kernel-bin | append-dtb
   IMAGES := sysupgrade.bin
@@ -1212,6 +1213,14 @@ define Device/xiaomi_mi-router-4c
   DEVICE_PACKAGES := uboot-envtools
 endef
 TARGET_DEVICES += xiaomi_mi-router-4c
+
+define Device/xiaomi_miwifi-3a
+  IMAGE_SIZE := 16064k
+  DEVICE_VENDOR := Xiaomi
+  DEVICE_MODEL := MiWiFi 3A
+  DEVICE_PACKAGES := kmod-mt76x2
+endef
+TARGET_DEVICES += xiaomi_miwifi-3a
 
 define Device/xiaomi_miwifi-3c
   IMAGE_SIZE := 15104k
