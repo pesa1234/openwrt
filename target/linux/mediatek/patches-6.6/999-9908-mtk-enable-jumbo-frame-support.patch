@@ -190,7 +190,7 @@ Subject: [PATCH] net: mediatek: Add jumbo frame support
  	}
  
  	/* Indicates CDM to parse the MTK special tag from CPU
-@@ -4506,11 +4526,40 @@ static void mtk_uninit(struct net_device
+@@ -4522,11 +4542,40 @@ static void mtk_uninit(struct net_device
  	mtk_rx_irq_disable(eth, ~0);
  }
  
@@ -231,7 +231,7 @@ Subject: [PATCH] net: mediatek: Add jumbo frame support
  
  	if (rcu_access_pointer(eth->prog) &&
  	    length > MTK_PP_MAX_BUF_SIZE) {
-@@ -4518,6 +4567,27 @@ static int mtk_change_mtu(struct net_dev
+@@ -4534,6 +4583,27 @@ static int mtk_change_mtu(struct net_dev
  		return -EINVAL;
  	}
  
@@ -259,7 +259,7 @@ Subject: [PATCH] net: mediatek: Add jumbo frame support
  	mtk_set_mcr_max_rx(mac, length);
  	dev->mtu = new_mtu;
  
-@@ -5300,6 +5370,8 @@ static int mtk_add_mac(struct mtk_eth *e
+@@ -5316,6 +5386,8 @@ static int mtk_add_mac(struct mtk_eth *e
  
  	if (MTK_HAS_CAPS(eth->soc->caps, MTK_SOC_MT7628))
  		eth->netdev[id]->max_mtu = MTK_MAX_RX_LENGTH - MTK_RX_ETH_HLEN;
@@ -279,7 +279,7 @@ Subject: [PATCH] net: mediatek: Add jumbo frame support
  #define MTK_TX_DMA_BUF_LEN	0x3fff
  #define MTK_TX_DMA_BUF_LEN_V2	0xffff
  #define MTK_QDMA_RING_SIZE	2048
-@@ -471,6 +473,7 @@
+@@ -479,6 +481,7 @@
  
  /* Mac control registers */
  #define MTK_MAC_MCR(x)		(0x10100 + (x * 0x100))
@@ -287,7 +287,7 @@ Subject: [PATCH] net: mediatek: Add jumbo frame support
  #define MAC_MCR_MAX_RX_MASK	GENMASK(25, 24)
  #define MAC_MCR_MAX_RX(_x)	(MAC_MCR_MAX_RX_MASK & ((_x) << 24))
  #define MAC_MCR_MAX_RX_1518	0x0
-@@ -554,6 +557,9 @@
+@@ -562,6 +565,9 @@
  #define XMAC_MCR_FORCE_TX_FC	BIT(5)
  #define XMAC_MCR_FORCE_RX_FC	BIT(4)
  
@@ -297,7 +297,7 @@ Subject: [PATCH] net: mediatek: Add jumbo frame support
  /* XFI Mac logic reset registers */
  #define MTK_XMAC_LOGIC_RST(x)	(MTK_XMAC_BASE(x) + 0x10)
  #define XMAC_LOGIC_RST		BIT(0)
-@@ -1438,6 +1444,7 @@ struct mtk_eth {
+@@ -1446,6 +1452,7 @@ struct mtk_eth {
  	struct dim			tx_dim;
  
  	int				ip_align;

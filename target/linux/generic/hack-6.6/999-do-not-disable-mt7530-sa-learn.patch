@@ -32,7 +32,16 @@
  
  		if (dsa_is_cpu_port(ds, i)) {
  			mt753x_cpu_port_enable(ds, i);
-@@ -2558,7 +2558,7 @@ mt7531_setup_common(struct dsa_switch *d
+@@ -2537,7 +2537,7 @@ mt7531_setup_common(struct dsa_switch *d
+ 	struct mt7530_priv *priv = ds->priv;
+ 	int ret, i;
+ 
+-	ds->assisted_learning_on_cpu_port = true;
++	//ds->assisted_learning_on_cpu_port = true;
+ 	ds->mtu_enforcement_ingress = true;
+ 
+ 	mt753x_trap_frames(priv);
+@@ -2561,7 +2561,7 @@ mt7531_setup_common(struct dsa_switch *d
  			   PCR_MATRIX_CLR);
  
  		/* Disable learning by default on all ports */
@@ -41,12 +50,3 @@
  
  		mt7530_set(priv, MT7531_DBG_CNT(i), MT7531_DIS_CLR);
  
-@@ -2682,7 +2682,7 @@ mt7531_setup(struct dsa_switch *ds)
- 	if (ret)
- 		return ret;
- 
--	ds->assisted_learning_on_cpu_port = true;
-+	//ds->assisted_learning_on_cpu_port = true;
- 	ds->mtu_enforcement_ingress = true;
- 
- 	return 0;
