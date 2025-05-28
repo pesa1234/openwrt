@@ -1,0 +1,29 @@
+From 7a50e806e6fa4b26acf69b1ac8ad04fff60df972 Mon Sep 17 00:00:00 2001
+From: Frank Wunderlich <frank-w@public-files.de>
+Date: Tue, 7 Jan 2025 22:55:40 +0100
+Subject: [PATCH] use net_prefetch for non-pagepool path
+
+after disabling pp i got ~5gbit/s
+
+[SUM]   8.00-9.00   sec   594 MBytes  4.97 Gbits/sec
+
+17:38:48     CPU    %usr   %nice    %sys %iowait    %irq   %soft  %steal  %guest  %gnice   %idle
+17:38:50     all    0.25    0.00   22.11    0.25    0.63   24.87    0.00    0.00    0.00   51.88
+17:38:50       0    0.00    0.00    0.00    0.50    0.50   38.69    0.00    0.00    0.00   60.30
+17:38:50       1    0.00    0.00    0.00    0.00    1.01   21.21    0.00    0.00    0.00   77.78
+17:38:50       2    0.00    0.00    0.50    0.50    0.50   29.00    0.00    0.00    0.00   69.50
+17:38:50       3    1.01    0.00   87.94    0.00    0.50   10.55    0.00    0.00    0.00    0.00
+---
+ drivers/net/ethernet/mediatek/mtk_eth_soc.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+--- a/drivers/net/ethernet/mediatek/mtk_eth_soc.c
++++ b/drivers/net/ethernet/mediatek/mtk_eth_soc.c
+@@ -2323,6 +2323,7 @@ static int mtk_poll_rx(struct napi_struc
+ 			dma_unmap_single(eth->dma_dev, ((u64)trxd.rxd1 | addr64),
+ 					 ring->buf_size, DMA_FROM_DEVICE);
+ 
++			net_prefetch(data + NET_SKB_PAD + NET_IP_ALIGN );
+ 			skb = napi_build_skb(data, ring->frag_size);
+ 			if (unlikely(!skb)) {
+ 				netdev->stats.rx_dropped++;
