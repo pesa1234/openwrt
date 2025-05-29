@@ -9,9 +9,9 @@ PKG_RELEASE:=2
 
 PKG_SOURCE_URL:=https://w1.fi/hostap.git
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_DATE:=2025-04-18
-PKG_SOURCE_VERSION:=9bc3fd0414068a5b5716f5fe5a0e2f4acec696f9
-PKG_MIRROR_HASH:=580a61a7954f1207a57af5631930137bd4f51a2655c6f14b03ce25a9cdac0840
+PKG_SOURCE_DATE:=2025-02-09
+PKG_SOURCE_VERSION:=c8c7d56a3d3c4ca79bcbb6a87f372ce4bc2e9f11
+PKG_MIRROR_HASH:=fafdef456a545bd1de0cbd7b68b520e5be7e70ad1aab7ef051b1fc5ccaaa012a
 
 PKG_MAINTAINER:=Felix Fietkau <nbd@nbd.name>
 PKG_LICENSE:=BSD-3-Clause
@@ -821,18 +821,6 @@ ifeq ($(BUILD_VARIANT),supplicant-full-mbedtls)
 	$(CP) $(PKG_BUILD_DIR)/wpa_supplicant/eapol_test $(1)/usr/sbin/
   endef
 endif
-
-define Build/Patch
-	$(if $(QUILT),rm -rf $(PKG_BUILD_DIR)/patches; mkdir -p $(PKG_BUILD_DIR)/patches)
-	$(call PatchDir,$(PKG_BUILD_DIR),$(PATCH_DIR)/std,std/)
-	$(call PatchDir,$(PKG_BUILD_DIR),$(PATCH_DIR)/mtk,mtk/)
-	$(if $(QUILT),touch $(PKG_BUILD_DIR)/.quilt_used)
-endef
-
-define Quilt/Refresh/Package
-$(call Quilt/RefreshDir,$(PKG_BUILD_DIR),$(PATCH_DIR)/std,std/)
-	$(call Quilt/RefreshDir,$(PKG_BUILD_DIR),$(PATCH_DIR)/mtk,mtk/)
-endef
 
 # Build hostapd-common before its dependents, to avoid
 # spurious rebuilds when building multiple variants.
