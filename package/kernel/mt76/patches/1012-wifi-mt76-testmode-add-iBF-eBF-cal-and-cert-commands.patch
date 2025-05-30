@@ -26,7 +26,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
 
 --- a/mt76.h
 +++ b/mt76.h
-@@ -789,6 +789,7 @@ struct mt76_testmode_data {
+@@ -799,6 +799,7 @@ struct mt76_testmode_data {
  
  	struct list_head tm_entry_list;
  	struct mt76_wcid *cur_entry;
@@ -34,7 +34,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  	u8 entry_num;
  	union {
  		struct mt76_testmode_entry_data ed;
-@@ -817,6 +818,9 @@ struct mt76_testmode_data {
+@@ -827,6 +828,9 @@ struct mt76_testmode_data {
  
  	u8 txbf_act;
  	u16 txbf_param[8];
@@ -46,7 +46,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  	u32 tx_queued;
 --- a/mt76_connac_mcu.c
 +++ b/mt76_connac_mcu.c
-@@ -2746,6 +2746,7 @@ int mt76_connac_mcu_bss_basic_tlv(struct
+@@ -2784,6 +2784,7 @@ int mt76_connac_mcu_bss_basic_tlv(struct
  	u32 type = vif->p2p ? NETWORK_P2P : NETWORK_INFRA;
  	struct bss_info_basic *bss;
  	struct tlv *tlv;
@@ -54,7 +54,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  
  	tlv = mt76_connac_mcu_add_tlv(skb, BSS_INFO_BASIC, sizeof(*bss));
  	bss = (struct bss_info_basic *)tlv;
-@@ -2805,6 +2806,8 @@ int mt76_connac_mcu_bss_basic_tlv(struct
+@@ -2843,6 +2844,8 @@ int mt76_connac_mcu_bss_basic_tlv(struct
  		bss->dtim_period = vif->bss_conf.dtim_period;
  		bss->phy_mode = mt76_connac_get_phy_mode(phy, vif,
  							 chandef->chan->band, NULL);

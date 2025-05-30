@@ -70,7 +70,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  static const struct ieee80211_channel mt76_channels_6ghz[] = {
 --- a/mt76.h
 +++ b/mt76.h
-@@ -741,6 +741,21 @@ struct mt76_testmode_ops {
+@@ -751,6 +751,21 @@ struct mt76_testmode_ops {
  	int (*set_params)(struct mt76_phy *phy, struct nlattr **tb,
  			  enum mt76_testmode_state new_state);
  	int (*dump_stats)(struct mt76_phy *phy, struct sk_buff *msg);
@@ -92,7 +92,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  };
  
  #define MT_TM_FW_RX_COUNT	BIT(0)
-@@ -749,16 +764,13 @@ struct mt76_testmode_data {
+@@ -759,16 +774,13 @@ struct mt76_testmode_data {
  	enum mt76_testmode_state state;
  
  	u32 param_set[DIV_ROUND_UP(NUM_MT76_TM_ATTRS, 32)];
@@ -111,7 +111,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  	u8 tx_rate_stbc;
  	u8 tx_ltf;
  
-@@ -774,10 +786,37 @@ struct mt76_testmode_data {
+@@ -784,10 +796,37 @@ struct mt76_testmode_data {
  	u8 tx_power[4];
  	u8 tx_power_control;
  
@@ -150,7 +150,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  	u32 tx_pending;
  	u32 tx_queued;
  	u16 tx_queued_limit;
-@@ -1429,6 +1468,68 @@ static inline bool mt76_testmode_enabled
+@@ -1441,6 +1480,68 @@ static inline bool mt76_testmode_enabled
  #endif
  }
  
@@ -219,7 +219,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  static inline bool mt76_is_testmode_skb(struct mt76_dev *dev,
  					struct sk_buff *skb,
  					struct ieee80211_hw **hw)
-@@ -1439,7 +1540,8 @@ static inline bool mt76_is_testmode_skb(
+@@ -1451,7 +1552,8 @@ static inline bool mt76_is_testmode_skb(
  	for (i = 0; i < ARRAY_SIZE(dev->phys); i++) {
  		struct mt76_phy *phy = dev->phys[i];
  
@@ -229,7 +229,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  			*hw = dev->phys[i]->hw;
  			return true;
  		}
-@@ -1570,7 +1672,8 @@ int mt76_testmode_cmd(struct ieee80211_h
+@@ -1582,7 +1684,8 @@ int mt76_testmode_cmd(struct ieee80211_h
  int mt76_testmode_dump(struct ieee80211_hw *hw, struct sk_buff *skb,
  		       struct netlink_callback *cb, void *data, int len);
  int mt76_testmode_set_state(struct mt76_phy *phy, enum mt76_testmode_state state);
@@ -261,7 +261,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  
 --- a/mt76_connac_mcu.h
 +++ b/mt76_connac_mcu.h
-@@ -1039,6 +1039,7 @@ enum {
+@@ -1040,6 +1040,7 @@ enum {
  	MCU_EXT_EVENT_FW_LOG_2_HOST = 0x13,
  	MCU_EXT_EVENT_THERMAL_PROTECT = 0x22,
  	MCU_EXT_EVENT_ASSERT_DUMP = 0x23,
@@ -269,7 +269,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  	MCU_EXT_EVENT_RDD_REPORT = 0x3a,
  	MCU_EXT_EVENT_CSA_NOTIFY = 0x4f,
  	MCU_EXT_EVENT_BSS_ACQ_PKT_CNT = 0x52,
-@@ -1266,6 +1267,7 @@ enum {
+@@ -1272,6 +1273,7 @@ enum {
  	MCU_EXT_CMD_PHY_STAT_INFO = 0xad,
  	/* for vendor csi and air monitor */
  	MCU_EXT_CMD_SMESH_CTRL = 0xae,

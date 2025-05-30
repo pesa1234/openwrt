@@ -21,7 +21,7 @@ Signed-off-by: Peter Chiu <chui-hao.chiu@mediatek.com>
 
 --- a/mt76.h
 +++ b/mt76.h
-@@ -416,6 +416,8 @@ struct mt76_txwi_cache {
+@@ -426,6 +426,8 @@ struct mt76_txwi_cache {
  	struct list_head list;
  	dma_addr_t dma_addr;
  
@@ -30,7 +30,7 @@ Signed-off-by: Peter Chiu <chui-hao.chiu@mediatek.com>
  	union {
  		struct sk_buff *skb;
  		void *ptr;
-@@ -871,6 +873,7 @@ struct mt76_phy {
+@@ -881,6 +883,7 @@ struct mt76_phy {
  		bool al;
  		u8 pin;
  	} leds;
@@ -38,7 +38,7 @@ Signed-off-by: Peter Chiu <chui-hao.chiu@mediatek.com>
  };
  
  struct mt76_dev {
-@@ -925,6 +928,8 @@ struct mt76_dev {
+@@ -935,6 +938,8 @@ struct mt76_dev {
  	u16 wed_token_count;
  	u16 token_count;
  	u16 token_size;
@@ -47,7 +47,7 @@ Signed-off-by: Peter Chiu <chui-hao.chiu@mediatek.com>
  
  	spinlock_t rx_token_lock;
  	struct idr rx_token;
-@@ -1792,7 +1797,8 @@ static inline bool mt76_queue_is_wed_rx(
+@@ -1804,7 +1809,8 @@ static inline bool mt76_queue_is_wed_rx(
  
  struct mt76_txwi_cache *
  mt76_token_release(struct mt76_dev *dev, int token, bool *wake);
@@ -70,7 +70,7 @@ Signed-off-by: Peter Chiu <chui-hao.chiu@mediatek.com>
  	idr_destroy(&dev->token);
 --- a/mt7915/init.c
 +++ b/mt7915/init.c
-@@ -1235,6 +1235,8 @@ int mt7915_register_device(struct mt7915
+@@ -1234,6 +1234,8 @@ int mt7915_register_device(struct mt7915
  
  	dev->dbdc_support = mt7915_band_config(dev);
  
@@ -79,7 +79,7 @@ Signed-off-by: Peter Chiu <chui-hao.chiu@mediatek.com>
  	phy2 = mt7915_alloc_ext_phy(dev);
  	if (IS_ERR(phy2))
  		return PTR_ERR(phy2);
-@@ -1267,6 +1269,7 @@ int mt7915_register_device(struct mt7915
+@@ -1266,6 +1268,7 @@ int mt7915_register_device(struct mt7915
  	ieee80211_queue_work(mt76_hw(dev), &dev->init_work);
  
  	dev->recovery.hw_init_done = true;
@@ -139,7 +139,7 @@ Signed-off-by: Peter Chiu <chui-hao.chiu@mediatek.com>
  	return 0;
  
  error:
-@@ -1501,6 +1503,8 @@ int mt7996_register_device(struct mt7996
+@@ -1503,6 +1505,8 @@ int mt7996_register_device(struct mt7996
  		return ret;
  
  	mt7996_init_wiphy(hw, &dev->mt76.mmio.wed);
@@ -148,7 +148,7 @@ Signed-off-by: Peter Chiu <chui-hao.chiu@mediatek.com>
  
  	ret = mt7996_register_phy(dev, MT_BAND1);
  	if (ret)
-@@ -1521,6 +1525,8 @@ int mt7996_register_device(struct mt7996
+@@ -1523,6 +1527,8 @@ int mt7996_register_device(struct mt7996
  	ieee80211_queue_work(mt76_hw(dev), &dev->init_work);
  
  	dev->recovery.hw_init_done = true;
@@ -159,7 +159,7 @@ Signed-off-by: Peter Chiu <chui-hao.chiu@mediatek.com>
  	if (ret)
 --- a/mt7996/mac.c
 +++ b/mt7996/mac.c
-@@ -1024,6 +1024,7 @@ int mt7996_tx_prepare_skb(struct mt76_de
+@@ -1032,6 +1032,7 @@ int mt7996_tx_prepare_skb(struct mt76_de
  	struct mt76_txwi_cache *t;
  	int id, i, pid, nbuf = tx_info->nbuf - 1;
  	bool is_8023 = info->flags & IEEE80211_TX_CTL_HW_80211_ENCAP;
@@ -167,7 +167,7 @@ Signed-off-by: Peter Chiu <chui-hao.chiu@mediatek.com>
  	u8 *txwi = (u8 *)txwi_ptr;
  
  	if (unlikely(tx_info->skb->len <= ETH_HLEN))
-@@ -1035,7 +1036,7 @@ int mt7996_tx_prepare_skb(struct mt76_de
+@@ -1043,7 +1044,7 @@ int mt7996_tx_prepare_skb(struct mt76_de
  	t = (struct mt76_txwi_cache *)(txwi + mdev->drv->txwi_size);
  	t->skb = tx_info->skb;
  

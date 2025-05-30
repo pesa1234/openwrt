@@ -15,7 +15,7 @@ Signed-off-by: Peter Chiu <chui-hao.chiu@mediatek.com>
 
 --- a/mt76.h
 +++ b/mt76.h
-@@ -417,6 +417,7 @@ struct mt76_txwi_cache {
+@@ -427,6 +427,7 @@ struct mt76_txwi_cache {
  	dma_addr_t dma_addr;
  
  	u8 phy_idx;

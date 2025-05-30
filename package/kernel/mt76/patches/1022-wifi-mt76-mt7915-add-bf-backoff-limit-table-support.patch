@@ -61,7 +61,7 @@ Signed-off-by: Shayne Chen <shayne.chen@mediatek.com>
 +	s8 max_power_backoff = -127;
  	s8 txs_delta;
 +	int n_chains = hweight16(phy->chainmask);
-+	s8 target_power_combine = target_power + mt76_tx_power_nss_delta(n_chains);
++	s8 target_power_combine = target_power + mt76_tx_power_path_delta(n_chains);
  
  	if (!mcs_rates)
  		mcs_rates = 10;
@@ -112,7 +112,7 @@ Signed-off-by: Shayne Chen <shayne.chen@mediatek.com>
  }
 --- a/mt76.h
 +++ b/mt76.h
-@@ -1156,6 +1156,14 @@ struct mt76_power_limits {
+@@ -1168,6 +1168,14 @@ struct mt76_power_limits {
  	s8 mcs[4][10];
  	s8 ru[7][12];
  	s8 eht[16][16];
@@ -252,12 +252,12 @@ Signed-off-by: Shayne Chen <shayne.chen@mediatek.com>
  		target_power = mt76_get_rate_power_limits(phy->mt76, chan,
  							  &limits,
  							  target_power);
-+
++		
 +		/* MT7915N can not enable Backoff table without setting value in dts */
 +		if (!limits.path.ofdm[0])
 +			phy->sku_path_en = false;
-+
- 		target_power += nss_delta;
++		
+ 		target_power += path_delta;
  		target_power = DIV_ROUND_UP(target_power, 2);
  		chan->max_power = min_t(int, chan->max_reg_power,
 --- a/mt7915/main.c

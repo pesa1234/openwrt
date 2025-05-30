@@ -25,7 +25,7 @@ Subject: [PATCH 01/70] wifi: mt76: mt7915: add mtk internal debug tools for
 
 --- a/mt76_connac_mcu.h
 +++ b/mt76_connac_mcu.h
-@@ -1215,6 +1215,7 @@ enum {
+@@ -1221,6 +1221,7 @@ enum {
  	MCU_EXT_CMD_SET_TX_POWER_CTRL = 0x11,
  	MCU_EXT_CMD_FW_LOG_2_HOST = 0x13,
  	MCU_EXT_CMD_TXBF_ACTION = 0x1e,
@@ -33,7 +33,7 @@ Subject: [PATCH 01/70] wifi: mt76: mt7915: add mtk internal debug tools for
  	MCU_EXT_CMD_EFUSE_BUFFER_MODE = 0x21,
  	MCU_EXT_CMD_THERMAL_PROT = 0x23,
  	MCU_EXT_CMD_STA_REC_UPDATE = 0x25,
-@@ -1238,6 +1239,11 @@ enum {
+@@ -1244,6 +1245,11 @@ enum {
  	MCU_EXT_CMD_TX_POWER_FEATURE_CTRL = 0x58,
  	MCU_EXT_CMD_RXDCOC_CAL = 0x59,
  	MCU_EXT_CMD_GET_MIB_INFO = 0x5a,

@@ -37,7 +37,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  out_put_node:
 --- a/mt76.h
 +++ b/mt76.h
-@@ -742,6 +742,7 @@ struct mt76_testmode_ops {
+@@ -752,6 +752,7 @@ struct mt76_testmode_ops {
  			  enum mt76_testmode_state new_state);
  	int (*dump_stats)(struct mt76_phy *phy, struct sk_buff *msg);
  	int (*set_eeprom)(struct mt76_phy *phy, u32 offset, u8 *val, u8 action);
@@ -47,7 +47,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  struct mt76_testmode_entry_data {
 --- a/mt76_connac_mcu.h
 +++ b/mt76_connac_mcu.h
-@@ -1035,6 +1035,7 @@ enum {
+@@ -1036,6 +1036,7 @@ enum {
  
  /* ext event table */
  enum {

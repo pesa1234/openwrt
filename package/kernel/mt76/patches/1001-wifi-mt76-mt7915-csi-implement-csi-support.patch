@@ -20,7 +20,7 @@ Subject: [PATCH 1001/1052] wifi: mt76: mt7915: csi: implement csi support
 
 --- a/mt76_connac_mcu.h
 +++ b/mt76_connac_mcu.h
-@@ -1046,6 +1046,7 @@ enum {
+@@ -1047,6 +1047,7 @@ enum {
  	MCU_EXT_EVENT_BCC_NOTIFY = 0x75,
  	MCU_EXT_EVENT_WF_RF_PIN_CTRL = 0x9a,
  	MCU_EXT_EVENT_MURU_CTRL = 0x9f,
@@ -28,7 +28,7 @@ Subject: [PATCH 1001/1052] wifi: mt76: mt7915: csi: implement csi support
  };
  
  /* unified event table */
-@@ -1264,6 +1265,7 @@ enum {
+@@ -1270,6 +1271,7 @@ enum {
  	MCU_EXT_CMD_PHY_STAT_INFO = 0xad,
  	MCU_EXT_CMD_SET_QOS_MAP = 0xb4,
  	MCU_EXT_CMD_WF_RF_PIN_CTRL = 0xbd,
@@ -132,7 +132,7 @@ Subject: [PATCH 1001/1052] wifi: mt76: mt7915: csi: implement csi support
  	ret = mt76_register_phy(mphy, true, mt76_rates,
  				ARRAY_SIZE(mt76_rates));
  	if (ret)
-@@ -1158,6 +1166,28 @@ void mt7915_set_stream_he_caps(struct mt
+@@ -1157,6 +1165,28 @@ void mt7915_set_stream_he_caps(struct mt
  	}
  }
  
@@ -161,7 +161,7 @@ Subject: [PATCH 1001/1052] wifi: mt76: mt7915: csi: implement csi support
  static void mt7915_unregister_ext_phy(struct mt7915_dev *dev)
  {
  	struct mt7915_phy *phy = mt7915_ext_phy(dev);
-@@ -1166,6 +1196,10 @@ static void mt7915_unregister_ext_phy(st
+@@ -1165,6 +1195,10 @@ static void mt7915_unregister_ext_phy(st
  	if (!phy)
  		return;
  
@@ -172,7 +172,7 @@ Subject: [PATCH 1001/1052] wifi: mt76: mt7915: csi: implement csi support
  	mt7915_unregister_thermal(phy);
  	mt76_unregister_phy(mphy);
  	ieee80211_free_hw(mphy->hw);
-@@ -1178,6 +1212,10 @@ static void mt7915_stop_hardware(struct
+@@ -1177,6 +1211,10 @@ static void mt7915_stop_hardware(struct
  	mt7915_dma_cleanup(dev);
  	tasklet_disable(&dev->mt76.irq_tasklet);
  
@@ -183,7 +183,7 @@ Subject: [PATCH 1001/1052] wifi: mt76: mt7915: csi: implement csi support
  	if (is_mt798x(&dev->mt76))
  		mt7986_wmac_disable(dev);
  }
-@@ -1220,6 +1258,14 @@ int mt7915_register_device(struct mt7915
+@@ -1219,6 +1257,14 @@ int mt7915_register_device(struct mt7915
  	dev->mt76.test_ops = &mt7915_testmode_ops;
  #endif
  
