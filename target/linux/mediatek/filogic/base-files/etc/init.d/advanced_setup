@@ -491,7 +491,8 @@ set_rps_cpu_bitmap()
 		eval rps_list=\$CPU${num}_RPS
 		logger -s "smp_affinity: # CPU$num: rps_list=$rps_list"
 		for i in $rps_list; do
-			var=${VAR_PREFIX}_${i//-/_}
+			var=${VAR_PREFIX}_${i//'-'/_}
+			var=${var//'.'/_}
 			eval ifval=\$$var
 			logger -s "smp_affinity: [var val before] \$$var=$ifval"
 			if [ -z "$ifval" ]; then
@@ -511,7 +512,8 @@ set_rps_cpus()
 {
 	logger -s "smp_affinity: # Setup rps of the interfaces, $RPS_IF_LIST."
 	for i in $RPS_IF_LIST; do
-		var=${VAR_PREFIX}_${i//-/_}
+		var=${VAR_PREFIX}_${i//'-'/_}
+		var=${var//'.'/_}
 		eval cpu_map=\$$var
 		if [ -d /sys/class/net/$i ]; then
 			if [ ! -z $cpu_map ]; then
