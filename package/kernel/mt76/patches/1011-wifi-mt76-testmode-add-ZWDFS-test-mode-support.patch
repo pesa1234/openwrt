@@ -55,7 +55,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  enum {
 --- a/mt7915/mcu.c
 +++ b/mt7915/mcu.c
-@@ -2813,6 +2813,7 @@ mt7915_mcu_background_chain_ctrl(struct
+@@ -2823,6 +2823,7 @@ mt7915_mcu_background_chain_ctrl(struct
  		req.monitor_chan = chandef->chan->hw_value;
  		req.monitor_central_chan =
  			ieee80211_frequency_to_channel(chandef->center_freq1);
@@ -63,7 +63,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  		req.band_idx = phy->mt76->band_idx;
  		req.scan_mode = 2;
  		break;
-@@ -4853,3 +4854,68 @@ int mt7915_mcu_set_amsdu_algo(struct mt7
+@@ -4863,3 +4864,68 @@ int mt7915_mcu_set_amsdu_algo(struct mt7
  	return mt76_mcu_send_msg(&dev->mt76, MCU_EXT_CMD(MEC_CTRL), &req, sizeof(req), true);
  }
  #endif

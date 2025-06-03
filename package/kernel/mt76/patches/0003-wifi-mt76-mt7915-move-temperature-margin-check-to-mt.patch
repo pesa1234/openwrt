@@ -37,7 +37,7 @@ Signed-off-by: Howard Hsu <howard-yh.hsu@mediatek.com>
  	}
 --- a/mt7915/mcu.c
 +++ b/mt7915/mcu.c
-@@ -3290,8 +3290,7 @@ int mt7915_mcu_set_thermal_protect(struc
+@@ -3300,8 +3300,7 @@ int mt7915_mcu_set_thermal_protect(struc
  
  	/* set high-temperature trigger threshold */
  	req.ctrl.ctrl_id = THERMAL_PROTECT_ENABLE;

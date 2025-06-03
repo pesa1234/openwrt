@@ -57,7 +57,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  	MCU_EXT_EVENT_THERMAL_PROTECT = 0x22,
 --- a/mt7915/mcu.c
 +++ b/mt7915/mcu.c
-@@ -524,6 +524,9 @@ mt7915_mcu_rx_ext_event(struct mt7915_de
+@@ -529,6 +529,9 @@ mt7915_mcu_rx_ext_event(struct mt7915_de
  	case MCU_EXT_EVENT_BF_STATUS_READ:
  		mt7915_tm_txbf_status_read(dev, skb);
  		break;

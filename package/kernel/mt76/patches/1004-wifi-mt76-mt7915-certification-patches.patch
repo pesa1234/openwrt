@@ -98,7 +98,7 @@ Subject: [PATCH 1004/1051] wifi: mt76: mt7915: certification patches
  		msta->wcid.sta = 1;
 --- a/mt7915/mcu.c
 +++ b/mt7915/mcu.c
-@@ -4304,6 +4304,472 @@ mt7915_mcu_report_csi(struct mt7915_dev
+@@ -4314,6 +4314,472 @@ mt7915_mcu_report_csi(struct mt7915_dev
  
  	return 0;
  }

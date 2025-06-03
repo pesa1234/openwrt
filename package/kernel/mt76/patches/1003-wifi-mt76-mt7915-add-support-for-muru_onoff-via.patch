@@ -23,7 +23,7 @@ Subject: [PATCH 1003/1051] wifi: mt76: mt7915: add support for muru_onoff via
  	hw->vif_data_size = sizeof(struct mt7915_vif);
 --- a/mt7915/mcu.c
 +++ b/mt7915/mcu.c
-@@ -1011,6 +1011,7 @@ mt7915_mcu_sta_muru_tlv(struct mt7915_de
+@@ -1016,6 +1016,7 @@ mt7915_mcu_sta_muru_tlv(struct mt7915_de
  {
  	struct mt7915_vif *mvif = (struct mt7915_vif *)vif->drv_priv;
  	struct ieee80211_he_cap_elem *elem = &sta->deflink.he_cap.he_cap_elem;
@@ -31,7 +31,7 @@ Subject: [PATCH 1003/1051] wifi: mt76: mt7915: add support for muru_onoff via
  	struct sta_rec_muru *muru;
  	struct tlv *tlv;
  
-@@ -1022,13 +1023,18 @@ mt7915_mcu_sta_muru_tlv(struct mt7915_de
+@@ -1027,13 +1028,18 @@ mt7915_mcu_sta_muru_tlv(struct mt7915_de
  
  	muru = (struct sta_rec_muru *)tlv;
  

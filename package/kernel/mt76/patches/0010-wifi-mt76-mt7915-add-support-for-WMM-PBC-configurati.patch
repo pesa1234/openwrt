@@ -74,7 +74,7 @@ Subject: [PATCH 10/21] wifi: mt76: mt7915: add support for WMM PBC
  	mutex_unlock(&mphy->dev->mutex);
 --- a/mt7915/mcu.c
 +++ b/mt7915/mcu.c
-@@ -397,6 +397,93 @@ mt7915_mcu_rx_bcc_notify(struct mt7915_d
+@@ -402,6 +402,93 @@ mt7915_mcu_rx_bcc_notify(struct mt7915_d
  			mt7915_mcu_cca_finish, mphy->hw);
  }
  
@@ -168,7 +168,7 @@ Subject: [PATCH 10/21] wifi: mt76: mt7915: add support for WMM PBC
  static void
  mt7915_mcu_rx_ext_event(struct mt7915_dev *dev, struct sk_buff *skb)
  {
-@@ -419,6 +506,9 @@ mt7915_mcu_rx_ext_event(struct mt7915_de
+@@ -424,6 +511,9 @@ mt7915_mcu_rx_ext_event(struct mt7915_de
  	case MCU_EXT_EVENT_BCC_NOTIFY:
  		mt7915_mcu_rx_bcc_notify(dev, skb);
  		break;

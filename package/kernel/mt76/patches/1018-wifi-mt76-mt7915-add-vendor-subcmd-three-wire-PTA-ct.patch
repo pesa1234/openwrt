@@ -27,7 +27,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  	MCU_EXT_CMD_CSI_CTRL = 0xc2,
 --- a/mt7915/mcu.c
 +++ b/mt7915/mcu.c
-@@ -4634,37 +4634,33 @@ void mt7915_mcu_set_dynalgo(struct mt791
+@@ -4644,37 +4644,33 @@ void mt7915_mcu_set_dynalgo(struct mt791
  			&req, sizeof(req), false);
  }
  

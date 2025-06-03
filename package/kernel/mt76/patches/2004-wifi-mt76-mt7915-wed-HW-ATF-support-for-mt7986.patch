@@ -539,7 +539,7 @@ Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
  }
 --- a/mt7915/mcu.c
 +++ b/mt7915/mcu.c
-@@ -1810,7 +1810,7 @@ mt7915_mcu_add_group(struct mt7915_dev *
+@@ -1815,7 +1815,7 @@ mt7915_mcu_add_group(struct mt7915_dev *
  {
  #define MT_STA_BSS_GROUP		1
  	struct mt7915_vif *mvif = (struct mt7915_vif *)vif->drv_priv;
@@ -548,7 +548,7 @@ Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
  	struct {
  		__le32 action;
  		u8 wlan_idx_lo;
-@@ -1821,10 +1821,9 @@ mt7915_mcu_add_group(struct mt7915_dev *
+@@ -1826,10 +1826,9 @@ mt7915_mcu_add_group(struct mt7915_dev *
  		u8 rsv1[8];
  	} __packed req = {
  		.action = cpu_to_le32(MT_STA_BSS_GROUP),
@@ -560,7 +560,7 @@ Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
  	req.wlan_idx_lo = to_wcid_lo(msta->wcid.idx);
  	req.wlan_idx_hi = to_wcid_hi(msta->wcid.idx);
  
-@@ -1886,6 +1885,7 @@ int mt7915_mcu_add_sta(struct mt7915_dev
+@@ -1891,6 +1890,7 @@ int mt7915_mcu_add_sta(struct mt7915_dev
  		mt7915_mcu_sta_bfee_tlv(dev, skb, vif, sta);
  	}
  
@@ -568,7 +568,7 @@ Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
  	ret = mt7915_mcu_add_group(dev, vif, sta);
  	if (ret) {
  		dev_kfree_skb(skb);
-@@ -3841,6 +3841,169 @@ int mt7915_mcu_set_ser(struct mt7915_dev
+@@ -3851,6 +3851,169 @@ int mt7915_mcu_set_ser(struct mt7915_dev
  				 &req, sizeof(req), false);
  }
  

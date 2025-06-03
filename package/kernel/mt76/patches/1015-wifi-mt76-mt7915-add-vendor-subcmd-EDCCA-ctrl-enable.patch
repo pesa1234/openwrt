@@ -38,7 +38,7 @@ Subject: [PATCH] wifi: mt76: mt7915: add vendor subcmd EDCCA ctrl
  			return ret;
 --- a/mt7915/mcu.c
 +++ b/mt7915/mcu.c
-@@ -4935,3 +4935,75 @@ int mt7915_mcu_ipi_hist_scan(struct mt79
+@@ -4945,3 +4945,75 @@ int mt7915_mcu_ipi_hist_scan(struct mt79
  
  	return 0;
  }
