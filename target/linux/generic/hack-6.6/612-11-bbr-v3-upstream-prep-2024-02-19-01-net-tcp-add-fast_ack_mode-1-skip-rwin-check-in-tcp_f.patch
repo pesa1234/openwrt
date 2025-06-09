@@ -52,7 +52,7 @@ Change-Id: Iaa0a0fd7108221f883137a79d5bfa724f1b096d4
  	if (tcp_ca_needs_ecn(sk))
 --- a/net/ipv4/tcp_input.c
 +++ b/net/ipv4/tcp_input.c
-@@ -5668,13 +5668,14 @@ static void __tcp_ack_snd_check(struct s
+@@ -5676,13 +5676,14 @@ static void __tcp_ack_snd_check(struct s
  
  	    /* More than one full frame received... */
  	if (((tp->rcv_nxt - tp->rcv_wup) > inet_csk(sk)->icsk_ack.rcv_mss &&
