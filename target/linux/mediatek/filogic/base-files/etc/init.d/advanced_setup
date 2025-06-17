@@ -317,7 +317,7 @@ gl-mt6000()
 		CPU1_AFFINITY="$eth_irq_rx1 $eth_irq_tx"
 		CPU2_AFFINITY="$eth_irq_rx2 $wifi2_irq $wifi3_irq"
 		CPU3_AFFINITY="$eth_irq_rx3 $wifi1_irq"
-
+		
 		CPU0_RPS="$WIFI_IF_LIST"
 		CPU1_RPS="$WIFI_IF_LIST"
 		CPU2_RPS="$WIFI_IF_LIST"
@@ -554,8 +554,13 @@ logger -s "smp_affinity: # NUM_OF_CPU=$NUM_OF_CPU"
 VAR_PREFIX="autogen"
 get_if_info
 setup_model
-set_rps_cpu_bitmap
-set_rps_cpus $DEFAULT_RPS
+rps_setting=$(uci get network.globals.packet_steering)
+if [ "$rps_setting" = "0" ]; then
+	set_rps_cpu_bitmap
+	set_rps_cpus $DEFAULT_RPS
+else
+	logger -s "smp_affinity: # RPS done by packet steering script"
+fi
 set_smp_affinity
 #end of file
 }
