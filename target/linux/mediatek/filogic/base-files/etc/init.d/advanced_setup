@@ -297,36 +297,64 @@ gl-mt6000()
 			WIFI_IF_LIST="$WIFI_IF_LIST $vif"
 		fi
 	done;
-	logger -s "smp_affinity: $WIFI_IF_LIST = $WIFI_IF_LIST"
+	
+	WAN_IF_LIST=""
+	for iface in $(uci show network | grep "=interface" | cut -d '.' -f 2 | cut -d '=' -f1); do
+		proto=$(uci get network.$iface.proto 2>/dev/null)
+		role=$(uci get network.$iface.role 2>/dev/null)
+
+		if [ "$proto" = "dhcp" ] || [ "$proto" = "pppoe" ] || [ "$role" = "wan" ]; then
+			ifnames=$(uci get network.$iface.ifname 2>/dev/null)
+			dev=$(uci get network.$iface.device 2>/dev/null)
+			for name in $ifnames $dev; do
+				if [ -n "$name" ]; then
+					WAN_IF_LIST="$WAN_IF_LIST $name"
+				fi
+			done
+		fi
+	done
+	
+	BRIDGE_MEMBERS=""
+	if [ -d /sys/class/net/br-lan/brif ]; then
+		for member in $(ls /sys/class/net/br-lan/brif); do
+			case "$member" in
+				wlan*|phy*)
+					;;  # salta Wi-Fi
+				*)
+					BRIDGE_MEMBERS="$BRIDGE_MEMBERS $member"
+					;;
+			esac
+		done
+	fi
+	
+	logger -s "smp_affinity: WAN_IF_LIST = $WAN_IF_LIST"
+	logger -s "smp_affinity: BRIDGE_LIST = $BRIDGE_MEMBERS"
+	logger -s "smp_affinity: WIFI_IF_LIST = $WIFI_IF_LIST"
+	
 	# Please update the CPU binding in each cases.
 	# CPU#_AFFINITY="add binding irq number here"
 	# CPU#_RPS="add binding interface name here"
-	if [ "$num_of_wifi" = "0" ]; then
-		CPU0_AFFINITY="$eth_irq_rx0"
-		CPU1_AFFINITY="$eth_irq_rx1 $eth_irq_tx"
-		CPU2_AFFINITY="$eth_irq_rx2"
-		CPU3_AFFINITY="$eth_irq_rx3"
+	
+	#we bound all wifi card to cpu1 and bound eth to cpu0
+	CPU0_AFFINITY="$eth_irq_rx0"
+	CPU1_AFFINITY="$eth_irq_rx1 $eth_irq_tx"
+	CPU2_AFFINITY="$eth_irq_rx2 $wifi2_irq $wifi3_irq"
+	CPU3_AFFINITY="$eth_irq_rx3 $wifi1_irq"
+	
+	rps_type=$(uci get advanced.@advanced_packet_steering[0].advanced_packet_steering_enable 2>/dev/null)
 
-		CPU0_RPS=""
-		CPU1_RPS=""
-		CPU2_RPS=""
-		CPU3_RPS=""
-	else
-		#we bound all wifi card to cpu1 and bound eth to cpu0
-		CPU0_AFFINITY="$eth_irq_rx0"
-		CPU1_AFFINITY="$eth_irq_rx1 $eth_irq_tx"
-		CPU2_AFFINITY="$eth_irq_rx2 $wifi2_irq $wifi3_irq"
-		CPU3_AFFINITY="$eth_irq_rx3 $wifi1_irq"
-		
+	if [ -z "$rps_type" ] || [ "$rps_type" = "1" ]; then
 		CPU0_RPS="$WIFI_IF_LIST"
 		CPU1_RPS="$WIFI_IF_LIST"
 		CPU2_RPS="$WIFI_IF_LIST"
 		CPU3_RPS="$WIFI_IF_LIST"
+	elif  [ "$rps_type" = "2" ]; then
+		CPU0_RPS="$BRIDGE_MEMBERS $WIFI_IF_LIST"
+		CPU1_RPS="$WAN_IF_LIST $WIFI_IF_LIST"
+		CPU2_RPS="$WAN_IF_LIST $WIFI_IF_LIST"
+		CPU3_RPS="$WAN_IF_LIST $WIFI_IF_LIST"
 	fi
-	logger -s "smp_affinity: CPU0_AFFINITY = $CPU0_AFFINITY"
-	logger -s "smp_affinity: CPU1_AFFINITY = $CPU1_AFFINITY"
-	logger -s "smp_affinity: CPU2_AFFINITY = $CPU2_AFFINITY"
-	logger -s "smp_affinity: CPU3_AFFINITY = $CPU3_AFFINITY"
+
 }
 
 MT7981()
@@ -554,13 +582,22 @@ logger -s "smp_affinity: # NUM_OF_CPU=$NUM_OF_CPU"
 VAR_PREFIX="autogen"
 get_if_info
 setup_model
-rps_setting=$(uci get network.globals.packet_steering)
-if [ "$rps_setting" = "0" ]; then
-	set_rps_cpu_bitmap
-	set_rps_cpus $DEFAULT_RPS
+
+rps_setting=$(uci get network.globals.packet_steering 2>/dev/null)
+rps_type=$(uci get advanced.@advanced_packet_steering[0].advanced_packet_steering_enable 2>/dev/null)
+
+if [ -z "$rps_setting" ] || [ "$rps_setting" = "0" ]; then
+	if [ -z "$rps_type" ] || [ "$rps_type" != "0" ]; then
+		set_rps_cpu_bitmap
+		set_rps_cpus $DEFAULT_RPS
+	else
+		logger -s "smp_affinity: # RPS disabled"
+	fi
 else
 	logger -s "smp_affinity: # RPS done by packet steering script"
 fi
+
+
 set_smp_affinity
 #end of file
 }
