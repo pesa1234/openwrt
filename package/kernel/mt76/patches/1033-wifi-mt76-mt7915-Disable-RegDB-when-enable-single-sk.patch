@@ -132,7 +132,7 @@ Subject: [PATCH 1033/1051] wifi: mt76: mt7915: Disable RegDB when enable
  }
 --- a/mt7915/regs.h
 +++ b/mt7915/regs.h
-@@ -1222,6 +1222,10 @@ enum offs_rev {
+@@ -1223,6 +1223,10 @@ enum offs_rev {
  #define MT_WF_IRPI_NSS(phy, nss)	MT_WF_IRPI(0x6000 + ((phy) << 20) + ((nss) << 16))
  #define MT_WF_IRPI_NSS_MT7916(phy, nss)	MT_WF_IRPI(0x1000 + ((phy) << 20) + ((nss) << 16))
  
@@ -143,7 +143,7 @@ Subject: [PATCH 1033/1051] wifi: mt76: mt7915: Disable RegDB when enable
  #define MT_WF_IPI_RESET			0x831a3008
  
  /* PHY */
-@@ -1238,10 +1242,6 @@ enum offs_rev {
+@@ -1239,10 +1243,6 @@ enum offs_rev {
  #define MT_WF_PHY_RXTD12_IRPI_SW_CLR_ONLY	BIT(18)
  #define MT_WF_PHY_RXTD12_IRPI_SW_CLR		BIT(29)
  
