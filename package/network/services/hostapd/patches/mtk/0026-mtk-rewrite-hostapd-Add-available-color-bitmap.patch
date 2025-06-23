@@ -214,7 +214,7 @@ Signed-off-by: Yi-Chia Hsieh <yi-chia.hsieh@mediatek.com>
  /**
 --- a/src/drivers/driver_nl80211.c
 +++ b/src/drivers/driver_nl80211.c
-@@ -14703,6 +14703,71 @@ static int nl80211_dpp_listen(void *priv
+@@ -14729,6 +14729,71 @@ static int nl80211_dpp_listen(void *priv
  }
  #endif /* CONFIG_DPP */
  
@@ -286,7 +286,7 @@ Signed-off-by: Yi-Chia Hsieh <yi-chia.hsieh@mediatek.com>
  
  static int nl80211_link_add(void *priv, u8 link_id, const u8 *addr,
  			    void *bss_ctx)
-@@ -15573,4 +15638,5 @@ const struct wpa_driver_ops wpa_driver_n
+@@ -15599,4 +15664,5 @@ const struct wpa_driver_ops wpa_driver_n
  	.ibf_dump = nl80211_ibf_dump,
  	.amsdu_ctrl = nl80211_enable_amsdu,
  	.amsdu_dump = nl80211_dump_amsdu,
@@ -294,7 +294,7 @@ Signed-off-by: Yi-Chia Hsieh <yi-chia.hsieh@mediatek.com>
  };
 --- a/src/drivers/driver_nl80211.h
 +++ b/src/drivers/driver_nl80211.h
-@@ -205,6 +205,7 @@ struct wpa_driver_nl80211_data {
+@@ -206,6 +206,7 @@ struct wpa_driver_nl80211_data {
  	unsigned int mtk_3wire_vendor_cmd_avail:1;
  	unsigned int mtk_ibf_vendor_cmd_avail:1;
  	unsigned int mtk_wireless_vendor_cmd_avail:1;

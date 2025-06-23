@@ -153,7 +153,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  /**
 --- a/src/drivers/driver_nl80211.c
 +++ b/src/drivers/driver_nl80211.c
-@@ -15139,6 +15139,39 @@ static int nl80211_get_edcca(void *priv,
+@@ -15165,6 +15165,39 @@ static int nl80211_get_edcca(void *priv,
  	return ret;
  }
  
@@ -193,7 +193,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  const struct wpa_driver_ops wpa_driver_nl80211_ops = {
  	.name = "nl80211",
  	.desc = "Linux nl80211/cfg80211",
-@@ -15317,4 +15350,5 @@ const struct wpa_driver_ops wpa_driver_n
+@@ -15343,4 +15376,5 @@ const struct wpa_driver_ops wpa_driver_n
  	.configure_edcca_enable = nl80211_configure_edcca_enable,
  	.configure_edcca_threshold = nl80211_configure_edcca_threshold,
  	.get_edcca = nl80211_get_edcca,
@@ -201,7 +201,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  };
 --- a/src/drivers/driver_nl80211.h
 +++ b/src/drivers/driver_nl80211.h
-@@ -202,6 +202,7 @@ struct wpa_driver_nl80211_data {
+@@ -203,6 +203,7 @@ struct wpa_driver_nl80211_data {
  	unsigned int connect_ext_vendor_cmd_avail:1;
  	unsigned int mtk_edcca_vendor_cmd_avail:1;
  	unsigned int mtk_mu_vendor_cmd_avail:1;

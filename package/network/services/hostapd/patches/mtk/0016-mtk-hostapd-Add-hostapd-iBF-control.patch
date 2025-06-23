@@ -258,7 +258,7 @@ Signed-off-by: mtk27835 <shurong.wen@mediatek.com>
  /**
 --- a/src/drivers/driver_nl80211.c
 +++ b/src/drivers/driver_nl80211.c
-@@ -15172,6 +15172,112 @@ static int nl80211_enable_three_wire(voi
+@@ -15198,6 +15198,112 @@ static int nl80211_enable_three_wire(voi
  	return ret;
  }
  
@@ -371,7 +371,7 @@ Signed-off-by: mtk27835 <shurong.wen@mediatek.com>
  const struct wpa_driver_ops wpa_driver_nl80211_ops = {
  	.name = "nl80211",
  	.desc = "Linux nl80211/cfg80211",
-@@ -15351,4 +15457,6 @@ const struct wpa_driver_ops wpa_driver_n
+@@ -15377,4 +15483,6 @@ const struct wpa_driver_ops wpa_driver_n
  	.configure_edcca_threshold = nl80211_configure_edcca_threshold,
  	.get_edcca = nl80211_get_edcca,
  	.three_wire_ctrl = nl80211_enable_three_wire,
@@ -380,7 +380,7 @@ Signed-off-by: mtk27835 <shurong.wen@mediatek.com>
  };
 --- a/src/drivers/driver_nl80211.h
 +++ b/src/drivers/driver_nl80211.h
-@@ -203,6 +203,7 @@ struct wpa_driver_nl80211_data {
+@@ -204,6 +204,7 @@ struct wpa_driver_nl80211_data {
  	unsigned int mtk_edcca_vendor_cmd_avail:1;
  	unsigned int mtk_mu_vendor_cmd_avail:1;
  	unsigned int mtk_3wire_vendor_cmd_avail:1;

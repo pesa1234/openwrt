@@ -315,7 +315,7 @@ edcca_enable and edcca_compensation and implement edcca related handlers.
  
  
  #ifndef NETLINK_CAP_ACK
-@@ -12514,7 +12516,6 @@ wpa_driver_nl80211_join_mesh(void *priv,
+@@ -12540,7 +12542,6 @@ wpa_driver_nl80211_join_mesh(void *priv,
  	return ret;
  }
  
@@ -323,7 +323,7 @@ edcca_enable and edcca_compensation and implement edcca related handlers.
  static int wpa_driver_nl80211_leave_mesh(void *priv)
  {
  	struct i802_bss *bss = priv;
-@@ -14871,6 +14872,164 @@ wpa_driver_get_multi_hw_info(void *priv,
+@@ -14897,6 +14898,164 @@ wpa_driver_get_multi_hw_info(void *priv,
  	return nl80211_get_multi_hw_info(bss, num_multi_hws);
  }
  
@@ -488,7 +488,7 @@ edcca_enable and edcca_compensation and implement edcca related handlers.
  
  const struct wpa_driver_ops wpa_driver_nl80211_ops = {
  	.name = "nl80211",
-@@ -15044,4 +15203,8 @@ const struct wpa_driver_ops wpa_driver_n
+@@ -15070,4 +15229,8 @@ const struct wpa_driver_ops wpa_driver_n
  	.radio_disable = testing_nl80211_radio_disable,
  #endif /* CONFIG_TESTING_OPTIONS */
  	.get_multi_hw_info = wpa_driver_get_multi_hw_info,
@@ -589,7 +589,7 @@ edcca_enable and edcca_compensation and implement edcca related handlers.
  /**
 --- a/src/drivers/driver_nl80211.h
 +++ b/src/drivers/driver_nl80211.h
-@@ -200,6 +200,7 @@ struct wpa_driver_nl80211_data {
+@@ -201,6 +201,7 @@ struct wpa_driver_nl80211_data {
  	unsigned int puncturing:1;
  	unsigned int qca_ap_allowed_freqs:1;
  	unsigned int connect_ext_vendor_cmd_avail:1;
