@@ -299,6 +299,7 @@ gl-mt6000()
 	done;
 	
 	WAN_IF_LIST=""
+
 	for iface in $(uci show network | grep "=interface" | cut -d '.' -f 2 | cut -d '=' -f1); do
 		proto=$(uci get network.$iface.proto 2>/dev/null)
 		role=$(uci get network.$iface.role 2>/dev/null)
@@ -306,26 +307,50 @@ gl-mt6000()
 		if [ "$proto" = "dhcp" ] || [ "$proto" = "pppoe" ] || [ "$role" = "wan" ]; then
 			ifnames=$(uci get network.$iface.ifname 2>/dev/null)
 			dev=$(uci get network.$iface.device 2>/dev/null)
+
 			for name in $ifnames $dev; do
 				if [ -n "$name" ]; then
-					WAN_IF_LIST="$WAN_IF_LIST $name"
+					if echo "$name" | grep -q '\.'; then
+						parent="${name%%.*}"
+						WAN_IF_LIST="$WAN_IF_LIST $parent"
+
+					elif [ -d "/sys/class/net/$name" ]; then
+						WAN_IF_LIST="$WAN_IF_LIST $name"
+
+					else
+						base_if=$(uci get network.$name.ifname 2>/dev/null)
+						if [ -n "$base_if" ]; then
+							WAN_IF_LIST="$WAN_IF_LIST $base_if"
+						fi
+					fi
 				fi
 			done
 		fi
 	done
+
+	WAN_IF_LIST=$(echo $WAN_IF_LIST | tr ' ' '\n' | sort -u | tr '\n' ' ')
+
 	
 	BRIDGE_MEMBERS=""
+
 	if [ -d /sys/class/net/br-lan/brif ]; then
 		for member in $(ls /sys/class/net/br-lan/brif); do
 			case "$member" in
 				wlan*|phy*)
-					;;  # salta Wi-Fi
-				*)
-					BRIDGE_MEMBERS="$BRIDGE_MEMBERS $member"
+					continue
 					;;
 			esac
+
+			if echo "$member" | grep -q '\.'; then
+				parent="${member%%.*}"
+				BRIDGE_MEMBERS="$BRIDGE_MEMBERS $parent"
+			else
+				BRIDGE_MEMBERS="$BRIDGE_MEMBERS $member"
+			fi
 		done
 	fi
+
+	BRIDGE_MEMBERS=$(echo $BRIDGE_MEMBERS | tr ' ' '\n' | sort -u | tr '\n' ' ')
 	
 	logger -s "smp_affinity: WAN_IF_LIST = $WAN_IF_LIST"
 	logger -s "smp_affinity: BRIDGE_LIST = $BRIDGE_MEMBERS"
@@ -687,17 +712,11 @@ start() {
 	if [ ! -f /tmp/smp_affinity_started ]; then
 		sleep 20
 		echo 1 > /tmp/smp_affinity_started
-		smp-mt76
-		enable-HQoS
-		usb-setup
-		hw-atf-setup
-		#mtk-offloading #### do not run - hardware flow offloading and bridger works better
-	else
-		smp-mt76
-		enable-HQoS
-		usb-setup
-		hw-atf-setup
-		#mtk-offloading #### do not run - hardware flow offloading and bridger works better
 	fi
+	smp-mt76
+	enable-HQoS
+	usb-setup
+	hw-atf-setup
+	#mtk-offloading #### do not run - hardware flow offloading and bridger works better
 	) &
 }
