@@ -30,7 +30,7 @@ Change-Id: I2e6494332167e75efcbdc99bd5c119034e9c39b4
  };
 --- a/net/ipv4/tcp_input.c
 +++ b/net/ipv4/tcp_input.c
-@@ -3807,7 +3807,8 @@ static void tcp_replace_ts_recent(struct
+@@ -3814,7 +3814,8 @@ static void tcp_replace_ts_recent(struct
  /* This routine deals with acks during a TLP episode and ends an episode by
   * resetting tlp_high_seq. Ref: TLP algorithm in draft-ietf-tcpm-rack
   */
@@ -40,7 +40,7 @@ Change-Id: I2e6494332167e75efcbdc99bd5c119034e9c39b4
  {
  	struct tcp_sock *tp = tcp_sk(sk);
  
-@@ -3835,6 +3836,11 @@ static void tcp_process_tlp_ack(struct s
+@@ -3842,6 +3843,11 @@ static void tcp_process_tlp_ack(struct s
  			     FLAG_NOT_DUP | FLAG_DATA_SACKED))) {
  		/* Pure dupack: original and TLP probe arrived; no loss */
  		tp->tlp_high_seq = 0;
@@ -52,7 +52,7 @@ Change-Id: I2e6494332167e75efcbdc99bd5c119034e9c39b4
  	}
  }
  
-@@ -4020,7 +4026,7 @@ static int tcp_ack(struct sock *sk, cons
+@@ -4027,7 +4033,7 @@ static int tcp_ack(struct sock *sk, cons
  	tcp_in_ack_event(sk, flag);
  
  	if (tp->tlp_high_seq)
@@ -61,7 +61,7 @@ Change-Id: I2e6494332167e75efcbdc99bd5c119034e9c39b4
  
  	if (tcp_ack_is_dubious(sk, flag)) {
  		if (!(flag & (FLAG_SND_UNA_ADVANCED |
-@@ -4065,7 +4071,7 @@ no_queue:
+@@ -4072,7 +4078,7 @@ no_queue:
  	tcp_ack_probe(sk);
  
  	if (tp->tlp_high_seq)
