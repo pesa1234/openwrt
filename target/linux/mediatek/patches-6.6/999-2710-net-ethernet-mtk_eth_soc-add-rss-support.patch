@@ -1,6 +1,6 @@
-From 7cb2f37bf865048dcb85d4c67531de3dd2bad153 Mon Sep 17 00:00:00 2001
+From 3d5dfb80dcd7e885398cc3f7a125b70ff94206bb Mon Sep 17 00:00:00 2001
 From: Mason Chang <mason-cw.chang@mediatek.com>
-Date: Wed, 26 Mar 2025 10:53:00 +0800
+Date: Thu, 29 May 2025 13:01:48 +0800
 Subject: [PATCH] net: ethernet: mtk_eth_soc: add rss support
 
 ---
@@ -683,17 +683,17 @@ Subject: [PATCH] net: ethernet: mtk_eth_soc: add rss support
  static u16 mtk_select_queue(struct net_device *dev, struct sk_buff *skb,
  			    struct net_device *sb_dev)
  {
-@@ -4867,6 +5087,10 @@ static const struct ethtool_ops mtk_etht
+@@ -4865,6 +5085,10 @@ static const struct ethtool_ops mtk_etht
+ 	.set_pauseparam		= mtk_set_pauseparam,
+ 	.get_rxnfc		= mtk_get_rxnfc,
  	.set_rxnfc		= mtk_set_rxnfc,
- 	.get_eee		= mtk_get_eee,
- 	.set_eee		= mtk_set_eee,
 +	.get_rxfh_key_size	= mtk_get_rxfh_key_size,
 +	.get_rxfh_indir_size	= mtk_get_rxfh_indir_size,
 +	.get_rxfh		= mtk_get_rxfh,
 +	.set_rxfh		= mtk_set_rxfh,
+ 	.get_eee		= mtk_get_eee,
+ 	.set_eee		= mtk_set_eee,
  };
- 
- static const struct net_device_ops mtk_netdev_ops = {
 @@ -5089,7 +5313,7 @@ static int mtk_add_mac(struct mtk_eth *e
  	eth->netdev[id]->features |= eth->soc->hw_features;
  	eth->netdev[id]->ethtool_ops = &mtk_ethtool_ops;
