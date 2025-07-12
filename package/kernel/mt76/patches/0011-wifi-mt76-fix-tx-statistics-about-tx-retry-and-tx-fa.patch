@@ -26,7 +26,7 @@ Signed-off-by: Peter Chiu <chui-hao.chiu@mediatek.com>
  	if (skb) {
 --- a/mt7915/mac.c
 +++ b/mt7915/mac.c
-@@ -1024,7 +1024,7 @@ static void mt7915_mac_add_txs(struct mt
+@@ -1018,7 +1018,7 @@ static void mt7915_mac_add_txs(struct mt
  
  	msta = container_of(wcid, struct mt7915_sta, wcid);
  

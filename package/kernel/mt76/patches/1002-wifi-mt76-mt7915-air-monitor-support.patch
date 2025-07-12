@@ -25,7 +25,7 @@ Subject: [PATCH] wifi: mt76: mt7915: air monitor support
  	MCU_EXT_CMD_CSI_CTRL = 0xc2,
 --- a/mt7915/mac.c
 +++ b/mt7915/mac.c
-@@ -547,6 +547,10 @@ mt7915_mac_fill_rx(struct mt7915_dev *de
+@@ -544,6 +544,10 @@ mt7915_mac_fill_rx(struct mt7915_dev *de
  			seq_ctrl = le16_to_cpu(hdr->seq_ctrl);
  			qos_ctl = *ieee80211_get_qos_ctl(hdr);
  		}

@@ -65,7 +65,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  	}
 --- a/mt7915/mac.c
 +++ b/mt7915/mac.c
-@@ -753,8 +753,10 @@ mt7915_mac_write_txwi_tm(struct mt7915_p
+@@ -750,8 +750,10 @@ mt7915_mac_write_txwi_tm(struct mt7915_p
  		val |= MT_TXD6_LDPC;
  
  	txwi[3] &= ~cpu_to_le32(MT_TXD3_SN_VALID);

@@ -150,7 +150,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  	u32 tx_pending;
  	u32 tx_queued;
  	u16 tx_queued_limit;
-@@ -1441,6 +1480,68 @@ static inline bool mt76_testmode_enabled
+@@ -1453,6 +1492,68 @@ static inline bool mt76_testmode_enabled
  #endif
  }
  
@@ -219,7 +219,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  static inline bool mt76_is_testmode_skb(struct mt76_dev *dev,
  					struct sk_buff *skb,
  					struct ieee80211_hw **hw)
-@@ -1451,7 +1552,8 @@ static inline bool mt76_is_testmode_skb(
+@@ -1463,7 +1564,8 @@ static inline bool mt76_is_testmode_skb(
  	for (i = 0; i < ARRAY_SIZE(dev->phys); i++) {
  		struct mt76_phy *phy = dev->phys[i];
  
@@ -229,7 +229,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  			*hw = dev->phys[i]->hw;
  			return true;
  		}
-@@ -1582,7 +1684,8 @@ int mt76_testmode_cmd(struct ieee80211_h
+@@ -1594,7 +1696,8 @@ int mt76_testmode_cmd(struct ieee80211_h
  int mt76_testmode_dump(struct ieee80211_hw *hw, struct sk_buff *skb,
  		       struct netlink_callback *cb, void *data, int len);
  int mt76_testmode_set_state(struct mt76_phy *phy, enum mt76_testmode_state state);
@@ -290,7 +290,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  }
 --- a/mt7915/mac.c
 +++ b/mt7915/mac.c
-@@ -602,6 +602,7 @@ mt7915_mac_fill_rx_vector(struct mt7915_
+@@ -599,6 +599,7 @@ mt7915_mac_fill_rx_vector(struct mt7915_
  			wb_rssi = le32_to_cpu(rxv[9]);
  
  		phy->test.last_rcpi[i] = rcpi & 0xff;
@@ -298,7 +298,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  		phy->test.last_ib_rssi[i] = ib_rssi & 0xff;
  		phy->test.last_wb_rssi[i] = wb_rssi & 0xff;
  	}
-@@ -627,17 +628,39 @@ mt7915_mac_write_txwi_tm(struct mt7915_p
+@@ -624,17 +625,39 @@ mt7915_mac_write_txwi_tm(struct mt7915_p
  {
  #ifdef CONFIG_NL80211_TESTMODE
  	struct mt76_testmode_data *td = &phy->mt76->test;
@@ -341,7 +341,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  	switch (td->tx_rate_mode) {
  	case MT76_TM_TX_MODE_HT:
  		nss = 1 + (rate_idx >> 3);
-@@ -667,7 +690,7 @@ mt7915_mac_write_txwi_tm(struct mt7915_p
+@@ -664,7 +687,7 @@ mt7915_mac_write_txwi_tm(struct mt7915_p
  			rate_idx += 4;
  
  		r = &phy->mt76->hw->wiphy->bands[band]->bitrates[rate_idx];
@@ -350,7 +350,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  
  		mode = val >> 8;
  		rate_idx = val & 0xff;
-@@ -726,13 +749,14 @@ mt7915_mac_write_txwi_tm(struct mt7915_p
+@@ -723,13 +746,14 @@ mt7915_mac_write_txwi_tm(struct mt7915_p
  	if (mode >= MT_PHY_TYPE_HE_SU)
  		val |= FIELD_PREP(MT_TXD6_HELTF, td->tx_ltf);
  
@@ -368,7 +368,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  #endif
  }
  
-@@ -1370,7 +1394,7 @@ mt7915_mac_restart(struct mt7915_dev *de
+@@ -1364,7 +1388,7 @@ mt7915_mac_restart(struct mt7915_dev *de
  		goto out;
  
  	/* set the necessary init items */
@@ -3155,7 +3155,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  
 --- a/tx.c
 +++ b/tx.c
-@@ -259,8 +259,7 @@ void __mt76_tx_complete_skb(struct mt76_
+@@ -257,8 +257,7 @@ void __mt76_tx_complete_skb(struct mt76_
  	if (mt76_is_testmode_skb(dev, skb, &hw)) {
  		struct mt76_phy *phy = hw->priv;
  

@@ -25,7 +25,7 @@ Signed-off-by: Peter Chiu <chui-hao.chiu@mediatek.com>
  		struct sk_buff *skb;
 --- a/mt7915/mac.c
 +++ b/mt7915/mac.c
-@@ -816,6 +816,8 @@ int mt7915_tx_prepare_skb(struct mt76_de
+@@ -813,6 +813,8 @@ int mt7915_tx_prepare_skb(struct mt76_de
  	if (id < 0)
  		return id;
  

@@ -47,7 +47,7 @@ Signed-off-by: Peter Chiu <chui-hao.chiu@mediatek.com>
  
  	spinlock_t rx_token_lock;
  	struct idr rx_token;
-@@ -1804,7 +1809,8 @@ static inline bool mt76_queue_is_wed_rx(
+@@ -1816,7 +1821,8 @@ static inline bool mt76_queue_is_wed_rx(
  
  struct mt76_txwi_cache *
  mt76_token_release(struct mt76_dev *dev, int token, bool *wake);
@@ -89,7 +89,7 @@ Signed-off-by: Peter Chiu <chui-hao.chiu@mediatek.com>
  	if (ret)
 --- a/mt7915/mac.c
 +++ b/mt7915/mac.c
-@@ -754,6 +754,7 @@ int mt7915_tx_prepare_skb(struct mt76_de
+@@ -751,6 +751,7 @@ int mt7915_tx_prepare_skb(struct mt76_de
  	struct mt76_connac_fw_txp *txp;
  	struct mt76_txwi_cache *t;
  	int id, i, nbuf = tx_info->nbuf - 1;
@@ -97,7 +97,7 @@ Signed-off-by: Peter Chiu <chui-hao.chiu@mediatek.com>
  	u8 *txwi = (u8 *)txwi_ptr;
  	int pid;
  
-@@ -777,7 +778,7 @@ int mt7915_tx_prepare_skb(struct mt76_de
+@@ -774,7 +775,7 @@ int mt7915_tx_prepare_skb(struct mt76_de
  	t = (struct mt76_txwi_cache *)(txwi + mdev->drv->txwi_size);
  	t->skb = tx_info->skb;
  
@@ -159,7 +159,7 @@ Signed-off-by: Peter Chiu <chui-hao.chiu@mediatek.com>
  	if (ret)
 --- a/mt7996/mac.c
 +++ b/mt7996/mac.c
-@@ -1032,6 +1032,7 @@ int mt7996_tx_prepare_skb(struct mt76_de
+@@ -1029,6 +1029,7 @@ int mt7996_tx_prepare_skb(struct mt76_de
  	struct mt76_txwi_cache *t;
  	int id, i, pid, nbuf = tx_info->nbuf - 1;
  	bool is_8023 = info->flags & IEEE80211_TX_CTL_HW_80211_ENCAP;
@@ -167,7 +167,7 @@ Signed-off-by: Peter Chiu <chui-hao.chiu@mediatek.com>
  	u8 *txwi = (u8 *)txwi_ptr;
  
  	if (unlikely(tx_info->skb->len <= ETH_HLEN))
-@@ -1043,7 +1044,7 @@ int mt7996_tx_prepare_skb(struct mt76_de
+@@ -1040,7 +1041,7 @@ int mt7996_tx_prepare_skb(struct mt76_de
  	t = (struct mt76_txwi_cache *)(txwi + mdev->drv->txwi_size);
  	t->skb = tx_info->skb;
  
@@ -178,7 +178,7 @@ Signed-off-by: Peter Chiu <chui-hao.chiu@mediatek.com>
  
 --- a/tx.c
 +++ b/tx.c
-@@ -849,16 +849,30 @@ void __mt76_set_tx_blocked(struct mt76_d
+@@ -848,16 +848,30 @@ void __mt76_set_tx_blocked(struct mt76_d
  }
  EXPORT_SYMBOL_GPL(__mt76_set_tx_blocked);
  
@@ -211,7 +211,7 @@ Signed-off-by: Peter Chiu <chui-hao.chiu@mediatek.com>
  #ifdef CONFIG_NET_MEDIATEK_SOC_WED
  	if (mtk_wed_device_active(&dev->mmio.wed) &&
  	    token >= dev->mmio.wed.wlan.token_start)
-@@ -902,6 +916,8 @@ mt76_token_release(struct mt76_dev *dev,
+@@ -901,6 +915,8 @@ mt76_token_release(struct mt76_dev *dev,
  	txwi = idr_remove(&dev->token, token);
  	if (txwi) {
  		dev->token_count--;

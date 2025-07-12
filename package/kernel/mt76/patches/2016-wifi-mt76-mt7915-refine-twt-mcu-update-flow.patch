@@ -36,7 +36,7 @@ Signed-off-by: Yi-Chia Hsieh <Yi-Chia.Hsieh@mediatek.com>
  }
 --- a/mt7915/mac.c
 +++ b/mt7915/mac.c
-@@ -2461,8 +2461,10 @@ void mt7915_mac_add_twt_setup(struct iee
+@@ -2455,8 +2455,10 @@ void mt7915_mac_add_twt_setup(struct iee
  	}
  	flow->tsf = le64_to_cpu(twt_agrt->twt);
  

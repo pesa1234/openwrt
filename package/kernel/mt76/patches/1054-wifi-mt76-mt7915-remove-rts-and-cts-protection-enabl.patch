@@ -11,7 +11,7 @@ Subject: [PATCH] wifi: mt76: mt7915: remove rts and cts protection enable flow
 
 --- a/mt7915/mac.c
 +++ b/mt7915/mac.c
-@@ -236,19 +236,6 @@ static void mt7915_mac_sta_poll(struct m
+@@ -233,19 +233,6 @@ static void mt7915_mac_sta_poll(struct m
  	rcu_read_unlock();
  }
  

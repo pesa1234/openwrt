@@ -49,7 +49,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  
 --- a/mt76.h
 +++ b/mt76.h
-@@ -840,10 +840,21 @@ struct mt76_testmode_data {
+@@ -841,10 +841,21 @@ struct mt76_testmode_data {
  	u16 tx_queued_limit;
  	u32 tx_done;
  	struct {
@@ -76,7 +76,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  	u8 offchan_center_ch;
 --- a/mt7915/mac.c
 +++ b/mt7915/mac.c
-@@ -588,10 +588,10 @@ mt7915_mac_fill_rx_vector(struct mt7915_
+@@ -585,10 +585,10 @@ mt7915_mac_fill_rx_vector(struct mt7915_
  		if (i == 3)
  			wb_rssi = le32_to_cpu(rxv[9]);
  
@@ -91,7 +91,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  	}
  
  	v20 = le32_to_cpu(rxv[20]);
-@@ -602,8 +602,8 @@ mt7915_mac_fill_rx_vector(struct mt7915_
+@@ -599,8 +599,8 @@ mt7915_mac_fill_rx_vector(struct mt7915_
  
  	snr = FIELD_GET(MT_CRXV_SNR, v20) - 16;
  

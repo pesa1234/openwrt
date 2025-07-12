@@ -83,7 +83,7 @@ Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
  static void
 --- a/mt7915/mac.c
 +++ b/mt7915/mac.c
-@@ -764,17 +764,6 @@ int mt7915_tx_prepare_skb(struct mt76_de
+@@ -761,17 +761,6 @@ int mt7915_tx_prepare_skb(struct mt76_de
  	if (!wcid)
  		wcid = &dev->mt76.global_wcid;
  
@@ -101,7 +101,7 @@ Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
  	t = (struct mt76_txwi_cache *)(txwi + mdev->drv->txwi_size);
  	t->skb = tx_info->skb;
  
-@@ -1026,7 +1015,7 @@ static void mt7915_mac_add_txs(struct mt
+@@ -1020,7 +1009,7 @@ static void mt7915_mac_add_txs(struct mt
  	msta = container_of(wcid, struct mt7915_sta, wcid);
  
  	if (le32_get_bits(txs_data[0], MT_TXS0_TXS_FORMAT) == MT_TXS_PPDU_FMT)

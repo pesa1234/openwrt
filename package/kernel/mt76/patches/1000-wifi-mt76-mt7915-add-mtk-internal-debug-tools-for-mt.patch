@@ -228,7 +228,7 @@ Subject: [PATCH 01/70] wifi: mt76: mt7915: add mtk internal debug tools for
  	if (dev->relay_fwlog)
 --- a/mt7915/mac.c
 +++ b/mt7915/mac.c
-@@ -302,6 +302,10 @@ mt7915_mac_fill_rx(struct mt7915_dev *de
+@@ -299,6 +299,10 @@ mt7915_mac_fill_rx(struct mt7915_dev *de
  	__le16 fc = 0;
  	int idx;
  
@@ -239,7 +239,7 @@ Subject: [PATCH 01/70] wifi: mt76: mt7915: add mtk internal debug tools for
  	memset(status, 0, sizeof(*status));
  
  	if ((rxd1 & MT_RXD1_NORMAL_BAND_IDX) && !phy->mt76->band_idx) {
-@@ -482,6 +486,10 @@ mt7915_mac_fill_rx(struct mt7915_dev *de
+@@ -479,6 +483,10 @@ mt7915_mac_fill_rx(struct mt7915_dev *de
  	}
  
  	hdr_gap = (u8 *)rxd - skb->data + 2 * remove_pad;
@@ -250,7 +250,7 @@ Subject: [PATCH 01/70] wifi: mt76: mt7915: add mtk internal debug tools for
  	if (hdr_trans && ieee80211_has_morefrags(fc)) {
  		struct ieee80211_vif *vif;
  		int err;
-@@ -809,6 +817,12 @@ int mt7915_tx_prepare_skb(struct mt76_de
+@@ -806,6 +814,12 @@ int mt7915_tx_prepare_skb(struct mt76_de
  	tx_info->buf[1].skip_unmap = true;
  	tx_info->nbuf = MT_CT_DMA_BUF_NUM;
  

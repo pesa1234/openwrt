@@ -16,7 +16,7 @@ Signed-off-by: MeiChia Chiu <meichia.chiu@mediatek.com>
 
 --- a/mt7915/mac.c
 +++ b/mt7915/mac.c
-@@ -1280,8 +1280,7 @@ mt7915_update_vif_beacon(void *priv, u8
+@@ -1274,8 +1274,7 @@ mt7915_update_vif_beacon(void *priv, u8
  	case NL80211_IFTYPE_MESH_POINT:
  	case NL80211_IFTYPE_ADHOC:
  	case NL80211_IFTYPE_AP:

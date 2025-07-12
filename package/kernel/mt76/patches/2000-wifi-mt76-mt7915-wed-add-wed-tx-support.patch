@@ -25,7 +25,7 @@ Signed-off-by: Sujuan Chen <sujuan.chen@mediatek.com>
  	__le16 flags;
 --- a/mt7915/mac.c
 +++ b/mt7915/mac.c
-@@ -870,9 +870,9 @@ u32 mt7915_wed_init_buf(void *ptr, dma_a
+@@ -867,9 +867,9 @@ u32 mt7915_wed_init_buf(void *ptr, dma_a
  
  	txp->token = cpu_to_le16(token_id);
  	txp->nbuf = 1;
@@ -37,7 +37,7 @@ Signed-off-by: Sujuan Chen <sujuan.chen@mediatek.com>
  }
  
  static void
-@@ -921,6 +921,7 @@ mt7915_mac_tx_free(struct mt7915_dev *de
+@@ -918,6 +918,7 @@ mt7915_mac_tx_free(struct mt7915_dev *de
  	LIST_HEAD(free_list);
  	void *end = data + len;
  	bool v3, wake = false;
@@ -45,7 +45,7 @@ Signed-off-by: Sujuan Chen <sujuan.chen@mediatek.com>
  	u16 total, count = 0;
  	u32 txd = le32_to_cpu(free->txd);
  	__le32 *cur_info;
-@@ -990,12 +991,15 @@ mt7915_mac_tx_free(struct mt7915_dev *de
+@@ -987,12 +988,15 @@ mt7915_mac_tx_free(struct mt7915_dev *de
  			txwi = mt76_token_release(mdev, msdu, &wake);
  			if (!txwi)
  				continue;
@@ -83,7 +83,7 @@ Signed-off-by: Sujuan Chen <sujuan.chen@mediatek.com>
  	ctx->dev = NULL;
 --- a/mt7915/mmio.c
 +++ b/mt7915/mmio.c
-@@ -740,6 +740,7 @@ int mt7915_mmio_wed_init(struct mt7915_d
+@@ -737,6 +737,7 @@ int mt7915_mmio_wed_init(struct mt7915_d
  
  	*irq = wed->irq;
  	dev->mt76.dma_dev = wed->dev;
@@ -104,7 +104,7 @@ Signed-off-by: Sujuan Chen <sujuan.chen@mediatek.com>
  #define MT7915_CFEND_RATE_DEFAULT	0x49	/* OFDM 24M */
 --- a/wed.c
 +++ b/wed.c
-@@ -171,7 +171,7 @@ void mt76_wed_offload_disable(struct mtk
+@@ -167,7 +167,7 @@ void mt76_wed_offload_disable(struct mtk
  	struct mt76_dev *dev = container_of(wed, struct mt76_dev, mmio.wed);
  
  	spin_lock_bh(&dev->token_lock);
