@@ -1,0 +1,45 @@
+From 8e7e10ed19f46089f013ab426b414fe424acf617 Mon Sep 17 00:00:00 2001
+From: Bo-Cun Chen <bc-bocun.chen@mediatek.com>
+Date: Tue, 10 Jun 2025 19:52:21 +0800
+Subject: [PATCH] net: ethernet: mtk_eth_soc: add 2500Mbps maximum rate limt
+ for NETSYSv3
+
+Without this patch, the ETH driver is unable to set QDMA maximum rate
+limit to 2500 Mbps for the specific TX queue.
+
+Signed-off-by: Bo-Cun Chen <bc-bocun.chen@mediatek.com>
+---
+ drivers/net/ethernet/mediatek/mtk_eth_soc.c | 15 +++++++++++++++
+ 1 file changed, 15 insertions(+)
+
+--- a/drivers/net/ethernet/mediatek/mtk_eth_soc.c
++++ b/drivers/net/ethernet/mediatek/mtk_eth_soc.c
+@@ -871,6 +871,8 @@ static void mtk_set_queue_speed(struct m
+ 	      MTK_QTX_SCH_LEAKY_BUCKET_SIZE;
+ 	if (mtk_is_netsys_v1(eth))
+ 		val |= MTK_QTX_SCH_LEAKY_BUCKET_EN;
++		
++	pr_info("mtk_eth: NETSYS version = %d\n", eth->soc->version);
+ 
+ 	if (IS_ENABLED(CONFIG_SOC_MT7621)) {
+ 		switch (speed) {
+@@ -915,12 +917,19 @@ static void mtk_set_queue_speed(struct m
+ 			       FIELD_PREP(MTK_QTX_SCH_MAX_RATE_EXP, 6) |
+ 			       FIELD_PREP(MTK_QTX_SCH_MAX_RATE_WEIGHT, 10);
+ 			break;
++		case SPEED_2500:
++			val |= MTK_QTX_SCH_MAX_RATE_EN |
++			       FIELD_PREP(MTK_QTX_SCH_MAX_RATE_MAN, 25) |
++			       FIELD_PREP(MTK_QTX_SCH_MAX_RATE_EXP, 5) |
++			       FIELD_PREP(MTK_QTX_SCH_MAX_RATE_WEIGHT, 10);
++			break;
+ 		default:
+ 			break;
+ 		}
+ 	}
+ 
+ 	ofs = MTK_QTX_OFFSET * idx;
++	pr_info("mtk_eth: queue %u speed=%d Mbps → val=0x%08x\n", idx, speed, val);
+ 	mtk_w32(eth, val, soc->reg_map->qdma.qtx_sch + ofs);
+ }
+ 
