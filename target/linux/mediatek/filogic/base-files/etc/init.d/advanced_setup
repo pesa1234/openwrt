@@ -309,27 +309,30 @@ gl-mt6000()
 			dev=$(uci get network.$iface.device 2>/dev/null)
 
 			for name in $ifnames $dev; do
-				if [ -n "$name" ]; then
-					if echo "$name" | grep -q '\.'; then
-						parent="${name%%.*}"
-						WAN_IF_LIST="$WAN_IF_LIST $parent"
+				[ -z "$name" ] && continue
 
-					elif [ -d "/sys/class/net/$name" ]; then
-						WAN_IF_LIST="$WAN_IF_LIST $name"
+				if echo "$name" | grep -q '\.'; then
+					base="${name%%.*}"
 
+					if [ -d "/sys/class/net/$base" ]; then
+						WAN_IF_LIST="$WAN_IF_LIST $base"
 					else
-						base_if=$(uci get network.$name.ifname 2>/dev/null)
-						if [ -n "$base_if" ]; then
-							WAN_IF_LIST="$WAN_IF_LIST $base_if"
-						fi
+						alt_if=$(uci get network.$base.ifname 2>/dev/null)
+						[ -n "$alt_if" ] && WAN_IF_LIST="$WAN_IF_LIST $alt_if"
 					fi
+
+				elif [ -d "/sys/class/net/$name" ]; then
+					WAN_IF_LIST="$WAN_IF_LIST $name"
+
+				else
+					base_if=$(uci get network.$name.ifname 2>/dev/null)
+					[ -n "$base_if" ] && WAN_IF_LIST="$WAN_IF_LIST $base_if"
 				fi
 			done
 		fi
 	done
 
-	WAN_IF_LIST=$(echo $WAN_IF_LIST | tr ' ' '\n' | sort -u | tr '\n' ' ')
-
+	WAN_IF_LIST=$(echo "$WAN_IF_LIST" | tr ' ' '\n' | sort -u | tr '\n' ' ')
 	
 	BRIDGE_MEMBERS=""
 
