@@ -300,33 +300,31 @@ gl-mt6000()
 	
 	WAN_IF_LIST=""
 
-	for iface in $(uci show network | grep "=interface" | cut -d '.' -f 2 | cut -d '=' -f1); do
+	for iface in $(uci show network | grep "=interface" | cut -d '.' -f 2 | cut -d '=' -f1 | sort -u); do
 		proto=$(uci get network.$iface.proto 2>/dev/null)
 		role=$(uci get network.$iface.role 2>/dev/null)
 
 		if [ "$proto" = "dhcp" ] || [ "$proto" = "pppoe" ] || [ "$role" = "wan" ]; then
-			ifnames=$(uci get network.$iface.ifname 2>/dev/null)
-			dev=$(uci get network.$iface.device 2>/dev/null)
+			device=$(uci get network.$iface.device 2>/dev/null)
 
-			for name in $ifnames $dev; do
-				[ -z "$name" ] && continue
+			for dev in $device; do
+				if echo "$dev" | grep -q '\.'; then
+					base_if=$(uci show network | grep "device..*name='$dev'" | cut -d. -f2 | while read devsec; do
+						uci get network.$devsec.ifname 2>/dev/null
+					done)
 
-				if echo "$name" | grep -q '\.'; then
-					base="${name%%.*}"
-
-					if [ -d "/sys/class/net/$base" ]; then
-						WAN_IF_LIST="$WAN_IF_LIST $base"
-					else
-						alt_if=$(uci get network.$base.ifname 2>/dev/null)
-						[ -n "$alt_if" ] && WAN_IF_LIST="$WAN_IF_LIST $alt_if"
+					if [ -n "$base_if" ]; then
+						WAN_IF_LIST="$WAN_IF_LIST $base_if"
 					fi
 
-				elif [ -d "/sys/class/net/$name" ]; then
-					WAN_IF_LIST="$WAN_IF_LIST $name"
+				elif [ -d "/sys/class/net/$dev" ]; then
+					WAN_IF_LIST="$WAN_IF_LIST $dev"
 
 				else
-					base_if=$(uci get network.$name.ifname 2>/dev/null)
-					[ -n "$base_if" ] && WAN_IF_LIST="$WAN_IF_LIST $base_if"
+					alias_if=$(uci get network.$dev.ifname 2>/dev/null)
+					if [ -n "$alias_if" ]; then
+						WAN_IF_LIST="$WAN_IF_LIST $alias_if"
+					fi
 				fi
 			done
 		fi
@@ -632,7 +630,7 @@ set_smp_affinity
 
 mtk-offloading()
 {
-	mtk_offloading_enable=$(uci get advanced.@defaults[0].mtk_offloading_enable)
+	mtk_offloading_enable=$(uci get advanced.@defaults[0].mtk_offloading_enable 2>/dev/null || echo "x")
 	if [ "$mtk_offloading_enable" == "1" ]; then
 			logger -s "smp_affinity: Enabling mtk offloading"
 			#TCP Binding
@@ -663,8 +661,8 @@ hw-atf-setup()
 	FILE="/sys/kernel/debug/ieee80211/phy0/mt76/vow"
 	if [ -e "$FILE" ]; then
 		logger -s "smp_affinity: HW-ATF available"
-		atf=$(uci get advanced.@defaults[0].atf_enable)
-		hwatf=$(uci get advanced.@defaults[0].hw_atf_enable)
+		atf=$(uci get advanced.@defaults[0].atf_enable 2>/dev/null || echo "x")
+		hwatf=$(uci get advanced.@defaults[0].hw_atf_enable 2>/dev/null || echo "x")
 		if [ $atf == 1 ]; then
 			echo 'vow_atf_en=1' > /sys/kernel/debug/ieee80211/phy0/mt76/vow
 		elif [ $atf == 0 ]; then
@@ -676,8 +674,7 @@ hw-atf-setup()
 		elif [ $hwatf == 0 ]; then
 			echo 'vow_watf_en=0' > /sys/kernel/debug/ieee80211/phy0/mt76/vow
 		fi
-		logger -t adv-log "HW-ATF Settings:"
-		echo 'show_vow_info' > /sys/kernel/debug/ieee80211/phy0/mt76/vow	
+		echo 'show_vow_info' > /sys/kernel/debug/ieee80211/phy0/mt76/vow
 	fi
 }
 
@@ -685,8 +682,8 @@ enable-HQoS()
 {
 	FILE="/sbin/mtkhnat"
 	if [ -e "$FILE" ]; then
-		mtkutil_enable=$(uci get mtkhnat.global.enable)
-		hqos_enable=$(uci get mtkhnat.global.hqos)
+		mtkutil_enable=$(uci get mtkhnat.global.enable 2>/dev/null  || echo "x")
+		hqos_enable=$(uci get mtkhnat.global.hqos 2>/dev/null  || echo "x")
 		if [ $mtkutil_enable == 1 ]; then
 			if [ $hqos_enable == 1 ]; then
 				/sbin/mtkhnat
@@ -699,12 +696,12 @@ enable-HQoS()
 
 usb-setup()
 {
-	usb2=$(uci get advanced.@defaults[0].usb_2)
+	usb2=$(uci get advanced.@defaults[0].usb_2 2>/dev/null || echo "x")
 	if [ $usb2 == 1 ]; then
-		logger -t adv-log "USB Speed set to 2.0"
+		logger -s "advanced_setup: USB Speed set to 2.0"
 		echo 1 > /sys/bus/usb/devices/usb2/2-0:1.0/usb2-port1/disable
 	elif [ $usb2 == 0 ]; then
-		logger -t adv-log "USB Speed set to 3.0"
+		logger -s "advanced_setup: USB Speed set to 3.0"
 		echo 0 > /sys/bus/usb/devices/usb2/2-0:1.0/usb2-port1/disable
 	fi
 	
@@ -721,5 +718,5 @@ start() {
 	usb-setup
 	hw-atf-setup
 	#mtk-offloading #### do not run - hardware flow offloading and bridger works better
-	) &
+	) >/dev/null 2>&1 </dev/null &
 }
