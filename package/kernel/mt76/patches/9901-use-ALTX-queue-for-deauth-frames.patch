@@ -1,0 +1,27 @@
+From faff9aec9fdbee4397411b4889011d298c41e825 Mon Sep 17 00:00:00 2001
+From: Chad Monroe <chad@monroe.io>
+Date: Thu, 3 Jul 2025 15:22:33 -0700
+Subject: [PATCH] SDG-4050: mt76: use ALTX queue for deauth frames
+
+prevents sending packets to regular AC queues after station
+has been torn down.
+---
+ .../0005-mt76-use-ALTX-queue-for-deauth-frames.patch | 12 ++++++++++++
+ 1 file changed, 12 insertions(+)
+ create mode 100644 mt76/patches/0005-mt76-use-ALTX-queue-for-deauth-frames.patch
+
+--- /dev/null
++++ b/mt76/patches/0005-mt76-use-ALTX-queue-for-deauth-frames.patch
+@@ -0,0 +1,12 @@
++--- a/tx.c
+++++ b/tx.c
++@@ -614,7 +614,8 @@ mt76_txq_schedule_pending_wcid(struct mt
++ 		if ((dev->drv->drv_flags & MT_DRV_HW_MGMT_TXQ) &&
++ 		    !(info->flags & IEEE80211_TX_CTL_HW_80211_ENCAP) &&
++ 		    !ieee80211_is_data(hdr->frame_control) &&
++-		    !ieee80211_is_bufferable_mmpdu(skb))
+++		    (!ieee80211_is_bufferable_mmpdu(skb) ||
+++		     ieee80211_is_deauth(hdr->frame_control)))
++ 			qid = MT_TXQ_PSD;
++ 
++ 		q = phy->q_tx[qid];
