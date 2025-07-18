@@ -710,7 +710,9 @@ usb-setup()
 start() {
 	(
 	if [ ! -f /tmp/smp_affinity_started ]; then
-		sleep 20
+		delay=$(uci get advanced.@advanced_packet_steering[0].advanced_packet_steering_delay 2>/dev/null || echo "30")
+		logger -s "smp_affinity: Starting with delay of $delay sec."
+		sleep $delay
 		echo 1 > /tmp/smp_affinity_started
 	fi
 	smp-mt76
