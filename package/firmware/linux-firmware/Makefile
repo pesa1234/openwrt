@@ -8,14 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=linux-firmware
-PKG_VERSION:=20250712
+PKG_VERSION:=20250708
 PKG_RELEASE:=1
 
-PKG_SOURCE_URL:=https://github.com/pesa1234/linux-firmware.git
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_DATE:=2025-07-04
-PKG_SOURCE_VERSION:=229b286cf53badd3a629cf408b71172ff9e21900
-PKG_MIRROR_HASH:=ec6c78111409e83669ddb26ca87000670b6c5b59573d850aafdfaa7643c7b749
+PKG_SOURCE_URL:=@KERNEL/linux/kernel/firmware
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
+PKG_HASH:=6f3efee7f600c201f9b2d675889a4ccdb8cfe56e0d283641796ed10e64c72047
 
 PKG_MAINTAINER:=Felix Fietkau <nbd@nbd.name>
 
@@ -29,7 +27,7 @@ STRIP:=:
 define Package/firmware-default
   SECTION:=firmware
   CATEGORY:=Firmware
-  URL:=https://github.com/pesa1234/linux-firmware.git
+  URL:=http://git.kernel.org/cgit/linux/kernel/git/firmware/linux-firmware.git
   TITLE:=$(1)
   DEPENDS:=$(2)
   LICENSE_FILES:=$(3)
