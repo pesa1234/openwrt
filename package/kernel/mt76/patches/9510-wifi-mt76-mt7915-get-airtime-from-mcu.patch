@@ -1,0 +1,408 @@
+From 156034144c64198c0a417926fa3867d635affbb4 Mon Sep 17 00:00:00 2001
+From: TomLiu <tomml.liu@mediatek.com>
+Date: Fri, 12 Apr 2024 17:07:00 +0000
+Subject: [PATCH] [mt76] mt7915 MCU event airtime
+
+---
+ mt76_connac_mcu.h |   12 ++++++++++++
+ mt7915/mac.c      |    7 +++++++
+ mt7915/mcu.c      |   81 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ mt7915/mcu.h      |   16 ++++++++++++++++
+ mt7915/mt7915.h   |    1 +
+ 5 files changed, 117 insertions(+)
+
+--- a/mt76_connac_mcu.h
++++ b/mt76_connac_mcu.h
+@@ -1049,6 +1049,7 @@ enum {
+ 	MCU_EXT_EVENT_BCC_NOTIFY = 0x75,
+ 	MCU_EXT_EVENT_WF_RF_PIN_CTRL = 0x9a,
+ 	MCU_EXT_EVENT_MURU_CTRL = 0x9f,
++	MCU_EXT_EVENT_GET_ALL_STA_STATS = 0xb5,
+ 	MCU_EXT_EVENT_CSI_REPORT = 0xc2,
+ };
+ 
+@@ -1279,6 +1280,7 @@ enum {
+ 	MCU_EXT_CMD_PHY_STAT_INFO = 0xad,
+ 	/* for vendor csi and air monitor */
+ 	MCU_EXT_CMD_SMESH_CTRL = 0xae,
++	MCU_EXT_CMD_GET_ALL_STA_STATS = 0xb5,
+ 	MCU_EXT_CMD_RX_STAT_USER_CTRL = 0xb3,
+ 	MCU_EXT_CMD_SET_QOS_MAP = 0xb4,
+ 	MCU_EXT_CMD_SET_CFG = 0xb7,
+@@ -1290,6 +1292,16 @@ enum {
+ 	MCU_EXT_CMD_LPI_CTRL = 0xc8,
+ };
+ 
++enum MCU_EXT_CMD_ALL_STA_INFO_TAG {
++	MCU_PHY_PER_STA_TX_RATE = 0x1,
++	MCU_PHY_PER_STA_TX_STAT = 0x2,
++	MCU_PHY_RX_STAT = 0x03,
++	MCU_PHY_PER_STA_TXRX_ADM_STAT = 0x04,
++	MCU_PHY_PER_STA_TXRX_AIR_TIME = 0x05,
++	MCU_PHY_PER_STA_DATA_TX_RETRY_COUNT = 0x06,
++	MCU_PHY_PER_STA_GI_MODE = 0x07,
++};
++
+ enum {
+ 	MCU_UNI_CMD_DEV_INFO_UPDATE = 0x01,
+ 	MCU_UNI_CMD_BSS_INFO_UPDATE = 0x02,
+@@ -1417,11 +1429,23 @@ enum {
+ 	UNI_OFFLOAD_OFFLOAD_BMC_RPY_DETECT,
+ };
+ 
++enum UNI_PER_STA_INFO_TAG {
++	UNI_PER_STA_RSSI,
++	UNI_PER_STA_CONTENTION_RX_RATE,
++	UNI_PER_STA_PER,
++	UNI_PER_STA_SNR,
++	UNI_PER_STA_TX_RATE,
++	UNI_PER_STA_TX_CNT,
++	UNI_PER_STA_TID_SN_GET,
++	UNI_PER_STA_TID_SN_SET,
++	UNI_PER_STA_MAX_NUM
++};
++
+ enum UNI_ALL_STA_INFO_TAG {
+ 	UNI_ALL_STA_TXRX_RATE,
+ 	UNI_ALL_STA_TX_STAT,
+ 	UNI_ALL_STA_TXRX_ADM_STAT,
+-	UNI_ALL_STA_TXRX_AIR_TIME,
++	UNI_ALL_STA_TXRX_AIRTIME,
+ 	UNI_ALL_STA_DATA_TX_RETRY_COUNT,
+ 	UNI_ALL_STA_GI_MODE,
+ 	UNI_ALL_STA_TXRX_MSDU_COUNT,
+--- a/mt7915/mac.c
++++ b/mt7915/mac.c
+@@ -90,18 +90,9 @@ u32 mt7915_mac_wtbl_lmac_addr(struct mt7
+ 
+ static void mt7915_mac_sta_poll(struct mt7915_dev *dev)
+ {
+-	static const u8 ac_to_tid[] = {
+-		[IEEE80211_AC_BE] = 0,
+-		[IEEE80211_AC_BK] = 1,
+-		[IEEE80211_AC_VI] = 4,
+-		[IEEE80211_AC_VO] = 6
+-	};
+-	struct ieee80211_sta *sta;
+ 	struct mt7915_sta *msta;
+ 	struct rate_info *rate;
+-	u32 tx_time[IEEE80211_NUM_ACS], rx_time[IEEE80211_NUM_ACS];
+ 	LIST_HEAD(sta_poll_list);
+-	int i;
+ 
+ 	spin_lock_bh(&dev->mt76.sta_poll_lock);
+ 	list_splice_init(&dev->mt76.sta_poll_list, &sta_poll_list);
+@@ -110,7 +101,6 @@ static void mt7915_mac_sta_poll(struct m
+ 	rcu_read_lock();
+ 
+ 	while (true) {
+-		bool clear = false;
+ 		u32 addr, val;
+ 		u16 idx;
+ 		s8 rssi[4];
+@@ -128,62 +118,6 @@ static void mt7915_mac_sta_poll(struct m
+ 
+ 		idx = msta->wcid.idx;
+ 
+-		/* refresh peer's airtime reporting */
+-		addr = mt7915_mac_wtbl_lmac_addr(dev, idx, 20);
+-
+-		for (i = 0; i < IEEE80211_NUM_ACS; i++) {
+-			u32 tx_last = msta->airtime_ac[i];
+-			u32 rx_last = msta->airtime_ac[i + 4];
+-
+-			msta->airtime_ac[i] = mt76_rr(dev, addr);
+-			msta->airtime_ac[i + 4] = mt76_rr(dev, addr + 4);
+-
+-			if (msta->airtime_ac[i] <= tx_last)
+-				tx_time[i] = 0;
+-			else
+-				tx_time[i] = msta->airtime_ac[i] - tx_last;
+-
+-			if (msta->airtime_ac[i + 4] <= rx_last)
+-				rx_time[i] = 0;
+-			else
+-				rx_time[i] = msta->airtime_ac[i + 4] - rx_last;
+-
+-			if ((tx_last | rx_last) & BIT(30))
+-				clear = true;
+-
+-			addr += 8;
+-		}
+-
+-		if (clear) {
+-			mt7915_mac_wtbl_update(dev, idx,
+-					       MT_WTBL_UPDATE_ADM_COUNT_CLEAR);
+-			memset(msta->airtime_ac, 0, sizeof(msta->airtime_ac));
+-		}
+-
+-		if (!msta->wcid.sta)
+-			continue;
+-
+-		sta = container_of((void *)msta, struct ieee80211_sta,
+-				   drv_priv);
+-		for (i = 0; i < IEEE80211_NUM_ACS; i++) {
+-			u8 queue = mt76_connac_lmac_mapping(i);
+-			u32 tx_cur = tx_time[queue];
+-			u32 rx_cur = rx_time[queue];
+-			u8 tid = ac_to_tid[i];
+-
+-			if (!tx_cur && !rx_cur)
+-				continue;
+-
+-			ieee80211_sta_register_airtime(sta, tid, tx_cur,
+-						       rx_cur);
+-		}
+-
+-		/*
+-		 * We don't support reading GI info from txs packets.
+-		 * For accurate tx status reporting and AQL improvement,
+-		 * we need to make sure that flags match so polling GI
+-		 * from per-sta counters directly.
+-		 */
+ 		rate = &msta->wcid.rate;
+ 		addr = mt7915_mac_wtbl_lmac_addr(dev, idx, 7);
+ 		val = mt76_rr(dev, addr);
+@@ -2083,11 +2017,14 @@ void mt7915_mac_work(struct work_struct
+ {
+ 	struct mt7915_phy *phy;
+ 	struct mt76_phy *mphy;
++	struct mt76_dev *mdev;
+ 
+ 	mphy = (struct mt76_phy *)container_of(work, struct mt76_phy,
+ 					       mac_work.work);
+ 	phy = mphy->priv;
+ 
++	mdev = mphy->dev;
++
+ 	mutex_lock(&mphy->dev->mutex);
+ 
+ 	mt76_update_survey(mphy);
+@@ -2101,6 +2038,8 @@ void mt7915_mac_work(struct work_struct
+ 
+ 		if (phy->dev->muru_debug)
+ 			mt7915_mcu_muru_debug_get(phy);
++			
++		mt7915_mcu_get_all_sta_info(mdev, MCU_PHY_PER_STA_TXRX_AIR_TIME);
+ 
+ 		/* Update DEV-wise information only in
+ 		 * the MAC work of the first band running.
+--- a/mt7915/mcu.c
++++ b/mt7915/mcu.c
+@@ -499,6 +499,104 @@ mt7915_mcu_rx_bss_acq_pkt_cnt(struct mt7
+ }
+ 
+ static void
++mt7915_mcu_rx_all_sta_info_event(struct mt7915_dev *dev, struct sk_buff *skb)
++{
++	struct mt7915_mcu_all_sta_info_event *res;
++	u16 i;
++
++	res = (struct mt7915_mcu_all_sta_info_event *)skb->data;
++	for (i = 0; i < le16_to_cpu(res->sta_num); i++) {
++		u8 ac;
++		u16 wlan_idx;
++		bool clear;
++		struct mt76_wcid *wcid;
++		struct ieee80211_sta *sta;
++		u32 prev_tx_airtime, prev_rx_airtime, diff_tx_airtime, diff_rx_airtime;
++
++		switch (res->tag) {
++		case MCU_PHY_PER_STA_TXRX_AIR_TIME:
++			wlan_idx = le16_to_cpu(res->airtime[i].wlan_idx);
++			wcid = rcu_dereference(dev->mt76.wcid[wlan_idx]);
++			clear = false;
++
++			sta = wcid_to_sta(wcid);
++			if (!sta)
++				continue;
++
++			for (ac = IEEE80211_AC_VO; ac < IEEE80211_NUM_ACS; ++ac) {
++				u8 lmac_ac = mt76_connac_lmac_mapping(ac);
++
++				prev_tx_airtime = wcid->stats.tx_airtime[ac];
++				prev_rx_airtime = wcid->stats.rx_airtime[ac];
++				wcid->stats.tx_airtime[ac] = le32_to_cpu(res->airtime[i].tx[lmac_ac]);
++				wcid->stats.rx_airtime[ac] = le32_to_cpu(res->airtime[i].rx[lmac_ac]);
++
++				if (wcid->stats.tx_airtime[ac] >= prev_tx_airtime) {
++					diff_tx_airtime = wcid->stats.tx_airtime[ac] - prev_tx_airtime;
++				} else {
++					diff_tx_airtime = wcid->stats.tx_airtime[ac];
++				}
++
++				if (wcid->stats.rx_airtime[ac] >= prev_rx_airtime) {
++					diff_rx_airtime = wcid->stats.rx_airtime[ac] - prev_rx_airtime;
++				} else {
++					diff_rx_airtime = wcid->stats.rx_airtime[ac];
++				}
++
++				if ((wcid->stats.tx_airtime[ac] | wcid->stats.rx_airtime[ac]) & BIT(30)) {
++						clear = true;
++
++						dev_dbg(dev->mt76.dev,
++							"sta: %02X:%02X:%02X:%02X:%02X:%02X ac: %u tx_read: %u rx_read: %u tx_time: %u rx_time: %u tx_prev: %u rx_prev: %u tx_diff: %u rx_diff: %u clear: %d\n",
++							sta->addr[0], sta->addr[1], sta->addr[2], sta->addr[3], sta->addr[4], sta->addr[5],
++							ac,
++							le32_to_cpu(res->airtime[i].tx[lmac_ac]),
++							le32_to_cpu(res->airtime[i].rx[lmac_ac]),
++							wcid->stats.tx_airtime[ac],
++							wcid->stats.rx_airtime[ac],
++							prev_tx_airtime, prev_rx_airtime,
++							diff_tx_airtime, diff_rx_airtime,
++							clear);
++				}
++
++				if ((diff_tx_airtime > 600000) || (diff_rx_airtime > 600000)) {
++					dev_dbg(dev->mt76.dev,
++						"sta: %02X:%02X:%02X:%02X:%02X:%02X ac: %u tx_read: %u rx_read: %u tx_time: %u rx_time: %u tx_prev: %u rx_prev: %u tx_diff: %u rx_diff: %u\n",
++						sta->addr[0], sta->addr[1], sta->addr[2], sta->addr[3], sta->addr[4], sta->addr[5],
++						ac,
++						le32_to_cpu(res->airtime[i].tx[lmac_ac]),
++						le32_to_cpu(res->airtime[i].rx[lmac_ac]),
++						wcid->stats.tx_airtime[ac],
++						wcid->stats.rx_airtime[ac],
++						prev_tx_airtime, prev_rx_airtime,
++						diff_tx_airtime, diff_rx_airtime);
++
++					if (diff_tx_airtime > 600000)
++						diff_tx_airtime = 0;
++					if (diff_rx_airtime > 600000)
++						diff_rx_airtime = 0;
++				}
++
++				ieee80211_sta_register_airtime(sta, mt76_ac_to_tid(ac),
++					diff_tx_airtime, diff_rx_airtime);
++			}
++
++			if (clear) {
++				dev_dbg(dev->mt76.dev,
++					"sta: %02X:%02X:%02X:%02X:%02X:%02X reset airtime counters\n",
++					sta->addr[0], sta->addr[1], sta->addr[2], sta->addr[3], sta->addr[4], sta->addr[5]);
++
++				mt7915_mac_wtbl_update(dev, wcid->idx,
++						       MT_WTBL_UPDATE_ADM_COUNT_CLEAR);
++			}
++			break;
++		default:
++			break;
++		}
++	}
++}
++
++static void
+ mt7915_mcu_rx_ext_event(struct mt7915_dev *dev, struct sk_buff *skb)
+ {
+ 	struct mt76_connac2_mcu_rxd *rxd;
+@@ -538,6 +636,9 @@ mt7915_mcu_rx_ext_event(struct mt7915_de
+ 	case MCU_EXT_EVENT_BSS_ACQ_PKT_CNT:
+ 		mt7915_mcu_rx_bss_acq_pkt_cnt(dev, skb);
+ 		break;
++	case MCU_EXT_EVENT_GET_ALL_STA_STATS:
++		mt7915_mcu_rx_all_sta_info_event(dev, skb);
++		break;
+ 	default:
+ 		break;
+ 	}
+@@ -570,6 +671,7 @@ void mt7915_mcu_rx_event(struct mt7915_d
+ 	     rxd->ext_eid == MCU_EXT_EVENT_PS_SYNC ||
+ 	     rxd->ext_eid == MCU_EXT_EVENT_BCC_NOTIFY ||
+ 	     rxd->ext_eid == MCU_EXT_EVENT_BF_STATUS_READ ||
++	     rxd->ext_eid == MCU_EXT_EVENT_GET_ALL_STA_STATS ||
+ 	     !rxd->seq) &&
+ 	     !(rxd->eid == MCU_CMD_EXT_CID &&
+ 	       rxd->ext_eid == MCU_EXT_EVENT_WA_TX_STAT))
+@@ -5534,3 +5636,16 @@ int mt7915_mcu_thermal_debug(struct mt79
+ 	return mt76_mcu_send_msg(&dev->mt76, MCU_EXT_CMD(THERMAL_DEBUG), &req,
+ 				 sizeof(req), true);
+ }
++
++int mt7915_mcu_get_all_sta_info(struct mt76_dev *dev, u16 tag)
++{
++	struct {
++		u8 tag;
++		u8 rsv[3];
++	} __packed req = {
++		.tag = tag,
++	};
++
++	return mt76_mcu_send_msg(dev, MCU_EXT_CMD(GET_ALL_STA_STATS),
++				&req, sizeof(req), false);
++}
+--- a/mt7915/mcu.h
++++ b/mt7915/mcu.h
+@@ -717,6 +717,22 @@ enum {
+ 	SER_RECOVER
+ };
+ 
++struct mt7915_mcu_all_sta_info_event {
++	struct mt76_connac2_mcu_rxd rxd;
++
++	u8 tag;
++	u8 more;
++	__le16 sta_num;
++
++	union {
++		struct {
++			__le16 wlan_idx;
++			__le32 tx[IEEE80211_NUM_ACS];
++			__le32 rx[IEEE80211_NUM_ACS];
++		} airtime[0] __packed;
++	} __packed;
++} __packed;
++
+ #define MT7915_MAX_BEACON_SIZE		1308
+ #define MT7915_BEACON_UPDATE_SIZE	(sizeof(struct sta_req_hdr) +	\
+ 					 sizeof(struct bss_info_bcn) +	\
+--- a/mt7915/mt7915.h
++++ b/mt7915/mt7915.h
+@@ -763,6 +763,7 @@ int mt7915_mcu_set_thermal_throttling(st
+ int mt7915_mcu_set_thermal_protect(struct mt7915_phy *phy);
+ int mt7915_mcu_get_rx_rate(struct mt7915_phy *phy, struct ieee80211_vif *vif,
+ 			   struct ieee80211_sta *sta, struct rate_info *rate);
++int mt7915_mcu_get_all_sta_info(struct mt76_dev *dev, u16 tag);
+ int mt7915_mcu_rdd_background_enable(struct mt7915_phy *phy,
+ 				     struct cfg80211_chan_def *chandef);
+ int mt7915_mcu_wed_wa_tx_stats(struct mt7915_dev *dev, u16 wcid);
+--- a/mt76.h
++++ b/mt76.h
+@@ -335,12 +335,16 @@ struct mt76_sta_stats {
+ 	u32 tx_packets;		/* unit: MSDU */
+ 	u32 tx_retries;
+ 	u32 tx_failed;
++	u32 tx_total_mpdu_cnt;
++	u32 tx_failed_mpdu_cnt;
++	u32 tx_airtime[4];
+ 	/* WED RX */
+ 	u64 rx_bytes;
+ 	u32 rx_packets;
+ 	u32 rx_errors;
+ 	u32 rx_drops;
+ 	u64 last_rx_bytes;
++	u32 rx_airtime[4];
+ };
+ 
+ enum mt76_wcid_flags {
+@@ -1451,6 +1455,22 @@ static inline int mt76_decr(int val, int
+ 
+ u8 mt76_ac_to_hwq(u8 ac);
+ 
++static inline u8
++mt76_ac_to_tid(u8 ac)
++{
++	static const u8 ac_to_tid[] = {
++		[IEEE80211_AC_BE] = 0,
++		[IEEE80211_AC_BK] = 1,
++		[IEEE80211_AC_VI] = 4,
++		[IEEE80211_AC_VO] = 6
++	};
++
++	if (WARN_ON(ac >= IEEE80211_NUM_ACS))
++		return 0;
++
++	return ac_to_tid[ac];
++}
++
+ static inline struct ieee80211_txq *
+ mtxq_to_txq(struct mt76_txq *mtxq)
+ {

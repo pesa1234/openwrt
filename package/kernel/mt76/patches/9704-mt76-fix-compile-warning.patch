@@ -1,0 +1,19 @@
+--- a/mt7915/debugfs.c
++++ b/mt7915/debugfs.c
+@@ -1829,7 +1829,7 @@ mt7915_get_csi_stats(struct file *file,
+ 	struct csi_mac_filter *current_mac, *tmp_mac;
+ 	static const size_t sz = 4096;
+ 	char *buf;
+-	u32 reg, len = 0;
++	u32 len = 0;
+ 	int ret;
+ 
+ 	buf = kzalloc(sz, GFP_KERNEL);
+@@ -1852,7 +1852,6 @@ mt7915_get_csi_stats(struct file *file,
+ 
+ 	ret = simple_read_from_buffer(user_buf, count, ppos, buf, len);
+ 
+-out:
+ 	kfree(buf);
+ 	return ret;
+ }

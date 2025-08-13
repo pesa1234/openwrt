@@ -1,0 +1,31 @@
+From fea6b9ca9537347997d6bda96af90c53cd585879 Mon Sep 17 00:00:00 2001
+From: TomLiu <tomml.liu@mediatek.com>
+Date: Tue, 13 Aug 2024 21:57:42 +0000
+Subject: [PATCH] [mt76]mt7915 add airtime filter for airtime spike
+
+---
+ mt7915/mcu.c | 13 ++++++++-----
+ 1 file changed, 8 insertions(+), 5 deletions(-)
+
+--- a/mt7915/mcu.c
++++ b/mt7915/mcu.c
+@@ -3456,11 +3456,14 @@ int mt7915_mcu_get_chan_mib_info(struct
+ 	if (chan_switch)
+ 		goto out;
+ 
+-	state->cc_tx += cc_tx - state_ts->cc_tx;
+-	state->cc_bss_rx += __res_u64(2) - state_ts->cc_bss_rx;
+-	state->cc_rx += __res_u64(2) + __res_u64(3) - state_ts->cc_rx;
+-	state->cc_busy += __res_u64(0) + cc_tx + __res_u64(2) + __res_u64(3) -
+-			  state_ts->cc_busy;
++	if (cc_tx - state_ts->cc_tx < 150000)
++		state->cc_tx += cc_tx - state_ts->cc_tx;
++	if (__res_u64(2) - state_ts->cc_bss_rx < 150000)
++		state->cc_bss_rx += __res_u64(2) - state_ts->cc_bss_rx;
++	if (__res_u64(2) + __res_u64(3) - state_ts->cc_rx < 150000)
++		state->cc_rx += __res_u64(2) + __res_u64(3) - state_ts->cc_rx;
++	if (__res_u64(0) + cc_tx + __res_u64(2) + __res_u64(3) - state_ts->cc_busy < 150000)
++		state->cc_busy += __res_u64(0) + cc_tx + __res_u64(2) + __res_u64(3) - state_ts->cc_busy;
+ 
+ out:
+ 	state_ts->cc_tx = cc_tx;

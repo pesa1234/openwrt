@@ -1,0 +1,146 @@
+From 40d175e8ad31eb956071998bc3801538020febf0 Mon Sep 17 00:00:00 2001
+From: Benjamin Lin <benjamin-jw.lin@mediatek.com>
+Date: Fri, 2 Aug 2024 14:22:45 +0800
+Subject: [PATCH] wifi: mt76: mt7915: enable PPDU TXS to update data-frame TX
+ rate
+
+When WED is on, only use data-frame TXS to update station's TX rate.
+When WED is off, enable PPDU TXS to update TX rate.
+
+Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
+---
+ mt76_connac.h     |  2 +-
+ mt76_connac_mac.c | 10 ++++++----
+ mt7915/init.c     |  3 +--
+ mt7915/mac.c      | 13 +------------
+ mt7915/main.c     |  1 -
+ mt7915/mt7915.h   |  1 -
+ tx.c              |  5 ++---
+ 7 files changed, 11 insertions(+), 24 deletions(-)
+
+--- a/mt76_connac.h
++++ b/mt76_connac.h
+@@ -435,7 +435,7 @@ u16 mt76_connac2_mac_tx_rate_val(struct
+ 				 struct ieee80211_bss_conf *conf,
+ 				 bool beacon, bool mcast);
+ bool mt76_connac2_mac_fill_txs(struct mt76_dev *dev, struct mt76_wcid *wcid,
+-			       __le32 *txs_data);
++			       int pid, __le32 *txs_data);
+ bool mt76_connac2_mac_add_txs_skb(struct mt76_dev *dev, struct mt76_wcid *wcid,
+ 				  int pid, __le32 *txs_data);
+ void mt76_connac2_mac_decode_he_radiotap(struct mt76_dev *dev,
+--- a/mt76_connac_mac.c
++++ b/mt76_connac_mac.c
+@@ -609,7 +609,7 @@ void mt76_connac2_mac_write_txwi(struct
+ EXPORT_SYMBOL_GPL(mt76_connac2_mac_write_txwi);
+ 
+ bool mt76_connac2_mac_fill_txs(struct mt76_dev *dev, struct mt76_wcid *wcid,
+-			       __le32 *txs_data)
++			       int pid, __le32 *txs_data)
+ {
+ 	struct mt76_sta_stats *stats = &wcid->stats;
+ 	struct ieee80211_supported_band *sband;
+@@ -621,8 +621,7 @@ bool mt76_connac2_mac_fill_txs(struct mt
+ 	txs = le32_to_cpu(txs_data[0]);
+ 
+ 	/* PPDU based reporting */
+-	if (mtk_wed_device_active(&dev->mmio.wed) &&
+-	    FIELD_GET(MT_TXS0_TXS_FORMAT, txs) > 1) {
++	if (FIELD_GET(MT_TXS0_TXS_FORMAT, txs) > 1) {
+ 		stats->tx_bytes +=
+ 			le32_get_bits(txs_data[5], MT_TXS5_MPDU_TX_BYTE) -
+ 			le32_get_bits(txs_data[7], MT_TXS7_MPDU_RETRY_BYTE);
+@@ -643,6 +642,9 @@ bool mt76_connac2_mac_fill_txs(struct mt
+ 		}
+ 	}
+ 
++	if (pid != MT_PACKET_ID_WED)
++		return true;
++
+ 	txrate = FIELD_GET(MT_TXS0_TX_RATE, txs);
+ 
+ 	rate.mcs = FIELD_GET(MT_TX_RATE_IDX, txrate);
+@@ -752,7 +754,7 @@ bool mt76_connac2_mac_add_txs_skb(struct
+ 			!!(info->flags & IEEE80211_TX_STAT_ACK);
+ 		info->status.rates[0].idx = -1;
+ 
+-		mt76_connac2_mac_fill_txs(dev, wcid, txs_data);
++		mt76_connac2_mac_fill_txs(dev, wcid, pid, txs_data);
+ 		mt76_tx_status_skb_done(dev, skb, &list);
+ 	}
+ 	mt76_tx_status_unlock(dev, &list);
+--- a/mt7915/init.c
++++ b/mt7915/init.c
+@@ -520,8 +520,7 @@ mt7915_mac_init_band(struct mt7915_dev *
+ 	/* MT_TXD5_TX_STATUS_HOST (MPDU format) has higher priority than
+ 	 * MT_AGG_ACR_PPDU_TXS2H (PPDU format) even though ACR bit is set.
+ 	 */
+-	if (mtk_wed_device_active(&dev->mt76.mmio.wed))
+-		mt76_set(dev, MT_AGG_ACR4(band), MT_AGG_ACR_PPDU_TXS2H);
++	mt76_set(dev, MT_AGG_ACR4(band), MT_AGG_ACR_PPDU_TXS2H);
+ }
+ 
+ static void
+--- a/mt7915/mac.c
++++ b/mt7915/mac.c
+@@ -761,17 +761,6 @@ int mt7915_tx_prepare_skb(struct mt76_de
+ 	if (!wcid)
+ 		wcid = &dev->mt76.global_wcid;
+ 
+-	if (sta) {
+-		struct mt7915_sta *msta;
+-
+-		msta = (struct mt7915_sta *)sta->drv_priv;
+-
+-		if (time_after(jiffies, msta->jiffies + HZ / 4)) {
+-			info->flags |= IEEE80211_TX_CTL_REQ_TX_STATUS;
+-			msta->jiffies = jiffies;
+-		}
+-	}
+-
+ 	t = (struct mt76_txwi_cache *)(txwi + mdev->drv->txwi_size);
+ 	t->skb = tx_info->skb;
+ 
+@@ -1020,7 +1009,7 @@ static void mt7915_mac_add_txs(struct mt
+ 	msta = container_of(wcid, struct mt7915_sta, wcid);
+ 
+ 	if (le32_get_bits(txs_data[0], MT_TXS0_TXS_FORMAT) == MT_TXS_PPDU_FMT)
+-		mt76_connac2_mac_fill_txs(&dev->mt76, wcid, txs_data);
++		mt76_connac2_mac_fill_txs(&dev->mt76, wcid, pid, txs_data);
+ 	else
+ 		mt76_connac2_mac_add_txs_skb(&dev->mt76, wcid, pid, txs_data);
+ 
+--- a/mt7915/main.c
++++ b/mt7915/main.c
+@@ -796,7 +796,6 @@ int mt7915_mac_sta_add(struct mt76_dev *
+ 	msta->wcid.sta_disabled = 1;
+ 	msta->wcid.idx = idx;
+ 	msta->wcid.phy_idx = ext_phy;
+-	msta->jiffies = jiffies;
+ 
+ 	ewma_avg_signal_init(&msta->avg_ack_signal);
+ 
+--- a/mt7915/mt7915.h
++++ b/mt7915/mt7915.h
+@@ -145,7 +145,6 @@ struct mt7915_sta {
+ 	struct ewma_avg_signal avg_ack_signal;
+ 
+ 	unsigned long changed;
+-	unsigned long jiffies;
+ 	struct mt76_connac_sta_key_conf bip;
+ 
+ 	struct {
+--- a/tx.c
++++ b/tx.c
+@@ -137,9 +137,8 @@ mt76_tx_status_skb_add(struct mt76_dev *
+ 
+ 	if (!(info->flags & (IEEE80211_TX_CTL_REQ_TX_STATUS |
+ 			     IEEE80211_TX_CTL_RATE_CTRL_PROBE))) {
+-		if (mtk_wed_device_active(&dev->mmio.wed) &&
+-		    ((info->flags & IEEE80211_TX_CTL_HW_80211_ENCAP) ||
+-		     ieee80211_is_data(hdr->frame_control)))
++		if (info->flags & IEEE80211_TX_CTL_HW_80211_ENCAP ||
++		    ieee80211_is_data(hdr->frame_control))
+ 			return MT_PACKET_ID_WED;
+ 
+ 		return MT_PACKET_ID_NO_SKB;

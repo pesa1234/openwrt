@@ -1,0 +1,42 @@
+From 664596920de78c1aa9d1c3dc0e07018ca5c7d43d Mon Sep 17 00:00:00 2001
+From: Bo Jiao <Bo.Jiao@mediatek.com>
+Date: Mon, 11 Sep 2023 17:11:24 +0800
+Subject: [PATCH 1037/1051] wifi: mt76: mt7915: add debug log for SER flow.
+
+Signed-off-by: Bo Jiao <Bo.Jiao@mediatek.com>
+---
+ mt7915/mac.c | 9 +++++++++
+ 1 file changed, 9 insertions(+)
+
+--- a/mt7915/mac.c
++++ b/mt7915/mac.c
+@@ -1524,6 +1524,9 @@ void mt7915_mac_reset_work(struct work_s
+ 	if (!(READ_ONCE(dev->recovery.state) & MT_MCU_CMD_STOP_DMA))
+ 		return;
+ 
++	dev_info(dev->mt76.dev,"\n%s L1 SER recovery start.",
++		 wiphy_name(dev->mt76.hw->wiphy));
++
+ 	ieee80211_stop_queues(mt76_hw(dev));
+ 	if (ext_phy)
+ 		ieee80211_stop_queues(ext_phy->hw);
+@@ -1604,6 +1607,9 @@ void mt7915_mac_reset_work(struct work_s
+ 		ieee80211_queue_delayed_work(ext_phy->hw,
+ 					     &phy2->mt76->mac_work,
+ 					     MT7915_WATCHDOG_TIME);
++
++	dev_info(dev->mt76.dev,"\n%s L1 SER recovery completed.",
++		 wiphy_name(dev->mt76.hw->wiphy));
+ }
+ 
+ /* firmware coredump */
+@@ -1719,6 +1725,9 @@ void mt7915_coredump(struct mt7915_dev *
+ 
+ void mt7915_reset(struct mt7915_dev *dev)
+ {
++	dev_info(dev->mt76.dev, "%s SER recovery state: 0x%08x\n",
++		 wiphy_name(dev->mt76.hw->wiphy), READ_ONCE(dev->recovery.state));
++
+ 	if (!dev->recovery.hw_init_done)
+ 		return;
+ 

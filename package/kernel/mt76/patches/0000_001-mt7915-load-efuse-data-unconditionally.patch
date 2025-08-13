@@ -1,0 +1,142 @@
+From a3fe76d8aef40740f2f5157c233176f3617c5d43 Mon Sep 17 00:00:00 2001
+From: Felix Fietkau <nbd@nbd.name>
+Date: Fri, 23 Aug 2024 16:23:30 +0200
+Subject: [PATCH] wifi: mt76: mt7915: load efuse data unconditionally
+
+This allows looking at the data through the 'otp' debugfs file.
+
+Signed-off-by: Felix Fietkau <nbd@nbd.name>
+---
+ mt7915/eeprom.c | 62 +++++++++++++++++++++++++++++++------------------
+ mt7915/mcu.c    | 11 +++++----
+ mt7915/mt7915.h |  2 +-
+ 3 files changed, 47 insertions(+), 28 deletions(-)
+
+--- a/mt7915/eeprom.c
++++ b/mt7915/eeprom.c
+@@ -120,6 +120,43 @@ out:
+ 	return ret;
+ }
+ 
++static int mt7915_eeprom_load_efuse(struct mt7915_dev *dev)
++{
++	u32 eeprom_blk_size = MT7915_EEPROM_BLOCK_SIZE;
++	u16 eeprom_size = mt7915_eeprom_size(dev);
++	u8 free_block_num;
++	u32 block_num, i;
++	u8 *buf;
++	int ret;
++
++	buf = devm_kzalloc(dev->mt76.dev, eeprom_size, GFP_KERNEL);
++	if (!buf)
++		return -ENOMEM;
++
++	dev->mt76.otp.data = buf;
++	dev->mt76.otp.size = eeprom_size;
++
++	ret = mt7915_mcu_get_eeprom_free_block(dev, &free_block_num);
++	if (ret < 0)
++		return ret;
++
++	/* read eeprom data from efuse */
++	block_num = DIV_ROUND_UP(eeprom_size, eeprom_blk_size);
++	for (i = 0; i < block_num; i++) {
++		mt7915_mcu_get_eeprom(dev, buf, i * eeprom_blk_size);
++		buf += eeprom_blk_size;
++	}
++
++	/* efuse info isn't enough */
++	if (free_block_num >= 29)
++		return -EINVAL;
++
++	if (!dev->flash_mode)
++		memcpy(dev->mt76.eeprom.data, dev->mt76.otp.data, eeprom_size);
++
++	return 0;
++}
++
+ static int mt7915_eeprom_load(struct mt7915_dev *dev)
+ {
+ 	int ret;
+@@ -129,29 +166,10 @@ static int mt7915_eeprom_load(struct mt7
+ 	if (ret < 0)
+ 		return ret;
+ 
+-	if (ret) {
++	if (ret)
+ 		dev->flash_mode = true;
+-	} else {
+-		u8 free_block_num;
+-		u32 block_num, i;
+-		u32 eeprom_blk_size = MT7915_EEPROM_BLOCK_SIZE;
+-
+-		ret = mt7915_mcu_get_eeprom_free_block(dev, &free_block_num);
+-		if (ret < 0)
+-			return ret;
+-
+-		/* efuse info isn't enough */
+-		if (free_block_num >= 29)
+-			return -EINVAL;
+-
+-		/* read eeprom data from efuse */
+-		block_num = DIV_ROUND_UP(eeprom_size, eeprom_blk_size);
+-		for (i = 0; i < block_num; i++) {
+-			ret = mt7915_mcu_get_eeprom(dev, i * eeprom_blk_size, NULL);
+-			if (ret < 0)
+-				return ret;
+-		}
+-	}
++	
++	mt7915_eeprom_load_efuse(dev);
+ 
+ 	return mt7915_check_eeprom(dev);
+ }
+--- a/mt7915/mcu.c
++++ b/mt7915/mcu.c
+@@ -2889,7 +2889,7 @@ int mt7915_mcu_set_eeprom(struct mt7915_
+ 				 &req, sizeof(req), true);
+ }
+ 
+-int mt7915_mcu_get_eeprom(struct mt7915_dev *dev, u32 offset, u8 *read_buf)
++int mt7915_mcu_get_eeprom(struct mt7915_dev *dev, u8 *buf, u32 offset)
+ {
+ 	struct mt7915_mcu_eeprom_info req = {
+ 		.addr = cpu_to_le32(round_down(offset,
+@@ -2897,7 +2897,6 @@ int mt7915_mcu_get_eeprom(struct mt7915_
+ 	};
+ 	struct mt7915_mcu_eeprom_info *res;
+ 	struct sk_buff *skb;
+-	u8 *buf = read_buf;
+ 	int ret;
+ 
+ 	ret = mt76_mcu_send_and_get_msg(&dev->mt76,
+@@ -2907,13 +2906,14 @@ int mt7915_mcu_get_eeprom(struct mt7915_
+ 		return ret;
+ 
+ 	res = (struct mt7915_mcu_eeprom_info *)skb->data;
+-	if (!buf)
+-		buf = dev->mt76.eeprom.data + le32_to_cpu(res->addr);
+-	memcpy(buf, res->data, MT7915_EEPROM_BLOCK_SIZE);
++	if (res->valid)
++		memcpy(buf, res->data, MT7915_EEPROM_BLOCK_SIZE);
++	else
++		ret = -EINVAL;
+ 
+ 	dev_kfree_skb(skb);
+ 
+-	return 0;
++	return ret;
+ }
+ 
+ int mt7915_mcu_get_eeprom_free_block(struct mt7915_dev *dev, u8 *block_num)
+--- a/mt7915/mt7915.h
++++ b/mt7915/mt7915.h
+@@ -484,7 +484,7 @@ int mt7915_mcu_set_fixed_rate_ctrl(struc
+ 				   struct ieee80211_sta *sta,
+ 				   void *data, u32 field);
+ int mt7915_mcu_set_eeprom(struct mt7915_dev *dev);
+-int mt7915_mcu_get_eeprom(struct mt7915_dev *dev, u32 offset, u8 *read_buf);
++int mt7915_mcu_get_eeprom(struct mt7915_dev *dev, u8 *buf, u32 offset);
+ int mt7915_mcu_get_eeprom_free_block(struct mt7915_dev *dev, u8 *block_num);
+ int mt7915_mcu_set_mac(struct mt7915_dev *dev, int band, bool enable,
+ 		       bool hdr_trans);

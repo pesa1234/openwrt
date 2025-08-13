@@ -1,0 +1,25 @@
+From 142444baea281daabf8b39e38aa1f83b30e58ddb Mon Sep 17 00:00:00 2001
+From: Rany Hany <rany_hany@riseup.net>
+Date: Sun, 7 Jul 2024 19:52:45 +0000
+Subject: [PATCH] mt76: dma: add len check in mt76_dma_rx_process to drop
+ garbage frames
+
+Ref: https://git01.mediatek.com/plugins/gitiles/openwrt/feeds/mtk-openwrt-feeds/+/9b805e58a26443d4d59349dfb4629f3f4986127a/autobuild_mac80211_release/mt7988_mt7996_mac80211_mlo/package/kernel/mt76/patches/0063-mtk-wifi-mt76-mt7915-wed-find-rx-token-by-physical-a.patch
+
+No other change in dma.c required (earlier rework WED flow just
+changed some variable names for that part of the code so that
+patch can't apply cleanly).
+
+Signed-off-by: Rany Hany <rany_hany@riseup.net>
+---
+--- a/dma.c
++++ b/dma.c
+@@ -865,7 +865,7 @@ mt76_dma_rx_process(struct mt76_dev *dev
+ 		if (!data)
+ 			break;
+ 
+-		if (drop)
++		if (drop || (len == 0))
+ 			goto free_frag;
+ 
+ 		if (q->rx_head)

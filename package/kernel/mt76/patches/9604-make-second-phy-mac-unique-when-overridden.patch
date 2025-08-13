@@ -1,0 +1,49 @@
+From de7b13012d78a96aef4e2c23e67c042d9b488660 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Bj=C3=B8rn=20Mork?= <bjorn@mork.no>
+Date: Mon, 11 Sep 2023 13:39:39 +0200
+Subject: [PATCH] mt76: mt7915: make second phy mac unique when overridden
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+The phys share a device tree node, so mt76_eeprom_override()
+will always load the exact same address for both.
+
+Fix by moving the local address modification outside the
+eeprom fallback block, making it conditional on actual
+address conflicts. This will also catch any buggy eeprom
+with the same valid address in both fields.
+
+Signed-off-by: Bjørn Mork <bjorn@mork.no>
+Signed-off-by: Chen Minqiang <ptpt52@gmail.com>
+---
+ mt7915/init.c | 14 ++++++++------
+ 1 file changed, 8 insertions(+), 6 deletions(-)
+
+--- a/mt7915/init.c
++++ b/mt7915/init.c
+@@ -742,16 +742,18 @@ mt7915_register_ext_phy(struct mt7915_de
+ 
+ 	memcpy(mphy->macaddr, dev->mt76.eeprom.data + MT_EE_MAC_ADDR2,
+ 	       ETH_ALEN);
++	if (!is_valid_ether_addr(mphy->macaddr) || memcmp(mphy->macaddr, dev->mt76.eeprom.data + MT_EE_MAC_ADDR, 3) != 0)
++		memcpy(mphy->macaddr, dev->mt76.eeprom.data + MT_EE_MAC_ADDR,
++		       ETH_ALEN);
++	mt76_eeprom_override(mphy);
++
+ 	/* Make the secondary PHY MAC address local without overlapping with
+ 	 * the usual MAC address allocation scheme on multiple virtual interfaces
+ 	 */
+-	if (!is_valid_ether_addr(mphy->macaddr)) {
+-		memcpy(mphy->macaddr, dev->mt76.eeprom.data + MT_EE_MAC_ADDR,
+-		       ETH_ALEN);
+-		mphy->macaddr[0] |= 2;
+-		mphy->macaddr[0] ^= BIT(7);
++	if (ether_addr_equal(mphy->macaddr, dev->mt76.phy.macaddr)) {
++		mphy->macaddr[3] |= 2;
++		mphy->macaddr[3] ^= BIT(7);
+ 	}
+-	mt76_eeprom_override(mphy);
+ 
+ 	/* init wiphy according to mphy and phy */
+ 	mt7915_init_wiphy(phy);

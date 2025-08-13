@@ -1,0 +1,12 @@
+--- a/mt7915/mcu.c
++++ b/mt7915/mcu.c
+@@ -3931,9 +3931,6 @@ int mt7915_mcu_set_sku_en(struct mt7915_
+ 	if (ret)
+ 		return ret;
+ 
+-	pr_info("%s: sku enable = %d, path enable = %d\n", __func__,
+-		sku_disable ? 0 : phy->sku_limit_en, sku_disable ? 0 : phy->sku_path_en);
+-
+ 	req.sku_enable = sku_disable ? 0 : phy->sku_path_en;
+ 	req.format_id = TX_POWER_LIMIT_PATH_ENABLE;
+ 

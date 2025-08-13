@@ -1,0 +1,20 @@
+From 372460c5ed7a903c5cc5f814d588df5811df850e Mon Sep 17 00:00:00 2001
+From: MeiChia Chiu <meichia.chiu@mediatek.com>
+Date: Tue, 8 Aug 2023 11:20:58 +0800
+Subject: [PATCH 1032/1051] wifi: mt76: mt7915: Establish BA in VO queue
+
+---
+ mt76_connac_mac.c | 2 --
+ 1 file changed, 2 deletions(-)
+
+--- a/mt76_connac_mac.c
++++ b/mt76_connac_mac.c
+@@ -1139,8 +1139,6 @@ void mt76_connac2_tx_check_aggr(struct i
+ 		return;
+ 
+ 	tid = le32_get_bits(txwi[1], MT_TXD1_TID);
+-	if (tid >= 6) /* skip VO queue */
+-		return;
+ 
+ 	val = le32_to_cpu(txwi[2]);
+ 	fc = FIELD_GET(MT_TXD2_FRAME_TYPE, val) << 2 |

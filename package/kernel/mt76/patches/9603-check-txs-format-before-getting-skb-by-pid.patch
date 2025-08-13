@@ -1,0 +1,29 @@
+From 44a2341d9c487b994d1751fe342e7575b8e2bc44 Mon Sep 17 00:00:00 2001
+From: Chen Minqiang <ptpt52@gmail.com>
+Date: Tue, 19 Dec 2023 14:10:32 +0800
+Subject: [PATCH] mt76: check txs format before getting skb by pid
+
+The PPDU TxS does not include the error bit so it cannot use to report
+status to mac80211.
+---
+ mt76_connac_mac.c | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
+
+--- a/mt76_connac_mac.c
++++ b/mt76_connac_mac.c
+@@ -752,10 +752,13 @@ bool mt76_connac2_mac_add_txs_skb(struct
+ 				  int pid, __le32 *txs_data)
+ {
+ 	struct sk_buff_head list;
+-	struct sk_buff *skb;
++	struct sk_buff *skb = NULL;
+ 
+ 	mt76_tx_status_lock(dev, &list);
+-	skb = mt76_tx_status_skb_get(dev, wcid, pid, &list);
++
++	if (le32_get_bits(txs_data[0], MT_TXS0_TXS_FORMAT) == MT_TXS_MPDU_FMT)
++		skb = mt76_tx_status_skb_get(dev, wcid, pid, &list);
++
+ 	if (skb) {
+ 		struct ieee80211_tx_info *info = IEEE80211_SKB_CB(skb);
+ 
