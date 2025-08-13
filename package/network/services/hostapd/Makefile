@@ -824,6 +824,18 @@ ifeq ($(BUILD_VARIANT),supplicant-full-mbedtls)
   endef
 endif
 
+define Build/Patch
+	$(if $(QUILT),rm -rf $(PKG_BUILD_DIR)/patches; mkdir -p $(PKG_BUILD_DIR)/patches)
+	$(call PatchDir,$(PKG_BUILD_DIR),$(PATCH_DIR)/std,std/)
+	$(call PatchDir,$(PKG_BUILD_DIR),$(PATCH_DIR)/mtk,mtk/)
+	$(if $(QUILT),touch $(PKG_BUILD_DIR)/.quilt_used)
+endef
+
+define Quilt/Refresh/Package
+$(call Quilt/RefreshDir,$(PKG_BUILD_DIR),$(PATCH_DIR)/std,std/)
+	$(call Quilt/RefreshDir,$(PKG_BUILD_DIR),$(PATCH_DIR)/mtk,mtk/)
+endef
+
 # Build hostapd-common before its dependents, to avoid
 # spurious rebuilds when building multiple variants.
 $(eval $(call BuildPackage,hostapd-common))
