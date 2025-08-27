@@ -35,7 +35,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
 
 --- a/mac80211.c
 +++ b/mac80211.c
-@@ -911,9 +911,9 @@ void mt76_rx(struct mt76_dev *dev, enum
+@@ -948,9 +948,9 @@ void mt76_rx(struct mt76_dev *dev, enum
  #ifdef CONFIG_NL80211_TESTMODE
  	if (!(phy->test.flag & MT_TM_FW_RX_COUNT) &&
  	    phy->test.state == MT76_TM_STATE_RX_FRAMES) {

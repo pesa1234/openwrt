@@ -77,7 +77,7 @@ Signed-off-by: Howard Hsu <howard-yh.hsu@mediatek.com>
  	mutex_lock(&dev->mt76.mutex);
  	for (i = 0; i < 10; i++) {
  		if (!mt7915_mac_restart(dev))
-@@ -1541,7 +1543,7 @@ void mt7915_mac_reset_work(struct work_s
+@@ -1539,7 +1541,7 @@ void mt7915_mac_reset_work(struct work_s
  	}
  
  	mutex_lock(&dev->mt76.mutex);
@@ -86,7 +86,7 @@ Signed-off-by: Howard Hsu <howard-yh.hsu@mediatek.com>
  	mt76_worker_disable(&dev->mt76.tx_worker);
  	mt76_for_each_q_rx(&dev->mt76, i)
  		napi_disable(&dev->mt76.napi[i]);
-@@ -1608,6 +1610,10 @@ void mt7915_mac_reset_work(struct work_s
+@@ -1606,6 +1608,10 @@ void mt7915_mac_reset_work(struct work_s
  					     &phy2->mt76->mac_work,
  					     MT7915_WATCHDOG_TIME);
  

@@ -48,7 +48,7 @@ Signed-off-by: Chad Monroe <chad@monroe.io>
  	}
 --- a/mt7996/mcu.c
 +++ b/mt7996/mcu.c
-@@ -1884,9 +1884,8 @@ mt7996_mcu_get_mmps_mode(enum ieee80211_
+@@ -1928,9 +1928,8 @@ mt7996_mcu_get_mmps_mode(enum ieee80211_
  	case IEEE80211_SMPS_OFF:
  		return MCU_MMPS_DISABLE;
  	case IEEE80211_SMPS_STATIC:

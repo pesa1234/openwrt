@@ -66,7 +66,7 @@ Signed-off-by: Bo Jiao <Bo.Jiao@mediatek.com>
  	desc += scnprintf(buff + desc, bufsz - desc,
 --- a/mt7915/mac.c
 +++ b/mt7915/mac.c
-@@ -1685,10 +1685,34 @@ void mt7915_mac_dump_work(struct work_st
+@@ -1683,10 +1683,34 @@ void mt7915_mac_dump_work(struct work_st
  
  	dev = container_of(work, struct mt7915_dev, dump_work);
  
@@ -103,7 +103,7 @@ Signed-off-by: Bo Jiao <Bo.Jiao@mediatek.com>
  }
  
  void mt7915_reset(struct mt7915_dev *dev)
-@@ -1707,7 +1731,7 @@ void mt7915_reset(struct mt7915_dev *dev
+@@ -1705,7 +1729,7 @@ void mt7915_reset(struct mt7915_dev *dev
  			 wiphy_name(dev->mt76.hw->wiphy));
  
  		mt7915_irq_disable(dev, MT_INT_MCU_CMD);

@@ -27,7 +27,7 @@ scan done and before restore to duty channel.
 
 --- a/mac80211.c
 +++ b/mac80211.c
-@@ -996,7 +996,7 @@ int __mt76_set_channel(struct mt76_phy *
+@@ -1033,7 +1033,7 @@ int __mt76_set_channel(struct mt76_phy *
  	if (!offchannel)
  		phy->main_chandef = *chandef;
  

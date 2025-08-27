@@ -12,7 +12,7 @@ Subject: [PATCH 1023/1051] wifi: mt76: mt7915: amsdu set and get control
 
 --- a/mt7915/mac.c
 +++ b/mt7915/mac.c
-@@ -1976,6 +1976,13 @@ static void mt7915_mac_severe_check(stru
+@@ -1974,6 +1974,13 @@ static void mt7915_mac_severe_check(stru
  	phy->trb_ts = trb;
  }
  
