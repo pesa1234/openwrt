@@ -17,13 +17,13 @@ Signed-off-by: Peter Chiu <chui-hao.chiu@mediatek.com>
 
 --- a/net/mac80211/cfg.c
 +++ b/net/mac80211/cfg.c
-@@ -4374,7 +4374,8 @@ static int ieee80211_probe_client(struct
+@@ -4392,7 +4392,8 @@ static int ieee80211_probe_client(struct
  	info = IEEE80211_SKB_CB(skb);
  
  	info->flags |= IEEE80211_TX_CTL_REQ_TX_STATUS |
 -		       IEEE80211_TX_INTFL_NL80211_FRAME_TX;
 +		       IEEE80211_TX_INTFL_NL80211_FRAME_TX |
 +		       IEEE80211_TX_CTL_USE_MINRATE;
+ 	info->control.flags |= u32_encode_bits(link_id, IEEE80211_TX_CTRL_MLO_LINK);
  	info->band = band;
  
- 	skb_set_queue_mapping(skb, IEEE80211_AC_VO);
