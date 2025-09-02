@@ -6,10 +6,7 @@
 	"properties": {
 		"mac": {
 			"description": "The stations MAC",
-			"type": "array",
-			"items": {
-				"type": "string"
-			}
+			"type": "string"
 		},
 		"key": {
 			"description": "The passphrase that shall be used",
