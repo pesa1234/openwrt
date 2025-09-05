@@ -11,7 +11,7 @@ This parameter will strongly affect the peak throughput of the SW path.
 
 --- a/drivers/net/ethernet/mediatek/mtk_eth_soc.c
 +++ b/drivers/net/ethernet/mediatek/mtk_eth_soc.c
-@@ -5751,13 +5751,15 @@ static int mtk_probe(struct platform_dev
+@@ -5914,13 +5914,15 @@ static int mtk_probe(struct platform_dev
  		dev_err(eth->dev, "failed to allocate dummy device\n");
  		goto err_unreg_netdev;
  	}

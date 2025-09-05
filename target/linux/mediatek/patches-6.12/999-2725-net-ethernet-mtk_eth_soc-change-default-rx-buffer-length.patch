@@ -14,7 +14,7 @@ total CPU usage.
 
 --- a/drivers/net/ethernet/mediatek/mtk_eth_soc.c
 +++ b/drivers/net/ethernet/mediatek/mtk_eth_soc.c
-@@ -602,6 +602,38 @@ static struct phylink_pcs *mtk_mac_selec
+@@ -612,6 +612,38 @@ static struct phylink_pcs *mtk_mac_selec
  	return NULL;
  }
  
@@ -53,7 +53,7 @@ total CPU usage.
  static void mtk_mac_config(struct phylink_config *config, unsigned int mode,
  			   const struct phylink_link_state *state)
  {
-@@ -753,6 +785,7 @@ static void mtk_mac_config(struct phylin
+@@ -763,6 +795,7 @@ static void mtk_mac_config(struct phylin
  	}
  
  	mac->interface = state->interface;
@@ -61,7 +61,7 @@ total CPU usage.
  
  	return;
  
-@@ -1274,8 +1307,8 @@ static void mtk_get_stats64(struct net_d
+@@ -1284,8 +1317,8 @@ static void mtk_get_stats64(struct net_d
  static inline int mtk_max_frag_size(int mtu)
  {
  	/* make sure buf_size will be at least MTK_MAX_RX_LENGTH */
@@ -72,7 +72,7 @@ total CPU usage.
  
  	return SKB_DATA_ALIGN(MTK_RX_HLEN + mtu) +
  		SKB_DATA_ALIGN(sizeof(struct skb_shared_info));
-@@ -1286,7 +1319,7 @@ static inline int mtk_max_buf_size(int f
+@@ -1296,7 +1329,7 @@ static inline int mtk_max_buf_size(int f
  	int buf_size = frag_size - NET_SKB_PAD - NET_IP_ALIGN -
  		       SKB_DATA_ALIGN(sizeof(struct skb_shared_info));
  
@@ -81,7 +81,7 @@ total CPU usage.
  
  	return buf_size;
  }
-@@ -4036,30 +4069,6 @@ static void mtk_dim_tx(struct work_struc
+@@ -4199,30 +4232,6 @@ static void mtk_dim_tx(struct work_struc
  	dim->state = DIM_START_MEASURE;
  }
  
@@ -112,7 +112,7 @@ total CPU usage.
  static void mtk_hw_dump_reg(struct mtk_eth *eth, char *name, u32 offset, u32 range)
  {
  	u32 cur = offset;
-@@ -4390,14 +4399,10 @@ static int mtk_hw_init(struct mtk_eth *e
+@@ -4553,14 +4562,10 @@ static int mtk_hw_init(struct mtk_eth *e
  	 * invoked.
  	 */
  	for (i = 0; i < MTK_MAX_DEVS; i++) {
@@ -128,7 +128,7 @@ total CPU usage.
  	}
  
  	/* Indicates CDM to parse the MTK special tag from CPU
-@@ -5330,11 +5335,7 @@ static int mtk_add_mac(struct mtk_eth *e
+@@ -5493,11 +5498,7 @@ static int mtk_add_mac(struct mtk_eth *e
  
  	eth->netdev[id]->irq = eth->irq_fe[0];
  	eth->netdev[id]->dev.of_node = np;
@@ -143,7 +143,7 @@ total CPU usage.
  		mac->device_notifier.notifier_call = mtk_device_event;
 --- a/drivers/net/ethernet/mediatek/mtk_eth_soc.h
 +++ b/drivers/net/ethernet/mediatek/mtk_eth_soc.h
-@@ -567,6 +567,10 @@
+@@ -570,6 +570,10 @@
  #define MTK_XMAC_LOGIC_RST(x)	(MTK_XMAC_BASE(x) + 0x10)
  #define XMAC_LOGIC_RST		BIT(0)
  
