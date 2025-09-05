@@ -11,7 +11,7 @@ Subject: [PATCH] net: ethernet: mtk_eth_soc: add register definitions for rss
 
 --- a/drivers/net/ethernet/mediatek/mtk_eth_soc.c
 +++ b/drivers/net/ethernet/mediatek/mtk_eth_soc.c
-@@ -60,13 +60,18 @@ static const struct mtk_reg_map mtk_reg_
+@@ -52,13 +52,18 @@ static const struct mtk_reg_map mtk_reg_
  		.rx_ptr		= 0x0900,
  		.rx_cnt_cfg	= 0x0904,
  		.pcrx_ptr	= 0x0908,
@@ -30,7 +30,7 @@ Subject: [PATCH] net: ethernet: mtk_eth_soc: add register definitions for rss
  	},
  	.qdma = {
  		.qtx_cfg	= 0x1800,
-@@ -124,6 +129,7 @@ static const struct mtk_reg_map mt7986_r
+@@ -116,6 +121,7 @@ static const struct mtk_reg_map mt7986_r
  	.tx_irq_mask		= 0x461c,
  	.tx_irq_status		= 0x4618,
  	.pdma = {
@@ -38,7 +38,7 @@ Subject: [PATCH] net: ethernet: mtk_eth_soc: add register definitions for rss
  		.rx_ptr		= 0x4100,
  		.rx_cnt_cfg	= 0x4104,
  		.pcrx_ptr	= 0x4108,
-@@ -134,6 +140,12 @@ static const struct mtk_reg_map mt7986_r
+@@ -126,6 +132,12 @@ static const struct mtk_reg_map mt7986_r
  		.irq_mask	= 0x4228,
  		.adma_rx_dbg0	= 0x4238,
  		.int_grp	= 0x4250,
@@ -51,7 +51,7 @@ Subject: [PATCH] net: ethernet: mtk_eth_soc: add register definitions for rss
  	},
  	.qdma = {
  		.qtx_cfg	= 0x4400,
-@@ -182,10 +194,21 @@ static const struct mtk_reg_map mt7988_r
+@@ -174,10 +186,21 @@ static const struct mtk_reg_map mt7988_r
  		.glo_cfg	= 0x6a04,
  		.rst_idx	= 0x6a08,
  		.delay_irq	= 0x6a0c,
@@ -75,7 +75,7 @@ Subject: [PATCH] net: ethernet: mtk_eth_soc: add register definitions for rss
  		.qtx_cfg	= 0x4400,
 --- a/drivers/net/ethernet/mediatek/mtk_eth_soc.h
 +++ b/drivers/net/ethernet/mediatek/mtk_eth_soc.h
-@@ -1168,16 +1168,29 @@ struct mtk_reg_map {
+@@ -1174,16 +1174,29 @@ struct mtk_reg_map {
  	u32	tx_irq_mask;
  	u32	tx_irq_status;
  	struct {
