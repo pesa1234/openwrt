@@ -448,6 +448,51 @@ MT7981()
 	logger -s "smp_affinity: CPU1_AFFINITY = $CPU1_AFFINITY"
 }
 
+gl-mt3000()
+{
+	num_of_wifi=$1
+	DEFAULT_RPS=0
+
+	#Physical IRQ# setting
+	eth_irq_rx=229
+	eth_irq_tx=230
+	wifi1_irq=
+	wifi2_irq=
+	wifi3_irq=
+
+	#AX3000
+	if [[ "$WED_ENABLE" -eq "1" ]]; then
+		
+		if [[ "$WIFI_RADIO1" -eq "1" ]]; then
+			wifi1_irq=237
+		fi
+	else
+		if [[ "$WIFI_RADIO1" -eq "1" ]]; then
+			wifi1_irq=245
+		fi
+	fi
+
+	# Please update the CPU binding in each cases.
+	# CPU#_AFFINITY="add binding irq number here"
+	# CPU#_RPS="add binding interface name here"
+	if [ "$num_of_wifi" = "0" ]; then
+		CPU0_AFFINITY="$eth_irq_rx"
+		CPU1_AFFINITY="$eth_irq_tx"
+
+		CPU0_RPS="$RPS_IF_LIST"
+		CPU1_RPS="$RPS_IF_LIST"
+	else
+		#we bound all wifi card to cpu0 and bound eth to cpu1
+		CPU0_AFFINITY="$wifi1_irq $wifi2_irq $wifi3_irq"
+		CPU1_AFFINITY="$eth_irq_rx $eth_irq_tx"
+
+		CPU0_RPS="$RPS_IF_LIST"
+		CPU1_RPS="$RPS_IF_LIST"
+	fi
+	logger -s "smp_affinity: CPU0_AFFINITY = $CPU0_AFFINITY"
+	logger -s "smp_affinity: CPU1_AFFINITY = $CPU1_AFFINITY"
+}
+
 MT7622()
 {
 	num_of_wifi=$1
@@ -497,6 +542,7 @@ MT7622()
 setup_model()
 {
 	board=$(board_name)
+	logger -s "smp_affinity: Board name: $board"
 	num_of_wifi=$NUM_WIFI_CARD
 
 	if [[ $board == *"7988"* ]]; then
@@ -511,6 +557,9 @@ setup_model()
 	elif [[ $board == *"7981"* ]]; then
 		logger -s "smp_affinity: setup_model: MT7981 NUM_WIFI_CARD=$num_of_wifi"
 		MT7981 $num_of_wifi
+	elif [[ $board == *"gl-mt3000"* ]]; then
+		logger -s "smp_affinity: setup_model: gl-mt3000 NUM_WIFI_CARD=$num_of_wifi"
+		gl-mt3000 $num_of_wifi
 	elif [[ $board == *"7622"* ]]; then
 		logger -s "smp_affinity: setup_model: MT7622 NUM_WIFI_CARD=$num_of_wifi"
 		MT7622 $num_of_wifi
