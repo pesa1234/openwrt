@@ -77,7 +77,7 @@ Signed-off-by: sujuan.chen <sujuan.chen@mediatek.com>
 +++ b/mt7915/mmio.c
 @@ -700,11 +700,14 @@ int mt7915_mmio_wed_init(struct mt7915_d
  		wed->wlan.wpdma_rx_glo = res->start + MT_WPDMA_GLO_CFG;
- 		wed->wlan.wpdma_rx = res->start + MT_RXQ_WED_DATA_RING_BASE;
+ 		wed->wlan.wpdma_rx[0] = res->start + MT_RXQ_WED_DATA_RING_BASE;
  	}
 -	wed->wlan.nbuf = MT7915_HW_TOKEN_SIZE;
 +

@@ -14,7 +14,7 @@ Signed-off-by: Peter Chiu <chui-hao.chiu@mediatek.com>
 
 --- a/dma.c
 +++ b/dma.c
-@@ -444,9 +444,32 @@ mt76_dma_get_buf(struct mt76_dev *dev, s
+@@ -541,9 +541,32 @@ mt76_dma_get_buf(struct mt76_dev *dev, s
  	mt76_dma_should_drop_buf(drop, ctrl, buf1, desc_info);
  
  	if (mt76_queue_is_wed_rx(q)) {

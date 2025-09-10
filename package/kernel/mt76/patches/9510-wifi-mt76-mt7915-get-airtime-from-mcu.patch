@@ -312,7 +312,7 @@ Subject: [PATCH] [mt76] mt7915 MCU event airtime
  	     !rxd->seq) &&
  	     !(rxd->eid == MCU_CMD_EXT_CID &&
  	       rxd->ext_eid == MCU_EXT_EVENT_WA_TX_STAT))
-@@ -5534,3 +5636,16 @@ int mt7915_mcu_thermal_debug(struct mt79
+@@ -5519,3 +5621,16 @@ int mt7915_mcu_thermal_debug(struct mt79
  	return mt76_mcu_send_msg(&dev->mt76, MCU_EXT_CMD(THERMAL_DEBUG), &req,
  				 sizeof(req), true);
  }
@@ -366,7 +366,7 @@ Subject: [PATCH] [mt76] mt7915 MCU event airtime
  int mt7915_mcu_wed_wa_tx_stats(struct mt7915_dev *dev, u16 wcid);
 --- a/mt76.h
 +++ b/mt76.h
-@@ -335,12 +335,16 @@ struct mt76_sta_stats {
+@@ -352,12 +352,16 @@ struct mt76_sta_stats {
  	u32 tx_packets;		/* unit: MSDU */
  	u32 tx_retries;
  	u32 tx_failed;
@@ -383,7 +383,7 @@ Subject: [PATCH] [mt76] mt7915 MCU event airtime
  };
  
  enum mt76_wcid_flags {
-@@ -1452,6 +1456,22 @@ static inline int mt76_decr(int val, int
+@@ -1477,6 +1481,22 @@ static inline int mt76_decr(int val, int
  
  u8 mt76_ac_to_hwq(u8 ac);
  

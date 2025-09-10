@@ -1,6 +1,6 @@
 --- a/mt7915/mcu.c
 +++ b/mt7915/mcu.c
-@@ -3931,9 +3931,6 @@ int mt7915_mcu_set_sku_en(struct mt7915_
+@@ -3916,9 +3916,6 @@ int mt7915_mcu_set_sku_en(struct mt7915_
  	if (ret)
  		return ret;
  

@@ -26,7 +26,7 @@ Signed-off-by: Bo Jiao <Bo.Jiao@mediatek.com>
  #define MT_QFLAG_WED_RING	GENMASK(1, 0)
  #define MT_QFLAG_WED_TYPE	GENMASK(4, 2)
  #define MT_QFLAG_WED		BIT(5)
-@@ -69,6 +71,12 @@ enum mt76_bus_type {
+@@ -71,6 +73,12 @@ enum mt76_bus_type {
  	MT76_BUS_SDIO,
  };
  
@@ -39,7 +39,7 @@ Signed-off-by: Bo Jiao <Bo.Jiao@mediatek.com>
  enum mt76_wed_type {
  	MT76_WED_Q_TX,
  	MT76_WED_Q_TXFREE,
-@@ -901,6 +909,9 @@ struct mt76_dev {
+@@ -925,6 +933,9 @@ struct mt76_dev {
  	struct device *dma_dev;
  
  	struct mt76_mcu mcu;
@@ -47,8 +47,8 @@ Signed-off-by: Bo Jiao <Bo.Jiao@mediatek.com>
 +	struct mt76_connac2_fw_trailer *wm_hdr;
 +	struct mt76_connac2_fw_trailer *wa_hdr;
  
- 	struct net_device napi_dev;
- 	struct net_device tx_napi_dev;
+ 	struct net_device *napi_dev;
+ 	struct net_device *tx_napi_dev;
 --- a/mt76_connac_mcu.c
 +++ b/mt76_connac_mcu.c
 @@ -3028,6 +3028,9 @@ int mt76_connac2_load_ram(struct mt76_de

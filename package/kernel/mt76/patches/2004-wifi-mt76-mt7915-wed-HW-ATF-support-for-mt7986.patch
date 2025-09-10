@@ -568,7 +568,7 @@ Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
  	ret = mt7915_mcu_add_group(dev, vif, sta);
  	if (ret) {
  		dev_kfree_skb(skb);
-@@ -3851,6 +3851,169 @@ int mt7915_mcu_set_ser(struct mt7915_dev
+@@ -3836,6 +3836,169 @@ int mt7915_mcu_set_ser(struct mt7915_dev
  				 &req, sizeof(req), false);
  }
  

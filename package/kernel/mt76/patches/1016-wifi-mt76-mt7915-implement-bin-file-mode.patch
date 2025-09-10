@@ -51,15 +51,7 @@ Signed-off-by: Shayne Chen <shayne.chen@mediatek.com>
  {
 --- a/mt76.h
 +++ b/mt76.h
-@@ -432,6 +432,7 @@ struct mt76_txwi_cache {
- 		struct sk_buff *skb;
- 		void *ptr;
- 	};
-+
- };
- 
- struct mt76_rx_tid {
-@@ -1064,6 +1065,9 @@ struct mt76_dev {
+@@ -1089,6 +1089,9 @@ struct mt76_dev {
  	};
  
  	atomic_t bus_hung;
@@ -69,7 +61,7 @@ Signed-off-by: Shayne Chen <shayne.chen@mediatek.com>
  };
  
  /* per-phy stats.  */
-@@ -1351,6 +1355,7 @@ void mt76_eeprom_override(struct mt76_ph
+@@ -1377,6 +1380,7 @@ void mt76_eeprom_override(struct mt76_ph
  int mt76_get_of_data_from_mtd(struct mt76_dev *dev, void *eep, int offset, int len);
  int mt76_get_of_data_from_nvmem(struct mt76_dev *dev, void *eep,
  				const char *cell_name, int len);

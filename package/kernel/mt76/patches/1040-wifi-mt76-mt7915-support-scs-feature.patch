@@ -30,7 +30,7 @@ Signed-off-by: Howard Hsu <howard-yh.hsu@mediatek.com>
 
 --- a/mt76.h
 +++ b/mt76.h
-@@ -328,6 +328,7 @@ struct mt76_sta_stats {
+@@ -345,6 +345,7 @@ struct mt76_sta_stats {
  	u64 tx_nss[4];		/* 1, 2, 3, 4 */
  	u64 tx_mcs[16];		/* mcs idx */
  	u64 tx_bytes;
@@ -38,7 +38,7 @@ Signed-off-by: Howard Hsu <howard-yh.hsu@mediatek.com>
  	/* WED TX */
  	u32 tx_packets;		/* unit: MSDU */
  	u32 tx_retries;
-@@ -337,6 +338,7 @@ struct mt76_sta_stats {
+@@ -354,6 +355,7 @@ struct mt76_sta_stats {
  	u32 rx_packets;
  	u32 rx_errors;
  	u32 rx_drops;
@@ -134,7 +134,7 @@ Signed-off-by: Howard Hsu <howard-yh.hsu@mediatek.com>
  	}
 --- a/mt7915/mcu.c
 +++ b/mt7915/mcu.c
-@@ -5141,3 +5141,121 @@ int mt7915_mcu_sw_aci_set(struct mt7915_
+@@ -5126,3 +5126,121 @@ int mt7915_mcu_sw_aci_set(struct mt7915_
  	return mt76_mcu_send_msg(&dev->mt76, MCU_EXT_CMD(SWLNA_ACI_CTRL), &req,
  				 sizeof(req), NULL);
  }

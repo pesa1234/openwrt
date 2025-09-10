@@ -26,7 +26,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
 
 --- a/mt76.h
 +++ b/mt76.h
-@@ -799,6 +799,7 @@ struct mt76_testmode_data {
+@@ -823,6 +823,7 @@ struct mt76_testmode_data {
  
  	struct list_head tm_entry_list;
  	struct mt76_wcid *cur_entry;
@@ -34,7 +34,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  	u8 entry_num;
  	union {
  		struct mt76_testmode_entry_data ed;
-@@ -827,6 +828,9 @@ struct mt76_testmode_data {
+@@ -851,6 +852,9 @@ struct mt76_testmode_data {
  
  	u8 txbf_act;
  	u16 txbf_param[8];
@@ -218,7 +218,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  
  	if (enable) {
  		mt7915_mcu_bss_rfch_tlv(skb, vif, phy);
-@@ -3652,6 +3665,7 @@ int mt7915_mcu_set_ser(struct mt7915_dev
+@@ -3637,6 +3650,7 @@ int mt7915_mcu_set_ser(struct mt7915_dev
  
  int mt7915_mcu_set_txbf(struct mt7915_dev *dev, u8 action)
  {
@@ -226,7 +226,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  	struct {
  		u8 action;
  		union {
-@@ -3678,7 +3692,6 @@ int mt7915_mcu_set_txbf(struct mt7915_de
+@@ -3663,7 +3677,6 @@ int mt7915_mcu_set_txbf(struct mt7915_de
  		.action = action,
  	};
  
@@ -234,7 +234,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  	switch (action) {
  	case MT_BF_SOUNDING_ON:
  		req.snd.snd_mode = MT_BF_PROCESSING;
-@@ -4756,6 +4769,9 @@ int mt7915_mcu_set_txbf_sound_info(struc
+@@ -4741,6 +4754,9 @@ int mt7915_mcu_set_txbf_sound_info(struc
  		req.he_opt = v2;
  		req.glo_opt = v3;
  		break;

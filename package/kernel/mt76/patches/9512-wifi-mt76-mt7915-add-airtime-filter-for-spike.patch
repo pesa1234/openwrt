@@ -9,7 +9,7 @@ Subject: [PATCH] [mt76]mt7915 add airtime filter for airtime spike
 
 --- a/mt7915/mcu.c
 +++ b/mt7915/mcu.c
-@@ -3456,11 +3456,14 @@ int mt7915_mcu_get_chan_mib_info(struct
+@@ -3441,11 +3441,14 @@ int mt7915_mcu_get_chan_mib_info(struct
  	if (chan_switch)
  		goto out;
  

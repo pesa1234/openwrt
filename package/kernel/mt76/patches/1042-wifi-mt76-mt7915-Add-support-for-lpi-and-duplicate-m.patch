@@ -94,7 +94,7 @@ Signed-off-by: Allen Ye <allen.ye@mediatek.com>
  
 --- a/mt76.h
 +++ b/mt76.h
-@@ -921,6 +921,9 @@ struct mt76_phy {
+@@ -944,6 +944,9 @@ struct mt76_phy {
  	u8 macaddr[ETH_ALEN];
  
  	int txpower_cur;
@@ -104,7 +104,7 @@ Signed-off-by: Allen Ye <allen.ye@mediatek.com>
  	u8 antenna_mask;
  	u16 chainmask;
  
-@@ -1903,7 +1906,7 @@ mt76_mcu_skb_send_msg(struct mt76_dev *d
+@@ -1928,7 +1931,7 @@ mt76_mcu_skb_send_msg(struct mt76_dev *d
  void mt76_set_irq_mask(struct mt76_dev *dev, u32 addr, u32 clear, u32 set);
  
  struct device_node *
@@ -216,7 +216,7 @@ Signed-off-by: Allen Ye <allen.ye@mediatek.com>
  
  	return mt7915_mcu_set_fixed_rate_ctrl(dev, vif, sta, &spe_idx,
  					      RATE_PARAM_SPE_UPDATE);
-@@ -3552,6 +3553,22 @@ mt7915_update_txpower(struct mt7915_phy
+@@ -3537,6 +3538,22 @@ mt7915_update_txpower(struct mt7915_phy
  		mphy->txpower_cur = e2p_power_limit;
  }
  
@@ -239,7 +239,7 @@ Signed-off-by: Allen Ye <allen.ye@mediatek.com>
  int mt7915_mcu_set_txpower_sku(struct mt7915_phy *phy)
  {
  #define TX_POWER_LIMIT_TABLE_RATE	0
-@@ -3582,14 +3599,37 @@ int mt7915_mcu_set_txpower_sku(struct mt
+@@ -3567,14 +3584,37 @@ int mt7915_mcu_set_txpower_sku(struct mt
  		mt7915_update_txpower(phy, tx_power);
  		return 0;
  	}
@@ -279,7 +279,7 @@ Signed-off-by: Allen Ye <allen.ye@mediatek.com>
  	skb_put_data(skb, &la.mcs[0], len[SKU_HT_BW20]);
  	skb_put_data(skb, &la.mcs[1], len[SKU_HT_BW40]);
  
-@@ -3619,8 +3659,34 @@ int mt7915_mcu_set_txpower_sku(struct mt
+@@ -3604,8 +3644,34 @@ int mt7915_mcu_set_txpower_sku(struct mt
  	hdr.limit_type = TX_POWER_LIMIT_TABLE_PATH;
  	skb_put_data(skb, &hdr, sizeof(hdr));
  	skb_put_data(skb, &la.path.cck, sizeof(la.path.cck));
@@ -316,7 +316,7 @@ Signed-off-by: Allen Ye <allen.ye@mediatek.com>
  
  	/* HT20 and HT40 */
  	skb_put_data(skb, &la.path.ru[3], sizeof(la.path.ru[3]));
-@@ -3696,6 +3762,21 @@ int mt7915_mcu_get_txpower_sku(struct mt
+@@ -3681,6 +3747,21 @@ int mt7915_mcu_get_txpower_sku(struct mt
  	return 0;
  }
  

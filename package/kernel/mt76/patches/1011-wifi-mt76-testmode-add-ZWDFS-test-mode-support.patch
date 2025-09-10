@@ -19,7 +19,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
 
 --- a/mt76.h
 +++ b/mt76.h
-@@ -837,6 +837,15 @@ struct mt76_testmode_data {
+@@ -861,6 +861,15 @@ struct mt76_testmode_data {
  		u64 fcs_error[__MT_RXQ_MAX];
  		u64 len_mismatch;
  	} rx_stats;
@@ -63,7 +63,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  		req.band_idx = phy->mt76->band_idx;
  		req.scan_mode = 2;
  		break;
-@@ -4863,3 +4864,68 @@ int mt7915_mcu_set_amsdu_algo(struct mt7
+@@ -4848,3 +4849,68 @@ int mt7915_mcu_set_amsdu_algo(struct mt7
  	return mt76_mcu_send_msg(&dev->mt76, MCU_EXT_CMD(MEC_CTRL), &req, sizeof(req), true);
  }
  #endif
