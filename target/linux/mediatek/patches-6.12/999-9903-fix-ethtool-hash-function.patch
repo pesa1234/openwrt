@@ -1,0 +1,43 @@
+--- a/drivers/net/ethernet/mediatek/mtk_eth_soc.c
++++ b/drivers/net/ethernet/mediatek/mtk_eth_soc.c
+@@ -5179,24 +5179,22 @@ static u32 mtk_get_rxfh_indir_size(struc
+ 
+ static int mtk_get_rxfh(struct net_device *dev, struct ethtool_rxfh_param *rxfh)
+ {
+-	struct mtk_mac *mac = netdev_priv(dev);
+-	struct mtk_eth *eth = mac->hw;
+-	struct mtk_rss_params *rss_params = &eth->rss_params;
+-	int i;
+-
+-	if (rxfh->hfunc)
+-		rxfh->hfunc = ETH_RSS_HASH_TOP;	/* Toeplitz */
+-
+-	if (rxfh->key)
+-		memcpy(rxfh->key, rss_params->hash_key,
+-		       sizeof(rss_params->hash_key));
+-
+-	if (rxfh->indir) {
+-		for (i = 0; i < MTK_RSS_MAX_INDIRECTION_TABLE; i++)
+-			rxfh->indir[i] = rss_params->indirection_table[i];
+-	}
+-
+-	return 0;
++    struct mtk_mac *mac = netdev_priv(dev);
++    struct mtk_eth *eth = mac->hw;
++    struct mtk_rss_params *rss_params = &eth->rss_params;
++    int i;
++
++    rxfh->hfunc = ETH_RSS_HASH_TOP; /* Toeplitz */
++
++    if (rxfh->key)
++        memcpy(rxfh->key, rss_params->hash_key, sizeof(rss_params->hash_key));
++
++    if (rxfh->indir) {
++        for (i = 0; i < MTK_RSS_MAX_INDIRECTION_TABLE; i++)
++            rxfh->indir[i] = rss_params->indirection_table[i];
++    }
++    
++    return 0;
+ }
+ 
+ static int mtk_set_rxfh(struct net_device *dev,
