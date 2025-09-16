@@ -47,7 +47,7 @@ Signed-off-by: Peter Chiu <chui-hao.chiu@mediatek.com>
  
  	spinlock_t rx_token_lock;
  	struct idr rx_token;
-@@ -1856,7 +1861,8 @@ static inline bool mt76_queue_is_emi(str
+@@ -1857,7 +1862,8 @@ static inline bool mt76_queue_is_emi(str
  
  struct mt76_txwi_cache *
  mt76_token_release(struct mt76_dev *dev, int token, bool *wake);
@@ -70,7 +70,7 @@ Signed-off-by: Peter Chiu <chui-hao.chiu@mediatek.com>
  	idr_destroy(&dev->token);
 --- a/mt7915/init.c
 +++ b/mt7915/init.c
-@@ -1234,6 +1234,8 @@ int mt7915_register_device(struct mt7915
+@@ -1236,6 +1236,8 @@ int mt7915_register_device(struct mt7915
  
  	dev->dbdc_support = mt7915_band_config(dev);
  
@@ -79,7 +79,7 @@ Signed-off-by: Peter Chiu <chui-hao.chiu@mediatek.com>
  	phy2 = mt7915_alloc_ext_phy(dev);
  	if (IS_ERR(phy2))
  		return PTR_ERR(phy2);
-@@ -1266,6 +1268,7 @@ int mt7915_register_device(struct mt7915
+@@ -1268,6 +1270,7 @@ int mt7915_register_device(struct mt7915
  	ieee80211_queue_work(mt76_hw(dev), &dev->init_work);
  
  	dev->recovery.hw_init_done = true;
@@ -130,7 +130,7 @@ Signed-off-by: Peter Chiu <chui-hao.chiu@mediatek.com>
  
 --- a/mt7996/init.c
 +++ b/mt7996/init.c
-@@ -732,6 +732,8 @@ static int mt7996_register_phy(struct mt
+@@ -735,6 +735,8 @@ static int mt7996_register_phy(struct mt
  				     MT_INT_TX_RX_DONE_EXT);
  	}
  
@@ -139,7 +139,7 @@ Signed-off-by: Peter Chiu <chui-hao.chiu@mediatek.com>
  	return 0;
  
  error:
-@@ -1663,6 +1665,8 @@ int mt7996_register_device(struct mt7996
+@@ -1666,6 +1668,8 @@ int mt7996_register_device(struct mt7996
  		return ret;
  
  	mt7996_init_wiphy(hw, &dev->mt76.mmio.wed);
@@ -148,7 +148,7 @@ Signed-off-by: Peter Chiu <chui-hao.chiu@mediatek.com>
  
  	ret = mt7996_register_phy(dev, MT_BAND1);
  	if (ret)
-@@ -1683,6 +1687,8 @@ int mt7996_register_device(struct mt7996
+@@ -1686,6 +1690,8 @@ int mt7996_register_device(struct mt7996
  	ieee80211_queue_work(mt76_hw(dev), &dev->init_work);
  
  	dev->recovery.hw_init_done = true;
@@ -178,7 +178,7 @@ Signed-off-by: Peter Chiu <chui-hao.chiu@mediatek.com>
  
 --- a/tx.c
 +++ b/tx.c
-@@ -848,16 +848,30 @@ void __mt76_set_tx_blocked(struct mt76_d
+@@ -849,16 +849,30 @@ void __mt76_set_tx_blocked(struct mt76_d
  }
  EXPORT_SYMBOL_GPL(__mt76_set_tx_blocked);
  
@@ -211,7 +211,7 @@ Signed-off-by: Peter Chiu <chui-hao.chiu@mediatek.com>
  #ifdef CONFIG_NET_MEDIATEK_SOC_WED
  	if (mtk_wed_device_active(&dev->mmio.wed) &&
  	    token >= dev->mmio.wed.wlan.token_start)
-@@ -901,6 +915,8 @@ mt76_token_release(struct mt76_dev *dev,
+@@ -902,6 +916,8 @@ mt76_token_release(struct mt76_dev *dev,
  	txwi = idr_remove(&dev->token, token);
  	if (txwi) {
  		dev->token_count--;

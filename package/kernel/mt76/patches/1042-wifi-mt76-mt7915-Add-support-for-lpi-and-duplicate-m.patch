@@ -32,7 +32,7 @@ Signed-off-by: Allen Ye <allen.ye@mediatek.com>
 
 --- a/eeprom.c
 +++ b/eeprom.c
-@@ -233,8 +233,9 @@ static bool mt76_string_prop_find(struct
+@@ -243,8 +243,9 @@ static bool mt76_string_prop_find(struct
  }
  
  struct device_node *
@@ -43,7 +43,7 @@ Signed-off-by: Allen Ye <allen.ye@mediatek.com>
  	struct device_node *np = dev->dev->of_node;
  	const char *const region_names[] = {
  		[NL80211_DFS_UNSET] = "ww",
-@@ -244,6 +245,7 @@ mt76_find_power_limits_node(struct mt76_
+@@ -254,6 +255,7 @@ mt76_find_power_limits_node(struct mt76_
  	};
  	struct device_node *cur, *fallback = NULL;
  	const char *region_name = NULL;
@@ -51,7 +51,7 @@ Signed-off-by: Allen Ye <allen.ye@mediatek.com>
  
  	if (dev->region < ARRAY_SIZE(region_names))
  		region_name = region_names[dev->region];
-@@ -252,17 +254,20 @@ mt76_find_power_limits_node(struct mt76_
+@@ -262,17 +264,20 @@ mt76_find_power_limits_node(struct mt76_
  	if (!np)
  		return NULL;
  
@@ -74,7 +74,7 @@ Signed-off-by: Allen Ye <allen.ye@mediatek.com>
  			of_node_put(np);
  			return cur;
  		}
-@@ -337,7 +342,7 @@ mt76_apply_array_limit(s8 *pwr, size_t p
+@@ -347,7 +352,7 @@ mt76_apply_array_limit(s8 *pwr, size_t p
  
  	for (i = 0; i < pwr_len; i++) {
  		pwr[i] = min_t(s8, target_power,
@@ -83,7 +83,7 @@ Signed-off-by: Allen Ye <allen.ye@mediatek.com>
  		*max_power = max(*max_power, pwr[i]);
  	}
  }
-@@ -401,7 +406,7 @@ s8 mt76_get_rate_power_limits(struct mt7
+@@ -411,7 +416,7 @@ s8 mt76_get_rate_power_limits(struct mt7
  	if (!IS_ENABLED(CONFIG_OF))
  		return target_power;
  
@@ -104,7 +104,7 @@ Signed-off-by: Allen Ye <allen.ye@mediatek.com>
  	u8 antenna_mask;
  	u16 chainmask;
  
-@@ -1928,7 +1931,7 @@ mt76_mcu_skb_send_msg(struct mt76_dev *d
+@@ -1929,7 +1932,7 @@ mt76_mcu_skb_send_msg(struct mt76_dev *d
  void mt76_set_irq_mask(struct mt76_dev *dev, u32 addr, u32 clear, u32 set);
  
  struct device_node *

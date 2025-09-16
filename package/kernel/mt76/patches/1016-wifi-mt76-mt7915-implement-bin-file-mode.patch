@@ -46,7 +46,7 @@ Signed-off-by: Shayne Chen <shayne.chen@mediatek.com>
 +}
 +EXPORT_SYMBOL_GPL(mt76_check_bin_file_mode);
 +
- void
+ int
  mt76_eeprom_override(struct mt76_phy *phy)
  {
 --- a/mt76.h
@@ -61,7 +61,7 @@ Signed-off-by: Shayne Chen <shayne.chen@mediatek.com>
  };
  
  /* per-phy stats.  */
-@@ -1377,6 +1380,7 @@ void mt76_eeprom_override(struct mt76_ph
+@@ -1377,6 +1380,7 @@ int mt76_eeprom_override(struct mt76_phy
  int mt76_get_of_data_from_mtd(struct mt76_dev *dev, void *eep, int offset, int len);
  int mt76_get_of_data_from_nvmem(struct mt76_dev *dev, void *eep,
  				const char *cell_name, int len);

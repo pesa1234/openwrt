@@ -116,7 +116,7 @@ Signed-off-by: sujuan.chen <sujuan.chen@mediatek.com>
  #define MT7915_CFEND_RATE_DEFAULT	0x49	/* OFDM 24M */
 --- a/tx.c
 +++ b/tx.c
-@@ -850,7 +850,7 @@ int mt76_token_consume(struct mt76_dev *
+@@ -851,7 +851,7 @@ int mt76_token_consume(struct mt76_dev *
  		       u8 phy_idx)
  {
  	struct mt76_phy *phy = phy_idx < __MT_MAX_BAND ? dev->phys[phy_idx] : NULL;
@@ -125,7 +125,7 @@ Signed-off-by: sujuan.chen <sujuan.chen@mediatek.com>
  
  	spin_lock_bh(&dev->token_lock);
  
-@@ -860,8 +860,12 @@ int mt76_token_consume(struct mt76_dev *
+@@ -861,8 +861,12 @@ int mt76_token_consume(struct mt76_dev *
  		return -EINVAL;
  	}
  
@@ -140,7 +140,7 @@ Signed-off-by: sujuan.chen <sujuan.chen@mediatek.com>
  		dev->token_count++;
  
  		if (dev->num_phy > 1 && phy) {
-@@ -870,12 +874,6 @@ int mt76_token_consume(struct mt76_dev *
+@@ -871,12 +875,6 @@ int mt76_token_consume(struct mt76_dev *
  		}
  	}
  
@@ -153,7 +153,7 @@ Signed-off-by: sujuan.chen <sujuan.chen@mediatek.com>
  	if (dev->token_count >= dev->token_size - MT76_TOKEN_FREE_THR)
  		__mt76_set_tx_blocked(dev, true);
  
-@@ -915,13 +913,6 @@ mt76_token_release(struct mt76_dev *dev,
+@@ -916,13 +914,6 @@ mt76_token_release(struct mt76_dev *dev,
  		dev->token_count--;
  		if (dev->num_phy > 1 && dev->phys[txwi->phy_idx])
  			dev->phys[txwi->phy_idx]->tokens--;

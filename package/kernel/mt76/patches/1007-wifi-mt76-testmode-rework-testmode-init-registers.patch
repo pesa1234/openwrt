@@ -19,7 +19,7 @@ Subject: [PATCH 1007/1051] wifi: mt76: testmode: rework testmode init
 
 --- a/mac80211.c
 +++ b/mac80211.c
-@@ -934,7 +934,8 @@ void mt76_rx(struct mt76_dev *dev, enum
+@@ -939,7 +939,8 @@ void mt76_rx(struct mt76_dev *dev, enum
  	}
  
  #ifdef CONFIG_NL80211_TESTMODE
