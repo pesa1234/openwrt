@@ -340,12 +340,16 @@ function iface_roaming(config) {
 
 			let ft_key = md5(`${config.mobility_domain}/${config.auth_secret ?? config.key}`);
 
-			set_default(config, 'r0kh', 'ff:ff:ff:ff:ff:ff * ' + ft_key);
-			set_default(config, 'r1kh', '00:00:00:00:00:00 00:00:00:00:00:00 ' + ft_key);
+			set_default(config, 'r0kh', [ 'ff:ff:ff:ff:ff:ff,*,' + ft_key ]);
+			set_default(config, 'r1kh', [ '00:00:00:00:00:00,00:00:00:00:00:00,' + ft_key ]);
 		}
 
+		for (let name in [ 'r0kh', 'r1kh' ])
+			for (let val in config[name])
+				append(name, join(' ', split(val, ',', 3)));
+
 		append_vars(config, [
-			'r0kh', 'r1kh', 'r1_key_holder', 'r0_key_lifetime', 'pmk_r1_push'
+			'r1_key_holder', 'r0_key_lifetime', 'pmk_r1_push'
 		]);
 	}
 
@@ -482,7 +486,7 @@ export function generate(interface, data, config, vlans, stas, phy_features) {
 			'rsn_override_mfp'
 		]);
 
-		if (config.mode == 'link') {
+		if (config.mlo) {
 			config.rsn_override_mfp_2 ??= config.rsn_override_mfp;
 			config.rsn_override_key_mgmt_2 ??= config.rsn_override_key_mgmt;
 			config.rsn_override_pairwise_2 ??= config.rsn_override_pairwise;
@@ -499,7 +503,7 @@ export function generate(interface, data, config, vlans, stas, phy_features) {
 	for (let raw in config.hostapd_options)
 		append_raw(raw);
 
-	if (config.mode == 'link') {
+	if (config.mlo) {
 		append_raw('mld_ap=1');
 		if (data.config.radio != null)
 			append_raw('mld_link_id=' + data.config.radio);
