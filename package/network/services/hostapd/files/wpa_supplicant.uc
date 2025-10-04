@@ -303,6 +303,9 @@ function mld_update_phy(phy, ifaces) {
 }
 
 function mld_start() {
+	if (wpas.data.mld_pending)
+		return;
+
 	wpas.printf(`Start pending MLD interfaces\n`);
 
 	let phy_list = {};
@@ -493,6 +496,18 @@ let main_obj = {
 			return libubus.STATUS_NOT_FOUND;
 		}
 	},
+	iface_status: {
+		args: {
+			name: ""
+		},
+		call: function(req) {
+			let iface = wpas.interfaces[req.args.name];
+			if (!iface)
+				return libubus.STATUS_NOT_FOUND;
+
+			return iface.status();
+		},
+	},
 	mld_set: {
 		args: {
 			config: {}
@@ -501,6 +516,7 @@ let main_obj = {
 			if (!req.args.config)
 				return libubus.STATUS_INVALID_ARGUMENT;
 
+			wpas.data.mld_pending = true;
 			mld_set_config(req.args.config);
 			return 0;
 		}
@@ -508,6 +524,7 @@ let main_obj = {
 	mld_start: {
 		args: {},
 		call: function(req) {
+			wpas.data.mld_pending = false;
 			mld_start();
 			return 0;
 		}
@@ -609,7 +626,10 @@ function iface_event(type, name, data) {
 
 	data ??= {};
 	data.name = name;
-	wpas.data.obj.notify(`iface.${type}`, data, null, null, null, -1);
+	let req = wpas.data.obj.notify(`iface.${type}`, data, null, null, null, -1);
+	if (req)
+		req.abort();
+
 	ubus.call("service", "event", { type: `wpa_supplicant.${name}.${type}`, data: {} });
 }
 
@@ -720,6 +740,9 @@ return {
 		iface_event("remove", name);
 	},
 	state: function(ifname, iface, state) {
+		let event_data = iface.status();
+		event_data.name = ifname;
+		iface_event("state", ifname, event_data);
 		try {
 			iface_hostapd_notify(ifname, iface, state);
 

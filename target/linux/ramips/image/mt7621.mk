@@ -2105,6 +2105,10 @@ define Device/MikroTik
   IMAGE/sysupgrade.bin := append-kernel | yaffs-filesystem -L | \
 	pad-to $$$$(BLOCKSIZE) | append-rootfs | pad-rootfs | check-size | \
 	append-metadata
+  IMAGES += sysupgrade-v7.bin
+  IMAGE/sysupgrade-v7.bin := append-kernel | kernel-pack-npk | \
+	  yaffs-filesystem -L | pad-to $$$$(BLOCKSIZE) | \
+	  append-rootfs | pad-rootfs | check-size | append-metadata
 endef
 
 define Device/mikrotik_ltap-2hnd
@@ -2523,6 +2527,21 @@ define Device/planex_vr500
   SUPPORTED_DEVICES += vr500
 endef
 TARGET_DEVICES += planex_vr500
+
+define Device/plasmacloud_pax1800-lite
+  $(Device/nand)
+  IMAGE_SIZE := 60512k
+  DEVICE_VENDOR := Plasma Cloud
+  DEVICE_MODEL := PAX1800-Lite
+  DEVICE_DTS_CONFIG := config@plasmacloud.pax1800-lite
+  DEVICE_PACKAGES := kmod-mt7915-firmware kmod-usb3 kmod-hwmon-lm75
+  KERNEL_IN_UBI := 1
+  IMAGES += factory.bin
+  KERNEL := kernel-bin | lzma | fit lzma $$(KDIR)/image-$$(firstword $$(DEVICE_DTS)).dtb | pad-to $$(BLOCKSIZE)
+  IMAGE/factory.bin := append-rootfs | pad-to 1k | dualboot-datachk-nand-image ce_type=PAX1800-Lite
+  IMAGE/sysupgrade.bin := append-rootfs | pad-to 1k | sysupgrade-tar rootfs=$$$$@ | append-metadata
+endef
+TARGET_DEVICES += plasmacloud_pax1800-lite
 
 define Device/raisecom_msg1500-x-00
   $(Device/nand)
