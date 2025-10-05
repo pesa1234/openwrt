@@ -47,7 +47,7 @@ Signed-off-by: Peter Chiu <chui-hao.chiu@mediatek.com>
  
  	spinlock_t rx_token_lock;
  	struct idr rx_token;
-@@ -1857,7 +1862,8 @@ static inline bool mt76_queue_is_emi(str
+@@ -1865,7 +1870,8 @@ static inline bool mt76_queue_is_emi(str
  
  struct mt76_txwi_cache *
  mt76_token_release(struct mt76_dev *dev, int token, bool *wake);
@@ -70,7 +70,7 @@ Signed-off-by: Peter Chiu <chui-hao.chiu@mediatek.com>
  	idr_destroy(&dev->token);
 --- a/mt7915/init.c
 +++ b/mt7915/init.c
-@@ -1236,6 +1236,8 @@ int mt7915_register_device(struct mt7915
+@@ -1243,6 +1243,8 @@ int mt7915_register_device(struct mt7915
  
  	dev->dbdc_support = mt7915_band_config(dev);
  
@@ -79,7 +79,7 @@ Signed-off-by: Peter Chiu <chui-hao.chiu@mediatek.com>
  	phy2 = mt7915_alloc_ext_phy(dev);
  	if (IS_ERR(phy2))
  		return PTR_ERR(phy2);
-@@ -1268,6 +1270,7 @@ int mt7915_register_device(struct mt7915
+@@ -1275,6 +1277,7 @@ int mt7915_register_device(struct mt7915
  	ieee80211_queue_work(mt76_hw(dev), &dev->init_work);
  
  	dev->recovery.hw_init_done = true;

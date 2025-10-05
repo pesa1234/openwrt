@@ -135,7 +135,7 @@ Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
  #ifdef CONFIG_MAC80211_DEBUGFS
 --- a/mt7915/mt7915.h
 +++ b/mt7915/mt7915.h
-@@ -83,6 +83,8 @@
+@@ -84,6 +84,8 @@
  #define MT7915_CRIT_TEMP		110
  #define MT7915_MAX_TEMP			120
  
@@ -144,7 +144,7 @@ Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
  struct mt7915_vif;
  struct mt7915_sta;
  struct mt7915_dfs_pulse;
-@@ -174,6 +176,8 @@ struct mt7915_vif {
+@@ -175,6 +177,8 @@ struct mt7915_vif {
  
  	struct ieee80211_tx_queue_params queue_params[IEEE80211_NUM_ACS];
  	struct cfg80211_bitrate_mask bitrate_mask;

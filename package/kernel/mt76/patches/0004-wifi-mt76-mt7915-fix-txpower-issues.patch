@@ -11,15 +11,15 @@ Subject: [PATCH 04/21] wifi: mt76: mt7915: fix txpower issues
 
 --- a/eeprom.c
 +++ b/eeprom.c
-@@ -372,7 +372,7 @@ s8 mt76_get_rate_power_limits(struct mt7
+@@ -384,7 +384,7 @@ s8 mt76_get_rate_power_limits(struct mt7
  	u32 ru_rates = ARRAY_SIZE(dest->ru[0]);
  	char band;
  	size_t len;
 -	s8 max_power = 0;
 +	s8 max_power = -127;
+ 	s8 max_power_backoff = -127;
  	s8 txs_delta;
- 
- 	if (!mcs_rates)
+ 	int n_chains = hweight16(phy->chainmask);
 --- a/mt7915/debugfs.c
 +++ b/mt7915/debugfs.c
 @@ -972,9 +972,9 @@ mt7915_xmit_queues_show(struct seq_file

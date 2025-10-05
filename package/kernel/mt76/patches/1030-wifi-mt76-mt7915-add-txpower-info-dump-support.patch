@@ -12,7 +12,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
 
 --- a/mt7915/debugfs.c
 +++ b/mt7915/debugfs.c
-@@ -1281,6 +1281,91 @@ mt7915_txpower_path_show(struct seq_file
+@@ -1282,6 +1282,91 @@ mt7915_txpower_path_show(struct seq_file
  DEFINE_SHOW_ATTRIBUTE(mt7915_txpower_path);
  
  static int
@@ -104,7 +104,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  mt7915_twt_stats(struct seq_file *s, void *data)
  {
  	struct mt7915_dev *dev = dev_get_drvdata(s->private);
-@@ -1414,6 +1499,8 @@ int mt7915_init_debugfs(struct mt7915_ph
+@@ -1415,6 +1500,8 @@ int mt7915_init_debugfs(struct mt7915_ph
  			    &mt7915_txpower_fops);
  	debugfs_create_file("txpower_path", 0400, dir, phy,
  			    &mt7915_txpower_path_fops);
