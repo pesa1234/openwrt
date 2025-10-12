@@ -1,6 +1,6 @@
-From ad478005e71cba56629b5b572f54f515f3d436ff Mon Sep 17 00:00:00 2001
+From 4a3001822a652050f796bb5ff8c4e888763a8983 Mon Sep 17 00:00:00 2001
 From: Bo-Cun Chen <bc-bocun.chen@mediatek.com>
-Date: Wed, 19 Mar 2025 17:21:16 +0800
+Date: Mon, 22 Sep 2025 11:12:05 +0800
 Subject: [PATCH] net: ethernet: mtk_eth_soc: convert cap_bit in mtk_eth_muxc
  struct to u64
 

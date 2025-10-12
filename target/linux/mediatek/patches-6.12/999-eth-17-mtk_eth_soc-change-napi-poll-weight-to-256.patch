@@ -1,17 +1,17 @@
-From fb9329b1b5d2fdb6d34104efb4c80eef6d61ed45 Mon Sep 17 00:00:00 2001
+From 9be90bb153b9a7cdd1fa0ef0b47414b5ddb36d63 Mon Sep 17 00:00:00 2001
 From: Mason Chang <mason-cw.chang@mediatek.com>
-Date: Wed, 30 Apr 2025 10:51:09 +0800
+Date: Mon, 22 Sep 2025 11:12:08 +0800
 Subject: [PATCH] net: ethernet: mtk_eth_soc: change napi poll weight to 256
 
 This parameter will strongly affect the peak throughput of the SW path.
 ---
- drivers/net/ethernet/mediatek/mtk_eth_soc.c | 15 +++++++++------
+ drivers/net/ethernet/mediatek/mtk_eth_soc.c | 13 +++++++------
  drivers/net/ethernet/mediatek/mtk_eth_soc.h |  1 +
- 2 files changed, 10 insertions(+), 6 deletions(-)
+ 2 files changed, 8 insertions(+), 6 deletions(-)
 
 --- a/drivers/net/ethernet/mediatek/mtk_eth_soc.c
 +++ b/drivers/net/ethernet/mediatek/mtk_eth_soc.c
-@@ -5903,13 +5903,15 @@ static int mtk_probe(struct platform_dev
+@@ -5904,13 +5904,15 @@ static int mtk_probe(struct platform_dev
  		dev_err(eth->dev, "failed to allocate dummy device\n");
  		goto err_unreg_netdev;
  	}
