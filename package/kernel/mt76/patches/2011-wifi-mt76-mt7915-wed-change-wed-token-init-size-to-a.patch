@@ -170,7 +170,7 @@ Signed-off-by: sujuan.chen <sujuan.chen@mediatek.com>
 --- a/wed.c
 +++ b/wed.c
 @@ -83,7 +83,7 @@ int mt76_wed_offload_enable(struct mtk_w
- 	struct mt76_dev *dev = container_of(wed, struct mt76_dev, mmio.wed);
+ 	struct mt76_dev *dev = mt76_wed_to_dev(wed);
  
  	spin_lock_bh(&dev->token_lock);
 -	dev->token_size = wed->wlan.token_start;
@@ -179,7 +179,7 @@ Signed-off-by: sujuan.chen <sujuan.chen@mediatek.com>
  
  	return !wait_event_timeout(dev->tx_wait, !dev->wed_token_count, HZ);
 @@ -167,7 +167,7 @@ void mt76_wed_offload_disable(struct mtk
- 	struct mt76_dev *dev = container_of(wed, struct mt76_dev, mmio.wed);
+ 	struct mt76_dev *dev = mt76_wed_to_dev(wed);
  
  	spin_lock_bh(&dev->token_lock);
 -	dev->token_size = wed->wlan.token_start;

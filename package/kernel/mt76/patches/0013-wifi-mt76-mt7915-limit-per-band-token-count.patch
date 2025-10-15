@@ -47,7 +47,7 @@ Signed-off-by: Peter Chiu <chui-hao.chiu@mediatek.com>
  
  	spinlock_t rx_token_lock;
  	struct idr rx_token;
-@@ -1865,7 +1870,8 @@ static inline bool mt76_queue_is_emi(str
+@@ -1874,7 +1879,8 @@ static inline bool mt76_queue_is_emi(str
  
  struct mt76_txwi_cache *
  mt76_token_release(struct mt76_dev *dev, int token, bool *wake);
