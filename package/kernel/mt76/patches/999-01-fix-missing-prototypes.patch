@@ -1,6 +1,6 @@
 --- a/mt7915/mt7915.h
 +++ b/mt7915/mt7915.h
-@@ -872,6 +872,29 @@ int mt7915_mmio_wed_init(struct mt7915_d
+@@ -882,6 +882,29 @@ int mt7915_mmio_wed_init(struct mt7915_d
  			 bool pci, int *irq);
  
  #ifdef CONFIG_MTK_VENDOR

@@ -12,7 +12,7 @@ Subject: [PATCH 1027/1051] wifi: mt76: mt7915: add muru user number debug
 
 --- a/mt7915/mt7915.h
 +++ b/mt7915/mt7915.h
-@@ -671,6 +671,7 @@ int mt7915_mcu_set_pulse_th(struct mt791
+@@ -681,6 +681,7 @@ int mt7915_mcu_set_pulse_th(struct mt791
  int mt7915_mcu_set_radar_th(struct mt7915_dev *dev, int index,
  			    const struct mt7915_dfs_pattern *pattern);
  int mt7915_mcu_set_muru_ctrl(struct mt7915_dev *dev, u32 cmd, u32 val);

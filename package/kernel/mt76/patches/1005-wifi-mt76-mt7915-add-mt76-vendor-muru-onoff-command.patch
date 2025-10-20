@@ -13,7 +13,7 @@ Subject: [PATCH 1005/1051] wifi: mt76: mt7915: add mt76 vendor muru onoff
 
 --- a/mt7915/mcu.c
 +++ b/mt7915/mcu.c
-@@ -4419,6 +4419,13 @@ void mt7915_set_wireless_vif(void *data,
+@@ -4434,6 +4434,13 @@ void mt7915_set_wireless_vif(void *data,
  		if (val == 0)
  			phy->muru_onoff = MUMIMO_DL_CERT | MUMIMO_DL;
  		break;
@@ -29,7 +29,7 @@ Subject: [PATCH 1005/1051] wifi: mt76: mt7915: add mt76 vendor muru onoff
  
 --- a/mt7915/mcu.h
 +++ b/mt7915/mcu.h
-@@ -438,6 +438,7 @@ enum {
+@@ -439,6 +439,7 @@ enum {
  #ifdef CONFIG_MTK_VENDOR
  	RATE_PARAM_FIXED_MIMO = 30,
  	RATE_PARAM_FIXED_OFDMA = 31,

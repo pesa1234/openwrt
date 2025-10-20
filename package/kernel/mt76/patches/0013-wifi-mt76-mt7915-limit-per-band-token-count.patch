@@ -21,7 +21,7 @@ Signed-off-by: Peter Chiu <chui-hao.chiu@mediatek.com>
 
 --- a/mt76.h
 +++ b/mt76.h
-@@ -444,6 +444,8 @@ struct mt76_txwi_cache {
+@@ -447,6 +447,8 @@ struct mt76_txwi_cache {
  	struct list_head list;
  	dma_addr_t dma_addr;
  
@@ -30,7 +30,7 @@ Signed-off-by: Peter Chiu <chui-hao.chiu@mediatek.com>
  	union {
  		struct sk_buff *skb;
  		void *ptr;
-@@ -905,6 +907,7 @@ struct mt76_phy {
+@@ -908,6 +910,7 @@ struct mt76_phy {
  		bool al;
  		u8 pin;
  	} leds;
@@ -38,7 +38,7 @@ Signed-off-by: Peter Chiu <chui-hao.chiu@mediatek.com>
  };
  
  struct mt76_dev {
-@@ -960,6 +963,8 @@ struct mt76_dev {
+@@ -963,6 +966,8 @@ struct mt76_dev {
  	u16 wed_token_count;
  	u16 token_count;
  	u16 token_size;
@@ -47,7 +47,7 @@ Signed-off-by: Peter Chiu <chui-hao.chiu@mediatek.com>
  
  	spinlock_t rx_token_lock;
  	struct idr rx_token;
-@@ -1874,7 +1879,8 @@ static inline bool mt76_queue_is_emi(str
+@@ -1877,7 +1882,8 @@ static inline bool mt76_queue_is_emi(str
  
  struct mt76_txwi_cache *
  mt76_token_release(struct mt76_dev *dev, int token, bool *wake);

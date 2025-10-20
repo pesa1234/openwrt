@@ -114,7 +114,7 @@ Signed-off-by: Bo Jiao <Bo.Jiao@mediatek.com>
  
 --- a/mt7915/mcu.h
 +++ b/mt7915/mcu.h
-@@ -705,8 +705,12 @@ enum {
+@@ -706,8 +706,12 @@ enum {
  	SER_SET_RECOVER_L3_TX_ABORT,
  	SER_SET_RECOVER_L3_TX_DISABLE,
  	SER_SET_RECOVER_L3_BF,

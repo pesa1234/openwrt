@@ -28,7 +28,7 @@ Subject: [PATCH 1023/1051] wifi: mt76: mt7915: amsdu set and get control
  {
 --- a/mt7915/mt7915.h
 +++ b/mt7915/mt7915.h
-@@ -785,6 +785,7 @@ int mt7915_mmio_wed_init(struct mt7915_d
+@@ -795,6 +795,7 @@ int mt7915_mmio_wed_init(struct mt7915_d
  			 bool pci, int *irq);
  
  #ifdef CONFIG_MTK_VENDOR

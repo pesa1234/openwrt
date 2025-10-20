@@ -19,7 +19,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
 
 --- a/mt76.h
 +++ b/mt76.h
-@@ -861,6 +861,15 @@ struct mt76_testmode_data {
+@@ -864,6 +864,15 @@ struct mt76_testmode_data {
  		u64 fcs_error[__MT_RXQ_MAX];
  		u64 len_mismatch;
  	} rx_stats;
@@ -55,7 +55,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  enum {
 --- a/mt7915/mcu.c
 +++ b/mt7915/mcu.c
-@@ -2823,6 +2823,7 @@ mt7915_mcu_background_chain_ctrl(struct
+@@ -2838,6 +2838,7 @@ mt7915_mcu_background_chain_ctrl(struct
  		req.monitor_chan = chandef->chan->hw_value;
  		req.monitor_central_chan =
  			ieee80211_frequency_to_channel(chandef->center_freq1);
@@ -63,7 +63,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  		req.band_idx = phy->mt76->band_idx;
  		req.scan_mode = 2;
  		break;
-@@ -4948,3 +4949,68 @@ int mt7915_mcu_set_amsdu_algo(struct mt7
+@@ -4963,3 +4964,68 @@ int mt7915_mcu_set_amsdu_algo(struct mt7
  	return mt76_mcu_send_msg(&dev->mt76, MCU_EXT_CMD(MEC_CTRL), &req, sizeof(req), true);
  }
  #endif
@@ -134,7 +134,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
 +}
 --- a/mt7915/mcu.h
 +++ b/mt7915/mcu.h
-@@ -633,6 +633,52 @@ enum CSI_CHAIN_TYPE {
+@@ -634,6 +634,52 @@ enum CSI_CHAIN_TYPE {
  };
  #endif
  
@@ -197,7 +197,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  
  	bool sku_limit_en:1;
  	bool sku_path_en:1;
-@@ -802,6 +803,9 @@ int mt7915_vendor_amnt_sta_remove(struct
+@@ -812,6 +813,9 @@ int mt7915_vendor_amnt_sta_remove(struct
  				  struct ieee80211_sta *sta);
  #endif
  

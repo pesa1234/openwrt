@@ -70,7 +70,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  static const struct ieee80211_channel mt76_channels_6ghz[] = {
 --- a/mt76.h
 +++ b/mt76.h
-@@ -775,6 +775,21 @@ struct mt76_testmode_ops {
+@@ -778,6 +778,21 @@ struct mt76_testmode_ops {
  	int (*set_params)(struct mt76_phy *phy, struct nlattr **tb,
  			  enum mt76_testmode_state new_state);
  	int (*dump_stats)(struct mt76_phy *phy, struct sk_buff *msg);
@@ -92,7 +92,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  };
  
  #define MT_TM_FW_RX_COUNT	BIT(0)
-@@ -783,16 +798,13 @@ struct mt76_testmode_data {
+@@ -786,16 +801,13 @@ struct mt76_testmode_data {
  	enum mt76_testmode_state state;
  
  	u32 param_set[DIV_ROUND_UP(NUM_MT76_TM_ATTRS, 32)];
@@ -111,7 +111,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  	u8 tx_rate_stbc;
  	u8 tx_ltf;
  
-@@ -808,10 +820,37 @@ struct mt76_testmode_data {
+@@ -811,10 +823,37 @@ struct mt76_testmode_data {
  	u8 tx_power[4];
  	u8 tx_power_control;
  
@@ -150,7 +150,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  	u32 tx_pending;
  	u32 tx_queued;
  	u16 tx_queued_limit;
-@@ -1497,6 +1536,68 @@ static inline bool mt76_testmode_enabled
+@@ -1500,6 +1539,68 @@ static inline bool mt76_testmode_enabled
  #endif
  }
  
@@ -219,7 +219,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  static inline bool mt76_is_testmode_skb(struct mt76_dev *dev,
  					struct sk_buff *skb,
  					struct ieee80211_hw **hw)
-@@ -1507,7 +1608,8 @@ static inline bool mt76_is_testmode_skb(
+@@ -1510,7 +1611,8 @@ static inline bool mt76_is_testmode_skb(
  	for (i = 0; i < ARRAY_SIZE(dev->phys); i++) {
  		struct mt76_phy *phy = dev->phys[i];
  
@@ -229,7 +229,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  			*hw = dev->phys[i]->hw;
  			return true;
  		}
-@@ -1638,7 +1740,8 @@ int mt76_testmode_cmd(struct ieee80211_h
+@@ -1641,7 +1743,8 @@ int mt76_testmode_cmd(struct ieee80211_h
  int mt76_testmode_dump(struct ieee80211_hw *hw, struct sk_buff *skb,
  		       struct netlink_callback *cb, void *data, int len);
  int mt76_testmode_set_state(struct mt76_phy *phy, enum mt76_testmode_state state);
@@ -410,7 +410,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  	     !rxd->seq) &&
  	     !(rxd->eid == MCU_CMD_EXT_CID &&
  	       rxd->ext_eid == MCU_EXT_EVENT_WA_TX_STAT))
-@@ -2919,7 +2925,8 @@ int mt7915_mcu_set_chan_info(struct mt79
+@@ -2934,7 +2940,8 @@ int mt7915_mcu_set_chan_info(struct mt79
  	}
  #endif
  
@@ -420,7 +420,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  		req.tx_path_num = fls(phy->mt76->antenna_mask);
  
  	if (phy->mt76->hw->conf.flags & IEEE80211_CONF_MONITOR)
-@@ -2987,14 +2994,14 @@ static int mt7915_mcu_set_eeprom_flash(s
+@@ -3002,14 +3009,14 @@ static int mt7915_mcu_set_eeprom_flash(s
  	return 0;
  }
  
@@ -455,7 +455,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  };
  
  struct mt7915_mcu_thermal_ctrl {
-@@ -493,6 +498,12 @@ enum {
+@@ -494,6 +499,12 @@ enum {
  
  enum {
  	MT_BF_SOUNDING_ON = 1,
@@ -468,7 +468,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  	MT_BF_TYPE_UPDATE = 20,
  	MT_BF_MODULE_UPDATE = 25
  };
-@@ -722,10 +733,20 @@ struct mt7915_muru {
+@@ -723,10 +734,20 @@ struct mt7915_muru {
  #define MURU_OFDMA_SCH_TYPE_UL          BIT(1)
  
  /* Common Config */
@@ -544,16 +544,16 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  #ifdef MTK_DEBUG
  	u16 wlan_idx;
  	struct {
-@@ -632,7 +644,7 @@ int mt7915_mcu_set_fixed_rate_ctrl(struc
- 				   struct ieee80211_vif *vif,
+@@ -642,7 +654,7 @@ int mt7915_mcu_set_fixed_rate_ctrl(struc
  				   struct ieee80211_sta *sta,
+ 				   struct mt76_wcid *wcid,
  				   void *data, u32 field);
 -int mt7915_mcu_set_eeprom(struct mt7915_dev *dev);
 +int mt7915_mcu_set_eeprom(struct mt7915_dev *dev, bool flash_mode);
  int mt7915_mcu_get_eeprom(struct mt7915_dev *dev, u8 *buf, u32 offset);
  int mt7915_mcu_get_eeprom_free_block(struct mt7915_dev *dev, u8 *block_num);
  int mt7915_mcu_set_mac(struct mt7915_dev *dev, int band, bool enable,
-@@ -672,6 +684,7 @@ int mt7915_mcu_fw_log_2_host(struct mt79
+@@ -682,6 +694,7 @@ int mt7915_mcu_fw_log_2_host(struct mt79
  int mt7915_mcu_fw_dbg_ctrl(struct mt7915_dev *dev, u32 module, u8 level);
  void mt7915_mcu_rx_event(struct mt7915_dev *dev, struct sk_buff *skb);
  void mt7915_mcu_exit(struct mt7915_dev *dev);
@@ -1118,7 +1118,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
 +	rate.ldpc = (rate.bw || ed->tx_rate_ldpc) * GENMASK(2, 0);
 +
 +	return mt7915_mcu_set_fixed_rate_ctrl(dev, phy->monitor_vif, sta,
-+					      &rate, RATE_PARAM_FIXED);
++					      wcid, &rate, RATE_PARAM_FIXED);
 +}
 +
 +static int

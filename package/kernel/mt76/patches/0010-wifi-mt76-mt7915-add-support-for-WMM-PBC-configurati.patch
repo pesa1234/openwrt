@@ -203,9 +203,9 @@ Subject: [PATCH 10/21] wifi: mt76: mt7915: add support for WMM PBC
  	MCU_WA_PARAM_CPU_UTIL = 0x0b,
  	MCU_WA_PARAM_RED = 0x0e,
 +	MCU_WA_PARAM_BSS_ACQ_PKT_CNT = 0x12,
+ 	MCU_WA_PARAM_WED_VERSION = 0x32,
  	MCU_WA_PARAM_RED_SETTING = 0x40,
  };
- 
 --- a/mt7915/mt7915.h
 +++ b/mt7915/mt7915.h
 @@ -324,6 +324,9 @@ struct mt7915_dev {
@@ -218,7 +218,7 @@ Subject: [PATCH 10/21] wifi: mt76: mt7915: add support for WMM PBC
  };
  
  enum {
-@@ -527,6 +530,7 @@ int mt7915_mcu_fw_log_2_host(struct mt79
+@@ -537,6 +540,7 @@ int mt7915_mcu_fw_log_2_host(struct mt79
  int mt7915_mcu_fw_dbg_ctrl(struct mt7915_dev *dev, u32 module, u8 level);
  void mt7915_mcu_rx_event(struct mt7915_dev *dev, struct sk_buff *skb);
  void mt7915_mcu_exit(struct mt7915_dev *dev);

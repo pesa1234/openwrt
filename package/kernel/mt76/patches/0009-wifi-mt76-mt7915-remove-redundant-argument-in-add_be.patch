@@ -48,7 +48,7 @@ Signed-off-by: MeiChia Chiu <meichia.chiu@mediatek.com>
  
 --- a/mt7915/mcu.c
 +++ b/mt7915/mcu.c
-@@ -2026,8 +2026,7 @@ mt7915_mcu_add_inband_discov(struct mt79
+@@ -2031,8 +2031,7 @@ mt7915_mcu_add_inband_discov(struct mt79
  				     MCU_EXT_CMD(BSS_INFO_UPDATE), true);
  }
  
@@ -60,7 +60,7 @@ Signed-off-by: MeiChia Chiu <meichia.chiu@mediatek.com>
  	struct mt7915_phy *phy = mt7915_hw_phy(hw);
 --- a/mt7915/mt7915.h
 +++ b/mt7915/mt7915.h
-@@ -472,7 +472,7 @@ int mt7915_mcu_update_bss_color(struct m
+@@ -480,7 +480,7 @@ int mt7915_mcu_update_bss_color(struct m
  int mt7915_mcu_add_inband_discov(struct mt7915_dev *dev, struct ieee80211_vif *vif,
  				 u32 changed);
  int mt7915_mcu_add_beacon(struct ieee80211_hw *hw, struct ieee80211_vif *vif,

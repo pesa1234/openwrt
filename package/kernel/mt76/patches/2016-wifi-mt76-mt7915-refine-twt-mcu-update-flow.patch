@@ -50,7 +50,7 @@ Signed-off-by: Yi-Chia Hsieh <Yi-Chia.Hsieh@mediatek.com>
  	dev->twt.table_mask |= BIT(table_id);
 --- a/mt7915/mcu.c
 +++ b/mt7915/mcu.c
-@@ -4393,20 +4393,22 @@ int mt7915_mcu_twt_agrt_update(struct mt
+@@ -4408,20 +4408,22 @@ int mt7915_mcu_twt_agrt_update(struct mt
  		.own_mac_idx = mvif->mt76.omac_idx,
  		.flowid = flow->id,
  		.peer_id = cpu_to_le16(flow->wcid),

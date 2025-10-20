@@ -27,7 +27,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  	MCU_EXT_CMD_CSI_CTRL = 0xc2,
 --- a/mt7915/mcu.c
 +++ b/mt7915/mcu.c
-@@ -4729,37 +4729,33 @@ void mt7915_mcu_set_dynalgo(struct mt791
+@@ -4744,37 +4744,33 @@ void mt7915_mcu_set_dynalgo(struct mt791
  			&req, sizeof(req), false);
  }
  
@@ -90,7 +90,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  void mt7915_mcu_set_bypass_smthint(struct mt7915_phy *phy, u8 val)
 --- a/mt7915/mcu.h
 +++ b/mt7915/mcu.h
-@@ -851,6 +851,35 @@ struct mt7915_mcu_rdd_ipi_scan {
+@@ -852,6 +852,35 @@ struct mt7915_mcu_rdd_ipi_scan {
  	u8 tx_assert_time;						/* unit: us */
  } __packed;
  
@@ -128,7 +128,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  #define OFDMA_UL                       BIT(1)
 --- a/mt7915/mt7915.h
 +++ b/mt7915/mt7915.h
-@@ -797,6 +797,7 @@ void mt7915_mcu_set_mimo(struct mt7915_p
+@@ -807,6 +807,7 @@ void mt7915_mcu_set_mimo(struct mt7915_p
  void mt7915_mcu_set_dynalgo(struct mt7915_phy *phy, u8 enable);
  int mt7915_mcu_set_mu_edca(struct mt7915_phy *phy, u8 val);
  void mt7915_mcu_set_cert(struct mt7915_phy *phy, u8 type);
