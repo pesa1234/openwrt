@@ -1,6 +1,9 @@
 #!/bin/sh /etc/rc.common
 
 START=99
+USE_PROCD=1
+
+. /lib/functions.sh
 
 
 smp-mt76() {
@@ -756,9 +759,12 @@ usb-setup()
 	
 }
 
-start() {
-	(
-	if [ ! -f /tmp/smp_affinity_started ]; then
+service_triggers() {
+    procd_add_reload_trigger advanced
+}
+
+start_service() {
+    if [ ! -f /tmp/smp_affinity_started ]; then
 		delay=$(uci get advanced.@advanced_packet_steering[0].advanced_packet_steering_delay 2>/dev/null || echo "30")
 		logger -s "smp_affinity: Starting with delay of $delay sec."
 		sleep $delay
@@ -768,6 +774,37 @@ start() {
 	enable-HQoS
 	usb-setup
 	hw-atf-setup
-	#mtk-offloading #### do not run - hardware flow offloading and bridger works better
-	) >/dev/null 2>&1 </dev/null &
+    logger -t advanced_setup "advanced_setup finished"
+}
+
+reload_service() {
+    trigger="$1"
+    case "$trigger" in
+        atf)
+			logger -t advanced_setup "advanced_setup atf"
+            hw_atf_setup
+            ;;
+        usb)
+			logger -t advanced_setup "advanced_setup usb"
+            usb_setup
+            ;;
+        *)
+			logger -t advanced_setup "advanced_setup generic"
+			if [ ! -f /tmp/smp_affinity_started ]; then
+				delay=$(uci get advanced.@advanced_packet_steering[0].advanced_packet_steering_delay 2>/dev/null || echo "30")
+				logger -s "smp_affinity: Starting with delay of $delay sec."
+				sleep $delay
+				echo 1 > /tmp/smp_affinity_started
+			fi
+			smp-mt76
+			enable-HQoS
+			usb-setup
+			hw-atf-setup
+			logger -t advanced_setup "advanced_setup finished"
+            ;;
+    esac
+}
+
+stop_service() {
+    logger -t advanced_setup "No stop actions defined"
 }
