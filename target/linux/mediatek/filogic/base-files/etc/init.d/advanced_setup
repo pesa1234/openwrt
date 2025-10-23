@@ -757,6 +757,28 @@ usb-setup()
 		echo 0 > /sys/bus/usb/devices/usb2/2-0:1.0/usb2-port1/disable
 	fi
 	
+	usbpower=$(uci get advanced.@defaults[0].usb_power 2>/dev/null || echo "x")
+	if [ $usbpower == 1 ]; then
+		logger -s "advanced_setup: USB Power ON"
+		echo 1 > /sys/devices/platform/regulator-usb-vbus/usb_vbus_enable
+	elif [ $usbpower == 0 ]; then
+		logger -s "advanced_setup: USB Power OFF"
+		echo 0 > /sys/devices/platform/regulator-usb-vbus/usb_vbus_enable
+	fi
+	
+	USB2_PATH="/sys/bus/usb/devices/usb2/2-0:1.0/usb2-port1/disable"
+	USBPOWER_PATH="/sys/devices/platform/regulator-usb-vbus/usb_vbus_enable"
+	status2=$(cat "$USB2_PATH")
+	statuspower=$(cat "$USBPOWER_PATH")
+	if [ "$status2" -eq 1 ]; then
+		logger -s "advanced_setup: USB Speed is set to 2.0"
+	fi
+	if [ "$statuspower" -eq 1 ]; then
+		logger -s "advanced_setup: USB is power ON"
+	else
+		logger -s "advanced_setup: USB is power OFF"
+	fi
+	
 }
 
 service_triggers() {
