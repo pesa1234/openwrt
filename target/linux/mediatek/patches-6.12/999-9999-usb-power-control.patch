@@ -1,0 +1,79 @@
+--- a/drivers/regulator/fixed.c
++++ b/drivers/regulator/fixed.c
+@@ -29,6 +29,8 @@
+ #include <linux/regulator/of_regulator.h>
+ #include <linux/regulator/machine.h>
+ #include <linux/clk.h>
++#include <linux/gpio/consumer.h>
++#include <linux/sysfs.h>
+ 
+ /* Default time in millisecond to wait for emergency shutdown */
+ #define FV_DEF_EMERG_SHUTDWN_TMO	10
+@@ -40,6 +42,7 @@ struct fixed_voltage_data {
+ 	struct clk *enable_clock;
+ 	unsigned int enable_counter;
+ 	int performance_state;
++	struct gpio_desc *ena_gpiod;
+ };
+ 
+ struct fixed_dev_type {
+@@ -47,6 +50,39 @@ struct fixed_dev_type {
+ 	bool has_performance_state;
+ };
+ 
++static ssize_t usb_vbus_enable_show(struct device *dev,
++                                    struct device_attribute *attr,
++                                    char *buf)
++{
++    struct platform_device *pdev = to_platform_device(dev);
++    struct fixed_voltage_data *drvdata = platform_get_drvdata(pdev);
++    if (!drvdata->ena_gpiod)
++        return -EINVAL;
++    return sprintf(buf, "%d\n", gpiod_get_value(drvdata->ena_gpiod));
++}
++
++static ssize_t usb_vbus_enable_store(struct device *dev,
++                                     struct device_attribute *attr,
++                                     const char *buf,
++                                     size_t count)
++{
++    struct platform_device *pdev = to_platform_device(dev);
++    struct fixed_voltage_data *drvdata = platform_get_drvdata(pdev);
++    unsigned long val;
++
++    if (!drvdata->ena_gpiod)
++        return -EINVAL;
++
++    if (kstrtoul(buf, 10, &val))
++        return -EINVAL;
++
++    gpiod_set_value(drvdata->ena_gpiod, val ? 1 : 0);
++
++    return count;
++}
++
++static DEVICE_ATTR_RW(usb_vbus_enable);
++
+ static int reg_clock_enable(struct regulator_dev *rdev)
+ {
+ 	struct fixed_voltage_data *priv = rdev_get_drvdata(rdev);
+@@ -323,6 +359,7 @@ static int reg_fixed_voltage_probe(struc
+ 		return dev_err_probe(&pdev->dev, PTR_ERR(cfg.ena_gpiod),
+ 				     "can't get GPIO\n");
+ 
++	drvdata->ena_gpiod = cfg.ena_gpiod;
+ 	cfg.dev = &pdev->dev;
+ 	cfg.init_data = config->init_data;
+ 	cfg.driver_data = drvdata;
+@@ -336,6 +373,11 @@ static int reg_fixed_voltage_probe(struc
+ 				    PTR_ERR(drvdata->dev));
+ 		return ret;
+ 	}
++	
++	ret = device_create_file(&pdev->dev, &dev_attr_usb_vbus_enable);
++	if (ret) {
++		dev_warn(&pdev->dev, "failed to create usb_vbus_enable sysfs file\n");
++	}
+ 
+ 	platform_set_drvdata(pdev, drvdata);
+ 
