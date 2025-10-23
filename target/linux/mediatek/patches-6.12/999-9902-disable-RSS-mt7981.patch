@@ -1,6 +1,6 @@
 --- a/drivers/net/ethernet/mediatek/mtk_eth_soc.c
 +++ b/drivers/net/ethernet/mediatek/mtk_eth_soc.c
-@@ -6135,7 +6135,7 @@ static const struct mtk_soc_data mt7981_
+@@ -6138,7 +6138,7 @@ static const struct mtk_soc_data mt7981_
  	.hash_offset = 4,
  	.has_accounting = true,
  	.foe_entry_size = MTK_FOE_ENTRY_V2_SIZE,
