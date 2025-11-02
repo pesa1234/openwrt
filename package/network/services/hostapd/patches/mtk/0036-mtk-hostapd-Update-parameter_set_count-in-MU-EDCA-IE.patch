@@ -1,0 +1,25 @@
+From 70d737a81e3a3fec7e5fa3ae896812062e642faf Mon Sep 17 00:00:00 2001
+From: MeiChia Chiu <meichia.chiu@mediatek.com>
+Date: Fri, 14 Jul 2023 17:19:13 +0800
+Subject: [PATCH 036/149] mtk: hostapd: Update parameter_set_count in MU EDCA
+ IE
+
+without this patch, MU EDCA Parameter update count not equal to
+WMM Parameter set count.
+
+---
+ src/ap/ieee802_11_he.c | 3 +++
+ 1 file changed, 3 insertions(+)
+
+--- a/src/ap/ieee802_11_he.c
++++ b/src/ap/ieee802_11_he.c
+@@ -320,6 +320,9 @@ u8 * hostapd_eid_he_mu_edca_parameter_se
+ 	edca = (struct ieee80211_he_mu_edca_parameter_set *) pos;
+ 	os_memcpy(edca, &hapd->iface->conf->he_mu_edca, sizeof(*edca));
+ 
++	if (hapd->conf->wmm_enabled)
++		edca->he_qos_info = hapd->parameter_set_count % 0xf;
++
+ 	wpa_hexdump(MSG_DEBUG, "HE: MU EDCA Parameter Set element",
+ 		    pos, sizeof(*edca));
+ 
