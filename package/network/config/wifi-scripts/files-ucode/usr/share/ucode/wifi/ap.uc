@@ -43,6 +43,9 @@ function iface_setup(config) {
 	if (config.multicast_to_unicast || config.proxy_arp)
 		config.ap_isolate = 1;
 
+	if (config.proxy_arp)
+		set_default(config, 'na_mcast_to_ucast', true);
+
 	append('bssid', config.macaddr);
 	config.ssid2 = config.ssid;
 	config.wmm_enabled = 1;
@@ -56,7 +59,7 @@ function iface_setup(config) {
 		'wds_sta', 'wds_bridge', 'snoop_iface', 'vendor_elements', 'nas_identifier', 'radius_acct_interim_interval',
 		'ocv', 'multicast_to_unicast', 'preamble', 'proxy_arp', 'per_sta_vif', 'mbo',
 		'bss_transition', 'wnm_sleep_mode', 'wnm_sleep_mode_no_keys', 'qos_map_set', 'max_listen_int',
-		'dtim_period', 'wmm_enabled', 'start_disabled',
+		'dtim_period', 'wmm_enabled', 'start_disabled', 'na_mcast_to_ucast',
 	]);
 }
 
@@ -167,7 +170,7 @@ function iface_auth_type(config) {
 	}
 
 	append_vars(config, [
-		'sae_require_mfp', 'sae_pwe', 'time_advertisement', 'time_zone',
+		'sae_require_mfp', 'sae_pwe', 'sae_track_password', 'time_advertisement', 'time_zone',
 		'wpa_group_rekey', 'wpa_ptk_rekey', 'wpa_gmk_rekey', 'wpa_strict_rekey',
 		'macaddr_acl', 'wpa_psk_radius', 'wpa_psk', 'wpa_passphrase', 'wpa_psk_file',
 		'eapol_version', 'dynamic_vlan', 'radius_request_cui', 'eap_reauth_period',
