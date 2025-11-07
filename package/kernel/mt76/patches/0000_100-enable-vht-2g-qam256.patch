@@ -34,7 +34,7 @@
  		if (ret)
  			return ret;
  	}
-@@ -744,7 +744,7 @@ int mt76_register_device(struct mt76_dev
+@@ -746,7 +746,7 @@ int mt76_register_device(struct mt76_dev
  		return ret;
  
  	if (phy->cap.has_2ghz) {

@@ -35,7 +35,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
 
 --- a/mac80211.c
 +++ b/mac80211.c
-@@ -953,9 +953,9 @@ void mt76_rx(struct mt76_dev *dev, enum
+@@ -956,9 +956,9 @@ void mt76_rx(struct mt76_dev *dev, enum
  #ifdef CONFIG_NL80211_TESTMODE
  	if (!(phy->test.flag & MT_TM_FW_RX_COUNT) &&
  	    phy->test.state == MT76_TM_STATE_RX_FRAMES) {
@@ -49,7 +49,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  
 --- a/mt76.h
 +++ b/mt76.h
-@@ -867,10 +867,21 @@ struct mt76_testmode_data {
+@@ -887,10 +887,21 @@ struct mt76_testmode_data {
  	u16 tx_queued_limit;
  	u32 tx_done;
  	struct {

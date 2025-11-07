@@ -17,7 +17,7 @@ Signed-off-by: Bo Jiao <Bo.Jiao@mediatek.com>
 
 --- a/mt76.h
 +++ b/mt76.h
-@@ -36,6 +36,8 @@
+@@ -41,6 +41,8 @@
  #define MT76_WED_WDS_MIN	256
  #define MT76_WED_WDS_MAX	272
  
@@ -26,7 +26,7 @@ Signed-off-by: Bo Jiao <Bo.Jiao@mediatek.com>
  #define MT_QFLAG_WED_RING	GENMASK(1, 0)
  #define MT_QFLAG_WED_TYPE	GENMASK(4, 2)
  #define MT_QFLAG_WED		BIT(5)
-@@ -74,6 +76,12 @@ enum mt76_bus_type {
+@@ -86,6 +88,12 @@ enum mt76_bus_type {
  	MT76_BUS_SDIO,
  };
  
@@ -39,7 +39,7 @@ Signed-off-by: Bo Jiao <Bo.Jiao@mediatek.com>
  enum mt76_wed_type {
  	MT76_WED_Q_TX,
  	MT76_WED_Q_TXFREE,
-@@ -928,6 +936,9 @@ struct mt76_dev {
+@@ -948,6 +956,9 @@ struct mt76_dev {
  	struct device *dma_dev;
  
  	struct mt76_mcu mcu;

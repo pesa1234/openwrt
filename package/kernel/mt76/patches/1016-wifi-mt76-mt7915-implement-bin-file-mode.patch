@@ -51,7 +51,7 @@ Signed-off-by: Shayne Chen <shayne.chen@mediatek.com>
  {
 --- a/mt76.h
 +++ b/mt76.h
-@@ -1092,6 +1092,9 @@ struct mt76_dev {
+@@ -1113,6 +1113,9 @@ struct mt76_dev {
  	};
  
  	atomic_t bus_hung;
@@ -61,7 +61,7 @@ Signed-off-by: Shayne Chen <shayne.chen@mediatek.com>
  };
  
  /* per-phy stats.  */
-@@ -1397,6 +1400,7 @@ int mt76_eeprom_override(struct mt76_phy
+@@ -1418,6 +1421,7 @@ int mt76_eeprom_override(struct mt76_phy
  int mt76_get_of_data_from_mtd(struct mt76_dev *dev, void *eep, int offset, int len);
  int mt76_get_of_data_from_nvmem(struct mt76_dev *dev, void *eep,
  				const char *cell_name, int len);

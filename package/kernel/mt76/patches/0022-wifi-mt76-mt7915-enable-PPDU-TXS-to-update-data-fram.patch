@@ -31,7 +31,7 @@ Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
  void mt76_connac2_mac_decode_he_radiotap(struct mt76_dev *dev,
 --- a/mt76_connac_mac.c
 +++ b/mt76_connac_mac.c
-@@ -609,7 +609,7 @@ void mt76_connac2_mac_write_txwi(struct
+@@ -612,7 +612,7 @@ void mt76_connac2_mac_write_txwi(struct
  EXPORT_SYMBOL_GPL(mt76_connac2_mac_write_txwi);
  
  bool mt76_connac2_mac_fill_txs(struct mt76_dev *dev, struct mt76_wcid *wcid,
@@ -40,7 +40,7 @@ Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
  {
  	struct mt76_sta_stats *stats = &wcid->stats;
  	struct ieee80211_supported_band *sband;
-@@ -621,8 +621,7 @@ bool mt76_connac2_mac_fill_txs(struct mt
+@@ -624,8 +624,7 @@ bool mt76_connac2_mac_fill_txs(struct mt
  	txs = le32_to_cpu(txs_data[0]);
  
  	/* PPDU based reporting */
@@ -50,7 +50,7 @@ Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
  		stats->tx_bytes +=
  			le32_get_bits(txs_data[5], MT_TXS5_MPDU_TX_BYTE) -
  			le32_get_bits(txs_data[7], MT_TXS7_MPDU_RETRY_BYTE);
-@@ -643,6 +642,9 @@ bool mt76_connac2_mac_fill_txs(struct mt
+@@ -646,6 +645,9 @@ bool mt76_connac2_mac_fill_txs(struct mt
  		}
  	}
  
@@ -60,7 +60,7 @@ Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
  	txrate = FIELD_GET(MT_TXS0_TX_RATE, txs);
  
  	rate.mcs = FIELD_GET(MT_TX_RATE_IDX, txrate);
-@@ -752,7 +754,7 @@ bool mt76_connac2_mac_add_txs_skb(struct
+@@ -755,7 +757,7 @@ bool mt76_connac2_mac_add_txs_skb(struct
  			!!(info->flags & IEEE80211_TX_STAT_ACK);
  		info->status.rates[0].idx = -1;
  

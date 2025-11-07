@@ -14,7 +14,7 @@ Signed-off-by: Peter Chiu <chui-hao.chiu@mediatek.com>
 
 --- a/mt76_connac_mac.c
 +++ b/mt76_connac_mac.c
-@@ -739,9 +739,6 @@ bool mt76_connac2_mac_add_txs_skb(struct
+@@ -742,9 +742,6 @@ bool mt76_connac2_mac_add_txs_skb(struct
  	struct sk_buff_head list;
  	struct sk_buff *skb;
  

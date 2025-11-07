@@ -12,7 +12,7 @@ Signed-off-by: Yi-Chia Hsieh <yi-chia.hsieh@mediatek.com>
 
 --- a/mt76_connac_mac.c
 +++ b/mt76_connac_mac.c
-@@ -617,11 +617,16 @@ bool mt76_connac2_mac_fill_txs(struct mt
+@@ -620,11 +620,16 @@ bool mt76_connac2_mac_fill_txs(struct mt
  	struct rate_info rate = {};
  	bool cck = false;
  	u32 txrate, txs, mode, stbc;
@@ -29,7 +29,7 @@ Signed-off-by: Yi-Chia Hsieh <yi-chia.hsieh@mediatek.com>
  		stats->tx_bytes +=
  			le32_get_bits(txs_data[5], MT_TXS5_MPDU_TX_BYTE) -
  			le32_get_bits(txs_data[7], MT_TXS7_MPDU_RETRY_BYTE);
-@@ -665,10 +670,6 @@ bool mt76_connac2_mac_fill_txs(struct mt
+@@ -668,10 +673,6 @@ bool mt76_connac2_mac_fill_txs(struct mt
  		cck = true;
  		fallthrough;
  	case MT_PHY_TYPE_OFDM:
