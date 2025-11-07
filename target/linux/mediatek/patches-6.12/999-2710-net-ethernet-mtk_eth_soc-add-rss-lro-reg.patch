@@ -75,7 +75,7 @@ Subject: [PATCH] net: ethernet: mtk_eth_soc: add register definitions for rss
  		.qtx_cfg	= 0x4400,
 --- a/drivers/net/ethernet/mediatek/mtk_eth_soc.h
 +++ b/drivers/net/ethernet/mediatek/mtk_eth_soc.h
-@@ -1168,16 +1168,29 @@ struct mtk_reg_map {
+@@ -1211,16 +1211,29 @@ struct mtk_reg_map {
  	u32	tx_irq_mask;
  	u32	tx_irq_status;
  	struct {

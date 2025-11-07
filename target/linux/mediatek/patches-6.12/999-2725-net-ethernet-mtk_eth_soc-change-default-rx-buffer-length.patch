@@ -61,7 +61,7 @@ total CPU usage.
  
  	return;
  
-@@ -1282,8 +1315,8 @@ static void mtk_get_stats64(struct net_d
+@@ -1312,8 +1345,8 @@ static void mtk_get_stats64(struct net_d
  static inline int mtk_max_frag_size(int mtu)
  {
  	/* make sure buf_size will be at least MTK_MAX_RX_LENGTH */
@@ -72,7 +72,7 @@ total CPU usage.
  
  	return SKB_DATA_ALIGN(MTK_RX_HLEN + mtu) +
  		SKB_DATA_ALIGN(sizeof(struct skb_shared_info));
-@@ -1294,7 +1327,7 @@ static inline int mtk_max_buf_size(int f
+@@ -1324,7 +1357,7 @@ static inline int mtk_max_buf_size(int f
  	int buf_size = frag_size - NET_SKB_PAD - NET_IP_ALIGN -
  		       SKB_DATA_ALIGN(sizeof(struct skb_shared_info));
  
@@ -81,7 +81,7 @@ total CPU usage.
  
  	return buf_size;
  }
-@@ -4191,30 +4224,6 @@ static void mtk_dim_tx(struct work_struc
+@@ -4227,30 +4260,6 @@ static void mtk_dim_tx(struct work_struc
  	dim->state = DIM_START_MEASURE;
  }
  
@@ -112,7 +112,7 @@ total CPU usage.
  static void mtk_hw_dump_reg(struct mtk_eth *eth, char *name, u32 offset, u32 range)
  {
  	u32 cur = offset;
-@@ -4545,14 +4554,10 @@ static int mtk_hw_init(struct mtk_eth *e
+@@ -4581,14 +4590,10 @@ static int mtk_hw_init(struct mtk_eth *e
  	 * invoked.
  	 */
  	for (i = 0; i < MTK_MAX_DEVS; i++) {
@@ -128,7 +128,7 @@ total CPU usage.
  	}
  
  	/* Indicates CDM to parse the MTK special tag from CPU
-@@ -5485,11 +5490,7 @@ static int mtk_add_mac(struct mtk_eth *e
+@@ -5534,11 +5539,7 @@ static int mtk_add_mac(struct mtk_eth *e
  
  	eth->netdev[id]->irq = eth->irq_fe[0];
  	eth->netdev[id]->dev.of_node = np;
@@ -143,9 +143,9 @@ total CPU usage.
  		mac->device_notifier.notifier_call = mtk_device_event;
 --- a/drivers/net/ethernet/mediatek/mtk_eth_soc.h
 +++ b/drivers/net/ethernet/mediatek/mtk_eth_soc.h
-@@ -570,6 +570,10 @@
- #define MTK_XMAC_LOGIC_RST(x)	(MTK_XMAC_BASE(x) + 0x10)
- #define XMAC_LOGIC_RST		BIT(0)
+@@ -591,6 +591,10 @@
+ #define XMAC_FORCE_TX_FC	BIT(4)
+ #define XMAC_FORCE_LINK		BIT(0)
  
 +/* XFI Mac RX configuration registers */
 +#define MTK_XMAC_RX_CFG2(x)	(MTK_XMAC_MCR(x) + 0xd0)
