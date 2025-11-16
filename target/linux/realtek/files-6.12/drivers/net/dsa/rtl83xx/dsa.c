@@ -16,14 +16,6 @@ static const u8 ipv6_all_hosts_mcast_addr_base[ETH_ALEN] =
 static const u8 ipv6_all_hosts_mcast_addr_mask[ETH_ALEN] =
 { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
 
-/* This interval needs to be short enough to prevent an undetected counter
- * overflow. The octet counters don't need to be considered for this, because
- * they are 64 bits on all platforms. Based on the possible packets per second
- * at the highest supported speeds, an interval of a minute is probably a safe
- * choice for the other counters.
- */
-#define RTLDSA_COUNTERS_POLL_INTERVAL	(60 * HZ)
-
 extern struct rtl83xx_soc_info soc_info;
 
 static void rtldsa_init_counters(struct rtl838x_switch_priv *priv);
@@ -324,6 +316,104 @@ const struct rtldsa_mib_desc rtldsa_930x_mib = {
 
 	.list_count = ARRAY_SIZE(rtldsa_930x_mib_list),
 	.list = rtldsa_930x_mib_list
+};
+
+const struct rtldsa_mib_list_item rtldsa_931x_mib_list[] = {
+	MIB_LIST_ITEM("ifOutDiscards", MIB_ITEM(MIB_TBL_STD, 36, 1)),
+	MIB_LIST_ITEM("dot1dTpPortInDiscards", MIB_ITEM(MIB_TBL_STD, 35, 1)),
+	MIB_LIST_ITEM("DropEvents", MIB_ITEM(MIB_TBL_STD, 25, 1)),
+	MIB_LIST_ITEM("tx_BroadcastPkts", MIB_ITEM(MIB_TBL_STD, 24, 1)),
+	MIB_LIST_ITEM("tx_MulticastPkts", MIB_ITEM(MIB_TBL_STD, 23, 1)),
+	MIB_LIST_ITEM("tx_CRCAlignErrors", MIB_ITEM(MIB_TBL_STD, 22, 1)),
+	MIB_LIST_ITEM("tx_UndersizePkts", MIB_ITEM(MIB_TBL_STD, 20, 1)),
+	MIB_LIST_ITEM("tx_OversizePkts", MIB_ITEM(MIB_TBL_STD, 18, 1)),
+	MIB_LIST_ITEM("tx_Fragments", MIB_ITEM(MIB_TBL_STD, 16, 1)),
+	MIB_LIST_ITEM("tx_Jabbers", MIB_ITEM(MIB_TBL_STD, 14, 1)),
+	MIB_LIST_ITEM("tx_Collisions", MIB_ITEM(MIB_TBL_STD, 12, 1)),
+
+	MIB_LIST_ITEM("rx_UndersizeDropPkts", MIB_ITEM(MIB_TBL_PRV, 27, 1)),
+	MIB_LIST_ITEM("tx_PktsFlexibleOctetsSet1", MIB_ITEM(MIB_TBL_PRV, 22, 1)),
+	MIB_LIST_ITEM("rx_PktsFlexibleOctetsSet1", MIB_ITEM(MIB_TBL_PRV, 21, 1)),
+	MIB_LIST_ITEM("tx_PktsFlexibleOctetsCRCSet1", MIB_ITEM(MIB_TBL_PRV, 28, 1)),
+	MIB_LIST_ITEM("rx_PktsFlexibleOctetsCRCSet1", MIB_ITEM(MIB_TBL_PRV, 27, 1)),
+	MIB_LIST_ITEM("tx_PktsFlexibleOctetsSet0", MIB_ITEM(MIB_TBL_PRV, 18, 1)),
+	MIB_LIST_ITEM("rx_PktsFlexibleOctetsSet0", MIB_ITEM(MIB_TBL_PRV, 17, 1)),
+	MIB_LIST_ITEM("tx_PktsFlexibleOctetsCRCSet0", MIB_ITEM(MIB_TBL_PRV, 16, 1)),
+	MIB_LIST_ITEM("rx_PktsFlexibleOctetsCRCSet0", MIB_ITEM(MIB_TBL_PRV, 15, 1)),
+	MIB_LIST_ITEM("LengthFieldError", MIB_ITEM(MIB_TBL_PRV, 14, 1)),
+	MIB_LIST_ITEM("FalseCarrierTimes", MIB_ITEM(MIB_TBL_PRV, 13, 1)),
+	MIB_LIST_ITEM("UndersizeOctets", MIB_ITEM(MIB_TBL_PRV, 12, 1)),
+	MIB_LIST_ITEM("FramingErrors", MIB_ITEM(MIB_TBL_PRV, 11, 1)),
+	MIB_LIST_ITEM("rx_MacDiscards", MIB_ITEM(MIB_TBL_PRV, 9, 1)),
+	MIB_LIST_ITEM("rx_MacIPGShortDrop", MIB_ITEM(MIB_TBL_PRV, 8, 1))
+};
+
+const struct rtldsa_mib_desc rtldsa_931x_mib = {
+	.symbol_errors = MIB_ITEM(MIB_TBL_STD, 29, 1),
+
+	.if_in_octets = MIB_ITEM(MIB_TBL_STD, 51, 2),
+	.if_out_octets = MIB_ITEM(MIB_TBL_STD, 49, 2),
+	.if_in_ucast_pkts = MIB_ITEM(MIB_TBL_STD, 47, 2),
+	.if_in_mcast_pkts = MIB_ITEM(MIB_TBL_STD, 45, 2),
+	.if_in_bcast_pkts = MIB_ITEM(MIB_TBL_STD, 43, 2),
+	.if_out_ucast_pkts = MIB_ITEM(MIB_TBL_STD, 41, 2),
+	.if_out_mcast_pkts = MIB_ITEM(MIB_TBL_STD, 39, 2),
+	.if_out_bcast_pkts = MIB_ITEM(MIB_TBL_STD, 37, 2),
+	.if_out_discards = MIB_ITEM(MIB_TBL_STD, 36, 1),
+	.single_collisions = MIB_ITEM(MIB_TBL_STD, 35, 1),
+	.multiple_collisions = MIB_ITEM(MIB_TBL_STD, 33, 1),
+	.deferred_transmissions = MIB_ITEM(MIB_TBL_STD, 32, 1),
+	.late_collisions = MIB_ITEM(MIB_TBL_STD, 31, 1),
+	.excessive_collisions = MIB_ITEM(MIB_TBL_STD, 30, 1),
+	.crc_align_errors = MIB_ITEM(MIB_TBL_STD, 21, 1),
+	.rx_pkts_over_max_octets = MIB_ITEM(MIB_TBL_PRV, 23, 1),
+
+	.unsupported_opcodes = MIB_ITEM(MIB_TBL_STD, 28, 1),
+
+	.rx_undersize_pkts = MIB_ITEM(MIB_TBL_STD, 19, 1),
+	.rx_oversize_pkts = MIB_ITEM(MIB_TBL_STD, 17, 1),
+	.rx_fragments = MIB_ITEM(MIB_TBL_STD, 15, 1),
+	.rx_jabbers = MIB_ITEM(MIB_TBL_STD, 13, 1),
+
+	.tx_pkts = {
+		MIB_ITEM(MIB_TBL_STD, 11, 1),
+		MIB_ITEM(MIB_TBL_STD, 9, 1),
+		MIB_ITEM(MIB_TBL_STD, 7, 1),
+		MIB_ITEM(MIB_TBL_STD, 5, 1),
+		MIB_ITEM(MIB_TBL_STD, 3, 1),
+		MIB_ITEM(MIB_TBL_STD, 1, 1),
+		MIB_ITEM(MIB_TBL_PRV, 26, 1),
+		MIB_ITEM(MIB_TBL_PRV, 24, 1)
+	},
+	.rx_pkts = {
+		MIB_ITEM(MIB_TBL_STD, 10, 1),
+		MIB_ITEM(MIB_TBL_STD, 8, 1),
+		MIB_ITEM(MIB_TBL_STD, 6, 1),
+		MIB_ITEM(MIB_TBL_STD, 4, 1),
+		MIB_ITEM(MIB_TBL_STD, 2, 1),
+		MIB_ITEM(MIB_TBL_STD, 0, 1),
+		MIB_ITEM(MIB_TBL_PRV, 25, 1),
+		MIB_ITEM(MIB_TBL_PRV, 23, 1),
+	},
+	.rmon_ranges = {
+		{ 0, 64 },
+		{ 65, 127 },
+		{ 128, 255 },
+		{ 256, 511 },
+		{ 512, 1023 },
+		{ 1024, 1518 },
+		{ 1519, 12288 },
+		{ 12289, 65535 }
+	},
+
+	.drop_events = MIB_ITEM(MIB_TBL_STD, 25, 1),
+	.collisions = MIB_ITEM(MIB_TBL_STD, 12, 1),
+
+	.rx_pause_frames = MIB_ITEM(MIB_TBL_STD, 27, 1),
+	.tx_pause_frames = MIB_ITEM(MIB_TBL_STD, 26, 1),
+
+	.list_count = ARRAY_SIZE(rtldsa_931x_mib_list),
+	.list = rtldsa_931x_mib_list
 };
 
 
@@ -859,6 +949,8 @@ static const struct rtldsa_mib_desc *rtldsa_get_mib_desc(struct rtl838x_switch_p
 		return &rtldsa_839x_mib;
 	case RTL9300_FAMILY_ID:
 		return &rtldsa_930x_mib;
+	case RTL9310_FAMILY_ID:
+		return &rtldsa_931x_mib;
 	default:
 		return NULL;
 	}
@@ -880,6 +972,15 @@ static bool rtldsa_read_mib_item(struct rtl838x_switch_priv *priv, int port,
 		reg = priv->r->stat_port_prv_mib;
 		reg_offset = 128;
 		break;
+	case MIB_TBL_STD:
+	case MIB_TBL_PRV:
+		if (!priv->r->stat_port_table_read)
+			return false;
+
+		*data = priv->r->stat_port_table_read(port, mib_item->size, mib_item->offset,
+						      mib_item->reg == MIB_TBL_PRV);
+
+		return true;
 	default:
 		return false;
 	}
@@ -920,6 +1021,40 @@ static void rtldsa_update_counter(struct rtl838x_switch_priv *priv, int port,
 		counter->val += diff;
 		counter->last = val32;
 	}
+}
+
+static void rtldsa_update_link_stat(struct rtnl_link_stats64 *s,
+				    const struct rtldsa_counter_state *counters)
+{
+	s->rx_packets = counters->if_in_ucast_pkts.val +
+			counters->if_in_mcast_pkts.val +
+			counters->if_in_bcast_pkts.val +
+			counters->rx_pkts_over_max_octets.val;
+
+	s->tx_packets = counters->if_out_ucast_pkts.val +
+			counters->if_out_mcast_pkts.val +
+			counters->if_out_bcast_pkts.val -
+			counters->if_out_discards.val;
+
+	/* Subtract FCS for each packet, and pause frames */
+	s->rx_bytes = counters->if_in_octets.val -
+		      4 * s->rx_packets -
+		      64 * counters->rx_pause_frames.val;
+	s->tx_bytes = counters->if_out_octets.val -
+		      4 * s->tx_packets -
+		      64 * counters->tx_pause_frames.val;
+
+	s->collisions = counters->collisions.val;
+
+	s->rx_dropped = counters->drop_events.val;
+	s->tx_dropped = counters->if_out_discards.val;
+
+	s->rx_crc_errors = counters->crc_align_errors.val;
+	s->rx_errors = s->rx_crc_errors;
+
+	s->tx_aborted_errors = counters->excessive_collisions.val;
+	s->tx_window_errors = counters->late_collisions.val;
+	s->tx_errors = s->tx_aborted_errors + s->tx_window_errors;
 }
 
 static void rtldsa_update_port_counters(struct rtl838x_switch_priv *priv, int port)
@@ -1013,6 +1148,45 @@ static void rtldsa_update_port_counters(struct rtl838x_switch_priv *priv, int po
 			      &mib_desc->rx_pause_frames);
 	rtldsa_update_counter(priv, port, &counters->tx_pause_frames,
 			      &mib_desc->tx_pause_frames);
+
+	/* prepare get_stats64 reply without requiring caller waiting for mutex */
+	spin_lock(&counters->link_stat_lock);
+	rtldsa_update_link_stat(&counters->link_stat, counters);
+	spin_unlock(&counters->link_stat_lock);
+}
+
+void rtldsa_counters_lock_register(struct rtl838x_switch_priv *priv, int port)
+	__acquires(&priv->ports[port].counters.lock)
+{
+	spin_lock(&priv->ports[port].counters.lock);
+}
+
+void rtldsa_counters_unlock_register(struct rtl838x_switch_priv *priv, int port)
+	__releases(&priv->ports[port].counters.lock)
+{
+	spin_unlock(&priv->ports[port].counters.lock);
+}
+
+void rtldsa_counters_lock_table(struct rtl838x_switch_priv *priv, int port __maybe_unused)
+	__acquires(&priv->counters_lock)
+{
+	mutex_lock(&priv->counters_lock);
+}
+
+void rtldsa_counters_unlock_table(struct rtl838x_switch_priv *priv, int port __maybe_unused)
+	__releases(&priv->ports[port].counters.lock)
+{
+	mutex_unlock(&priv->counters_lock);
+}
+
+static void rtldsa_counters_lock(struct rtl838x_switch_priv *priv, int port)
+{
+	priv->r->stat_counters_lock(priv, port);
+}
+
+static void rtldsa_counters_unlock(struct rtl838x_switch_priv *priv, int port)
+{
+	priv->r->stat_counters_unlock(priv, port);
 }
 
 static void rtldsa_poll_counters(struct work_struct *work)
@@ -1020,40 +1194,38 @@ static void rtldsa_poll_counters(struct work_struct *work)
 	struct rtl838x_switch_priv *priv = container_of(to_delayed_work(work),
 							struct rtl838x_switch_priv,
 							counters_work);
-	struct rtldsa_counter_state *counters;
 
-	for (int i = 0; i < priv->cpu_port; i++) {
-		if (!priv->ports[i].phy && !priv->pcs[i])
+	for (int port = 0; port < priv->cpu_port; port++) {
+		if (!priv->ports[port].phy && !priv->pcs[port])
 			continue;
 
-		counters = &priv->ports[i].counters;
-
-		spin_lock(&counters->lock);
-		rtldsa_update_port_counters(priv, i);
-		spin_unlock(&counters->lock);
+		rtldsa_counters_lock(priv, port);
+		rtldsa_update_port_counters(priv, port);
+		rtldsa_counters_unlock(priv, port);
 	}
 
 	queue_delayed_work(priv->wq, &priv->counters_work,
-			   RTLDSA_COUNTERS_POLL_INTERVAL);
+			   priv->r->stat_counter_poll_interval);
 }
 
 static void rtldsa_init_counters(struct rtl838x_switch_priv *priv)
 {
 	struct rtldsa_counter_state *counters;
 
-	for (int i = 0; i < priv->cpu_port; i++) {
-		if (!priv->ports[i].phy && !priv->pcs[i])
+	for (int port = 0; port < priv->cpu_port; port++) {
+		if (!priv->ports[port].phy && !priv->pcs[port])
 			continue;
 
-		counters = &priv->ports[i].counters;
+		counters = &priv->ports[port].counters;
 
 		memset(counters, 0, sizeof(*counters));
 		spin_lock_init(&counters->lock);
+		spin_lock_init(&counters->link_stat_lock);
 	}
 
 	INIT_DELAYED_WORK(&priv->counters_work, rtldsa_poll_counters);
 	queue_delayed_work(priv->wq, &priv->counters_work,
-			   RTLDSA_COUNTERS_POLL_INTERVAL);
+			   priv->r->stat_counter_poll_interval);
 }
 
 static void rtldsa_get_strings(struct dsa_switch *ds,
@@ -1127,13 +1299,13 @@ static void rtldsa_get_eth_phy_stats(struct dsa_switch *ds, int port,
 	if (!rtldsa_get_mib_desc(priv))
 		return;
 
-	spin_lock(&counters->lock);
+	rtldsa_counters_lock(priv, port);
 
 	rtldsa_update_port_counters(priv, port);
 
 	phy_stats->SymbolErrorDuringCarrier = counters->symbol_errors.val;
 
-	spin_unlock(&counters->lock);
+	rtldsa_counters_unlock(priv, port);
 }
 
 static void rtldsa_get_eth_mac_stats(struct dsa_switch *ds, int port,
@@ -1148,7 +1320,7 @@ static void rtldsa_get_eth_mac_stats(struct dsa_switch *ds, int port,
 	if (!rtldsa_get_mib_desc(priv))
 		return;
 
-	spin_lock(&counters->lock);
+	rtldsa_counters_lock(priv, port);
 
 	rtldsa_update_port_counters(priv, port);
 
@@ -1182,7 +1354,7 @@ static void rtldsa_get_eth_mac_stats(struct dsa_switch *ds, int port,
 
 	mac_stats->FrameCheckSequenceErrors = counters->crc_align_errors.val;
 
-	spin_unlock(&counters->lock);
+	rtldsa_counters_unlock(priv, port);
 }
 
 static void rtldsa_get_eth_ctrl_stats(struct dsa_switch *ds, int port,
@@ -1197,13 +1369,13 @@ static void rtldsa_get_eth_ctrl_stats(struct dsa_switch *ds, int port,
 	if (!rtldsa_get_mib_desc(priv))
 		return;
 
-	spin_lock(&counters->lock);
+	rtldsa_counters_lock(priv, port);
 
 	rtldsa_update_port_counters(priv, port);
 
 	ctrl_stats->UnsupportedOpcodesReceived = counters->unsupported_opcodes.val;
 
-	spin_unlock(&counters->lock);
+	rtldsa_counters_unlock(priv, port);
 }
 
 static void rtldsa_get_rmon_stats(struct dsa_switch *ds, int port,
@@ -1221,7 +1393,7 @@ static void rtldsa_get_rmon_stats(struct dsa_switch *ds, int port,
 	if (!mib_desc)
 		return;
 
-	spin_lock(&counters->lock);
+	rtldsa_counters_lock(priv, port);
 
 	rtldsa_update_port_counters(priv, port);
 
@@ -1247,7 +1419,14 @@ static void rtldsa_get_rmon_stats(struct dsa_switch *ds, int port,
 
 	*ranges = mib_desc->rmon_ranges;
 
-	spin_unlock(&counters->lock);
+	rtldsa_counters_unlock(priv, port);
+}
+
+void rtldsa_update_counters_atomically(struct rtl838x_switch_priv *priv, int port)
+{
+	rtldsa_counters_lock(priv, port);
+	rtldsa_update_port_counters(priv, port);
+	rtldsa_counters_unlock(priv, port);
 }
 
 static void rtldsa_get_stats64(struct dsa_switch *ds, int port,
@@ -1264,41 +1443,13 @@ static void rtldsa_get_stats64(struct dsa_switch *ds, int port,
 		return;
 	}
 
-	spin_lock(&counters->lock);
+	if (priv->r->stat_update_counters_atomically)
+		priv->r->stat_update_counters_atomically(priv, port);
 
-	rtldsa_update_port_counters(priv, port);
-
-	s->rx_packets = counters->if_in_ucast_pkts.val +
-			counters->if_in_mcast_pkts.val +
-			counters->if_in_bcast_pkts.val +
-			counters->rx_pkts_over_max_octets.val;
-
-	s->tx_packets = counters->if_out_ucast_pkts.val +
-			counters->if_out_mcast_pkts.val +
-			counters->if_out_bcast_pkts.val -
-			counters->if_out_discards.val;
-
-	/* Subtract FCS for each packet, and pause frames */
-	s->rx_bytes = counters->if_in_octets.val -
-		      4 * s->rx_packets -
-		      64 * counters->rx_pause_frames.val;
-	s->tx_bytes = counters->if_out_octets.val -
-		      4 * s->tx_packets -
-		      64 * counters->tx_pause_frames.val;
-
-	s->collisions = counters->collisions.val;
-
-	s->rx_dropped = counters->drop_events.val;
-	s->tx_dropped = counters->if_out_discards.val;
-
-	s->rx_crc_errors = counters->crc_align_errors.val;
-	s->rx_errors = s->rx_crc_errors;
-
-	s->tx_aborted_errors = counters->excessive_collisions.val;
-	s->tx_window_errors = counters->late_collisions.val;
-	s->tx_errors = s->tx_aborted_errors + s->tx_window_errors;
-
-	spin_unlock(&counters->lock);
+	/* retrieve prepared return data without potentially sleeping via mutex */
+	spin_lock(&counters->link_stat_lock);
+	memcpy(s, &counters->link_stat, sizeof(*s));
+	spin_unlock(&counters->link_stat_lock);
 }
 
 static void rtldsa_get_pause_stats(struct dsa_switch *ds, int port,
@@ -1313,14 +1464,14 @@ static void rtldsa_get_pause_stats(struct dsa_switch *ds, int port,
 	if (!rtldsa_get_mib_desc(priv))
 		return;
 
-	spin_lock(&counters->lock);
+	rtldsa_counters_lock(priv, port);
 
 	rtldsa_update_port_counters(priv, port);
 
 	pause_stats->tx_pause_frames = counters->tx_pause_frames.val;
 	pause_stats->rx_pause_frames = counters->rx_pause_frames.val;
 
-	spin_unlock(&counters->lock);
+	rtldsa_counters_unlock(priv, port);
 }
 
 static int rtl83xx_mc_group_alloc(struct rtl838x_switch_priv *priv, int port)
