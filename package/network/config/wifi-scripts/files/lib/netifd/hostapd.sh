@@ -128,7 +128,6 @@ hostapd_common_add_device_config() {
 	config_add_int rssi_reject_assoc_rssi
 	config_add_int rssi_ignore_probe_request
 	config_add_int maxassoc
-	config_add_boolean vendor_vht
 	config_add_int reg_power_type
 	config_add_boolean stationary_ap
 
@@ -150,7 +149,7 @@ hostapd_prepare_device_config() {
 	json_get_vars country country3 country_ie beacon_int:100 doth require_mode legacy_rates \
 		acs_chan_bias local_pwr_constraint spectrum_mgmt_required airtime_mode cell_density \
 		rts_threshold beacon_rate rssi_reject_assoc_rssi rssi_ignore_probe_request maxassoc \
-		vendor_vht mbssid:0 band reg_power_type stationary_ap
+		mbssid:0 band reg_power_type stationary_ap
 
 	hostapd_set_log_options base_cfg
 
@@ -219,7 +218,6 @@ hostapd_prepare_device_config() {
 				set_default rate_list "24000 36000 48000 54000"
 				set_default basic_rate_list "24000"
 			fi
-			[ -n "$vendor_vht" ] && append base_cfg "vendor_vht=$vendor_vht" "$N"
 		;;
 		a)
 			if [ "$cell_density" -eq 1 ]; then
@@ -338,7 +336,7 @@ hostapd_common_add_bss_config() {
 	config_add_string time_zone
 	config_add_string vendor_elements
 
-	config_add_boolean ieee80211k rrm_neighbor_report rrm_beacon_report rnr
+	config_add_boolean ieee80211k rrm_neighbor_report rrm_beacon_report
 
 	config_add_boolean ftm_responder stationary_ap
 	config_add_string lci civic
@@ -426,13 +424,10 @@ hostapd_set_psk_file() {
 	local vlan="$2"
 	local vlan_id=""
 
-	json_get_vars vid key
-	json_get_values mac_list mac
-	set_default mac_list "00:00:00:00:00:00"
+	json_get_vars mac vid key
+	set_default mac "00:00:00:00:00:00"
 	[ -n "$vid" ] && vlan_id="vlanid=$vid "
-	for mac in $mac_list; do
-		echo "${vlan_id} ${mac} ${key}" >> /var/run/hostapd-${ifname}.psk
-	done
+	echo "${vlan_id} ${mac} ${key}" >> /var/run/hostapd-${ifname}.psk
 }
 
 hostapd_set_psk() {
@@ -451,14 +446,11 @@ hostapd_set_sae_file() {
 	local vlan="$2"
 	local vlan_id=""
 
-	json_get_vars vid key
-	json_get_values mac_list mac
-	set_default mac_list "ff:ff:ff:ff:ff:ff"
+	json_get_vars mac vid key
+	set_default mac "ff:ff:ff:ff:ff:ff"
+	[ -n "$mac" ] && mac="|mac=$mac"
 	[ -n "$vid" ] && vlan_id="|vlanid=$vid"
-	for mac in $mac_list; do
-		mac="|mac=$mac"
-		printf '%s%s%s\n' "${key}" "${mac}" "${vlan_id}" >> /var/run/hostapd-${ifname}.sae
-	done
+	printf '%s%s%s\n' "${key}" "${mac}" "${vlan_id}" >> /var/run/hostapd-${ifname}.sae
 }
 
 hostapd_set_sae() {
