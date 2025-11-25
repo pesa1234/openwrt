@@ -132,39 +132,39 @@
 #define RTL_SPEED_5000				6
 #define RTL_SPEED_10000				4
 
-#define RTL83XX_FORCE_EN			(1 << 0)
-#define RTL83XX_FORCE_LINK_EN			(1 << 1)
+#define RTL83XX_FORCE_EN			BIT(0)
+#define RTL83XX_FORCE_LINK_EN			BIT(1)
 
-#define RTL838X_NWAY_EN				(1 << 2)
-#define RTL838X_DUPLEX_MODE			(1 << 3)
+#define RTL838X_NWAY_EN				BIT(2)
+#define RTL838X_DUPLEX_MODE			BIT(3)
 #define RTL838X_SPEED_SHIFT			(4)
 #define RTL838X_SPEED_MASK			(3 << RTL838X_SPEED_SHIFT)
-#define RTL838X_TX_PAUSE_EN			(1 << 6)
-#define RTL838X_RX_PAUSE_EN			(1 << 7)
-#define RTL838X_MAC_FORCE_FC_EN			(1 << 8)
+#define RTL838X_TX_PAUSE_EN			BIT(6)
+#define RTL838X_RX_PAUSE_EN			BIT(7)
+#define RTL838X_MAC_FORCE_FC_EN			BIT(8)
 
-#define RTL839X_DUPLEX_MODE			(1 << 2)
+#define RTL839X_DUPLEX_MODE			BIT(2)
 #define RTL839X_SPEED_SHIFT			(3)
 #define RTL839X_SPEED_MASK			(3 << RTL839X_SPEED_SHIFT)
-#define RTL839X_TX_PAUSE_EN			(1 << 5)
-#define RTL839X_RX_PAUSE_EN			(1 << 6)
-#define RTL839X_MAC_FORCE_FC_EN			(1 << 7)
+#define RTL839X_TX_PAUSE_EN			BIT(5)
+#define RTL839X_RX_PAUSE_EN			BIT(6)
+#define RTL839X_MAC_FORCE_FC_EN			BIT(7)
 
-#define RTL930X_FORCE_EN			(1 << 0)
-#define RTL930X_FORCE_LINK_EN			(1 << 1)
-#define RTL930X_DUPLEX_MODE			(1 << 2)
+#define RTL930X_FORCE_EN			BIT(0)
+#define RTL930X_FORCE_LINK_EN			BIT(1)
+#define RTL930X_DUPLEX_MODE			BIT(2)
 #define RTL930X_SPEED_SHIFT			(3)
 #define RTL930X_SPEED_MASK			(15 << RTL930X_SPEED_SHIFT)
-#define RTL930X_TX_PAUSE_EN			(1 << 7)
-#define RTL930X_RX_PAUSE_EN			(1 << 8)
-#define RTL930X_MAC_FORCE_FC_EN			(1 << 9)
+#define RTL930X_TX_PAUSE_EN			BIT(7)
+#define RTL930X_RX_PAUSE_EN			BIT(8)
+#define RTL930X_MAC_FORCE_FC_EN			BIT(9)
 
-#define RTL931X_FORCE_EN			(1 << 9)
-#define RTL931X_FORCE_LINK_EN			(1 << 0)
-#define RTL931X_DUPLEX_MODE			(1 << 2)
-#define RTL931X_MAC_FORCE_FC_EN			(1 << 4)
-#define RTL931X_TX_PAUSE_EN			(1 << 16)
-#define RTL931X_RX_PAUSE_EN			(1 << 17)
+#define RTL931X_FORCE_EN			BIT(9)
+#define RTL931X_FORCE_LINK_EN			BIT(0)
+#define RTL931X_DUPLEX_MODE			BIT(2)
+#define RTL931X_MAC_FORCE_FC_EN			BIT(4)
+#define RTL931X_TX_PAUSE_EN			BIT(16)
+#define RTL931X_RX_PAUSE_EN			BIT(17)
 
 /* EEE */
 #define RTL838X_MAC_EEE_ABLTY			(0xa1a8)
@@ -658,7 +658,7 @@ typedef enum {
 #define RTL931X_LED_SETX_1_CTRL(x) (RTL931X_LED_SETX_0_CTRL(x) - 4)
 
 /* get register for given set and led in the set */
-#define RTL931X_LED_SETX_LEDY(x,y) (RTL931X_LED_SETX_0_CTRL(x) - 4 * (y / 2))
+#define RTL931X_LED_SETX_LEDY(x, y) (RTL931X_LED_SETX_0_CTRL(x) - 4 * (y / 2))
 
 /* get shift for given led in any set */
 #define RTL931X_LED_SET_LEDX_SHIFT(x) (16 * (x % 2))
@@ -723,8 +723,8 @@ enum pbvlan_mode {
 };
 
 struct rtldsa_counter {
-	uint64_t val;
-	uint32_t last;
+	u64 val;
+	u32 last;
 };
 
 struct rtldsa_counter_state {
@@ -885,7 +885,8 @@ enum egr_filter {
 /* Intermediate representation of a  Packet Inspection Engine Rule
  * as suggested by the Kernel's tc flower offload subsystem
  * Field meaning is universal across SoC families, but data content is specific
- * to SoC family (e.g. because of different port ranges) */
+ * to SoC family (e.g. because of different port ranges)
+ */
 struct pie_rule {
 	int id;
 	enum pie_phase phase;	/* Phase in which this template is applied */
@@ -1289,16 +1290,16 @@ struct rtl838x_switch_priv {
 	struct notifier_block ne_nb;
 	struct notifier_block fib_nb;
 	bool eee_enabled;
-	unsigned long int mc_group_bm[MAX_MC_GROUPS >> 5];
+	unsigned long mc_group_bm[MAX_MC_GROUPS >> 5];
 	int n_pie_blocks;
 	struct rhashtable tc_ht;
-	unsigned long int pie_use_bm[MAX_PIE_ENTRIES >> 5];
+	unsigned long pie_use_bm[MAX_PIE_ENTRIES >> 5];
 	int n_counters;
-	unsigned long int octet_cntr_use_bm[MAX_COUNTERS >> 5];
-	unsigned long int packet_cntr_use_bm[MAX_COUNTERS >> 4];
+	unsigned long octet_cntr_use_bm[MAX_COUNTERS >> 5];
+	unsigned long packet_cntr_use_bm[MAX_COUNTERS >> 4];
 	struct rhltable routes;
-	unsigned long int route_use_bm[MAX_ROUTES >> 5];
-	unsigned long int host_route_use_bm[MAX_HOST_ROUTES >> 5];
+	unsigned long route_use_bm[MAX_ROUTES >> 5];
+	unsigned long host_route_use_bm[MAX_HOST_ROUTES >> 5];
 	struct rtl838x_l3_intf *interfaces[MAX_INTERFACES];
 	u16 intf_mtus[MAX_INTF_MTUS];
 	int intf_mtu_count[MAX_INTF_MTUS];
