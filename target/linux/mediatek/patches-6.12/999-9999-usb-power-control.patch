@@ -65,8 +65,8 @@
  	cfg.dev = &pdev->dev;
  	cfg.init_data = config->init_data;
  	cfg.driver_data = drvdata;
-@@ -336,6 +373,11 @@ static int reg_fixed_voltage_probe(struc
- 				    PTR_ERR(drvdata->dev));
+@@ -337,6 +374,11 @@ static int reg_fixed_voltage_probe(struc
+ 		gpiod_put(cfg.ena_gpiod);
  		return ret;
  	}
 +	

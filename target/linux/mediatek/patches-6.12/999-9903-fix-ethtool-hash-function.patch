@@ -1,6 +1,6 @@
 --- a/drivers/net/ethernet/mediatek/mtk_eth_soc.c
 +++ b/drivers/net/ethernet/mediatek/mtk_eth_soc.c
-@@ -5231,24 +5231,22 @@ static u32 mtk_get_rxfh_indir_size(struc
+@@ -5238,24 +5238,22 @@ static u32 mtk_get_rxfh_indir_size(struc
  
  static int mtk_get_rxfh(struct net_device *dev, struct ethtool_rxfh_param *rxfh)
  {
