@@ -19,7 +19,7 @@ Signed-off-by: Michael-CY Lee <michael-cy.lee@mediatek.com>
 
 --- a/include/net/mac80211.h
 +++ b/include/net/mac80211.h
-@@ -3093,8 +3093,14 @@ struct ieee80211_hw {
+@@ -3096,8 +3096,14 @@ struct ieee80211_hw {
  	u32 max_mtu;
  	const s8 *tx_power_levels;
  	u8 max_txpwr_levels_idx;
@@ -36,7 +36,7 @@ Signed-off-by: Michael-CY Lee <michael-cy.lee@mediatek.com>
  {
 --- a/net/mac80211/agg-tx.c
 +++ b/net/mac80211/agg-tx.c
-@@ -1049,7 +1049,10 @@ void ieee80211_process_addba_resp(struct
+@@ -1050,7 +1050,10 @@ void ieee80211_process_addba_resp(struct
  		tid_tx->timeout =
  			le16_to_cpu(mgmt->u.action.u.addba_resp.timeout);
  
@@ -50,7 +50,7 @@ Signed-off-by: Michael-CY Lee <michael-cy.lee@mediatek.com>
  			tid_tx->last_tx = jiffies;
 --- a/net/mac80211/debugfs.c
 +++ b/net/mac80211/debugfs.c
-@@ -450,6 +450,54 @@ static const struct file_operations rese
+@@ -448,6 +448,54 @@ static const struct file_operations rese
  };
  #endif
  
@@ -105,7 +105,7 @@ Signed-off-by: Michael-CY Lee <michael-cy.lee@mediatek.com>
  static const char *hw_flag_names[] = {
  #define FLAG(F)	[IEEE80211_HW_##F] = #F
  	FLAG(HAS_RATE_CONTROL),
-@@ -724,6 +772,7 @@ void debugfs_hw_add(struct ieee80211_loc
+@@ -721,6 +769,7 @@ void debugfs_hw_add(struct ieee80211_loc
  	debugfs_create_u32("aql_threshold", 0600,
  			   phyd, &local->aql_threshold);
  

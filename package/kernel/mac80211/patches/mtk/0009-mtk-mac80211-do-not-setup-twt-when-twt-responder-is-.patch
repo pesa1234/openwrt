@@ -10,7 +10,7 @@ Subject: [PATCH 09/87] mtk: mac80211: do not setup twt when twt responder is
 
 --- a/net/mac80211/rx.c
 +++ b/net/mac80211/rx.c
-@@ -3456,6 +3456,9 @@ ieee80211_process_rx_twt_action(struct i
+@@ -3460,6 +3460,9 @@ ieee80211_process_rx_twt_action(struct i
  	if (sdata->vif.type != NL80211_IFTYPE_AP)
  		return false;
  

@@ -30,10 +30,10 @@ Signed-off-by: fancy.liu <fancy.liu@mediatek.com>
 
 --- a/include/net/mac80211.h
 +++ b/include/net/mac80211.h
-@@ -7853,4 +7853,11 @@ int ieee80211_emulate_switch_vif_chanctx
- 					 int n_vifs,
- 					 enum ieee80211_chanctx_switch_mode mode);
- 
+@@ -7878,4 +7878,11 @@ int ieee80211_emulate_switch_vif_chanctx
+  * Return: %true iff the vif is a NAN interface and NAN is started
+  */
+ bool ieee80211_vif_nan_started(struct ieee80211_vif *vif);
 +/**
 + * ieee80211_get_scanning - get scanning bitmask
 + *
@@ -44,10 +44,10 @@ Signed-off-by: fancy.liu <fancy.liu@mediatek.com>
  #endif /* MAC80211_H */
 --- a/net/mac80211/util.c
 +++ b/net/mac80211/util.c
-@@ -4445,3 +4445,11 @@ void ieee80211_clear_tpe(struct ieee8021
- 		       sizeof(tpe->psd_reg_client[i].power));
- 	}
+@@ -4563,3 +4563,11 @@ bool ieee80211_vif_nan_started(struct ie
+ 	return vif->type == NL80211_IFTYPE_NAN && sdata->u.nan.started;
  }
+ EXPORT_SYMBOL_GPL(ieee80211_vif_nan_started);
 +
 +unsigned long ieee80211_get_scanning(struct ieee80211_hw *hw)
 +{

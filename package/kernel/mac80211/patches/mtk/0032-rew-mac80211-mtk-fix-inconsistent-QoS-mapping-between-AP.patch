@@ -18,7 +18,7 @@ Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
 
 --- a/net/mac80211/iface.c
 +++ b/net/mac80211/iface.c
-@@ -388,8 +388,29 @@ static int ieee80211_check_concurrent_if
+@@ -405,8 +405,29 @@ static int ieee80211_check_concurrent_if
  			 * can only add VLANs to enabled APs
  			 */
  			if (iftype == NL80211_IFTYPE_AP_VLAN &&

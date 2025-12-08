@@ -1,6 +1,6 @@
 --- a/net/wireless/core.h
 +++ b/net/wireless/core.h
-@@ -86,6 +86,9 @@ struct cfg80211_registered_device {
+@@ -93,6 +93,9 @@ struct cfg80211_registered_device {
  
  	struct wireless_dev *background_radar_wdev;
  	struct cfg80211_chan_def background_radar_chandef;

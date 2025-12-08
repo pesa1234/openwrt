@@ -17,7 +17,7 @@ echo 1 > /sys/kernel/debug/tracing/events/mac80211/bss_color_collision/enable
 
 --- a/include/net/mac80211.h
 +++ b/include/net/mac80211.h
-@@ -820,6 +820,7 @@ struct ieee80211_bss_conf {
+@@ -822,6 +822,7 @@ struct ieee80211_bss_conf {
  	} he_oper;
  	struct ieee80211_he_obss_pd he_obss_pd;
  	struct cfg80211_he_bss_color he_bss_color;
@@ -27,7 +27,7 @@ echo 1 > /sys/kernel/debug/tracing/events/mac80211/bss_color_collision/enable
  	struct cfg80211_bitrate_mask beacon_tx_rate;
 --- a/net/mac80211/rx.c
 +++ b/net/mac80211/rx.c
-@@ -3392,9 +3392,13 @@ ieee80211_rx_check_bss_color_collision(s
+@@ -3396,9 +3396,13 @@ ieee80211_rx_check_bss_color_collision(s
  
  		color = le32_get_bits(he_oper->he_oper_params,
  				      IEEE80211_HE_OPERATION_BSS_COLOR_MASK);
@@ -44,7 +44,7 @@ echo 1 > /sys/kernel/debug/tracing/events/mac80211/bss_color_collision/enable
  }
 --- a/net/mac80211/trace.h
 +++ b/net/mac80211/trace.h
-@@ -3288,6 +3288,27 @@ TRACE_EVENT(drv_prep_add_interface,
+@@ -3359,6 +3359,27 @@ TRACE_EVENT(drv_prep_add_interface,
  	)
  );
  

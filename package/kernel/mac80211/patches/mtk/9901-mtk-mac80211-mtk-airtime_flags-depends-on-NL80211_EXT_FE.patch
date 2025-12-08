@@ -11,7 +11,7 @@ Signed-off-by: Evelyn Tsai <evelyn.tsai@mediatek.com>
 
 --- a/net/mac80211/main.c
 +++ b/net/mac80211/main.c
-@@ -968,8 +968,9 @@ struct ieee80211_hw *ieee80211_alloc_hw_
+@@ -993,8 +993,9 @@ struct ieee80211_hw *ieee80211_alloc_hw_
  			IEEE80211_DEFAULT_AQL_TXQ_LIMIT_H;
  		atomic_set(&local->aql_ac_pending_airtime[i], 0);
  	}

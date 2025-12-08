@@ -11,7 +11,7 @@ Signed-off-by: Bo Jiao <Bo.Jiao@mediatek.com>
 
 --- a/net/wireless/nl80211.c
 +++ b/net/wireless/nl80211.c
-@@ -3815,6 +3815,9 @@ static int nl80211_set_wiphy(struct sk_b
+@@ -4001,6 +4001,9 @@ static int nl80211_set_wiphy(struct sk_b
  		if (frag_threshold < 256)
  			return -EINVAL;
  
