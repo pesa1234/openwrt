@@ -78,6 +78,89 @@ define FixupDependencies
   $(call AddDependency,$(1),$$(DEPS))
 endef
 
+# Format provide and add ABI and version if it's not a virtual provide marked
+# with an @.
+#
+# 1: provide name
+# 2: provide version
+# 3: (optional) ABI preformatted by FormatABISuffix
+define AddProvide
+$(if $(filter @%,$(1)),$(patsubst @%,%,$(1)),$(1)$(3)=$(2))
+endef
+
+# Remove virtual provides prefix and self. apk doesn't like it when packages
+# specify a redundant provide pointing to self.
+#
+# 1: package name
+# 2: list of provides
+define SanitizeProvides
+$(filter-out $(1),$(patsubst @%,%,$(2)))
+endef
+
+# Format provides both for apk and control
+#
+# - If ABI version is defined:
+#   - package is named `${package_name}${ABI_version}`
+#     if a `package_name` ends in a number, the `ABI_version` will be prefixed
+#     with a - sign, e.g.: libsqlite3-0
+#   - package implicitly provides
+#     `${package_name}${ABI_version}=${package_version}`
+#     this implies that only one version of a package per ABI can be installed
+#     at the same time
+#   - additionally provide `${package_name}` so multiple packages can be looked
+#     up by its base name
+#   - for each `provides`, provide `${provide}${ABI_version}=${package_version}`
+#     this implies that only one version of a provide can be installed at the
+#     same time
+#
+# - else if ABI version is _not_ defined
+#   - package is named `${package_name}`
+#   - package implicitly provides `${package_name}=${package_version}`
+#     this implies that only one version of a package can be installed at the
+#     same time
+#   - if `alternatives` is defined
+#     - for each `provides`, provide `${provide}`
+#       this implies that multiple versions of a provide can be installed at the
+#       same time
+#   - else if `alternatives` is _not_ defined
+#     - for each `provides`, provide `${provide}=${package_version}`
+#       this implies that only one version of a provide can be installed at the
+#       same time
+#
+# - Both with and without an ABI, if a provide starts with an @, treat it as a
+#   virtual provide, that doesn't own the name by not appending version.
+#   Multiple packages with the same virtual provides can be installed
+#   side-by-side.
+#
+# - apk doesn't like it when packages specify a redundant provide pointing to
+#   self. Filter it out, but keep virtual self provides, in the form of
+#   @(kmod-)?${package_name}-any.
+#
+# - Packages implicitly add a virtual @${package_name}-any provide in Package.
+#
+# - kmods implicitly add a virtual @kmod-${package_name}-any provide in
+#   KernelPackage.
+#
+# 1: package name
+# 2: package version
+# 3: list of provides
+# 4: list of alternatives
+define FormatProvides
+$(strip $(if $(ABIV_$(1)), \
+  $(1) $(foreach provide, \
+    $(filter-out $(1),$(3)), \
+    $(call AddProvide,$(provide),$(2),$(ABIV_$(1))) \
+  ), \
+  $(if $(4), \
+    $(filter-out $(1),$(3)), \
+    $(foreach provide, \
+      $(filter-out $(1),$(3)), \
+      $(call AddProvide,$(provide),$(2)) \
+    ) \
+  ) \
+))
+endef
+
 ifneq ($(PKG_NAME),toolchain)
   define CheckDependencies
 	@( \
@@ -191,25 +274,64 @@ endif
     $(STAGING_DIR_ROOT)/stamp/.$(1)_installed: $(PKG_BUILD_DIR)/.pkgdir/$(1).installed
 	mkdir -p $(STAGING_DIR_ROOT)/stamp
 	$(if $(ABI_VERSION),echo '$(ABI_VERSION)' | cmp -s - $(PKG_INFO_DIR)/$(1).version || { \
+		mkdir -p $(PKG_INFO_DIR); \
 		echo '$(ABI_VERSION)' > $(PKG_INFO_DIR)/$(1).version; \
-		$(foreach pkg,$(filter-out $(1),$(PROVIDES)), \
+		$(foreach pkg,$(call SanitizeProvides,$(1),$(PROVIDES)), \
 			cp $(PKG_INFO_DIR)/$(1).version $(PKG_INFO_DIR)/$(pkg).version; \
 		) \
 	} )
 	$(call locked,$(CP) $(PKG_BUILD_DIR)/.pkgdir/$(1)/. $(STAGING_DIR_ROOT)/,root-copy)
 	touch $$@
 
-    Package/$(1)/DEPENDS := $$(call mergelist,$$(foreach dep,$$(filter-out @%,$$(IDEPEND_$(1))),$$(dep)$$(call GetABISuffix,$$(dep))))
+    Package/$(1)/DEPENDS := $$(foreach dep,$$(filter-out @%,$$(IDEPEND_$(1))),$$(dep)$$(call GetABISuffix,$$(dep)))
     ifneq ($$(EXTRA_DEPENDS),)
-      Package/$(1)/DEPENDS := $$(EXTRA_DEPENDS)$$(if $$(Package/$(1)/DEPENDS),$$(comma) $$(Package/$(1)/DEPENDS))
+      ifeq ($(CONFIG_USE_APK),)
+        Package/$(1)/DEPENDS := $$(call mergelist,$$(Package/$(1)/DEPENDS))
+        Package/$(1)/DEPENDS := $$(EXTRA_DEPENDS)$$(if $$(Package/$(1)/DEPENDS),$$(comma) $$(Package/$(1)/DEPENDS))
+      else
+        _SEP := __COMMA_SEP__
+        _SPACE := __SPACE_SEP__
+        _DEPENDS := $$(Package/$(1)/DEPENDS)
+        _EXTRA_DEPENDS_ABI :=
+        _DEP_ITEMS := $$(subst $$(_SEP),$$(space),$$(subst $$(space),$$(_SPACE),$$(subst $$(comma),$$(_SEP),$$(EXTRA_DEPENDS))))
+
+        $$(foreach dep,$$(_DEP_ITEMS), \
+          $$(eval _CUR_DEP := $$(subst $$(_SPACE),$$(space),$$(strip $$(dep)))) \
+          $$(eval _PKG_NAME := $$(word 1,$$(_CUR_DEP))) \
+          $$(if $$(findstring $$(paren_left), $$(_PKG_NAME)), \
+            $$(error "Unsupported extra dependency format: no space before '(': $$(_CUR_DEP)")) \
+          ) \
+          $$(eval _ABI_SUFFIX := $$(call GetABISuffix,$$(_PKG_NAME))) \
+          $$(eval _PKG_NAME_ABI := $$(_PKG_NAME)$$(_ABI_SUFFIX)) \
+          $$(eval _VERSION_CONSTRAINT := $$(word 2,$$(_CUR_DEP))) \
+          $$(if $$(_VERSION_CONSTRAINT), \
+            $$(eval _EXTRA_DEP := $$(_PKG_NAME_ABI) $$(_VERSION_CONSTRAINT)), \
+            $$(error "Extra dependencies must have version constraints. $$(_PKG_NAME) seems to be unversioned.") \
+          ) \
+          $$(if $$(_EXTRA_DEPENDS_ABI), \
+            $$(eval _EXTRA_DEPENDS_ABI := $$(_EXTRA_DEPENDS_ABI)$$(comma)$$(_EXTRA_DEP)), \
+            $$(eval _EXTRA_DEPENDS_ABI := $$(_EXTRA_DEP)) \
+          ) \
+          $$(if $$(_DEPENDS), \
+            $$(eval _DEPENDS := $$(filter-out $$(_PKG_NAME_ABI),$$(_DEPENDS))) \
+          ) \
+        )
+
+        _DEPENDS := $$(call mergelist,$$(_DEPENDS))
+        Package/$(1)/DEPENDS := $$(_EXTRA_DEPENDS_ABI)$$(if $$(_DEPENDS),$$(comma) $$(_DEPENDS))
+      endif
+    else
+      Package/$(1)/DEPENDS := $$(call mergelist,$$(Package/$(1)/DEPENDS))
     endif
+
+    Package/$(1)/PROVIDES := $$(call FormatProvides,$(1),$(VERSION),$(PROVIDES),$(ALTERNATIVES))
 
 $(_define) Package/$(1)/CONTROL
 Package: $(1)$$(ABIV_$(1))
 Version: $(VERSION)
 $$(call addfield,Depends,$$(Package/$(1)/DEPENDS)
 )$$(call addfield,Conflicts,$$(call mergelist,$(CONFLICTS))
-)$$(call addfield,Provides,$$(call mergelist,$$(filter-out $(1)$$(ABIV_$(1)),$(PROVIDES)$$(if $$(ABIV_$(1)), $(1) $(foreach provide,$(PROVIDES),$(provide)$$(ABIV_$(1))))))
+)$$(call addfield,Provides,$$(call mergelist,$$(Package/$(1)/PROVIDES))
 )$$(call addfield,Alternatives,$$(call mergelist,$(ALTERNATIVES))
 )$$(call addfield,Source,$(SOURCE)
 )$$(call addfield,SourceName,$(PKG_NAME)
@@ -253,7 +375,7 @@ endif
 			fi; \
 		done; $(Package/$(1)/extra_provides) \
 	) | sort -u > $(PKG_INFO_DIR)/$(1).provides
-	$(if $(PROVIDES),@for pkg in $(filter-out $(1),$(PROVIDES)); do cp $(PKG_INFO_DIR)/$(1).provides $(PKG_INFO_DIR)/$$$$pkg.provides; done)
+	$(if $(PROVIDES),@for pkg in $(call SanitizeProvides,$(1),$(PROVIDES)); do cp $(PKG_INFO_DIR)/$(1).provides $(PKG_INFO_DIR)/$$$$pkg.provides; done)
 	$(CheckDependencies)
 
 	$(RSTRIP) $$(IDIR_$(1))
@@ -320,7 +442,7 @@ else
 		echo "[ -s "\$$$${IPKG_INSTROOT}/lib/functions.sh" ] || exit 0"; \
 		echo ". \$$$${IPKG_INSTROOT}/lib/functions.sh"; \
 		echo 'export root="$$$${IPKG_INSTROOT}"'; \
-		echo 'export pkgname="$(1)"'; \
+		echo 'export pkgname="$(1)$$(ABIV_$(1))"'; \
 		echo "add_group_and_user"; \
 		echo "default_postinst"; \
 		[ ! -f $$(ADIR_$(1))/postinst-pkg ] || sed -z 's/^\s*#!/#!/' "$$(ADIR_$(1))/postinst-pkg"; \
@@ -345,34 +467,34 @@ else
 		echo "[ -s "\$$$${IPKG_INSTROOT}/lib/functions.sh" ] || exit 0"; \
 		echo ". \$$$${IPKG_INSTROOT}/lib/functions.sh"; \
 		echo 'export root="$$$${IPKG_INSTROOT}"'; \
-		echo 'export pkgname="$(1)"'; \
+		echo 'export pkgname="$(1)$$(ABIV_$(1))"'; \
 		echo "default_prerm"; \
 		[ ! -f $$(ADIR_$(1))/prerm-pkg ] || sed -z 's/^\s*#!/#!/' "$$(ADIR_$(1))/prerm-pkg"; \
 	) > $$(ADIR_$(1))/pre-deinstall;
 
 	[ ! -f $$(ADIR_$(1))/postrm ] || sed -zi 's/^\s*#!/#!/' "$$(ADIR_$(1))/postrm";
 
-	if [ -n "$(USERID)" ]; then echo $(USERID) > $$(IDIR_$(1))/lib/apk/packages/$(1).rusers; fi;
-	if [ -n "$(ALTERNATIVES)" ]; then echo $(ALTERNATIVES) > $$(IDIR_$(1))/lib/apk/packages/$(1).alternatives; fi;
-	(cd $$(IDIR_$(1)) && find . -type f,l -printf "/%P\n" | sort > $(TMP_DIR)/$(1).list && mv $(TMP_DIR)/$(1).list $$(IDIR_$(1))/lib/apk/packages/$(1).list)
+	if [ -n "$(USERID)" ]; then echo $(USERID) > $$(IDIR_$(1))/lib/apk/packages/$(1)$$(ABIV_$(1)).rusers; fi;
+	if [ -n "$(ALTERNATIVES)" ]; then echo $(ALTERNATIVES) > $$(IDIR_$(1))/lib/apk/packages/$(1)$$(ABIV_$(1)).alternatives; fi;
+	(cd $$(IDIR_$(1)) && find . -type f,l -printf "/%P\n" | sort > $(TMP_DIR)/$(1).list && mv $(TMP_DIR)/$(1).list $$(IDIR_$(1))/lib/apk/packages/$(1)$$(ABIV_$(1)).list)
 	# Move conffiles to IDIR and build conffiles_static with csums
 	if [ -f $$(ADIR_$(1))/conffiles ]; then \
-		mv -f $$(ADIR_$(1))/conffiles $$(IDIR_$(1))/lib/apk/packages/$(1).conffiles; \
-		for file in $$$$(cat $$(IDIR_$(1))/lib/apk/packages/$(1).conffiles); do \
+		mv -f $$(ADIR_$(1))/conffiles $$(IDIR_$(1))/lib/apk/packages/$(1)$$(ABIV_$(1)).conffiles; \
+		for file in $$$$(cat $$(IDIR_$(1))/lib/apk/packages/$(1)$$(ABIV_$(1)).conffiles); do \
 			[ -f $$(IDIR_$(1))/$$$$file ] || continue; \
 			csum=$$$$($(MKHASH) sha256 $$(IDIR_$(1))/$$$$file); \
-			echo $$$$file $$$$csum >> $$(IDIR_$(1))/lib/apk/packages/$(1).conffiles_static; \
+			echo $$$$file $$$$csum >> $$(IDIR_$(1))/lib/apk/packages/$(1)$$(ABIV_$(1)).conffiles_static; \
 		done; \
 	fi
 
 	# Some package (base-files) manually append stuff to conffiles
 	# Append stuff from it and delete the CONTROL directory since everything else should be migrated
 	if [ -f $$(IDIR_$(1))/CONTROL/conffiles ]; then \
-		echo $$$$(IDIR_$(1))/CONTROL/conffiles >> $$(IDIR_$(1))/lib/apk/packages/$(1).conffiles; \
+		echo $$$$(IDIR_$(1))/CONTROL/conffiles >> $$(IDIR_$(1))/lib/apk/packages/$(1)$$(ABIV_$(1)).conffiles; \
 		for file in $$$$(cat $$(IDIR_$(1))/CONTROL/conffiles); do \
 			[ -f $$(IDIR_$(1))/$$$$file ] || continue; \
 			csum=$$$$($(MKHASH) sha256 $$(IDIR_$(1))/$$$$file); \
-			echo $$$$file $$$$csum >> $$(IDIR_$(1))/lib/apk/packages/$(1).conffiles_static; \
+			echo $$$$file $$$$csum >> $$(IDIR_$(1))/lib/apk/packages/$(1)$$(ABIV_$(1)).conffiles_static; \
 		done; \
 		rm -rf $$(IDIR_$(1))/CONTROL/conffiles; \
 	fi
@@ -394,16 +516,7 @@ else
 	  --info "origin:$(SOURCE)" \
 	  --info "url:$(URL)" \
 	  --info "maintainer:$(MAINTAINER)" \
-	  --info "provides:$$(foreach prov,\
-			$$(filter-out $(1)$$(ABIV_$(1)), \
-			$(PROVIDES)$$(if $$(ABIV_$(1)), \
-				$(1)=$(VERSION) $(foreach provide, \
-					$(PROVIDES), \
-					$(provide)$$(ABIV_$(1))=$(VERSION) \
-				) \
-			) \
-		), \
-		$$(prov) )" \
+	  $$(if $$(Package/$(1)/PROVIDES),--info "provides:$$(Package/$(1)/PROVIDES)") \
 	  $(if $(DEFAULT_VARIANT),--info "provider-priority:100",$(if $(PROVIDES),--info "provider-priority:1")) \
 	  $$(APK_SCRIPTS_$(1)) \
 	  --info "depends:$$(foreach depends,$$(subst $$(comma),$$(space),$$(subst $$(space),,$$(subst $$(paren_right),,$$(subst $$(paren_left),,$$(Package/$(1)/DEPENDS))))),$$(depends))" \

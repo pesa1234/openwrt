@@ -5,6 +5,18 @@
 
 /* Register definition */
 
+/*
+ * Reset
+ */
+#define RTL838X_RST_GLB_CTRL_0			(0x003c)
+#define RTL839X_RST_GLB_CTRL			(0x0014)
+#define RTL930X_RST_GLB_CTRL_0			(0x000c)
+#define RTL931X_RST_GLB_CTRL			(0x0400)
+
+/* Switch interrupts */
+#define RTL839X_IMR_PORT_LINK_STS_CHG		(0x0068)
+#define RTL839X_ISR_PORT_LINK_STS_CHG		(0x00a0)
+
 /* Per port MAC control */
 #define RTL838X_MAC_PORT_CTRL			(0xd560)
 #define RTL839X_MAC_PORT_CTRL			(0x8004)
@@ -436,6 +448,7 @@ struct p_hdr;
 struct dsa_tag;
 
 struct rtl838x_eth_reg {
+	int family_id;
 	irqreturn_t (*net_irq)(int irq, void *dev_id);
 	int (*mac_port_ctrl)(int port);
 	int dma_if_intr_sts;
@@ -467,8 +480,5 @@ struct rtl838x_eth_reg {
 	void (*create_tx_header)(struct p_hdr *h, unsigned int dest_port, int prio);
 	bool (*decode_tag)(struct p_hdr *h, struct dsa_tag *tag);
 };
-
-/* TODO actually from arch/mips/rtl838x/prom.c */
-extern struct rtl83xx_soc_info soc_info;
 
 #endif /* _RTL838X_ETH_H */
