@@ -65,11 +65,11 @@
  	cfg.dev = &pdev->dev;
  	cfg.init_data = config->init_data;
  	cfg.driver_data = drvdata;
-@@ -337,6 +374,11 @@ static int reg_fixed_voltage_probe(struc
- 		gpiod_put(cfg.ena_gpiod);
- 		return ret;
- 	}
-+	
+@@ -334,6 +371,11 @@ static int reg_fixed_voltage_probe(struc
+ 		return dev_err_probe(&pdev->dev, PTR_ERR(drvdata->dev),
+ 				     "Failed to register regulator: %ld\n",
+ 				     PTR_ERR(drvdata->dev));
++				     
 +	ret = device_create_file(&pdev->dev, &dev_attr_usb_vbus_enable);
 +	if (ret) {
 +		dev_warn(&pdev->dev, "failed to create usb_vbus_enable sysfs file\n");
