@@ -90,7 +90,8 @@ function iface_auth_type(config) {
 	}
 
 	if (config.auth_type in [ 'psk-sae', 'eap-eap2' ]) {
-		config.ieee80211w = 1;
+		if (!config.ieee80211w)
+			config.ieee80211w = 1;
 		if (config.rsn_override)
 			config.rsn_override_mfp = 2;
 		config.sae_require_mfp = 1;
@@ -166,7 +167,7 @@ function iface_auth_type(config) {
 
 		if (config.radius_das_client && config.radius_das_secret) {
 			set_default(config, 'radius_das_port', 3799);
-			set_default(config, 'radius_das_client', `${config.radius_das_client} ${config.radius_das_secret}`);
+			config.radius_das_client = config.radius_das_client + ' ' + config.radius_das_secret;
 		}
 
 		set_default(config, 'eapol_version', config.wpa & 1);
@@ -363,7 +364,7 @@ function iface_roaming(config) {
 	if (!config.ieee80211r || config.wpa < 2)
 		return;
 
-	set_default(config, 'mobility_domain', substr(md5(config.ssid), 0, 4));
+	set_default(config, 'mobility_domain', substr(md5(config.ssid + '\n'), 0, 4));
 	set_default(config, 'ft_psk_generate_local', config.auth_type == 'psk');
 	set_default(config, 'ft_iface', config.network_ifname);
 

@@ -18,36 +18,20 @@
 
 struct phylink_pcs *rtpcs_create(struct device *dev, struct device_node *np, int port);
 
-int rtl83xx_port_get_stp_state(struct rtl838x_switch_priv *priv, int port)
+int rtldsa_port_get_stp_state(struct rtl838x_switch_priv *priv, int port)
 {
+	u32 table[4];
 	u32 msti = 0;
-	u32 port_state[4];
-	int index, bit;
-	int pos = port;
-	int n = priv->port_width << 1;
+	int state;
 
-	/* Ports above or equal CPU port can never be configured */
 	if (port >= priv->cpu_port)
-		return -1;
+		return -EINVAL;
 
 	mutex_lock(&priv->reg_mutex);
-
-	/* For the RTL839x and following, the bits are left-aligned in the 64/128 bit field */
-	if (priv->family_id == RTL8390_FAMILY_ID)
-		pos += 12;
-	if (priv->family_id == RTL9300_FAMILY_ID)
-		pos += 3;
-	if (priv->family_id == RTL9310_FAMILY_ID)
-		pos += 8;
-
-	index = n - (pos >> 4) - 1;
-	bit = (pos << 1) % 32;
-
-	priv->r->stp_get(priv, msti, port_state);
-
+	state = priv->r->stp_get(priv, msti, port, table);
 	mutex_unlock(&priv->reg_mutex);
 
-	return (port_state[index] >> bit) & 3;
+	return state;
 }
 
 static struct table_reg rtl838x_tbl_regs[] = {
@@ -257,31 +241,22 @@ static int rtldsa_bus_c45_write(struct mii_bus *bus, int addr, int devad, int re
 
 static int rtl83xx_mdio_probe(struct rtl838x_switch_priv *priv)
 {
-	struct device_node *dn, *phy_node, *pcs_node, *led_node, *np, *mii_np;
+	struct device_node *dn, *phy_node, *pcs_node, *led_node;
 	struct device *dev = priv->dev;
 	struct mii_bus *bus;
 	int ret;
 	u32 pn;
 
-	np = of_find_compatible_node(NULL, NULL, "realtek,otto-mdio");
-	if (!np) {
-		dev_err(priv->dev, "mdio controller node not found");
+	dn = of_find_compatible_node(NULL, NULL, "realtek,otto-mdio");
+	if (!dn)
 		return -ENODEV;
-	}
 
-	mii_np = of_get_child_by_name(np, "mdio-bus");
-	if (!mii_np) {
-		dev_err(priv->dev, "mdio-bus subnode not found");
-		return -ENODEV;
-	}
-
-	priv->parent_bus = of_mdio_find_bus(mii_np);
-	if (!priv->parent_bus) {
-		dev_dbg(priv->dev, "Deferring probe of mdio bus\n");
-		return -EPROBE_DEFER;
-	}
-	if (!of_device_is_available(mii_np))
+	if (!of_device_is_available(dn))
 		ret = -ENODEV;
+
+	priv->parent_bus = of_mdio_find_bus(dn);
+	if (!priv->parent_bus)
+		return -EPROBE_DEFER;
 
 	bus = devm_mdiobus_alloc(priv->ds->dev);
 	if (!bus)
@@ -300,12 +275,10 @@ static int rtl83xx_mdio_probe(struct rtl838x_switch_priv *priv)
 	priv->ds->user_mii_bus->priv = priv;
 
 	ret = mdiobus_register(priv->ds->user_mii_bus);
-	if (ret && mii_np) {
-		of_node_put(dn);
+	if (ret)
 		return ret;
-	}
 
-	dn = of_find_compatible_node(NULL, NULL, "realtek,rtl83xx-switch");
+	dn = of_find_compatible_node(NULL, NULL, "realtek,otto-switch");
 	if (!dn) {
 		dev_err(priv->dev, "No RTL switch node in DTS\n");
 		return -ENODEV;
@@ -393,14 +366,9 @@ static int rtl83xx_mdio_probe(struct rtl838x_switch_priv *priv)
 	/* Disable MAC polling the PHY so that we can start configuration */
 	priv->r->set_port_reg_le(0ULL, priv->r->smi_poll_ctrl);
 
-	/* Enable PHY control via SoC */
-	if (priv->family_id == RTL8380_FAMILY_ID) {
-		/* Enable SerDes NWAY and PHY control via SoC */
-		sw_w32_mask(BIT(7), BIT(15), RTL838X_SMI_GLB_CTRL);
-	} else if (priv->family_id == RTL8390_FAMILY_ID) {
-		/* Disable PHY polling via SoC */
+	/* Disable PHY polling via SoC */
+	if (priv->family_id == RTL8390_FAMILY_ID)
 		sw_w32_mask(BIT(7), 0, RTL839X_SMI_GLB_CTRL);
-	}
 
 	return 0;
 }
@@ -1421,7 +1389,7 @@ static int rtl83xx_sw_probe(struct platform_device *pdev)
 		return -ENOMEM;
 	priv->ds->dev = dev;
 	priv->ds->priv = priv;
-	priv->ds->ops = &rtl83xx_switch_ops;
+	priv->ds->ops = &rtldsa_83xx_switch_ops;
 	priv->ds->needs_standalone_vlan_filtering = true;
 	priv->dev = dev;
 	dev_set_drvdata(dev, priv);
@@ -1434,19 +1402,18 @@ static int rtl83xx_sw_probe(struct platform_device *pdev)
 	if (err)
 		return err;
 
+	priv->r = device_get_match_data(&pdev->dev);
 	priv->family_id = soc_info.family;
 	priv->id = soc_info.id;
 	switch (soc_info.family) {
 	case RTL8380_FAMILY_ID:
-		priv->ds->ops = &rtl83xx_switch_ops;
+		priv->ds->ops = &rtldsa_83xx_switch_ops;
 		priv->cpu_port = RTL838X_CPU_PORT;
 		priv->port_mask = 0x1f;
 		priv->port_width = 1;
 		priv->irq_mask = 0x0FFFFFFF;
-		priv->r = &rtl838x_reg;
-		priv->ds->num_ports = 29;
+		priv->ds->num_ports = RTL838X_CPU_PORT + 1;
 		priv->fib_entries = 8192;
-		rtl8380_get_version(priv);
 		priv->ds->num_lag_ids = 8;
 		priv->l2_bucket_size = 4;
 		priv->n_mst = 64;
@@ -1455,15 +1422,13 @@ static int rtl83xx_sw_probe(struct platform_device *pdev)
 		priv->n_counters = 128;
 		break;
 	case RTL8390_FAMILY_ID:
-		priv->ds->ops = &rtl83xx_switch_ops;
+		priv->ds->ops = &rtldsa_83xx_switch_ops;
 		priv->cpu_port = RTL839X_CPU_PORT;
 		priv->port_mask = 0x3f;
 		priv->port_width = 2;
 		priv->irq_mask = 0xFFFFFFFFFFFFFULL;
-		priv->r = &rtl839x_reg;
-		priv->ds->num_ports = 53;
+		priv->ds->num_ports = RTL839X_CPU_PORT + 1;
 		priv->fib_entries = 16384;
-		rtl8390_get_version(priv);
 		priv->ds->num_lag_ids = 16;
 		priv->l2_bucket_size = 4;
 		priv->n_mst = 256;
@@ -1472,18 +1437,13 @@ static int rtl83xx_sw_probe(struct platform_device *pdev)
 		priv->n_counters = 1024;
 		break;
 	case RTL9300_FAMILY_ID:
-		priv->ds->ops = &rtl93xx_switch_ops;
+		priv->ds->ops = &rtldsa_93xx_switch_ops;
 		priv->cpu_port = RTL930X_CPU_PORT;
 		priv->port_mask = 0x1f;
 		priv->port_width = 1;
 		priv->irq_mask = 0x0FFFFFFF;
-		priv->r = &rtl930x_reg;
-		priv->ds->num_ports = 29;
+		priv->ds->num_ports = RTL930X_CPU_PORT + 1;
 		priv->fib_entries = 16384;
-		/* TODO A version based on CHIP_INFO and MODEL_NAME_INFO should
-		 * be constructed. For now, just set it to a static 'A'
-		 */
-		priv->version = RTL8390_VERSION_A;
 		priv->ds->num_lag_ids = 16;
 		sw_w32(0, RTL930X_ST_CTRL);
 		priv->l2_bucket_size = 8;
@@ -1493,18 +1453,13 @@ static int rtl83xx_sw_probe(struct platform_device *pdev)
 		priv->n_counters = 2048;
 		break;
 	case RTL9310_FAMILY_ID:
-		priv->ds->ops = &rtl93xx_switch_ops;
+		priv->ds->ops = &rtldsa_93xx_switch_ops;
 		priv->cpu_port = RTL931X_CPU_PORT;
 		priv->port_mask = 0x3f;
 		priv->port_width = 2;
 		priv->irq_mask = GENMASK_ULL(priv->cpu_port - 1, 0);
-		priv->r = &rtl931x_reg;
-		priv->ds->num_ports = 57;
+		priv->ds->num_ports = RTL931X_CPU_PORT + 1;
 		priv->fib_entries = 16384;
-		/* TODO A version based on CHIP_INFO and MODEL_NAME_INFO should
-		 * be constructed. For now, just set it to a static 'A'
-		 */
-		priv->version = RTL8390_VERSION_A;
 		priv->ds->num_lag_ids = 16;
 		sw_w32(0, RTL931x_ST_CTRL);
 		priv->l2_bucket_size = 8;
@@ -1514,7 +1469,6 @@ static int rtl83xx_sw_probe(struct platform_device *pdev)
 		priv->n_counters = 2048;
 		break;
 	}
-	pr_debug("Chip version %c\n", priv->version);
 
 	err = rtl83xx_mdio_probe(priv);
 	if (err) {
@@ -1586,7 +1540,8 @@ static int rtl83xx_sw_probe(struct platform_device *pdev)
 
 	rtl83xx_get_l2aging(priv);
 
-	rtl83xx_setup_qos(priv);
+	if (priv->r->qos_init)
+		priv->r->qos_init(priv);
 
 	if (priv->r->l3_setup)
 		priv->r->l3_setup(priv);
@@ -1676,7 +1631,22 @@ static void rtl83xx_sw_remove(struct platform_device *pdev)
 }
 
 static const struct of_device_id rtl83xx_switch_of_ids[] = {
-	{ .compatible = "realtek,rtl83xx-switch"},
+	{
+		.compatible = "realtek,rtl8380-switch",
+		.data = &rtldsa_838x_cfg,
+	},
+	{
+		.compatible = "realtek,rtl8392-switch",
+		.data = &rtldsa_839x_cfg,
+	},
+	{
+		.compatible = "realtek,rtl9301-switch",
+		.data = &rtldsa_930x_cfg,
+	},
+	{
+		.compatible = "realtek,rtl9311-switch",
+		.data = &rtldsa_931x_cfg,
+	},
 	{ /* sentinel */ }
 };
 

@@ -23,9 +23,6 @@ struct __packed fw_header {
  */
 #define FIRMWARE_838X_8380_1			"rtl838x_phy/rtl838x_8380.fw"
 
-#define FIRMWARE_838X_8214FC_1			"rtl838x_phy/rtl838x_8214fc.fw"
-#define FIRMWARE_838X_8218b_1			"rtl838x_phy/rtl838x_8218b.fw"
-
 #define PHY_ID_RTL8214C				0x001cc942
 #define PHY_ID_RTL8218B_E			0x001cc980
 #define PHY_ID_RTL8214_OR_8218			0x001cc981
