@@ -1,0 +1,21 @@
+From e93ab61e3dbdb0836e7ec49b5ce1229dfda8540a Mon Sep 17 00:00:00 2001
+From: Erik Karlsson <erik.karlsson@iopsys.eu>
+Date: Tue, 5 Nov 2024 10:50:02 +0100
+Subject: [PATCH] mt7915: avoid list corruption on failure to add TWT
+
+Remove the flow from the list on failure.
+---
+ mt7915/mac.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+--- a/mt7915/mac.c
++++ b/mt7915/mac.c
+@@ -2456,7 +2456,7 @@ void mt7915_mac_add_twt_setup(struct iee
+ 	flow->tsf = le64_to_cpu(twt_agrt->twt);
+ 
+ 	if (mt7915_mcu_twt_agrt_update(dev, msta->vif, flow, MCU_TWT_AGRT_ADD)) {
+-		list_del(&flow->list);
++		list_del_init(&flow->list);
+ 		goto unlock;
+ 	}
+ 

@@ -1,0 +1,61 @@
+From: Chad Monroe <chad@monroe.io>
+Date: Thu, 13 Mar 2025 17:39:44 -0700
+Subject: [PATCH] mt7915/mt7996: HACK: ignore dynamic SMPS requests 
+
+when there are Windows machines with dynamic SMPS mode connected
+to these radios, they constantly move between dynamic and off states.
+something about this toggling causes other clients on the same radio
+to disconnect randomly.
+
+surely there is a better way we can handle these clients but more
+research is required.
+
+this has been reported around the community for quite some time:
+https://github.com/openwrt/mt76/issues/883
+https://github.com/openwrt/openwrt/issues/7888
+https://github.com/openwrt/openwrt/issues/10074
+
+Signed-off-by: Chad Monroe <chad@monroe.io>
+---
+ mt76_connac_mcu.c |    2 +-
+ mt7915/mcu.c      |    3 +--
+ mt7996/mcu.c      |    3 +--
+ 3 files changed, 3 insertions(+), 5 deletions(-)
+
+--- a/mt76_connac_mcu.c
++++ b/mt76_connac_mcu.c
+@@ -960,7 +960,7 @@ void mt76_connac_mcu_wtbl_smps_tlv(struc
+ 	tlv = mt76_connac_mcu_add_nested_tlv(skb, WTBL_SMPS, sizeof(*smps),
+ 					     wtbl_tlv, sta_wtbl);
+ 	smps = (struct wtbl_smps *)tlv;
+-	smps->smps = (sta->deflink.smps_mode == IEEE80211_SMPS_DYNAMIC);
++	smps->smps = 0;
+ }
+ EXPORT_SYMBOL_GPL(mt76_connac_mcu_wtbl_smps_tlv);
+ 
+--- a/mt7915/mcu.c
++++ b/mt7915/mcu.c
+@@ -1582,9 +1582,8 @@ mt7915_mcu_get_mmps_mode(enum ieee80211_
+ 	case IEEE80211_SMPS_OFF:
+ 		return MCU_MMPS_DISABLE;
+ 	case IEEE80211_SMPS_STATIC:
+-		return MCU_MMPS_STATIC;
+ 	case IEEE80211_SMPS_DYNAMIC:
+-		return MCU_MMPS_DYNAMIC;
++		return MCU_MMPS_STATIC;
+ 	default:
+ 		return MCU_MMPS_DISABLE;
+ 	}
+--- a/mt7996/mcu.c
++++ b/mt7996/mcu.c
+@@ -2075,9 +2075,8 @@ mt7996_mcu_get_mmps_mode(enum ieee80211_
+ 	case IEEE80211_SMPS_OFF:
+ 		return MCU_MMPS_DISABLE;
+ 	case IEEE80211_SMPS_STATIC:
+-		return MCU_MMPS_STATIC;
+ 	case IEEE80211_SMPS_DYNAMIC:
+-		return MCU_MMPS_DYNAMIC;
++		return MCU_MMPS_STATIC;
+ 	default:
+ 		return MCU_MMPS_DISABLE;
+ 	}

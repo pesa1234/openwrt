@@ -1,0 +1,22 @@
+From 01a42eca7e7ac3362e4108efc4d9b1938ff4c5ee Mon Sep 17 00:00:00 2001
+From: Rex Lu <rex.lu@mediatek.com>
+Date: Wed, 16 Oct 2024 13:48:03 +0800
+Subject: [PATCH] wifi: mt76: mt7915: remove rts and cts protection enable flow
+
+---
+ mt7915/mac.c    | 13 -------------
+ mt7915/main.c   |  3 ---
+ mt7915/mt7915.h |  2 --
+ 3 files changed, 18 deletions(-)
+
+--- a/mt7915/mt7915.h
++++ b/mt7915/mt7915.h
+@@ -775,8 +775,6 @@ bool mt7915_mac_wtbl_update(struct mt791
+ void mt7915_mac_reset_counters(struct mt7915_phy *phy);
+ void mt7915_mac_cca_stats_reset(struct mt7915_phy *phy);
+ void mt7915_mac_enable_nf(struct mt7915_dev *dev, bool ext_phy);
+-void mt7915_mac_enable_rtscts(struct mt7915_dev *dev,
+-			      struct ieee80211_vif *vif, bool enable);
+ void mt7915_mac_write_txwi(struct mt76_dev *dev, __le32 *txwi,
+ 			   struct sk_buff *skb, struct mt76_wcid *wcid, int pid,
+ 			   struct ieee80211_key_conf *key,

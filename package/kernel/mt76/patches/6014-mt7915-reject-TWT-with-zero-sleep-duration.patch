@@ -1,0 +1,21 @@
+From 725fbf6ad4c41f3ee93fac18edede7136d87d751 Mon Sep 17 00:00:00 2001
+From: Erik Karlsson <erik.karlsson@iopsys.eu>
+Date: Mon, 4 Nov 2024 10:55:38 +0100
+Subject: [PATCH] mt7915: reject TWT with zero sleep duration
+
+Setting up such a schedule appears to cause Tx stalls.
+---
+ mt7915/mac.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/mt7915/mac.c
++++ b/mt7915/mac.c
+@@ -2348,7 +2348,7 @@ static int mt7915_mac_check_twt_req(stru
+ 	duration = twt_agrt->min_twt_dur << 8;
+ 
+ 	interval = (u64)mantissa << exp;
+-	if (interval < duration)
++	if (interval <= duration)
+ 		return -EOPNOTSUPP;
+ 
+ 	return 0;
