@@ -1,0 +1,20 @@
+--- a/hostapd/ctrl_iface.c
++++ b/hostapd/ctrl_iface.c
+@@ -4195,7 +4195,7 @@ hostapd_ctrl_iface_get_edcca(struct host
+ 		return os_snprintf(pos, end - pos, "Compensation: %d\n",
+ 				  hapd->iconf->edcca_compensation);
+ 	} else if (os_strcmp(cmd, "threshold") == 0) {
+-		if (hostapd_drv_get_edcca(hapd, EDCCA_CTRL_GET_THRES, &value) != 0)
++		if (hostapd_drv_get_edcca(hapd, EDCCA_CTRL_GET_THRES, value) != 0)
+ 			return -1;
+ 		return os_snprintf(pos, end - pos,
+ 				   "Threshold BW20: 0x%x, BW40: 0x%x, BW80: 0x%x\n",
+@@ -4355,7 +4355,7 @@ hostapd_ctrl_iface_get_aval_color_bmp(st
+ 	end = buf + buflen;
+ 
+ 	ret = os_snprintf(buf, buflen,
+-			"available color bitmap=0x%llx\n",
++			"available color bitmap=0x%lx\n",
+ 			aval_color_bmp);
+ 	if (os_snprintf_error(end - pos, ret))
+ 		return pos - buf;
