@@ -1,0 +1,402 @@
+From 79d67e10d0c8db8939639b778ac9d46361f8182e Mon Sep 17 00:00:00 2001
+From: mtk27835 <shurong.wen@mediatek.com>
+Date: Wed, 7 Sep 2022 14:41:51 -0700
+Subject: [PATCH 016/149] mtk: hostapd: Add hostapd iBF control
+
+Signed-off-by: mtk27835 <shurong.wen@mediatek.com>
+---
+ hostapd/config_file.c             |   3 +
+ hostapd/ctrl_iface.c              |  26 ++++++++
+ hostapd/hostapd_cli.c             |   9 +++
+ src/ap/ap_config.c                |   1 +
+ src/ap/ap_config.h                |   2 +
+ src/ap/ap_drv_ops.c               |  14 ++++
+ src/ap/ap_drv_ops.h               |   2 +
+ src/ap/hostapd.c                  |   2 +
+ src/common/mtk_vendor.h           |  35 +++++++++-
+ src/drivers/driver.h              |  19 ++++++
+ src/drivers/driver_nl80211.c      | 107 ++++++++++++++++++++++++++++++
+ src/drivers/driver_nl80211.h      |   1 +
+ src/drivers/driver_nl80211_capa.c |   3 +
+ 13 files changed, 223 insertions(+), 1 deletion(-)
+
+--- a/hostapd/config_file.c
++++ b/hostapd/config_file.c
+@@ -5030,6 +5030,9 @@ static int hostapd_config_fill(struct ho
+ 		u8 en = atoi(pos);
+ 
+ 		conf->three_wire_enable = en;
++	} else if (os_strcmp(buf, "ibf_enable") == 0) { /*ibf setting is per device*/
++		int val = atoi(pos);
++		conf->ibf_enable = !!val;
+ 	} else {
+ 		wpa_printf(MSG_ERROR,
+ 			   "Line %d: unknown configuration item '%s'",
+--- a/hostapd/ctrl_iface.c
++++ b/hostapd/ctrl_iface.c
+@@ -4269,6 +4269,30 @@ hostapd_ctrl_iface_get_mu(struct hostapd
+ }
+ 
+ 
++static int
++hostapd_ctrl_iface_get_ibf(struct hostapd_data *hapd, char *buf,
++					 size_t buflen)
++{
++	u8 ibf_enable;
++	int ret;
++	char *pos, *end;
++
++	pos = buf;
++	end = buf + buflen;
++
++	if (hostapd_drv_ibf_dump(hapd, &ibf_enable) == 0) {
++		hapd->iconf->ibf_enable = ibf_enable;
++		ret = os_snprintf(pos, end - pos, "ibf_enable: %u\n",
++			  ibf_enable);
++	}
++
++	if (os_snprintf_error(end - pos, ret))
++		return 0;
++
++	return ret;
++}
++
++
+ static int hostapd_ctrl_iface_receive_process(struct hostapd_data *hapd,
+ 					      char *buf, char *reply,
+ 					      int reply_size,
+@@ -4890,6 +4914,8 @@ static int hostapd_ctrl_iface_receive_pr
+ 							  reply_size);
+ 	} else if (os_strncmp(buf, "GET_MU", 6) == 0) {
+ 		reply_len = hostapd_ctrl_iface_get_mu(hapd, reply, reply_size);
++	} else if (os_strncmp(buf, "GET_IBF", 7) == 0) {
++		reply_len = hostapd_ctrl_iface_get_ibf(hapd, reply, reply_size);
+ 	} else {
+ 		os_memcpy(reply, "UNKNOWN COMMAND\n", 16);
+ 		reply_len = 16;
+--- a/hostapd/hostapd_cli.c
++++ b/hostapd/hostapd_cli.c
+@@ -1672,6 +1672,13 @@ static int hostapd_cli_cmd_driver(struct
+ #endif /* ANDROID */
+ 
+ 
++static int hostapd_cli_cmd_get_ibf(struct wpa_ctrl *ctrl, int argc,
++					   char *argv[])
++{
++	return hostapd_cli_cmd(ctrl, "GET_IBF", 0, argc, argv);
++}
++
++
+ struct hostapd_cli_cmd {
+ 	const char *cmd;
+ 	int (*handler)(struct wpa_ctrl *ctrl, int argc, char *argv[]);
+@@ -1900,6 +1907,8 @@ static const struct hostapd_cli_cmd host
+ 	{ "driver", hostapd_cli_cmd_driver, NULL,
+ 	  "<driver sub command> [<hex formatted data>] = send driver command data" },
+ #endif /* ANDROID */
++	{ "get_ibf", hostapd_cli_cmd_get_ibf, NULL,
++	  " = show iBF state (enabled/disabled)"},
+ 	{ NULL, NULL, NULL, NULL }
+ };
+ 
+--- a/src/ap/ap_config.c
++++ b/src/ap/ap_config.c
+@@ -312,6 +312,7 @@ struct hostapd_config * hostapd_config_d
+ 	conf->edcca_enable = EDCCA_MODE_AUTO;
+ 	conf->edcca_compensation = EDCCA_DEFAULT_COMPENSATION;
+ 	conf->three_wire_enable = THREE_WIRE_MODE_DISABLE;
++	conf->ibf_enable = IBF_DEFAULT_ENABLE;
+ 
+ 	hostapd_set_and_check_bw320_offset(conf, 0);
+ 
+--- a/src/ap/ap_config.h
++++ b/src/ap/ap_config.h
+@@ -1282,6 +1282,7 @@ struct hostapd_config {
+ 	s8 edcca_compensation;
+ 	int *edcca_threshold;
+ 	u8 three_wire_enable;
++	u8 ibf_enable;
+ };
+ 
+ enum three_wire_mode {
+@@ -1444,6 +1445,7 @@ hostapd_set_and_check_bw320_offset(struc
+ #endif /* CONFIG_IEEE80211BE */
+ }
+ 
++#define IBF_DEFAULT_ENABLE 0
+ 
+ int hostapd_mac_comp(const void *a, const void *b);
+ struct hostapd_config * hostapd_config_defaults(void);
+--- a/src/ap/ap_drv_ops.c
++++ b/src/ap/ap_drv_ops.c
+@@ -1488,3 +1488,17 @@ int hostapd_drv_three_wire_ctrl(struct h
+ 	}
+ 	return hapd->driver->three_wire_ctrl(hapd->drv_priv, hapd->iconf->three_wire_enable);
+ }
++
++int hostapd_drv_ibf_ctrl(struct hostapd_data *hapd)
++{
++	if (!hapd->driver || !hapd->driver->ibf_ctrl)
++		return 0;
++	return hapd->driver->ibf_ctrl(hapd->drv_priv, hapd->iconf->ibf_enable);
++}
++
++int hostapd_drv_ibf_dump(struct hostapd_data *hapd, u8 *ibf_enable)
++{
++	if (!hapd->driver || !hapd->driver->ibf_dump)
++		return 0;
++	return hapd->driver->ibf_dump(hapd->drv_priv, ibf_enable);
++}
+\ No newline at end of file
+--- a/src/ap/ap_drv_ops.h
++++ b/src/ap/ap_drv_ops.h
+@@ -164,6 +164,8 @@ int hostapd_drv_get_edcca(struct hostapd
+ int hostapd_drv_mu_ctrl(struct hostapd_data *hapd);
+ int hostapd_drv_mu_dump(struct hostapd_data *hapd, u8 *mu_onoff);
+ int hostapd_drv_three_wire_ctrl(struct hostapd_data *hapd);
++int hostapd_drv_ibf_ctrl(struct hostapd_data *hapd);
++int hostapd_drv_ibf_dump(struct hostapd_data *hapd, u8 *ibf_enable);
+ 
+ #include "drivers/driver.h"
+ 
+--- a/src/ap/hostapd.c
++++ b/src/ap/hostapd.c
+@@ -2816,6 +2816,8 @@ dfs_offload:
+ 		goto fail;
+ 	if (hostapd_drv_three_wire_ctrl(hapd) < 0)
+ 		goto fail;
++	if (hostapd_drv_ibf_ctrl(hapd) < 0)
++		goto fail;
+ 
+ 	wpa_printf(MSG_DEBUG, "%s: Setup of interface done.",
+ 		   iface->bss[0]->conf->iface);
+--- a/src/common/mtk_vendor.h
++++ b/src/common/mtk_vendor.h
+@@ -13,7 +13,8 @@ enum mtk_nl80211_vendor_subcmds {
+ 	MTK_NL80211_VENDOR_SUBCMD_MU_CTRL = 0xc5,
+ 	MTK_NL80211_VENDOR_SUBCMD_PHY_CAPA_CTRL= 0xc6,
+ 	MTK_NL80211_VENDOR_SUBCMD_EDCCA_CTRL = 0xc7,
+-	MTK_NL80211_VENDOR_SUBCMD_3WIRE_CTRL = 0xc8
++	MTK_NL80211_VENDOR_SUBCMD_3WIRE_CTRL = 0xc8,
++	MTK_NL80211_VENDOR_SUBCMD_IBF_CTRL = 0xc9,
+ };
+ 
+ enum mtk_vendor_attr_edcca_ctrl {
+@@ -207,6 +208,38 @@ enum mtk_vendor_attr_mu_ctrl {
+ 		NUM_MTK_VENDOR_ATTRS_MU_CTRL - 1
+ };
+ 
++enum mtk_vendor_attr_ibf_ctrl {
++	MTK_VENDOR_ATTR_IBF_CTRL_UNSPEC,
++
++	MTK_VENDOR_ATTR_IBF_CTRL_ENABLE,
++
++	/* keep last */
++	NUM_MTK_VENDOR_ATTRS_IBF_CTRL,
++	MTK_VENDOR_ATTR_IBF_CTRL_MAX =
++		NUM_MTK_VENDOR_ATTRS_IBF_CTRL - 1
++};
++
++enum mtk_vendor_attr_ibf_dump {
++	MTK_VENDOR_ATTR_IBF_DUMP_UNSPEC,
++
++	MTK_VENDOR_ATTR_IBF_DUMP_ENABLE,
++
++	/* keep last */
++	NUM_MTK_VENDOR_ATTRS_IBF_DUMP,
++	MTK_VENDOR_ATTR_IBF_DUMP_MAX =
++		NUM_MTK_VENDOR_ATTRS_IBF_DUMP - 1
++};
++
++static struct nla_policy
++ibf_ctrl_policy[NUM_MTK_VENDOR_ATTRS_IBF_CTRL] = {
++	[MTK_VENDOR_ATTR_IBF_CTRL_ENABLE] = { .type = NLA_U8 },
++};
++
++static struct nla_policy
++ibf_dump_policy[NUM_MTK_VENDOR_ATTRS_IBF_DUMP] = {
++	[MTK_VENDOR_ATTR_IBF_DUMP_ENABLE] = { .type = NLA_U8 },
++};
++
+ 
+ #define CSI_MAX_COUNT 256
+ #define ETH_ALEN 6
+--- a/src/drivers/driver.h
++++ b/src/drivers/driver.h
+@@ -192,6 +192,11 @@ struct hostapd_channel_data {
+ 	 * mu onoff=<val> (bitmap- UL MU-MIMO(bit3), DL MU-MIMO(bit2), UL OFDMA(bit1), DL OFDMA(bit0))
+ 	 */
+ 	u8 mu_onoff;
++
++	/**
++	 * ibf_enable=<val>
++	 */
++	u8 ibf_enable;
+ };
+ 
+ #define HE_MAC_CAPAB_0		0
+@@ -5567,6 +5572,20 @@ struct wpa_driver_ops {
+ 	 *
+ 	 */
+ 	 int (*three_wire_ctrl)(void *priv, u8 three_wire_enable);
++
++	/**
++	 * ibf_ctrl - ctrl disable/enable for ibf
++	 * @priv: Private driver interface data
++	 *
++	 */
++	int (*ibf_ctrl)(void *priv, u8 ibf_enable);
++
++	/**
++	 * ibf_dump - dump ibf
++	 * @priv: Private driver interface data
++	 *
++	 */
++	int (*ibf_dump)(void *priv, u8 *ibf_enable);
+ };
+ 
+ /**
+--- a/src/drivers/driver_nl80211.c
++++ b/src/drivers/driver_nl80211.c
+@@ -15373,6 +15373,112 @@ static int nl80211_enable_three_wire(voi
+ 	return ret;
+ }
+ 
++static int nl80211_ibf_enable(void *priv, u8 ibf_enable)
++{
++	struct i802_bss *bss = priv;
++	struct wpa_driver_nl80211_data *drv = bss->drv;
++	struct nl_msg *msg;
++	struct nlattr *data;
++	int ret;
++
++	if (!drv->mtk_ibf_vendor_cmd_avail) {
++		wpa_printf(MSG_INFO,
++			   "nl80211: Driver does not support setting ibf control");
++		return 0;
++	}
++
++	msg = nl80211_drv_msg(drv, 0, NL80211_CMD_VENDOR);
++	if (!msg)
++		goto fail;
++
++	if (nla_put_u32(msg, NL80211_ATTR_VENDOR_ID, OUI_MTK) ||
++		nla_put_u32(msg, NL80211_ATTR_VENDOR_SUBCMD, MTK_NL80211_VENDOR_SUBCMD_IBF_CTRL))
++		goto fail;
++
++	data = nla_nest_start(msg, NL80211_ATTR_VENDOR_DATA);
++	if (!data)
++		goto fail;
++
++	nla_put_u8(msg, MTK_VENDOR_ATTR_IBF_CTRL_ENABLE, ibf_enable);
++
++	nla_nest_end(msg, data);
++	ret = send_and_recv_cmd(drv, msg);
++	if (ret) {
++		wpa_printf(MSG_ERROR, "Failed to set ibf_enable. ret=%d (%s)", ret, strerror(-ret));
++	}
++
++	return ret;
++
++fail:
++	nlmsg_free(msg);
++	return -ENOBUFS;
++}
++
++static int ibf_dump_handler(struct nl_msg *msg, void *arg)
++{
++	u8 *ibf_enable = (u8 *) arg;
++	struct nlattr *tb[NL80211_ATTR_MAX + 1];
++	struct nlattr *tb_vendor[MTK_VENDOR_ATTR_IBF_DUMP_MAX + 1];
++	struct genlmsghdr *gnlh = nlmsg_data(nlmsg_hdr(msg));
++	struct nlattr *nl_vend, *attr;
++
++	nla_parse(tb, NL80211_ATTR_MAX, genlmsg_attrdata(gnlh, 0),
++			genlmsg_attrlen(gnlh, 0), NULL);
++
++	nl_vend = tb[NL80211_ATTR_VENDOR_DATA];
++	if (!nl_vend)
++		return NL_SKIP;
++
++	nla_parse(tb_vendor, MTK_VENDOR_ATTR_IBF_DUMP_MAX,
++			nla_data(nl_vend), nla_len(nl_vend), NULL);
++
++	attr = tb_vendor[MTK_VENDOR_ATTR_IBF_DUMP_ENABLE];
++	if (!attr) {
++		wpa_printf(MSG_ERROR, "nl80211: cannot find MTK_VENDOR_ATTR_IBF_DUMP_ENABLE");
++		return NL_SKIP;
++	}
++
++	*ibf_enable = nla_get_u8(attr);
++
++	return NL_SKIP;
++}
++
++static int
++nl80211_ibf_dump(void *priv, u8 *ibf_enable)
++{
++	struct i802_bss *bss = priv;
++	struct wpa_driver_nl80211_data *drv = bss->drv;
++	struct nl_msg *msg;
++	struct nlattr *data;
++	int ret;
++
++	msg = nl80211_drv_msg(drv, NLM_F_DUMP, NL80211_CMD_VENDOR);
++	if (!msg)
++		goto fail;
++
++	if (nla_put_u32(msg, NL80211_ATTR_VENDOR_ID, OUI_MTK) ||
++		nla_put_u32(msg, NL80211_ATTR_VENDOR_SUBCMD, MTK_NL80211_VENDOR_SUBCMD_IBF_CTRL))
++		goto fail;
++
++	data = nla_nest_start(msg, NL80211_ATTR_VENDOR_DATA | NLA_F_NESTED);
++	if (!data)
++		goto fail;
++
++	nla_nest_end(msg, data);
++
++	ret = send_and_recv_resp(drv, msg, ibf_dump_handler, ibf_enable);
++
++	if (ret) {
++		wpa_printf(MSG_ERROR, "Failed to dump ibf_enable. ret=%d (%s)", ret, strerror(-ret));
++	}
++
++	return ret;
++
++fail:
++	nlmsg_free(msg);
++	return -ENOBUFS;
++}
++
+ const struct wpa_driver_ops wpa_driver_nl80211_ops = {
+ 	.name = "nl80211",
+ 	.desc = "Linux nl80211/cfg80211",
+@@ -15553,4 +15659,6 @@ const struct wpa_driver_ops wpa_driver_n
+ 	.configure_edcca_threshold = nl80211_configure_edcca_threshold,
+ 	.get_edcca = nl80211_get_edcca,
+ 	.three_wire_ctrl = nl80211_enable_three_wire,
++	.ibf_ctrl = nl80211_ibf_enable,
++	.ibf_dump = nl80211_ibf_dump,
+ };
+--- a/src/drivers/driver_nl80211.h
++++ b/src/drivers/driver_nl80211.h
+@@ -204,6 +204,7 @@ struct wpa_driver_nl80211_data {
+ 	unsigned int mtk_edcca_vendor_cmd_avail:1;
+ 	unsigned int mtk_mu_vendor_cmd_avail:1;
+ 	unsigned int mtk_3wire_vendor_cmd_avail:1;
++	unsigned int mtk_ibf_vendor_cmd_avail:1;
+ 
+ 	u8 extra_bss_membership_selectors[8];
+ 
+--- a/src/drivers/driver_nl80211_capa.c
++++ b/src/drivers/driver_nl80211_capa.c
+@@ -1158,6 +1158,9 @@ static int wiphy_info_handler(struct nl_
+ 				case MTK_NL80211_VENDOR_SUBCMD_3WIRE_CTRL :
+ 					drv->mtk_3wire_vendor_cmd_avail = 1;
+ 					break;
++				case MTK_NL80211_VENDOR_SUBCMD_IBF_CTRL:
++					drv->mtk_ibf_vendor_cmd_avail = 1;
++					break;
+ 				}
+ 			}
+ 
