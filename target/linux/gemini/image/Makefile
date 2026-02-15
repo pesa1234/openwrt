@@ -243,15 +243,22 @@ define Device/itian_sq201
 endef
 TARGET_DEVICES += itian_sq201
 
+define Device/raidsonic_ib-4210-b
+	$(Device/storlink-reference)
+	DEVICE_VENDOR := Raidsonic
+	DEVICE_MODEL := NAS IB-4210-B
+	DEVICE_DTS := gemini-nas4210b
+	IMAGE/factory.bin := storlink-3072k-factory-image $(1)
+	IMAGE/sysupgrade.bin := storlink-3072k-sysupgrade-image $(1) |\
+			append-metadata
+endef
+TARGET_DEVICES += raidsonic_ib-4210-b
+
 define Device/raidsonic_ib-4220-b
 	$(Device/storlink-reference)
 	DEVICE_VENDOR := Raidsonic
 	DEVICE_MODEL := NAS IB-4220-B
 	DEVICE_DTS := gemini-nas4220b
-	# The IB-4220-B has a deviating flash layout
-	# Kern         3072k - 512 | = 3145216
-	# Ramdisk      6144k       | = 9216k
-	# Application  6144k       | = 15360k
 	IMAGE/factory.bin := storlink-3072k-factory-image $(1)
 	IMAGE/sysupgrade.bin := storlink-3072k-sysupgrade-image $(1) |\
 			append-metadata
@@ -270,6 +277,16 @@ define Device/storlink_sl93512r
 endef
 TARGET_DEVICES += storlink_sl93512r
 
+define Device/verbatim_s08v1901_d1
+	$(Device/storlink-reference)
+	DEVICE_VENDOR := Verbatim
+	DEVICE_MODEL := S08V1901-D1 (Gigabit Ethernet Hard Drive)
+	DEVICE_DTS := gemini-verbatim-s08v1901-d1
+	IMAGE/factory.bin := storlink-3072k-factory-image $(1)
+	IMAGE/sysupgrade.bin := storlink-3072k-sysupgrade-image $(1) |\
+			append-metadata
+endef
+TARGET_DEVICES += verbatim_s08v1901_d1
 
 # The wiliboard images need some changes to be functional and buildable.
 #
