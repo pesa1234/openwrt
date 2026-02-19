@@ -574,6 +574,33 @@ define Package/eapol-test-mbedtls
   PROVIDES:=eapol-test
 endef
 
+define Build/Patch/QuiltRoot
+	@mkdir -p "$(PKG_BUILD_DIR)/patches"
+	@for patch in $$$$( (cd "$(PATCH_DIR)" && if [ -f series ]; then sed -e 's,\\#.*,,g' series | grep -E '[a-zA-Z0-9]'; else ls | sort; fi) 2>/dev/null ); do \
+		[ -f "$(PATCH_DIR)/$$$$patch" ] || continue; \
+		cp "$(PATCH_DIR)/$$$$patch" "$(PKG_BUILD_DIR)/patches/"; \
+		echo "$$$$patch" >> "$(PKG_BUILD_DIR)/patches/series"; \
+	done
+endef
+
+define Build/Patch
+	$(if $(QUILT),rm -rf $(PKG_BUILD_DIR)/patches; mkdir -p $(PKG_BUILD_DIR)/patches)
+	$(if $(QUILT),$(Build/Patch/QuiltRoot),$(call PatchDir,$(PKG_BUILD_DIR),$(PATCH_DIR),))
+	$(call PatchDir,$(PKG_BUILD_DIR),$(PATCH_DIR)/mtk,mtk/)
+	$(if $(QUILT),touch $(PKG_BUILD_DIR)/.quilt_used)
+endef
+
+define Quilt/Refresh/Package
+	$(call Quilt/RefreshDir,$(PKG_BUILD_DIR),$(PATCH_DIR))
+	$(call Quilt/RefreshDir,$(PKG_BUILD_DIR),$(PATCH_DIR)/mtk,mtk/)
+	@if [ -f "$(PKG_BUILD_DIR)/patches/series" ]; then \
+		grep '^mtk/' "$(PKG_BUILD_DIR)/patches/series" | awk '{print $$$$1}' | while read -r patch; do \
+			base="$$$$(basename "$$$$patch")"; \
+			rm -f "$(PATCH_DIR)/$$$$base"; \
+		done; \
+	fi
+endef
+
 
 ifneq ($(wildcard $(PKG_BUILD_DIR)/.config_*),$(subst .configured_,.config_,$(STAMP_CONFIGURED)))
   define Build/Configure/rebuild
