@@ -16,18 +16,18 @@ Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
 
 --- a/include/net/mac80211.h
 +++ b/include/net/mac80211.h
-@@ -4517,6 +4517,7 @@ struct ieee80211_prep_tx_info {
-  *      interface with the specified type would be added, and thus drivers that
-  *      implement this callback need to handle such cases. The type is the full
-  *      &enum nl80211_iftype.
+@@ -4545,6 +4545,7 @@ struct ieee80211_prep_tx_info {
+  * @set_eml_op_mode: Configure eMLSR/eMLMR operation mode in the underlay
+  *	driver according to the parameter received in the EML Operating mode
+  *	notification frame.
 + * @set_qos_map: Set QoS mapping information to driver.
   */
  struct ieee80211_ops {
  	void (*tx)(struct ieee80211_hw *hw,
-@@ -4912,6 +4913,8 @@ struct ieee80211_ops {
- 			struct ieee80211_neg_ttlm *ttlm);
- 	void (*prep_add_interface)(struct ieee80211_hw *hw,
- 				   enum nl80211_iftype type);
+@@ -4944,6 +4945,8 @@ struct ieee80211_ops {
+ 			       struct ieee80211_vif *vif,
+ 			       struct ieee80211_sta *sta,
+ 			       struct ieee80211_eml_params *eml_params);
 +	int (*set_qos_map)(struct ieee80211_vif *vif,
 +			   struct cfg80211_qos_map *qos_map);
  };
@@ -46,7 +46,7 @@ Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
  static int ieee80211_set_ap_chanwidth(struct wiphy *wiphy,
 --- a/net/mac80211/trace.h
 +++ b/net/mac80211/trace.h
-@@ -3380,6 +3380,12 @@ TRACE_EVENT(bss_color_bitmap,
+@@ -3412,6 +3412,12 @@ TRACE_EVENT(bss_color_bitmap,
  	)
  );
  
@@ -61,8 +61,8 @@ Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
  #undef TRACE_INCLUDE_PATH
 --- a/net/mac80211/driver-ops.h
 +++ b/net/mac80211/driver-ops.h
-@@ -1772,4 +1772,20 @@ drv_prep_add_interface(struct ieee80211_
- 	trace_drv_return_void(local);
+@@ -1793,4 +1793,20 @@ static inline int drv_set_eml_op_mode(st
+ 	return ret;
  }
  
 +static inline int drv_set_qos_map(struct ieee80211_local *local,

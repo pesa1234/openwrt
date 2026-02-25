@@ -44,7 +44,7 @@ echo 1 > /sys/kernel/debug/tracing/events/mac80211/bss_color_collision/enable
  }
 --- a/net/mac80211/trace.h
 +++ b/net/mac80211/trace.h
-@@ -3359,6 +3359,27 @@ TRACE_EVENT(drv_prep_add_interface,
+@@ -3391,6 +3391,27 @@ TRACE_EVENT(drv_set_eml_op_mode,
  	)
  );
  

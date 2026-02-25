@@ -30,7 +30,7 @@ Signed-off-by: fancy.liu <fancy.liu@mediatek.com>
 
 --- a/include/net/mac80211.h
 +++ b/include/net/mac80211.h
-@@ -7929,4 +7929,11 @@ int ieee80211_emulate_switch_vif_chanctx
+@@ -7961,4 +7961,11 @@ int ieee80211_emulate_switch_vif_chanctx
   * Return: %true iff the vif is a NAN interface and NAN is started
   */
  bool ieee80211_vif_nan_started(struct ieee80211_vif *vif);
