@@ -1,0 +1,26 @@
+From: Chad Monroe <chad@monroe.io>
+Date: Fri, 18 Apr 2025 09:41:44 -0700
+Subject: [PATCH] mt76: mt7915: set appropriate txq memory limits 
+
+MT7986 is DBDC and would fall back to the mac80211 default of 16MB
+or if the radio does not support VHT (2G/6G) then 4MB. Set all radios
+to 32MB except MT7915 DBDC where 16MB is adequate.
+
+Signed-off-by: Chad Monroe <chad@monroe.io>
+---
+ mt7915/init.c |    4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+--- a/mt7915/init.c
++++ b/mt7915/init.c
+@@ -427,7 +427,9 @@ mt7915_init_wiphy(struct mt7915_phy *phy
+ 
+ 	hw->max_tx_fragments = 4;
+ 
+-	if (!phy->dev->dbdc_support)
++	if (phy->dev->dbdc_support && is_mt7915(&dev->mt76))
++		wiphy->txq_memory_limit = 16 << 20; /* 16 MiB */
++	else
+ 		wiphy->txq_memory_limit = 32 << 20; /* 32 MiB */
+ 
+ 	if (phy->mt76->cap.has_2ghz) {
