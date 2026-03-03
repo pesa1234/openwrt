@@ -1,6 +1,6 @@
 --- a/src/ap/drv_callbacks.c
 +++ b/src/ap/drv_callbacks.c
-@@ -1391,7 +1391,6 @@ void hostapd_event_ch_switch(struct host
+@@ -1406,7 +1406,6 @@ void hostapd_event_ch_switch(struct host
  	hapd->iconf->punct_bitmap = punct_bitmap;
  #endif /* CONFIG_IEEE80211BE */
  	if (hapd->iconf->ieee80211ac) {

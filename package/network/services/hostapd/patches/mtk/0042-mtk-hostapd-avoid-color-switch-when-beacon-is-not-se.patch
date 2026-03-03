@@ -11,7 +11,7 @@ Signed-off-by: Michael-CY Lee <michael-cy.lee@mediatek.com>
 
 --- a/src/ap/hostapd.c
 +++ b/src/ap/hostapd.c
-@@ -5029,7 +5029,7 @@ void hostapd_switch_color(struct hostapd
+@@ -5070,7 +5070,7 @@ void hostapd_switch_color(struct hostapd
  {
  	struct os_reltime now;
  

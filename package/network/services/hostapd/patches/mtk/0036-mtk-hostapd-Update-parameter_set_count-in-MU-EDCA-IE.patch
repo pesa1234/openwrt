@@ -13,7 +13,7 @@ WMM Parameter set count.
 
 --- a/src/ap/ieee802_11_he.c
 +++ b/src/ap/ieee802_11_he.c
-@@ -320,6 +320,9 @@ u8 * hostapd_eid_he_mu_edca_parameter_se
+@@ -305,6 +305,9 @@ u8 * hostapd_eid_he_mu_edca_parameter_se
  	edca = (struct ieee80211_he_mu_edca_parameter_set *) pos;
  	os_memcpy(edca, &hapd->iface->conf->he_mu_edca, sizeof(*edca));
  

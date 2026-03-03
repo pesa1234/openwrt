@@ -9,22 +9,27 @@ Subject: [PATCH 032/149] mtk: hostapd: Add HE capabilities check
 
 --- a/src/ap/hw_features.c
 +++ b/src/ap/hw_features.c
-@@ -731,6 +731,32 @@ static int ieee80211ac_supported_vht_cap
+@@ -791,7 +791,38 @@ static int ieee80211be_supported_eht_cap
  #ifdef CONFIG_IEEE80211AX
  static int ieee80211ax_supported_he_capab(struct hostapd_iface *iface)
  {
+-	return iface->current_mode->he_capab[IEEE80211_MODE_AP].he_supported;
 +	struct hostapd_hw_modes *mode = iface->current_mode;
 +	struct he_capabilities *he_cap = &mode->he_capab[IEEE80211_MODE_AP];
 +	struct hostapd_config *conf = iface->conf;
 +
-+#define HE_CAP_CHECK(hw_cap, field, phy_idx, cfg_cap)					\
-+	do {									\
-+		if (cfg_cap && !(hw_cap[phy_idx] & field)) {	\
-+			wpa_printf(MSG_ERROR, "Driver does not support configured" \
-+				     " HE capability [%s]", #field);		\
-+			return 0;						\
-+		}								\
++#define HE_CAP_CHECK(hw_cap, field, phy_idx, cfg_cap)                      \
++	do {                                                                \
++		if ((cfg_cap) && !((hw_cap)[(phy_idx)] & (field))) {       \
++			wpa_printf(MSG_ERROR,                              \
++				   "Driver does not support configured " \
++				   "HE capability [%s]", #field);       \
++			return 0;                                       \
++		}                                                           \
 +	} while (0)
++
++	if (!he_cap->he_supported)
++		return 0;
 +
 +	HE_CAP_CHECK(he_cap->phy_cap, HE_PHYCAP_LDPC_CODING_IN_PAYLOAD,
 +		     HE_PHYCAP_LDPC_CODING_IN_PAYLOAD_IDX,
@@ -39,6 +44,8 @@ Subject: [PATCH 032/149] mtk: hostapd: Add HE capabilities check
 +		     HE_PHYCAP_MU_BEAMFORMER_CAPAB_IDX,
 +		     conf->he_phy_capab.he_mu_beamformer);
 +
- 	return 1;
++#undef HE_CAP_CHECK
++	return 1;
  }
  #endif /* CONFIG_IEEE80211AX */
+ 

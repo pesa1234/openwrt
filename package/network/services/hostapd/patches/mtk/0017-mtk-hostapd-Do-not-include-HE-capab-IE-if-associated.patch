@@ -15,13 +15,13 @@ Signed-off-by: Michael-CY Lee <michael-cy.lee@mediatek.com>
 
 --- a/src/ap/ieee802_11.c
 +++ b/src/ap/ieee802_11.c
-@@ -5412,7 +5412,8 @@ static u16 send_assoc_resp(struct hostap
+@@ -5707,7 +5707,8 @@ static u16 send_assoc_resp(struct hostap
  #endif /* CONFIG_IEEE80211AC */
  
  #ifdef CONFIG_IEEE80211AX
--	if (hapd->iconf->ieee80211ax && !hapd->conf->disable_11ax) {
-+	if (hapd->iconf->ieee80211ax && !hapd->conf->disable_11ax && sta &&
-+			sta->flags & WLAN_STA_HE) {
+-	if (hostapd_is_he_enabled(hapd)) {
++	if (hostapd_is_he_enabled(hapd) && sta &&
++        (sta->flags & WLAN_STA_HE)) {
  		p = hostapd_eid_he_capab(hapd, p, IEEE80211_MODE_AP);
  		p = hostapd_eid_he_operation(hapd, p);
  		p = hostapd_eid_cca(hapd, p);

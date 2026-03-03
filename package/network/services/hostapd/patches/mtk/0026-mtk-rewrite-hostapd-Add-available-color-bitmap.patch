@@ -18,7 +18,7 @@ Signed-off-by: Yi-Chia Hsieh <yi-chia.hsieh@mediatek.com>
 
 --- a/hostapd/ctrl_iface.c
 +++ b/hostapd/ctrl_iface.c
-@@ -4316,6 +4316,76 @@ hostapd_ctrl_iface_get_amsdu(struct host
+@@ -4177,6 +4177,76 @@ hostapd_ctrl_iface_get_amsdu(struct host
  	return ret;
  }
  
@@ -95,7 +95,7 @@ Signed-off-by: Yi-Chia Hsieh <yi-chia.hsieh@mediatek.com>
  
  static int hostapd_ctrl_iface_receive_process(struct hostapd_data *hapd,
  					      char *buf, char *reply,
-@@ -4942,6 +5012,10 @@ static int hostapd_ctrl_iface_receive_pr
+@@ -4815,6 +4885,10 @@ static int hostapd_ctrl_iface_receive_pr
  		reply_len = hostapd_ctrl_iface_get_ibf(hapd, reply, reply_size);
  	} else if (os_strncmp(buf, "GET_AMSDU", 9) == 0) {
  		reply_len = hostapd_ctrl_iface_get_amsdu(hapd, reply, reply_size);
@@ -108,7 +108,7 @@ Signed-off-by: Yi-Chia Hsieh <yi-chia.hsieh@mediatek.com>
  		reply_len = 16;
 --- a/hostapd/hostapd_cli.c
 +++ b/hostapd/hostapd_cli.c
-@@ -1664,6 +1664,20 @@ static int hostapd_cli_cmd_reload_rxkhs(
+@@ -1685,6 +1685,20 @@ static int hostapd_cli_cmd_reload_rxkhs(
  #endif /* CONFIG_IEEE80211R_AP */
  
  
@@ -129,7 +129,7 @@ Signed-off-by: Yi-Chia Hsieh <yi-chia.hsieh@mediatek.com>
  #ifdef ANDROID
  static int hostapd_cli_cmd_driver(struct wpa_ctrl *ctrl, int argc, char *argv[])
  {
-@@ -1910,6 +1924,10 @@ static const struct hostapd_cli_cmd host
+@@ -1939,6 +1953,10 @@ static const struct hostapd_cli_cmd host
  	{ "get_rxkhs", hostapd_cli_cmd_get_rxkhs, NULL,
  	  "= get R0KHs and R1KHs" },
  #endif /* CONFIG_IEEE80211R_AP */
@@ -142,7 +142,7 @@ Signed-off-by: Yi-Chia Hsieh <yi-chia.hsieh@mediatek.com>
  	  "<driver sub command> [<hex formatted data>] = send driver command data" },
 --- a/src/ap/ap_drv_ops.c
 +++ b/src/ap/ap_drv_ops.c
-@@ -1515,4 +1515,12 @@ int hostapd_drv_amsdu_dump(struct hostap
+@@ -1506,4 +1506,12 @@ int hostapd_drv_amsdu_dump(struct hostap
  	if (!hapd->driver || !hapd->driver->amsdu_dump)
  		return 0;
  	return hapd->driver->amsdu_dump(hapd->drv_priv, amsdu);
@@ -159,7 +159,7 @@ Signed-off-by: Yi-Chia Hsieh <yi-chia.hsieh@mediatek.com>
 +}
 --- a/src/ap/ap_drv_ops.h
 +++ b/src/ap/ap_drv_ops.h
-@@ -168,6 +168,8 @@ int hostapd_drv_ibf_ctrl(struct hostapd_
+@@ -165,6 +165,8 @@ int hostapd_drv_ibf_ctrl(struct hostapd_
  int hostapd_drv_ibf_dump(struct hostapd_data *hapd, u8 *ibf_enable);
  int hostapd_drv_amsdu_ctrl(struct hostapd_data *hapd);
  int hostapd_drv_amsdu_dump(struct hostapd_data *hapd, u8 *amsdu);
@@ -197,7 +197,7 @@ Signed-off-by: Yi-Chia Hsieh <yi-chia.hsieh@mediatek.com>
  #define ETH_ALEN 6
 --- a/src/drivers/driver.h
 +++ b/src/drivers/driver.h
-@@ -5595,6 +5595,14 @@ struct wpa_driver_ops {
+@@ -5685,6 +5685,14 @@ struct wpa_driver_ops {
  	 */
  	int (*amsdu_ctrl)(void *priv, u8 amsdu);
  	int (*amsdu_dump)(void *priv, u8 *amsdu);
@@ -214,7 +214,7 @@ Signed-off-by: Yi-Chia Hsieh <yi-chia.hsieh@mediatek.com>
  /**
 --- a/src/drivers/driver_nl80211.c
 +++ b/src/drivers/driver_nl80211.c
-@@ -14835,6 +14835,71 @@ static int nl80211_dpp_listen(void *priv
+@@ -15171,6 +15171,71 @@ static int nl80211_dpp_listen(void *priv
  }
  #endif /* CONFIG_DPP */
  
@@ -286,7 +286,7 @@ Signed-off-by: Yi-Chia Hsieh <yi-chia.hsieh@mediatek.com>
  
  static int nl80211_link_add(void *priv, u8 link_id, const u8 *addr,
  			    void *bss_ctx)
-@@ -15777,4 +15842,5 @@ const struct wpa_driver_ops wpa_driver_n
+@@ -16307,4 +16372,5 @@ const struct wpa_driver_ops wpa_driver_n
  	.ibf_dump = nl80211_ibf_dump,
  	.amsdu_ctrl = nl80211_enable_amsdu,
  	.amsdu_dump = nl80211_dump_amsdu,
@@ -294,7 +294,7 @@ Signed-off-by: Yi-Chia Hsieh <yi-chia.hsieh@mediatek.com>
  };
 --- a/src/drivers/driver_nl80211.h
 +++ b/src/drivers/driver_nl80211.h
-@@ -206,6 +206,7 @@ struct wpa_driver_nl80211_data {
+@@ -221,6 +221,7 @@ struct wpa_driver_nl80211_data {
  	unsigned int mtk_3wire_vendor_cmd_avail:1;
  	unsigned int mtk_ibf_vendor_cmd_avail:1;
  	unsigned int mtk_wireless_vendor_cmd_avail:1;
@@ -304,7 +304,7 @@ Signed-off-by: Yi-Chia Hsieh <yi-chia.hsieh@mediatek.com>
  
 --- a/src/drivers/driver_nl80211_capa.c
 +++ b/src/drivers/driver_nl80211_capa.c
-@@ -1164,6 +1164,9 @@ static int wiphy_info_handler(struct nl_
+@@ -1183,6 +1183,9 @@ static int wiphy_info_handler(struct nl_
  				case MTK_NL80211_VENDOR_SUBCMD_WIRELESS_CTRL:
  					drv->mtk_wireless_vendor_cmd_avail = 1;
  					break;
