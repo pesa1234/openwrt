@@ -1,0 +1,11 @@
+--- a/net/mac80211/mlme.c
++++ b/net/mac80211/mlme.c
+@@ -8449,7 +8449,7 @@ void ieee80211_sta_work(struct ieee80211
+ 			 */
+ 			if (status_acked) {
+ 				ifmgd->assoc_data->timeout =
+-					jiffies + IEEE80211_ASSOC_TIMEOUT_SHORT * 4;
++					jiffies + IEEE80211_ASSOC_TIMEOUT_SHORT * 2;
+ 				run_again(sdata, ifmgd->assoc_data->timeout);
+ 			} else {
+ 				ifmgd->assoc_data->timeout = jiffies - 1;

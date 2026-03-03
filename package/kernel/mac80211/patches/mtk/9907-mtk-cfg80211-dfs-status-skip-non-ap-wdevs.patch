@@ -1,0 +1,14 @@
+--- a/net/wireless/debugfs.c
++++ b/net/wireless/debugfs.c
+@@ -238,6 +238,11 @@ static ssize_t dfs_status_read(struct fi
+ 		return -ENOMEM;
+ 
+ 	list_for_each_entry(wdev, &wiphy->wdev_list, list) {
++		/* DFS reporting below relies on AP/AP_VLAN chandef semantics. */
++		if (wdev->iftype != NL80211_IFTYPE_AP &&
++		    wdev->iftype != NL80211_IFTYPE_AP_VLAN)
++			continue;
++
+ 		offset += scnprintf(buf + offset, buf_size - offset,
+ 				    "wdev 0x%x\n"
+ 				    "interface type %s\n",

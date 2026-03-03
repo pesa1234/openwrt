@@ -1,0 +1,23 @@
+--- a/net/mac80211/cfg.c
++++ b/net/mac80211/cfg.c
+@@ -4730,6 +4730,7 @@ static int ieee80211_set_qos_map(struct
+ {
+ 	struct ieee80211_sub_if_data *sdata = IEEE80211_DEV_TO_SUB_IF(dev);
+ 	struct mac80211_qos_map *new_qos_map, *old_qos_map;
++	int ret;
+ 
+ 	if (qos_map) {
+ 		new_qos_map = kzalloc(sizeof(*new_qos_map), GFP_KERNEL);
+@@ -4746,7 +4747,11 @@ static int ieee80211_set_qos_map(struct
+ 	if (old_qos_map)
+ 		kfree_rcu(old_qos_map, rcu_head);
+ 
+-	return drv_set_qos_map(sdata->local, sdata, qos_map);
++	ret = drv_set_qos_map(sdata->local, sdata, qos_map);
++	if (ret == -EOPNOTSUPP)
++		return 0;
++
++	return ret;
+ }
+ 
+ static int ieee80211_set_ap_chanwidth(struct wiphy *wiphy,

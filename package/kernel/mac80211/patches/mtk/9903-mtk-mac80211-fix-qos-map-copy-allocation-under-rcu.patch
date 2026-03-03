@@ -1,0 +1,33 @@
+--- a/net/mac80211/iface.c
++++ b/net/mac80211/iface.c
+@@ -406,22 +406,25 @@ static int ieee80211_check_concurrent_if
+ 			 */
+ 			if (iftype == NL80211_IFTYPE_AP_VLAN &&
+ 			    nsdata->vif.type == NL80211_IFTYPE_AP) {
++				struct cfg80211_qos_map qos_map_data;
+ 				struct mac80211_qos_map *old_qos_map, *new_qos_map = NULL;
+ 
+ 				sdata->bss = &nsdata->u.ap;
+ 
+ 				rcu_read_lock();
+ 				old_qos_map = rcu_dereference(nsdata->qos_map);
++				if (old_qos_map)
++					qos_map_data = old_qos_map->qos_map;
++				rcu_read_unlock();
++
+ 				if (old_qos_map) {
+ 					new_qos_map = kzalloc(sizeof(*new_qos_map), GFP_KERNEL);
+-					if (!new_qos_map) {
+-						rcu_read_unlock();
++					if (!new_qos_map)
+ 						return -ENOMEM;
+-					}
+-					memcpy(&new_qos_map->qos_map, &old_qos_map->qos_map,
++
++					memcpy(&new_qos_map->qos_map, &qos_map_data,
+ 					       sizeof(new_qos_map->qos_map));
+ 				}
+-				rcu_read_unlock();
+ 
+ 				old_qos_map = sdata_dereference(sdata->qos_map, sdata);
+ 				rcu_assign_pointer(sdata->qos_map, new_qos_map);
