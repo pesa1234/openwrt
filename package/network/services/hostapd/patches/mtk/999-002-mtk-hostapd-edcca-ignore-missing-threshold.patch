@@ -1,0 +1,13 @@
+--- a/src/drivers/driver_nl80211.c
++++ b/src/drivers/driver_nl80211.c
+@@ -15644,8 +15644,8 @@ static int nl80211_configure_edcca_thres
+ 	}
+ 
+ 	if (!threshold) {
+-		wpa_printf(MSG_INFO,
+-			   "nl80211: Input EDCCA threshold is empty!");
++		wpa_printf(MSG_DEBUG,
++			   "nl80211: EDCCA threshold not configured; skip");
+ 		return 0;
+ 	}
+ 
