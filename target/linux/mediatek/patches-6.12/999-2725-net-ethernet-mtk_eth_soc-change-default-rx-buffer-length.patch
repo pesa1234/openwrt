@@ -128,7 +128,7 @@ total CPU usage.
  	}
  
  	/* Indicates CDM to parse the MTK special tag from CPU
-@@ -5541,11 +5546,7 @@ static int mtk_add_mac(struct mtk_eth *e
+@@ -5544,11 +5549,7 @@ static int mtk_add_mac(struct mtk_eth *e
  
  	eth->netdev[id]->irq = eth->irq_fe[0];
  	eth->netdev[id]->dev.of_node = np;
