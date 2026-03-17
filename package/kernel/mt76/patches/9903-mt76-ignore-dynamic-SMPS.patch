@@ -35,7 +35,7 @@ Signed-off-by: Chad Monroe <chad@monroe.io>
  
 --- a/mt7915/mcu.c
 +++ b/mt7915/mcu.c
-@@ -1610,9 +1610,8 @@ mt7915_mcu_get_mmps_mode(enum ieee80211_
+@@ -1615,9 +1615,8 @@ mt7915_mcu_get_mmps_mode(enum ieee80211_
  	case IEEE80211_SMPS_OFF:
  		return MCU_MMPS_DISABLE;
  	case IEEE80211_SMPS_STATIC:
