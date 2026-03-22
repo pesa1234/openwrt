@@ -104,7 +104,7 @@
  	}
  
  	if (!MTK_HAS_CAPS(eth->soc->caps, MTK_SRAM) ||
-@@ -4766,9 +4803,25 @@ static void mtk_uninit(struct net_device
+@@ -4775,9 +4812,25 @@ static void mtk_uninit(struct net_device
  
  static int mtk_change_mtu(struct net_device *dev, int new_mtu)
  {
@@ -131,7 +131,7 @@
  
  	if (rcu_access_pointer(eth->prog) &&
  	    length > MTK_PP_MAX_BUF_SIZE) {
-@@ -4776,9 +4829,56 @@ static int mtk_change_mtu(struct net_dev
+@@ -4785,9 +4838,56 @@ static int mtk_change_mtu(struct net_dev
  		return -EINVAL;
  	}
  
@@ -189,7 +189,7 @@
  	return 0;
  }
  
-@@ -5557,7 +5657,7 @@ static int mtk_add_mac(struct mtk_eth *e
+@@ -5566,7 +5666,7 @@ static int mtk_add_mac(struct mtk_eth *e
  
  	eth->netdev[id]->irq = eth->irq_fe[0];
  	eth->netdev[id]->dev.of_node = np;
@@ -198,7 +198,7 @@
  
  	if (MTK_HAS_CAPS(eth->soc->caps, MTK_QDMA)) {
  		mac->device_notifier.notifier_call = mtk_device_event;
-@@ -5707,6 +5807,7 @@ static int mtk_probe(struct platform_dev
+@@ -5716,6 +5816,7 @@ static int mtk_probe(struct platform_dev
  	spin_lock_init(&eth->tx_irq_lock);
  	spin_lock_init(&eth->rx_irq_lock);
  	spin_lock_init(&eth->dim_lock);
