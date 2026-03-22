@@ -18,7 +18,7 @@ Signed-off-by: Yi-Chia Hsieh <yi-chia.hsieh@mediatek.com>
 
 --- a/hostapd/ctrl_iface.c
 +++ b/hostapd/ctrl_iface.c
-@@ -4177,6 +4177,76 @@ hostapd_ctrl_iface_get_amsdu(struct host
+@@ -4178,6 +4178,76 @@ hostapd_ctrl_iface_get_amsdu(struct host
  	return ret;
  }
  
@@ -95,7 +95,7 @@ Signed-off-by: Yi-Chia Hsieh <yi-chia.hsieh@mediatek.com>
  
  static int hostapd_ctrl_iface_receive_process(struct hostapd_data *hapd,
  					      char *buf, char *reply,
-@@ -4815,6 +4885,10 @@ static int hostapd_ctrl_iface_receive_pr
+@@ -4816,6 +4886,10 @@ static int hostapd_ctrl_iface_receive_pr
  		reply_len = hostapd_ctrl_iface_get_ibf(hapd, reply, reply_size);
  	} else if (os_strncmp(buf, "GET_AMSDU", 9) == 0) {
  		reply_len = hostapd_ctrl_iface_get_amsdu(hapd, reply, reply_size);
@@ -197,7 +197,7 @@ Signed-off-by: Yi-Chia Hsieh <yi-chia.hsieh@mediatek.com>
  #define ETH_ALEN 6
 --- a/src/drivers/driver.h
 +++ b/src/drivers/driver.h
-@@ -5685,6 +5685,14 @@ struct wpa_driver_ops {
+@@ -5686,6 +5686,14 @@ struct wpa_driver_ops {
  	 */
  	int (*amsdu_ctrl)(void *priv, u8 amsdu);
  	int (*amsdu_dump)(void *priv, u8 *amsdu);
@@ -214,7 +214,7 @@ Signed-off-by: Yi-Chia Hsieh <yi-chia.hsieh@mediatek.com>
  /**
 --- a/src/drivers/driver_nl80211.c
 +++ b/src/drivers/driver_nl80211.c
-@@ -15171,6 +15171,71 @@ static int nl80211_dpp_listen(void *priv
+@@ -15174,6 +15174,71 @@ static int nl80211_dpp_listen(void *priv
  }
  #endif /* CONFIG_DPP */
  
@@ -286,7 +286,7 @@ Signed-off-by: Yi-Chia Hsieh <yi-chia.hsieh@mediatek.com>
  
  static int nl80211_link_add(void *priv, u8 link_id, const u8 *addr,
  			    void *bss_ctx)
-@@ -16307,4 +16372,5 @@ const struct wpa_driver_ops wpa_driver_n
+@@ -16310,4 +16375,5 @@ const struct wpa_driver_ops wpa_driver_n
  	.ibf_dump = nl80211_ibf_dump,
  	.amsdu_ctrl = nl80211_enable_amsdu,
  	.amsdu_dump = nl80211_dump_amsdu,

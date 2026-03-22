@@ -21,7 +21,7 @@ edcca_enable and edcca_compensation and implement edcca related handlers.
 
 --- a/hostapd/config_file.c
 +++ b/hostapd/config_file.c
-@@ -5010,6 +5010,38 @@ static int hostapd_config_fill(struct ho
+@@ -5014,6 +5014,38 @@ static int hostapd_config_fill(struct ho
  #endif // def CONFIG_APUP
  	} else if (os_strcmp(buf, "i2r_lmr_policy") == 0) {
  		conf->i2r_lmr_policy = atoi(pos);
@@ -82,7 +82,7 @@ edcca_enable and edcca_compensation and implement edcca related handlers.
  static int hostapd_ctrl_iface_wps_get_status(struct hostapd_data *hapd,
  					     char *buf, size_t buflen)
  {
-@@ -3950,6 +3963,112 @@ static int hostapd_ctrl_iface_proc_coord
+@@ -3951,6 +3964,112 @@ static int hostapd_ctrl_iface_proc_coord
  #endif /* CONFIG_TESTING_OPTIONS */
  
  
@@ -195,7 +195,7 @@ edcca_enable and edcca_compensation and implement edcca related handlers.
  static int hostapd_ctrl_iface_receive_process(struct hostapd_data *hapd,
  					      char *buf, char *reply,
  					      int reply_size,
-@@ -4572,6 +4691,12 @@ static int hostapd_ctrl_iface_receive_pr
+@@ -4573,6 +4692,12 @@ static int hostapd_ctrl_iface_receive_pr
  			reply_len = -1;
  #endif /* CONFIG_PROCESS_COORDINATION */
  #endif /* CONFIG_TESTING_OPTIONS */
@@ -219,8 +219,8 @@ edcca_enable and edcca_compensation and implement edcca related handlers.
 +
  	hostapd_set_and_check_bw320_offset(conf, 0);
  
- 	return conf;
-@@ -1044,6 +1047,7 @@ void hostapd_config_free(struct hostapd_
+ 	conf->disable_mcs15_rx = true;
+@@ -1046,6 +1049,7 @@ void hostapd_config_free(struct hostapd_
  #ifdef CONFIG_ACS
  	os_free(conf->acs_chan_bias);
  #endif /* CONFIG_ACS */
@@ -260,7 +260,7 @@ edcca_enable and edcca_compensation and implement edcca related handlers.
 +}
 --- a/src/ap/hostapd.c
 +++ b/src/ap/hostapd.c
-@@ -2821,6 +2821,13 @@ dfs_offload:
+@@ -2817,6 +2817,13 @@ dfs_offload:
  	}
  #endif /* CONFIG_MESH */
  
@@ -315,7 +315,7 @@ edcca_enable and edcca_compensation and implement edcca related handlers.
  
  
  #ifndef NETLINK_CAP_ACK
-@@ -12958,7 +12960,6 @@ wpa_driver_nl80211_join_mesh(void *priv,
+@@ -12961,7 +12963,6 @@ wpa_driver_nl80211_join_mesh(void *priv,
  	return ret;
  }
  
@@ -323,7 +323,7 @@ edcca_enable and edcca_compensation and implement edcca related handlers.
  static int wpa_driver_nl80211_leave_mesh(void *priv)
  {
  	struct i802_bss *bss = priv;
-@@ -15410,6 +15411,164 @@ wpa_driver_get_multi_hw_info(void *priv,
+@@ -15413,6 +15414,164 @@ wpa_driver_get_multi_hw_info(void *priv,
  	return nl80211_get_multi_hw_info(bss, num_multi_hws);
  }
  
@@ -488,7 +488,7 @@ edcca_enable and edcca_compensation and implement edcca related handlers.
  
  #ifdef CONFIG_NAN
  
-@@ -15778,4 +15937,8 @@ const struct wpa_driver_ops wpa_driver_n
+@@ -15781,4 +15940,8 @@ const struct wpa_driver_ops wpa_driver_n
  	.nan_stop = wpa_driver_nl80211_nan_stop,
  	.nan_change_config = wpa_driver_nl80211_nan_change_config,
  #endif /* CONFIG_NAN */
@@ -536,15 +536,17 @@ edcca_enable and edcca_compensation and implement edcca related handlers.
  
 --- a/src/ap/ap_config.h
 +++ b/src/ap/ap_config.h
-@@ -1290,8 +1290,37 @@ struct hostapd_config {
+@@ -1294,9 +1294,41 @@ struct hostapd_config {
  
- 	/* Set I2R LMR policy to allow LMR response from ISTA */
- 	bool i2r_lmr_policy;
-+	
+ 	/* Disable MCS15 Subfield in EHT operation element */
+ 	bool disable_mcs15_rx;
++
++	/* EDCCA Compensation */
 +	u8 edcca_enable;
 +	s8 edcca_compensation;
 +	int *edcca_threshold;
  };
+ 
  
 +enum edcca_mode {
 +	EDCCA_MODE_FORCE_DISABLE = 0,
@@ -571,12 +573,14 @@ edcca_enable and edcca_compensation and implement edcca related handlers.
 +#define EDCCA_MAX_COMPENSATION 126
 +#define EDCCA_MIN_CONFIG_THRES -126
 +#define EDCCA_MAX_CONFIG_THRES 0
- 
++
++
  static inline enum oper_chan_width
  hostapd_get_oper_chwidth(struct hostapd_config *conf)
+ {
 --- a/src/drivers/driver.h
 +++ b/src/drivers/driver.h
-@@ -5632,6 +5632,10 @@ struct wpa_driver_ops {
+@@ -5633,6 +5633,10 @@ struct wpa_driver_ops {
  	 */
  	void (*nan_stop)(void *priv);
  #endif /* CONFIG_NAN */

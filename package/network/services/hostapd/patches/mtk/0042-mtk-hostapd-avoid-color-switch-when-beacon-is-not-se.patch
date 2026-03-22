@@ -11,12 +11,12 @@ Signed-off-by: Michael-CY Lee <michael-cy.lee@mediatek.com>
 
 --- a/src/ap/hostapd.c
 +++ b/src/ap/hostapd.c
-@@ -5070,7 +5070,7 @@ void hostapd_switch_color(struct hostapd
+@@ -5078,7 +5078,7 @@ void hostapd_switch_color(struct hostapd
  {
  	struct os_reltime now;
  
--	if (hapd->cca_in_progress)
-+	if (hapd->cca_in_progress || !hapd->beacon_set_done)
+-	if (hostapd_is_cca_in_progress(hapd->iface))
++	if (hostapd_is_cca_in_progress(hapd->iface) || !hapd->beacon_set_done)
  		return;
  
  	if (os_get_reltime(&now))
