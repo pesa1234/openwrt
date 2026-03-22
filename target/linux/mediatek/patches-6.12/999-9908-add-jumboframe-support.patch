@@ -1,0 +1,263 @@
+--- a/drivers/net/ethernet/mediatek/mtk_eth_soc.c
++++ b/drivers/net/ethernet/mediatek/mtk_eth_soc.c
+@@ -620,7 +620,8 @@ static void mtk_set_mcr_max_rx(struct mt
+ 
+ 	if (!mtk_interface_mode_is_xgmii(mac->interface)) {
+ 		mcr_cur = mtk_r32(mac->hw, MTK_MAC_MCR(mac->id));
+-		mcr_new = mcr_cur & ~MAC_MCR_MAX_RX_MASK;
++		mcr_new = mcr_cur & ~(MAC_MCR_MAX_RX_MASK |
++				      MAC_MCR_MAX_RX_JUMBO_MASK);
+ 
+ 		if (val <= 1518)
+ 			mcr_new |= MAC_MCR_MAX_RX(MAC_MCR_MAX_RX_1518);
+@@ -628,14 +629,28 @@ static void mtk_set_mcr_max_rx(struct mt
+ 			mcr_new |= MAC_MCR_MAX_RX(MAC_MCR_MAX_RX_1536);
+ 		else if (val <= 1552)
+ 			mcr_new |= MAC_MCR_MAX_RX(MAC_MCR_MAX_RX_1552);
+-		else
++		else {
+ 			mcr_new |= MAC_MCR_MAX_RX(MAC_MCR_MAX_RX_2048);
+ 
++			if (MTK_HAS_CAPS(eth->soc->caps, MTK_NETSYS_RX_9K) &&
++			    val > MTK_MAX_RX_LENGTH_2K) {
++				if (val <= MTK_MAX_RX_LENGTH_9K)
++					mcr_new |= MAC_MCR_MAX_RX_JUMBO(9);
++				else
++					mcr_new |= MAC_MCR_MAX_RX_JUMBO(15);
++			}
++		}
++
+ 		if (mcr_new != mcr_cur)
+ 			mtk_w32(mac->hw, mcr_new, MTK_MAC_MCR(mac->id));
+ 	} else if (mtk_is_netsys_v3_or_greater(mac->hw) && mac->id != MTK_GMAC1_ID) {
+ 		mcr_cur = mtk_r32(mac->hw, MTK_XMAC_RX_CFG2(mac->id));
+-		mcr_new = FIELD_PREP(MTK_XMAC_MAX_RX_MASK, val);
++
++		if (MTK_HAS_CAPS(eth->soc->caps, MTK_NETSYS_RX_9K) &&
++		    val >= MTK_MAX_RX_LENGTH_9K)
++			mcr_new = FIELD_PREP(MTK_XMAC_MAX_RX_MASK, MTK_MAX_RX_LENGTH_9K);
++		else
++			mcr_new = FIELD_PREP(MTK_XMAC_MAX_RX_MASK, val);
+ 
+ 		if (mcr_new != mcr_cur)
+ 			mtk_w32(mac->hw, mcr_new, MTK_XMAC_RX_CFG2(mac->id));
+@@ -793,7 +808,7 @@ static void mtk_mac_config(struct phylin
+ 	}
+ 
+ 	mac->interface = state->interface;
+-	mtk_set_mcr_max_rx(mac, MTK_MAX_RX_LENGTH);
++	mtk_set_mcr_max_rx(mac, eth->rx_buf_len);
+ 
+ 	return;
+ 
+@@ -865,6 +880,16 @@ static void mtk_mac_link_down(struct phy
+ 	}
+ }
+ 
++static void mtk_set_max_mtu(struct mtk_mac *mac)
++{
++	struct mtk_eth *eth = mac->hw;
++
++	if (MTK_HAS_CAPS(eth->soc->caps, MTK_NETSYS_RX_9K))
++		eth->netdev[mac->id]->max_mtu = MTK_MAX_RX_LENGTH_9K - MTK_RX_ETH_HLEN;
++	else
++		eth->netdev[mac->id]->max_mtu = MTK_MAX_RX_LENGTH - MTK_RX_ETH_HLEN;
++}
++
+ static void mtk_set_queue_speed(struct mtk_eth *eth, unsigned int idx,
+ 				int speed)
+ {
+@@ -3056,7 +3081,7 @@ static int mtk_rx_alloc(struct mtk_eth *
+ 		rx_data_len = MTK_MAX_LRO_RX_LENGTH;
+ 		rx_dma_size = MTK_HW_LRO_DMA_SIZE;
+ 	} else {
+-		rx_data_len = ETH_DATA_LEN;
++		rx_data_len = eth->rx_buf_len - MTK_RX_ETH_HLEN;
+ 		rx_dma_size = soc->rx.dma_size;
+ 	}
+ 
+@@ -3067,7 +3092,8 @@ static int mtk_rx_alloc(struct mtk_eth *
+ 	if (!ring->data)
+ 		return -ENOMEM;
+ 
+-	if (mtk_page_pool_enabled(eth)) {
++	if (mtk_page_pool_enabled(eth) &&
++	    ring->buf_size <= MTK_PP_MAX_BUF_SIZE) {
+ 		struct page_pool *pp;
+ 
+ 		pp = mtk_create_page_pool(eth, &ring->xdp_q, ring_no,
+@@ -3076,6 +3102,17 @@ static int mtk_rx_alloc(struct mtk_eth *
+ 			return PTR_ERR(pp);
+ 
+ 		ring->page_pool = pp;
++	} else if (mtk_page_pool_enabled(eth)) {
++		if (rx_flag == MTK_RX_FLAGS_NORMAL && !ring_no && eth->netdev[0])
++			netdev_warn(eth->netdev[0],
++				    "jumbo-rx: disable page_pool ring=%d buf_size=%d limit=%lu\n",
++				    ring_no, ring->buf_size,
++				    (unsigned long)MTK_PP_MAX_BUF_SIZE);
++		else if (rx_flag == MTK_RX_FLAGS_NORMAL && !ring_no)
++			dev_warn(eth->dev,
++				 "jumbo-rx: disable page_pool ring=%d buf_size=%d limit=%lu\n",
++				 ring_no, ring->buf_size,
++				 (unsigned long)MTK_PP_MAX_BUF_SIZE);
+ 	}
+ 
+ 	if (!MTK_HAS_CAPS(eth->soc->caps, MTK_SRAM) ||
+@@ -4766,9 +4803,25 @@ static void mtk_uninit(struct net_device
+ 
+ static int mtk_change_mtu(struct net_device *dev, int new_mtu)
+ {
+-	int length = new_mtu + MTK_RX_ETH_HLEN;
+ 	struct mtk_mac *mac = netdev_priv(dev);
+ 	struct mtk_eth *eth = mac->hw;
++	bool need_update, running[MTK_MAX_DEVS] = { 0 };
++	int i, mtu, length, max_mtu = 0, rx_buf_len, err = 0;
++
++	for (i = 0; i < MTK_MAX_DEVS; i++) {
++		if (!eth->netdev[i])
++			continue;
++
++		if (eth->netdev[i] == dev)
++			mtu = new_mtu;
++		else
++			mtu = eth->netdev[i]->mtu;
++
++		if (mtu > max_mtu)
++			max_mtu = mtu;
++	}
++
++	length = max_mtu + MTK_RX_ETH_HLEN;
+ 
+ 	if (rcu_access_pointer(eth->prog) &&
+ 	    length > MTK_PP_MAX_BUF_SIZE) {
+@@ -4776,9 +4829,56 @@ static int mtk_change_mtu(struct net_dev
+ 		return -EINVAL;
+ 	}
+ 
+-	mtk_set_mcr_max_rx(mac, length);
++	if (length <= MTK_MAX_RX_LENGTH)
++		rx_buf_len = MTK_MAX_RX_LENGTH;
++	else
++		rx_buf_len = DIV_ROUND_UP(length, MTK_MAX_RX_LENGTH_UNIT) *
++			     MTK_MAX_RX_LENGTH_UNIT;
++
++	need_update = rx_buf_len != eth->rx_buf_len;
++
++	if (need_update) {
++		for (i = 0; i < MTK_MAX_DEVS; i++) {
++			if (!eth->netdev[i] || !netif_running(eth->netdev[i]))
++				continue;
++
++			running[i] = true;
++			mtk_stop(eth->netdev[i]);
++		}
++	}
++
++	eth->rx_buf_len = rx_buf_len;
++
+ 	WRITE_ONCE(dev->mtu, new_mtu);
+ 
++	for (i = 0; i < MTK_MAX_DEVS; i++) {
++		struct mtk_mac *mac_i;
++
++		if (!eth->netdev[i])
++			continue;
++
++		mac_i = netdev_priv(eth->netdev[i]);
++		mtk_set_mcr_max_rx(mac_i, eth->rx_buf_len);
++	}
++
++	if (need_update) {
++		for (i = 0; i < MTK_MAX_DEVS; i++) {
++			if (!running[i])
++				continue;
++
++			err = mtk_open(eth->netdev[i]);
++			if (err) {
++				netdev_err(dev,
++					   "jumbo-mtu: reopen failed dev=%s err=%d\n",
++					   eth->netdev[i]->name, err);
++				return err;
++			}
++		}
++
++		netdev_info(dev, "jumbo-mtu: mtu=%d rx_buf_len=%u\n",
++			    new_mtu, eth->rx_buf_len);
++	}
++
+ 	return 0;
+ }
+ 
+@@ -5557,7 +5657,7 @@ static int mtk_add_mac(struct mtk_eth *e
+ 
+ 	eth->netdev[id]->irq = eth->irq_fe[0];
+ 	eth->netdev[id]->dev.of_node = np;
+-	eth->netdev[id]->max_mtu = MTK_MAX_RX_LENGTH - MTK_RX_ETH_HLEN;
++	mtk_set_max_mtu(mac);
+ 
+ 	if (MTK_HAS_CAPS(eth->soc->caps, MTK_QDMA)) {
+ 		mac->device_notifier.notifier_call = mtk_device_event;
+@@ -5707,6 +5807,7 @@ static int mtk_probe(struct platform_dev
+ 	spin_lock_init(&eth->tx_irq_lock);
+ 	spin_lock_init(&eth->rx_irq_lock);
+ 	spin_lock_init(&eth->dim_lock);
++	eth->rx_buf_len = MTK_MAX_RX_LENGTH;
+ 
+ 	eth->rx_dim.mode = DIM_CQ_PERIOD_MODE_START_FROM_EQE;
+ 	INIT_WORK(&eth->rx_dim.work, mtk_dim_rx);
+--- a/drivers/net/ethernet/mediatek/mtk_eth_soc.h
++++ b/drivers/net/ethernet/mediatek/mtk_eth_soc.h
+@@ -29,7 +29,9 @@
+ #define MTK_QDMA_NUM_QUEUES	16
+ #define MTK_QDMA_PAGE_SIZE	2048
+ #define MTK_MAX_RX_LENGTH	1536
++#define MTK_MAX_RX_LENGTH_UNIT	1024
+ #define MTK_MAX_RX_LENGTH_2K	2048
++#define MTK_MAX_RX_LENGTH_9K	9216
+ #define MTK_TX_DMA_BUF_LEN	0x3fff
+ #define MTK_TX_DMA_BUF_LEN_V2	0xffff
+ #define MTK_QDMA_RING_SIZE	2048
+@@ -490,6 +492,8 @@
+ 
+ /* Mac control registers */
+ #define MTK_MAC_MCR(x)		(0x10100 + (x * 0x100))
++#define MAC_MCR_MAX_RX_JUMBO_MASK	GENMASK(31, 28)
++#define MAC_MCR_MAX_RX_JUMBO(_x)	FIELD_PREP(MAC_MCR_MAX_RX_JUMBO_MASK, (_x))
+ #define MAC_MCR_MAX_RX_MASK	GENMASK(25, 24)
+ #define MAC_MCR_MAX_RX(_x)	(MAC_MCR_MAX_RX_MASK & ((_x) << 24))
+ #define MAC_MCR_MAX_RX_1518	0x0
+@@ -1087,6 +1091,7 @@ enum mkt_eth_capabilities {
+ 	MTK_SRAM_BIT,
+ 	MTK_XGMAC_BIT,
+ 	MTK_XGMAC_V2_BIT,
++	MTK_NETSYS_RX_9K_BIT,
+ 	MTK_36BIT_DMA_BIT,
+ 
+ 	/* MUX BITS*/
+@@ -1138,6 +1143,7 @@ enum mkt_eth_capabilities {
+ #define MTK_SRAM		BIT_ULL(MTK_SRAM_BIT)
+ #define MTK_XGMAC		BIT_ULL(MTK_XGMAC_BIT)
+ #define MTK_XGMAC_V2		BIT_ULL(MTK_XGMAC_V2_BIT)
++#define MTK_NETSYS_RX_9K	BIT_ULL(MTK_NETSYS_RX_9K_BIT)
+ #define MTK_36BIT_DMA	BIT_ULL(MTK_36BIT_DMA_BIT)
+ 
+ #define MTK_ETH_MUX_GDM1_TO_GMAC1_ESW		\
+@@ -1245,7 +1251,8 @@ enum mkt_eth_capabilities {
+ 
+ #define MT7986_CAPS  (MTK_GMAC1_SGMII | MTK_GMAC2_SGMII | \
+ 		      MTK_MUX_GMAC12_TO_GEPHY_SGMII | MTK_QDMA | \
+-		      MTK_RSTCTRL_PPE1 | MTK_SRAM | MTK_PDMA_INT | MTK_RSS)
++		      MTK_RSTCTRL_PPE1 | MTK_SRAM | MTK_PDMA_INT | MTK_RSS | \
++		      MTK_NETSYS_RX_9K)
+ 
+ #define MT7987_CAPS  (MTK_36BIT_DMA | MTK_GMAC1_SGMII | \
+ 		      MTK_GMAC2_2P5GPHY_V2 | MTK_GMAC2_SGMII | MTK_GMAC3_SGMII | \
+@@ -1480,6 +1487,7 @@ struct mtk_eth {
+ 
+ 	spinlock_t			dim_lock;
+ 
++	u32				rx_buf_len;
+ 	u32				rx_events;
+ 	u32				rx_packets;
+ 	u32				rx_bytes;
