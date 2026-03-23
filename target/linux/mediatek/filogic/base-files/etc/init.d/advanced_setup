@@ -6,7 +6,7 @@ USE_PROCD=1
 . /lib/functions.sh
 
 
-smp-mt76() {
+smp_mt76() {
 OPTIMIZED_FOR="$1"
 CPU_LIST=`cat /proc/interrupts | sed -n '1p'`
 NUM_OF_CPU=0; for i in $CPU_LIST; do NUM_OF_CPU=`expr $NUM_OF_CPU + 1`; done;
@@ -274,7 +274,7 @@ MT7986()
 	logger -s "smp_affinity: CPU3_AFFINITY = $CPU3_AFFINITY"
 }
 
-gl-mt6000()
+gl_mt6000()
 {
 	num_of_wifi=$1
 	DEFAULT_RPS=0
@@ -451,7 +451,7 @@ MT7981()
 	logger -s "smp_affinity: CPU1_AFFINITY = $CPU1_AFFINITY"
 }
 
-gl-mt3000()
+gl_mt3000()
 {
 	num_of_wifi=$1
 	DEFAULT_RPS=0
@@ -556,13 +556,13 @@ setup_model()
 		MT7986 $num_of_wifi
 	elif [[ $board == *"gl-mt6000"* ]]; then
 		logger -s "smp_affinity: setup_model: gl-mt6000 NUM_WIFI_CARD=$num_of_wifi"
-		gl-mt6000 $num_of_wifi
+			gl_mt6000 $num_of_wifi
 	elif [[ $board == *"7981"* ]]; then
 		logger -s "smp_affinity: setup_model: MT7981 NUM_WIFI_CARD=$num_of_wifi"
 		MT7981 $num_of_wifi
 	elif [[ $board == *"gl-mt3000"* ]]; then
 		logger -s "smp_affinity: setup_model: gl-mt3000 NUM_WIFI_CARD=$num_of_wifi"
-		gl-mt3000 $num_of_wifi
+			gl_mt3000 $num_of_wifi
 	elif [[ $board == *"7622"* ]]; then
 		logger -s "smp_affinity: setup_model: MT7622 NUM_WIFI_CARD=$num_of_wifi"
 		MT7622 $num_of_wifi
@@ -680,7 +680,7 @@ set_smp_affinity
 #end of file
 }
 
-mtk-offloading()
+mtk_offloading()
 {
 	mtk_offloading_enable=$(uci get advanced.@defaults[0].mtk_offloading_enable 2>/dev/null || echo "x")
 	if [ "$mtk_offloading_enable" == "1" ]; then
@@ -708,7 +708,7 @@ mtk-offloading()
 	fi
 }
 
-hw-atf-setup()
+hw_atf_setup()
 {
 	FILE="/sys/kernel/debug/ieee80211/phy0/mt76/vow"
 	if [ -e "$FILE" ]; then
@@ -730,7 +730,7 @@ hw-atf-setup()
 	fi
 }
 
-enable-HQoS()
+enable_HQoS()
 {
 	FILE="/sbin/mtkhnat"
 	if [ -e "$FILE" ]; then
@@ -746,7 +746,7 @@ enable-HQoS()
 	
 }
 
-usb-setup()
+usb_setup()
 {
 	usb2=$(uci get advanced.@defaults[0].usb_2 2>/dev/null || echo "x")
 	if [ $usb2 == 1 ]; then
@@ -792,10 +792,10 @@ start_service() {
 		sleep $delay
 		echo 1 > /tmp/smp_affinity_started
 	fi
-	smp-mt76
-	enable-HQoS
-	usb-setup
-	hw-atf-setup
+		smp_mt76
+		enable_HQoS
+		usb_setup
+		hw_atf_setup
     logger -t advanced_setup "advanced_setup finished"
 }
 
@@ -818,10 +818,10 @@ reload_service() {
 				sleep $delay
 				echo 1 > /tmp/smp_affinity_started
 			fi
-			smp-mt76
-			enable-HQoS
-			usb-setup
-			hw-atf-setup
+				smp_mt76
+				enable_HQoS
+				usb_setup
+				hw_atf_setup
 			logger -t advanced_setup "advanced_setup finished"
             ;;
     esac
