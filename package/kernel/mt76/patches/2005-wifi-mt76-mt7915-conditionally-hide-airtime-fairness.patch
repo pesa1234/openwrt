@@ -1,0 +1,65 @@
+Allow mt7915e to keep the cfg80211 airtime fairness capability enabled by
+default while still supporting the legacy 5.4 ATF behavior when requested by
+userspace.
+
+This adds a module parameter that controls whether
+NL80211_EXT_FEATURE_AIRTIME_FAIRNESS is exposed and wires it into the generic
+mt76 feature setup path.
+---
+ mac80211.c    | 5 ++++-
+ mt76.h        | 1 +
+ mt7915/mmio.c | 6 ++++++
+ 3 files changed, 11 insertions(+), 1 deletion(-)
+
+--- a/mac80211.c
++++ b/mac80211.c
+@@ -458,7 +458,8 @@ mt76_phy_init(struct mt76_phy *phy, stru
+ 			WIPHY_FLAG_AP_UAPSD;
+ 
+ 	wiphy_ext_feature_set(wiphy, NL80211_EXT_FEATURE_CQM_RSSI_LIST);
+-	wiphy_ext_feature_set(wiphy, NL80211_EXT_FEATURE_AIRTIME_FAIRNESS);
++	if (dev->expose_airtime_fairness)
++		wiphy_ext_feature_set(wiphy, NL80211_EXT_FEATURE_AIRTIME_FAIRNESS);
+ 	wiphy_ext_feature_set(wiphy, NL80211_EXT_FEATURE_AQL);
+ 
+ 	if (!wiphy->max_remain_on_channel_duration)
+@@ -695,6 +696,7 @@ mt76_alloc_device(struct device *pdev, u
+ 	dev->dev = pdev;
+ 	dev->drv = drv_ops;
+ 	dev->dma_dev = pdev;
++	dev->expose_airtime_fairness = true;
+ 
+ 	phy = &dev->phy;
+ 	phy->dev = dev;
+--- a/mt76.h
++++ b/mt76.h
+@@ -1070,6 +1070,7 @@ struct mt76_dev {
+ 	u16 token_size;
+ 	u16 token_threshold;
+ 	u8 num_phy;
++	bool expose_airtime_fairness;
+ 
+ 	spinlock_t rx_token_lock;
+ 	struct idr rx_token;
+--- a/mt7915/mmio.c
++++ b/mt7915/mmio.c
+@@ -17,6 +17,11 @@ static bool wed_enable;
+ module_param(wed_enable, bool, 0644);
+ MODULE_PARM_DESC(wed_enable, "Enable Wireless Ethernet Dispatch support");
+ 
++static bool expose_airtime_fairness = true;
++module_param(expose_airtime_fairness, bool, 0644);
++MODULE_PARM_DESC(expose_airtime_fairness,
++		 "Expose NL80211_EXT_FEATURE_AIRTIME_FAIRNESS");
++
+ static const u32 mt7915_reg[] = {
+ 	[INT_SOURCE_CSR]		= 0xd7010,
+ 	[INT_MASK_CSR]			= 0xd7014,
+@@ -958,6 +963,7 @@ struct mt7915_dev *mt7915_mmio_probe(str
+ 		return ERR_PTR(-ENOMEM);
+ 
+ 	dev = container_of(mdev, struct mt7915_dev, mt76);
++	dev->mt76.expose_airtime_fairness = expose_airtime_fairness;
+ 
+ 	ret = mt7915_mmio_init(mdev, mem_base, device_id);
+ 	if (ret)

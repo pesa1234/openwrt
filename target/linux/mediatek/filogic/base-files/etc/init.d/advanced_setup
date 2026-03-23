@@ -710,20 +710,60 @@ mtk_offloading()
 
 hw_atf_setup()
 {
+	MODULE_FILE="/etc/modules.d/mt7915e"
 	FILE="/sys/kernel/debug/ieee80211/phy0/mt76/vow"
+	atf=$(uci get advanced.@defaults[0].atf_enable 2>/dev/null || echo "0")
+	hwatf=$(uci get advanced.@defaults[0].hw_atf_enable 2>/dev/null || echo "0")
+
+	if [ "$atf" != "1" ] && [ "$hwatf" = "1" ]; then
+		logger -t advanced_setup "HW-ATF requires ATF; forcing hw_atf_enable=0"
+		uci set advanced.@defaults[0].hw_atf_enable='0'
+		uci commit advanced
+		hwatf=0
+	fi
+
+	if [ -e "$MODULE_FILE" ]; then
+		old_content=$(cat "$MODULE_FILE" 2>/dev/null)
+		new_line="mt7915e"
+
+		set -- $old_content
+		for token in "$@"; do
+			case "$token" in
+				mt7915e|expose_airtime_fairness=*)
+					;;
+				*)
+					case " $new_line " in
+						*" $token "*)
+							;;
+						*)
+							new_line="$new_line $token"
+							;;
+					esac
+					;;
+			esac
+		done
+
+		if [ "$atf" = "1" ]; then
+			new_line="$new_line expose_airtime_fairness=0"
+		fi
+
+		if [ "$old_content" != "$new_line" ]; then
+			printf '%s\n' "$new_line" > "$MODULE_FILE"
+			logger -t advanced_setup "updated $MODULE_FILE to '$new_line'; reboot required for Airtime Fairness mode change"
+		fi
+	fi
+
 	if [ -e "$FILE" ]; then
 		logger -s "smp_affinity: HW-ATF available"
-		atf=$(uci get advanced.@defaults[0].atf_enable 2>/dev/null || echo "x")
-		hwatf=$(uci get advanced.@defaults[0].hw_atf_enable 2>/dev/null || echo "x")
-		if [ $atf == 1 ]; then
+		if [ "$atf" = "1" ]; then
 			echo 'vow_atf_en=1' > /sys/kernel/debug/ieee80211/phy0/mt76/vow
-		elif [ $atf == 0 ]; then
+		else
 			echo 'vow_atf_en=0' > /sys/kernel/debug/ieee80211/phy0/mt76/vow
 		fi
 		
-		if [ $hwatf == 1 ]; then
+		if [ "$atf" = "1" ] && [ "$hwatf" = "1" ]; then
 			echo 'vow_watf_en=1' > /sys/kernel/debug/ieee80211/phy0/mt76/vow
-		elif [ $hwatf == 0 ]; then
+		else
 			echo 'vow_watf_en=0' > /sys/kernel/debug/ieee80211/phy0/mt76/vow
 		fi
 		echo 'show_vow_info' > /sys/kernel/debug/ieee80211/phy0/mt76/vow
