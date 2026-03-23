@@ -1,6 +1,6 @@
 --- a/src/drivers/driver_nl80211.c
 +++ b/src/drivers/driver_nl80211.c
-@@ -15647,8 +15647,8 @@ static int nl80211_configure_edcca_thres
+@@ -15655,8 +15655,8 @@ static int nl80211_configure_edcca_thres
  	}
  
  	if (!threshold) {

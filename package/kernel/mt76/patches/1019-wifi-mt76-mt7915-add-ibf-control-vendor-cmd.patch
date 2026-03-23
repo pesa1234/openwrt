@@ -23,7 +23,7 @@ Signed-off-by: mtk27835 <shurong.wen@mediatek.com>
  struct csi_null_tone {
  	u8 start;
  	u8 end;
-@@ -1345,6 +1350,54 @@ static int mt7915_vendor_3wire_ctrl(stru
+@@ -1359,6 +1364,54 @@ static int mt7915_vendor_3wire_ctrl(stru
  	return mt7915_mcu_set_cfg(phy, CFGINFO_3WIRE_EN_CFG, three_wire_mode);
  }
  
@@ -78,7 +78,7 @@ Signed-off-by: mtk27835 <shurong.wen@mediatek.com>
  
  static const struct wiphy_vendor_command mt7915_vendor_commands[] = {
  	{
-@@ -1438,6 +1491,18 @@ static const struct wiphy_vendor_command
+@@ -1452,6 +1505,18 @@ static const struct wiphy_vendor_command
  		.doit = mt7915_vendor_3wire_ctrl,
  		.policy = three_wire_ctrl_policy,
  		.maxattr = MTK_VENDOR_ATTR_3WIRE_CTRL_MAX,

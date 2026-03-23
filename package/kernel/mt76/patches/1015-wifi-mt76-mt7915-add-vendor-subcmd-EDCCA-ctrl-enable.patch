@@ -183,7 +183,7 @@ Subject: [PATCH] wifi: mt76: mt7915: add vendor subcmd EDCCA ctrl
  struct csi_null_tone {
  	u8 start;
  	u8 end;
-@@ -1172,6 +1190,108 @@ mt7915_vendor_phy_capa_ctrl_dump(struct
+@@ -1172,6 +1190,122 @@ mt7915_vendor_phy_capa_ctrl_dump(struct
  	return len;
  }
  
@@ -221,8 +221,15 @@ Subject: [PATCH] wifi: mt76: mt7915: add vendor subcmd EDCCA ctrl
 +
 +		err = mt7915_mcu_set_edcca(phy, edcca_mode, edcca_value,
 +					   edcca_compensation);
-+		if (err)
++		if (err) {
++			dev_err(phy->dev->mt76.dev,
++				"EDCCA enable request failed: ret=%d\n", err);
 +			return err;
++		}
++		dev_info(phy->dev->mt76.dev,
++			 "EDCCA enable request accepted by driver: mode=%s compensation=%d\n",
++			 edcca_value[0] ? "auto" : "force-disable",
++			 edcca_compensation);
 +	} else if (edcca_mode == EDCCA_CTRL_SET_THERS) {
 +		if (!tb[MTK_VENDOR_ATTR_EDCCA_CTRL_PRI20_VAL] ||
 +		    !tb[MTK_VENDOR_ATTR_EDCCA_CTRL_SEC40_VAL] ||
@@ -237,8 +244,15 @@ Subject: [PATCH] wifi: mt76: mt7915: add vendor subcmd EDCCA ctrl
 +			nla_get_u8(tb[MTK_VENDOR_ATTR_EDCCA_CTRL_SEC80_VAL]);
 +		err = mt7915_mcu_set_edcca(phy, edcca_mode, edcca_value,
 +					   edcca_compensation);
-+		if (err)
++		if (err) {
++			dev_err(phy->dev->mt76.dev,
++				"EDCCA threshold request failed: ret=%d\n", err);
 +			return err;
++		}
++		dev_info(phy->dev->mt76.dev,
++			 "EDCCA threshold request accepted by driver: BW20=%d BW40=%d BW80=%d\n",
++			 (s8)edcca_value[0], (s8)edcca_value[1],
++			 (s8)edcca_value[2]);
 +	} else {
 +		return -EINVAL;
 +	}
@@ -292,7 +306,7 @@ Subject: [PATCH] wifi: mt76: mt7915: add vendor subcmd EDCCA ctrl
  static const struct wiphy_vendor_command mt7915_vendor_commands[] = {
  	{
  		.info = {
-@@ -1240,6 +1360,18 @@ static const struct wiphy_vendor_command
+@@ -1240,6 +1374,18 @@ static const struct wiphy_vendor_command
  		.dumpit = mt7915_vendor_phy_capa_ctrl_dump,
  		.policy = phy_capa_ctrl_policy,
  		.maxattr = MTK_VENDOR_ATTR_PHY_CAPA_CTRL_MAX,

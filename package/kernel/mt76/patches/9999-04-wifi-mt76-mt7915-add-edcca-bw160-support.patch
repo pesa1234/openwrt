@@ -1,0 +1,144 @@
+--- a/mt7915/mcu.c
++++ b/mt7915/mcu.c
+@@ -5508,7 +5508,7 @@ int mt7915_mcu_set_edcca(struct mt7915_p
+ 	struct {
+ 		u8 band_idx;
+ 		u8 cmd_idx;
+-		u8 setting[3];
++		u8 setting[4];
+ 		bool record_in_fw;
+ 		u8 region;
+ 		s8 thres_compensation;
+@@ -5525,9 +5525,10 @@ int mt7915_mcu_set_edcca(struct mt7915_p
+ 	if (mode == EDCCA_CTRL_SET_EN) {
+ 		req.setting[0] = (!value)? EDCCA_MODE_AUTO: value[0];
+ 	} else if (mode == EDCCA_CTRL_SET_THERS) {
+-		req.setting[0] = value[0];
+-		req.setting[1] = value[1];
+-		req.setting[2] = value[2];
++		int i;
++
++		for (i = 0; i < ARRAY_SIZE(req.setting); i++)
++			req.setting[i] = value[i];
+ 	} else {
+ 		return -EINVAL;
+ 	}
+@@ -5541,7 +5542,7 @@ int mt7915_mcu_get_edcca(struct mt7915_p
+ 	struct {
+ 		u8 band_idx;
+ 		u8 cmd_idx;
+-		u8 setting[3];
++		u8 setting[4];
+ 		bool record_in_fw;
+ 		u8 region;
+ 		s8 thres_compensation;
+@@ -5552,6 +5553,7 @@ int mt7915_mcu_get_edcca(struct mt7915_p
+ 	};
+ 	struct sk_buff *skb;
+ 	int ret;
++	int i;
+ 	struct mt7915_mcu_edcca_info *res;
+ 
+ 	ret = mt76_mcu_send_and_get_msg(&dev->mt76, MCU_EXT_CMD(EDCCA), &req, sizeof(req),
+@@ -5560,9 +5562,8 @@ int mt7915_mcu_get_edcca(struct mt7915_p
+ 		return ret;
+ 
+ 	res = (struct mt7915_mcu_edcca_info *)skb->data;
+-	*value++ = res->info[0];
+-	*value++ = res->info[1];
+-	*value = res->info[2];
++	for (i = 0; i < ARRAY_SIZE(res->info); i++)
++		*value++ = res->info[i];
+ 	dev_kfree_skb(skb);
+ 
+ 	return 0;
+--- a/mt7915/mcu.h
++++ b/mt7915/mcu.h
+@@ -1151,9 +1151,9 @@ enum {
+ struct mt7915_mcu_edcca_info {
+ 	u8 cmd_idx;
+ 	u8 band_idx;
+-	u8 info[3];
++	u8 info[4];
+ 	u8 fginit;
+-	u8 rsv[2];
++	u8 rsv[1];
+ };
+ #endif
+ 
+--- a/mt7915/vendor.c
++++ b/mt7915/vendor.c
+@@ -87,6 +87,7 @@ edcca_ctrl_policy[NUM_MTK_VENDOR_ATTRS_E
+        [MTK_VENDOR_ATTR_EDCCA_CTRL_SEC40_VAL] = { .type = NLA_U8 },
+        [MTK_VENDOR_ATTR_EDCCA_CTRL_SEC80_VAL] = { .type = NLA_U8 },
+        [MTK_VENDOR_ATTR_EDCCA_CTRL_COMPENSATE] = { .type = NLA_S8 },
++       [MTK_VENDOR_ATTR_EDCCA_CTRL_SEC160_VAL] = { .type = NLA_U8 },
+ };
+ 
+ static const struct nla_policy
+@@ -95,6 +96,7 @@ edcca_dump_policy[NUM_MTK_VENDOR_ATTRS_E
+        [MTK_VENDOR_ATTR_EDCCA_DUMP_PRI20_VAL] = { .type = NLA_U8 },
+        [MTK_VENDOR_ATTR_EDCCA_DUMP_SEC40_VAL] = { .type = NLA_U8 },
+        [MTK_VENDOR_ATTR_EDCCA_DUMP_SEC80_VAL] = { .type = NLA_U8 },
++       [MTK_VENDOR_ATTR_EDCCA_DUMP_SEC160_VAL] = { .type = NLA_U8 },
+ };
+ 
+ static const struct nla_policy
+@@ -1332,7 +1334,8 @@ static int mt7915_vendor_edcca_ctrl(stru
+ 	} else if (edcca_mode == EDCCA_CTRL_SET_THERS) {
+ 		if (!tb[MTK_VENDOR_ATTR_EDCCA_CTRL_PRI20_VAL] ||
+ 		    !tb[MTK_VENDOR_ATTR_EDCCA_CTRL_SEC40_VAL] ||
+-		    !tb[MTK_VENDOR_ATTR_EDCCA_CTRL_SEC80_VAL]) {
++		    !tb[MTK_VENDOR_ATTR_EDCCA_CTRL_SEC80_VAL] ||
++		    !tb[MTK_VENDOR_ATTR_EDCCA_CTRL_SEC160_VAL]) {
+ 			return -EINVAL;
+ 		}
+ 		edcca_value[0] =
+@@ -1341,6 +1344,8 @@ static int mt7915_vendor_edcca_ctrl(stru
+ 			nla_get_u8(tb[MTK_VENDOR_ATTR_EDCCA_CTRL_SEC40_VAL]);
+ 		edcca_value[2] =
+ 			nla_get_u8(tb[MTK_VENDOR_ATTR_EDCCA_CTRL_SEC80_VAL]);
++		edcca_value[3] =
++			nla_get_u8(tb[MTK_VENDOR_ATTR_EDCCA_CTRL_SEC160_VAL]);
+ 		err = mt7915_mcu_set_edcca(phy, edcca_mode, edcca_value,
+ 					   edcca_compensation);
+ 		if (err) {
+@@ -1349,9 +1354,9 @@ static int mt7915_vendor_edcca_ctrl(stru
+ 			return err;
+ 		}
+ 		dev_info(phy->dev->mt76.dev,
+-			 "EDCCA threshold request accepted by driver: BW20=%d BW40=%d BW80=%d\n",
++			 "EDCCA threshold request accepted by driver: BW20=%d BW40=%d BW80=%d BW160=%d\n",
+ 			 (s8)edcca_value[0], (s8)edcca_value[1],
+-			 (s8)edcca_value[2]);
++			 (s8)edcca_value[2], (s8)edcca_value[3]);
+ 	} else {
+ 		return -EINVAL;
+ 	}
+--- a/mt7915/vendor.h
++++ b/mt7915/vendor.h
+@@ -3,7 +3,7 @@
+ #define __MT7915_VENDOR_H
+ 
+ #define MTK_NL80211_VENDOR_ID	0x0ce7
+-#define EDCCA_THRES_NUM 3
++#define EDCCA_THRES_NUM 4
+ 
+ enum mtk_nl80211_vendor_subcmds {
+ 	MTK_NL80211_VENDOR_SUBCMD_AMNT_CTRL = 0xae,
+@@ -30,6 +30,7 @@ enum mtk_vendor_attr_edcca_ctrl {
+         MTK_VENDOR_ATTR_EDCCA_CTRL_SEC40_VAL,
+         MTK_VENDOR_ATTR_EDCCA_CTRL_SEC80_VAL,
+         MTK_VENDOR_ATTR_EDCCA_CTRL_COMPENSATE,
++        MTK_VENDOR_ATTR_EDCCA_CTRL_SEC160_VAL,
+ 
+         /* keep last */
+         NUM_MTK_VENDOR_ATTRS_EDCCA_CTRL,
+@@ -45,6 +46,7 @@ enum mtk_vendor_attr_edcca_dump {
+         MTK_VENDOR_ATTR_EDCCA_DUMP_PRI20_VAL,
+         MTK_VENDOR_ATTR_EDCCA_DUMP_SEC40_VAL,
+         MTK_VENDOR_ATTR_EDCCA_DUMP_SEC80_VAL,
++        MTK_VENDOR_ATTR_EDCCA_DUMP_SEC160_VAL,
+ 
+         /* keep last */
+         NUM_MTK_VENDOR_ATTRS_EDCCA_DUMP,

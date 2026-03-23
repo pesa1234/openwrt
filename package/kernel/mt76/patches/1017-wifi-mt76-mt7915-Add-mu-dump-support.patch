@@ -47,7 +47,7 @@ Subject: [PATCH 1017/1051] wifi: mt76: mt7915: Add mu dump support
  static int
  mt7915_vendor_phy_capa_ctrl_dump(struct wiphy *wiphy, struct wireless_dev *wdev,
  			     struct sk_buff *skb, const void *data, int data_len,
-@@ -1347,6 +1370,7 @@ static const struct wiphy_vendor_command
+@@ -1361,6 +1384,7 @@ static const struct wiphy_vendor_command
  		.flags = WIPHY_VENDOR_CMD_NEED_NETDEV |
  			WIPHY_VENDOR_CMD_NEED_RUNNING,
  		.doit = mt7915_vendor_mu_ctrl,

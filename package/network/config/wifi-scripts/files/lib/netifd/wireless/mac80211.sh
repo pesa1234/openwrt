@@ -516,7 +516,8 @@ mac80211_hostapd_setup_base() {
 		thres_0=$(uci get advanced.@edcca[0].thres_0 2>/dev/null || echo "-60")
 		thres_1=$(uci get advanced.@edcca[0].thres_1 2>/dev/null || echo "-62")
 		thres_2=$(uci get advanced.@edcca[0].thres_2 2>/dev/null || echo "-59")
-		edcca_threshold="${thres_0} ${thres_1} ${thres_2}"
+		thres_3=$(uci get advanced.@edcca[0].thres_3 2>/dev/null || echo "-54")
+		edcca_threshold="${thres_0} ${thres_1} ${thres_2} ${thres_3}"
 		if [ -n "$edcca_threshold" ]; then
 			append base_cfg "edcca_threshold=$edcca_threshold" "$N"
 		fi

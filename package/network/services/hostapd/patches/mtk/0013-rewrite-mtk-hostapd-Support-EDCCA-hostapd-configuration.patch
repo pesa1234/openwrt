@@ -323,7 +323,7 @@ edcca_enable and edcca_compensation and implement edcca related handlers.
  static int wpa_driver_nl80211_leave_mesh(void *priv)
  {
  	struct i802_bss *bss = priv;
-@@ -15413,6 +15414,164 @@ wpa_driver_get_multi_hw_info(void *priv,
+@@ -15413,6 +15414,179 @@ wpa_driver_get_multi_hw_info(void *priv,
  	return nl80211_get_multi_hw_info(bss, num_multi_hws);
  }
  
@@ -343,6 +343,11 @@ edcca_enable and edcca_compensation and implement edcca related handlers.
 +		return 0;
 +	}
 +
++	wpa_printf(MSG_INFO,
++		   "nl80211: request EDCCA enable=%u (%s) compensation=%d",
++		   edcca_enable, edcca_enable ? "auto" : "force-disable",
++		   edcca_compensation);
++
 +	if (!(msg = nl80211_drv_msg(drv, 0, NL80211_CMD_VENDOR)) ||
 +	    nla_put_u32(msg, NL80211_ATTR_VENDOR_ID, OUI_MTK) ||
 +	    nla_put_u32(msg, NL80211_ATTR_VENDOR_SUBCMD,
@@ -361,6 +366,9 @@ edcca_enable and edcca_compensation and implement edcca related handlers.
 +	if (ret) {
 +		wpa_printf(MSG_ERROR, "Failed to configure EDCCA enable. ret=%d (%s) ",
 +			   ret, strerror(-ret));
++	} else {
++		wpa_printf(MSG_INFO,
++			   "nl80211: EDCCA enable request accepted by driver");
 +	}
 +	return ret;
 +}
@@ -385,6 +393,10 @@ edcca_enable and edcca_compensation and implement edcca related handlers.
 +		return 0;
 +	}
 +
++	wpa_printf(MSG_INFO,
++		   "nl80211: request EDCCA thresholds BW20=%d BW40=%d BW80=%d",
++		   threshold[0], threshold[1], threshold[2]);
++
 +	if (!(msg = nl80211_drv_msg(drv, 0, NL80211_CMD_VENDOR)) ||
 +	    nla_put_u32(msg, NL80211_ATTR_VENDOR_ID, OUI_MTK) ||
 +	    nla_put_u32(msg, NL80211_ATTR_VENDOR_SUBCMD,
@@ -403,6 +415,9 @@ edcca_enable and edcca_compensation and implement edcca related handlers.
 +	if (ret) {
 +		wpa_printf(MSG_ERROR, "Failed to configure EDCCA threshold. ret=%d (%s) ",
 +			   ret, strerror(-ret));
++	} else {
++		wpa_printf(MSG_INFO,
++			   "nl80211: EDCCA threshold request accepted by driver");
 +	}
 +	return ret;
 +}
@@ -488,7 +503,7 @@ edcca_enable and edcca_compensation and implement edcca related handlers.
  
  #ifdef CONFIG_NAN
  
-@@ -15781,4 +15940,8 @@ const struct wpa_driver_ops wpa_driver_n
+@@ -15781,4 +15955,8 @@ const struct wpa_driver_ops wpa_driver_n
  	.nan_stop = wpa_driver_nl80211_nan_stop,
  	.nan_change_config = wpa_driver_nl80211_nan_change_config,
  #endif /* CONFIG_NAN */

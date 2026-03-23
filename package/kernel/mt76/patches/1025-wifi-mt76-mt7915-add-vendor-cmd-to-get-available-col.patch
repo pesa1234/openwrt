@@ -27,7 +27,7 @@ Signed-off-by: Yi-Chia Hsieh <yi-chia.hsieh@mediatek.com>
  struct csi_null_tone {
  	u8 start;
  	u8 end;
-@@ -1431,6 +1436,27 @@ mt7915_vendor_ibf_ctrl_dump(struct wiphy
+@@ -1445,6 +1450,27 @@ mt7915_vendor_ibf_ctrl_dump(struct wiphy
  	return 1;
  }
  
@@ -55,7 +55,7 @@ Signed-off-by: Yi-Chia Hsieh <yi-chia.hsieh@mediatek.com>
  
  static const struct wiphy_vendor_command mt7915_vendor_commands[] = {
  	{
-@@ -1537,6 +1563,17 @@ static const struct wiphy_vendor_command
+@@ -1551,6 +1577,17 @@ static const struct wiphy_vendor_command
  		.dumpit = mt7915_vendor_ibf_ctrl_dump,
  		.policy = ibf_ctrl_policy,
  		.maxattr = MTK_VENDOR_ATTR_IBF_CTRL_MAX,

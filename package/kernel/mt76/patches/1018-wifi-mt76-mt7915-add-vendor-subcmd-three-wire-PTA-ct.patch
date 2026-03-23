@@ -159,7 +159,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  		mt7915_mcu_set_bypass_smthint(phy, val8); /* Cert bypass smooth interpolation */
  	}
  
-@@ -1272,6 +1277,7 @@ static int mt7915_vendor_edcca_ctrl(stru
+@@ -1286,6 +1291,7 @@ static int mt7915_vendor_edcca_ctrl(stru
  	return 0;
  }
  
@@ -167,7 +167,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  static int
  mt7915_vendor_edcca_ctrl_dump(struct wiphy *wiphy, struct wireless_dev *wdev,
  			     struct sk_buff *skb, const void *data, int data_len,
-@@ -1315,6 +1321,31 @@ mt7915_vendor_edcca_ctrl_dump(struct wip
+@@ -1329,6 +1335,31 @@ mt7915_vendor_edcca_ctrl_dump(struct wip
  	return len;
  }
  
@@ -199,7 +199,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  static const struct wiphy_vendor_command mt7915_vendor_commands[] = {
  	{
  		.info = {
-@@ -1396,6 +1427,17 @@ static const struct wiphy_vendor_command
+@@ -1410,6 +1441,17 @@ static const struct wiphy_vendor_command
  		.dumpit = mt7915_vendor_edcca_ctrl_dump,
  		.policy = edcca_ctrl_policy,
  		.maxattr = MTK_VENDOR_ATTR_EDCCA_CTRL_MAX,

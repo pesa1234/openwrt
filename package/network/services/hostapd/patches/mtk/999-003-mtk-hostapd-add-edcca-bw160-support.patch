@@ -1,0 +1,108 @@
+--- a/hostapd/config_file.c
++++ b/hostapd/config_file.c
+@@ -5032,7 +5032,9 @@ static int hostapd_config_fill(struct ho
+ 		    conf->edcca_threshold[1] < EDCCA_MIN_CONFIG_THRES ||
+ 		    conf->edcca_threshold[1] > EDCCA_MAX_CONFIG_THRES ||
+ 		    conf->edcca_threshold[2] < EDCCA_MIN_CONFIG_THRES ||
+-		    conf->edcca_threshold[2] > EDCCA_MAX_CONFIG_THRES) {
++		    conf->edcca_threshold[2] > EDCCA_MAX_CONFIG_THRES ||
++		    conf->edcca_threshold[3] < EDCCA_MIN_CONFIG_THRES ||
++		    conf->edcca_threshold[3] > EDCCA_MAX_CONFIG_THRES) {
+ 			wpa_printf(MSG_ERROR, "Line %d: invalid edcca threshold",
+ 				   line);
+ 			return 1;
+--- a/hostapd/ctrl_iface.c
++++ b/hostapd/ctrl_iface.c
+@@ -4010,7 +4010,7 @@ hostapd_ctrl_iface_set_edcca(struct host
+ 		int bw_idx= atoi(value);
+ 		int threshold = atoi(thres_value);
+ 
+-		if (bw_idx < EDCCA_BW_20 || bw_idx > EDCCA_BW_80) {
++		if (bw_idx < EDCCA_BW_20 || bw_idx > EDCCA_BW_160) {
+ 			wpa_printf(MSG_ERROR,
+ 				   "Unsupported Bandwidth idx %d for SET_EDCCA",
+ 				   bw_idx);
+@@ -4060,8 +4060,8 @@ hostapd_ctrl_iface_get_edcca(struct host
+ 		if (hostapd_drv_get_edcca(hapd, EDCCA_CTRL_GET_THRES, value) != 0)
+ 			return -1;
+ 		return os_snprintf(pos, end - pos,
+-				   "Threshold BW20: 0x%x, BW40: 0x%x, BW80: 0x%x\n",
+-				   value[0], value[1], value[2]);
++				   "Threshold BW20: 0x%x, BW40: 0x%x, BW80: 0x%x, BW160: 0x%x\n",
++				   value[0], value[1], value[2], value[3]);
+ 	} else {
+ 		wpa_printf(MSG_ERROR,
+ 			"Unsupported parameter %s for GET_EDCCA", cmd);
+--- a/src/ap/ap_config.h
++++ b/src/ap/ap_config.h
+@@ -1331,6 +1331,7 @@ enum edcca_bw_id {
+ 	EDCCA_BW_20 = 0,
+ 	EDCCA_BW_40,
+ 	EDCCA_BW_80,
++	EDCCA_BW_160,
+ 	EDCCA_MAX_BW_NUM,
+ };
+ 
+--- a/src/common/mtk_vendor.h
++++ b/src/common/mtk_vendor.h
+@@ -43,6 +43,7 @@ enum mtk_vendor_attr_edcca_dump {
+ 	MTK_VENDOR_ATTR_EDCCA_DUMP_PRI20_VAL,
+ 	MTK_VENDOR_ATTR_EDCCA_DUMP_SEC40_VAL,
+ 	MTK_VENDOR_ATTR_EDCCA_DUMP_SEC80_VAL,
++	MTK_VENDOR_ATTR_EDCCA_DUMP_SEC160_VAL,
+ 
+ 	/* keep last */
+ 	NUM_MTK_VENDOR_ATTRS_EDCCA_DUMP,
+@@ -61,6 +62,14 @@ static struct nla_policy edcca_ctrl_poli
+ 	[MTK_VENDOR_ATTR_EDCCA_CTRL_SEC160_VAL] = { .type = NLA_U8 },
+ };
+ 
++static struct nla_policy edcca_dump_policy[NUM_MTK_VENDOR_ATTRS_EDCCA_DUMP] = {
++	[MTK_VENDOR_ATTR_EDCCA_DUMP_MODE] = { .type = NLA_U8 },
++	[MTK_VENDOR_ATTR_EDCCA_DUMP_PRI20_VAL] = { .type = NLA_U8 },
++	[MTK_VENDOR_ATTR_EDCCA_DUMP_SEC40_VAL] = { .type = NLA_U8 },
++	[MTK_VENDOR_ATTR_EDCCA_DUMP_SEC80_VAL] = { .type = NLA_U8 },
++	[MTK_VENDOR_ATTR_EDCCA_DUMP_SEC160_VAL] = { .type = NLA_U8 },
++};
++
+ enum mtk_vendor_attr_3wire_ctrl {
+ 	MTK_VENDOR_ATTR_3WIRE_CTRL_UNSPEC,
+ 
+--- a/src/drivers/driver_nl80211.c
++++ b/src/drivers/driver_nl80211.c
+@@ -15661,8 +15661,8 @@ static int nl80211_configure_edcca_thres
+ 	}
+ 
+ 	wpa_printf(MSG_INFO,
+-		   "nl80211: request EDCCA thresholds BW20=%d BW40=%d BW80=%d",
+-		   threshold[0], threshold[1], threshold[2]);
++		   "nl80211: request EDCCA thresholds BW20=%d BW40=%d BW80=%d BW160=%d",
++		   threshold[0], threshold[1], threshold[2], threshold[3]);
+ 
+ 	if (!(msg = nl80211_drv_msg(drv, 0, NL80211_CMD_VENDOR)) ||
+ 	    nla_put_u32(msg, NL80211_ATTR_VENDOR_ID, OUI_MTK) ||
+@@ -15672,7 +15672,8 @@ static int nl80211_configure_edcca_thres
+ 	    nla_put_u8(msg, MTK_VENDOR_ATTR_EDCCA_CTRL_MODE, EDCCA_CTRL_SET_THRES) ||
+ 	    nla_put_u8(msg, MTK_VENDOR_ATTR_EDCCA_CTRL_PRI20_VAL, threshold[0] & 0xff) ||
+ 	    nla_put_u8(msg, MTK_VENDOR_ATTR_EDCCA_CTRL_SEC40_VAL, threshold[1] & 0xff) ||
+-	    nla_put_u8(msg, MTK_VENDOR_ATTR_EDCCA_CTRL_SEC80_VAL, threshold[2] & 0xff)) {
++	    nla_put_u8(msg, MTK_VENDOR_ATTR_EDCCA_CTRL_SEC80_VAL, threshold[2] & 0xff) ||
++	    nla_put_u8(msg, MTK_VENDOR_ATTR_EDCCA_CTRL_SEC160_VAL, threshold[3] & 0xff)) {
+ 		wpa_printf (MSG_ERROR, "Prepare nl80211 msg fail");
+ 		nlmsg_free(msg);
+ 		return -ENOBUFS;
+@@ -15730,6 +15731,14 @@ static int edcca_info_handler(struct nl_
+ 		return NL_SKIP;
+ 	}
+ 
++	*info++ = nla_get_u8(attr);
++
++	attr = tb_vendor[MTK_VENDOR_ATTR_EDCCA_DUMP_SEC160_VAL];
++	if (!attr) {
++		wpa_printf(MSG_ERROR, "nl80211: MTK_VENDOR_ATTR_EDCCA_DUMP_SEC160_VAL");
++		return NL_SKIP;
++	}
++
+ 	*info = nla_get_u8(attr);
+ 	return NL_SKIP;
+ }

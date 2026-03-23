@@ -286,7 +286,7 @@ Signed-off-by: Yi-Chia Hsieh <yi-chia.hsieh@mediatek.com>
  
  static int nl80211_link_add(void *priv, u8 link_id, const u8 *addr,
  			    void *bss_ctx)
-@@ -16310,4 +16375,5 @@ const struct wpa_driver_ops wpa_driver_n
+@@ -16325,4 +16390,5 @@ const struct wpa_driver_ops wpa_driver_n
  	.ibf_dump = nl80211_ibf_dump,
  	.amsdu_ctrl = nl80211_enable_amsdu,
  	.amsdu_dump = nl80211_dump_amsdu,

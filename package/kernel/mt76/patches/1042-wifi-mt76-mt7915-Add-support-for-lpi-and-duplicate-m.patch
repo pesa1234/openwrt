@@ -365,7 +365,7 @@ Signed-off-by: Allen Ye <allen.ye@mediatek.com>
  struct csi_null_tone {
  	u8 start;
  	u8 end;
-@@ -1471,6 +1478,63 @@ mt7915_vendor_bss_color_ctrl_dump(struct
+@@ -1485,6 +1492,63 @@ mt7915_vendor_bss_color_ctrl_dump(struct
  	return len;
  }
  
@@ -429,7 +429,7 @@ Signed-off-by: Allen Ye <allen.ye@mediatek.com>
  static const struct wiphy_vendor_command mt7915_vendor_commands[] = {
  	{
  		.info = {
-@@ -1587,6 +1651,17 @@ static const struct wiphy_vendor_command
+@@ -1601,6 +1665,17 @@ static const struct wiphy_vendor_command
  		.dumpit = mt7915_vendor_bss_color_ctrl_dump,
  		.policy = bss_color_ctrl_policy,
  		.maxattr = MTK_VENDOR_ATTR_BSS_COLOR_CTRL_MAX,

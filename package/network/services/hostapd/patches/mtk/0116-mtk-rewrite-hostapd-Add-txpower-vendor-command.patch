@@ -125,7 +125,7 @@ control.
  static struct nl_sock * nl_create_handle(struct nl_cb *cb, const char *dbg)
  {
  	struct nl_sock *handle;
-@@ -16186,6 +16193,49 @@ fail:
+@@ -16201,6 +16208,49 @@ fail:
  	return -ENOBUFS;
  }
  
@@ -175,7 +175,7 @@ control.
  const struct wpa_driver_ops wpa_driver_nl80211_ops = {
  	.name = "nl80211",
  	.desc = "Linux nl80211/cfg80211",
-@@ -16373,6 +16423,7 @@ const struct wpa_driver_ops wpa_driver_n
+@@ -16388,6 +16438,7 @@ const struct wpa_driver_ops wpa_driver_n
  	.three_wire_ctrl = nl80211_enable_three_wire,
  	.ibf_ctrl = nl80211_ibf_enable,
  	.ibf_dump = nl80211_ibf_dump,

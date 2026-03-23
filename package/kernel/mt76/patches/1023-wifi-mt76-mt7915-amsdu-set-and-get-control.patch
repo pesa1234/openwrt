@@ -91,7 +91,7 @@ Subject: [PATCH 1023/1051] wifi: mt76: mt7915: amsdu set and get control
  static int mt7915_vendor_mu_ctrl(struct wiphy *wiphy,
  				  struct wireless_dev *wdev,
  				  const void *data,
-@@ -1443,6 +1472,7 @@ static const struct wiphy_vendor_command
+@@ -1457,6 +1486,7 @@ static const struct wiphy_vendor_command
  		.flags = WIPHY_VENDOR_CMD_NEED_NETDEV |
  			WIPHY_VENDOR_CMD_NEED_RUNNING,
  		.doit = mt7915_vendor_wireless_ctrl,

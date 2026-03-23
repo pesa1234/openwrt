@@ -153,7 +153,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  /**
 --- a/src/drivers/driver_nl80211.c
 +++ b/src/drivers/driver_nl80211.c
-@@ -15870,6 +15870,39 @@ static void wpa_driver_nl80211_nan_stop(
+@@ -15885,6 +15885,39 @@ static void wpa_driver_nl80211_nan_stop(
  #endif /* CONFIG_NAN */
  
  
@@ -193,7 +193,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  const struct wpa_driver_ops wpa_driver_nl80211_ops = {
  	.name = "nl80211",
  	.desc = "Linux nl80211/cfg80211",
-@@ -16054,4 +16087,5 @@ const struct wpa_driver_ops wpa_driver_n
+@@ -16069,4 +16102,5 @@ const struct wpa_driver_ops wpa_driver_n
  	.configure_edcca_enable = nl80211_configure_edcca_enable,
  	.configure_edcca_threshold = nl80211_configure_edcca_threshold,
  	.get_edcca = nl80211_get_edcca,
