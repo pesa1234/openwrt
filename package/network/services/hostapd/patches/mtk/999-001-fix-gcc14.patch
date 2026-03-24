@@ -9,7 +9,7 @@
  			return -1;
  		return os_snprintf(pos, end - pos,
  				   "Threshold BW20: 0x%x, BW40: 0x%x, BW80: 0x%x\n",
-@@ -4217,7 +4217,7 @@ hostapd_ctrl_iface_get_aval_color_bmp(st
+@@ -4220,7 +4220,7 @@ hostapd_ctrl_iface_get_aval_color_bmp(st
  	end = buf + buflen;
  
  	ret = os_snprintf(buf, buflen,

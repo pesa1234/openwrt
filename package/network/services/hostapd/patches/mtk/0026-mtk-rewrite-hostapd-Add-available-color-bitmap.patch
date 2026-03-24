@@ -18,7 +18,7 @@ Signed-off-by: Yi-Chia Hsieh <yi-chia.hsieh@mediatek.com>
 
 --- a/hostapd/ctrl_iface.c
 +++ b/hostapd/ctrl_iface.c
-@@ -4178,6 +4178,76 @@ hostapd_ctrl_iface_get_amsdu(struct host
+@@ -4181,6 +4181,76 @@ hostapd_ctrl_iface_get_amsdu(struct host
  	return ret;
  }
  
@@ -95,7 +95,7 @@ Signed-off-by: Yi-Chia Hsieh <yi-chia.hsieh@mediatek.com>
  
  static int hostapd_ctrl_iface_receive_process(struct hostapd_data *hapd,
  					      char *buf, char *reply,
-@@ -4816,6 +4886,10 @@ static int hostapd_ctrl_iface_receive_pr
+@@ -4819,6 +4889,10 @@ static int hostapd_ctrl_iface_receive_pr
  		reply_len = hostapd_ctrl_iface_get_ibf(hapd, reply, reply_size);
  	} else if (os_strncmp(buf, "GET_AMSDU", 9) == 0) {
  		reply_len = hostapd_ctrl_iface_get_amsdu(hapd, reply, reply_size);

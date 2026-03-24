@@ -39,7 +39,7 @@ Subject: [PATCH 020/149] mtk: hostapd: Add amsdu set get ctrl
  			   "Line %d: unknown configuration item '%s'",
 --- a/hostapd/ctrl_iface.c
 +++ b/hostapd/ctrl_iface.c
-@@ -4155,6 +4155,30 @@ hostapd_ctrl_iface_get_ibf(struct hostap
+@@ -4158,6 +4158,30 @@ hostapd_ctrl_iface_get_ibf(struct hostap
  }
  
  
@@ -70,7 +70,7 @@ Subject: [PATCH 020/149] mtk: hostapd: Add amsdu set get ctrl
  static int hostapd_ctrl_iface_receive_process(struct hostapd_data *hapd,
  					      char *buf, char *reply,
  					      int reply_size,
-@@ -4790,6 +4814,8 @@ static int hostapd_ctrl_iface_receive_pr
+@@ -4793,6 +4817,8 @@ static int hostapd_ctrl_iface_receive_pr
  		reply_len = hostapd_ctrl_iface_get_mu(hapd, reply, reply_size);
  	} else if (os_strncmp(buf, "GET_IBF", 7) == 0) {
  		reply_len = hostapd_ctrl_iface_get_ibf(hapd, reply, reply_size);
