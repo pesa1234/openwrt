@@ -624,13 +624,18 @@ set_rps_cpus()
 		var=${var//'.'/_}
 		eval cpu_map=\$$var
 		if [ -d /sys/class/net/$i ]; then
-			if [ ! -z $cpu_map ]; then
+			if [ -n "$cpu_map" ]; then
 				cpu_map=`printf '%x' $cpu_map`
-				logger -s "smp_affinity: echo $cpu_map > /sys/class/net/$i/queues/rx-0/rps_cpus"
-				echo $cpu_map > /sys/class/net/$i/queues/rx-0/rps_cpus
-			elif [ ! -z $1 ]; then
-				logger -s "smp_affinity: echo $1 > /sys/class/net/$i/queues/rx-0/rps_cpus"
-				echo $1 > /sys/class/net/$i/queues/rx-0/rps_cpus
+			elif [ -n "$1" ]; then
+				cpu_map="$1"
+			fi
+
+			if [ -n "$cpu_map" ]; then
+				for rxq in /sys/class/net/$i/queues/rx-*; do
+					[ -d "$rxq" ] || continue
+					logger -s "smp_affinity: echo $cpu_map > $rxq/rps_cpus"
+					echo $cpu_map > "$rxq/rps_cpus"
+				done
 			fi
 		fi
 	done
@@ -908,7 +913,7 @@ usb_setup()
 }
 
 service_triggers() {
-    procd_add_reload_trigger advanced
+    procd_add_reload_trigger advanced network
 }
 
 start_service() {
