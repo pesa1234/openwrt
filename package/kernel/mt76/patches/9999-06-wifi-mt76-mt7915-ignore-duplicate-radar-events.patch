@@ -1,0 +1,60 @@
+--- a/mt7915/mac.c
++++ b/mt7915/mac.c
+@@ -2165,6 +2165,8 @@ int mt7915_dfs_init_radar_detector(struc
+ 	enum mt76_dfs_state dfs_state, prev_state;
+ 	int err, rdd_idx = mt7915_get_rdd_idx(phy, false);
+ 
++	phy->rdd_hw_value = 0;
++
+ 	prev_state = phy->mt76->dfs_state;
+ 	dfs_state = mt76_phy_dfs_state(phy->mt76);
+ 
+--- a/mt7915/mcu.c
++++ b/mt7915/mcu.c
+@@ -316,6 +316,8 @@ static void
+ mt7915_mcu_rx_radar_detected(struct mt7915_dev *dev, struct sk_buff *skb)
+ {
+ 	struct mt76_phy *mphy = &dev->mt76.phy;
++	struct mt7915_phy *phy;
++	struct cfg80211_chan_def *chandef;
+ 	struct mt7915_mcu_rdd_report *r;
+ 	u32 sku;
+ 
+@@ -345,12 +347,24 @@ mt7915_mcu_rx_radar_detected(struct mt79
+ 	if (!mphy)
+ 		return;
+ 
+-	if (r->rdd_idx == MT_RDD_IDX_BACKGROUND)
++	phy = (struct mt7915_phy *)mphy->priv;
++	chandef = &phy->mt76->chandef;
++
++	if (phy->rdd_hw_value == chandef->chan->hw_value) {
++		dev_info(dev->mt76.dev,
++			 "%s: radar detection for channel=%u in progress, ignore r->rdd_idx=%d\n",
++			 __func__, phy->rdd_hw_value, r->rdd_idx);
++		return;
++	}
++
++	if (r->rdd_idx == MT_RDD_IDX_BACKGROUND) {
+ 		cfg80211_background_radar_event(mphy->hw->wiphy,
+ 						&dev->rdd2_chandef,
+ 						GFP_ATOMIC);
+-	else
++	} else {
++		phy->rdd_hw_value = chandef->chan->hw_value;
+ 		ieee80211_radar_detected(mphy->hw, NULL);
++	}
+ 	dev->hw_pattern++;
+ }
+ 
+--- a/mt7915/mt7915.h
++++ b/mt7915/mt7915.h
+@@ -373,6 +373,8 @@ struct mt7915_phy {
+ 	s16 coverage_class;
+ 	u8 slottime;
+ 
++	u16 rdd_hw_value;
++
+ 	u32 trb_ts;
+ 
+ 	u32 rx_ampdu_ts;
