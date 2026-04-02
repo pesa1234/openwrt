@@ -1,7 +1,7 @@
-From 67f82834819b71417b58dc1293c20f71b990264f Mon Sep 17 00:00:00 2001
+From 4059d35a5bbf1901b2e0eb7126369cd713cacfce Mon Sep 17 00:00:00 2001
 From: Daniel Golle <daniel@makrotopia.org>
 Date: Tue, 24 Mar 2026 16:30:08 +0000
-Subject: [PATCH 28/35] net: dsa: wire flash_update devlink callback to drivers
+Subject: [PATCH 19/26] net: dsa: wire flash_update devlink callback to drivers
 
 Add a devlink_flash_update callback to dsa_switch_ops so that DSA
 drivers can support devlink dev flash without open-coding the devlink

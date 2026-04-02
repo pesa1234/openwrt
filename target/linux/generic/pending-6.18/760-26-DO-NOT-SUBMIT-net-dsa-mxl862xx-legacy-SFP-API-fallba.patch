@@ -1,7 +1,7 @@
-From 0ac876d5b952218ab79ea0a0815cf6fd1290b1d0 Mon Sep 17 00:00:00 2001
+From f0548f842b9ff31f19452a2fc72a16f937d86008 Mon Sep 17 00:00:00 2001
 From: Daniel Golle <daniel@makrotopia.org>
 Date: Tue, 24 Mar 2026 18:19:56 +0000
-Subject: [PATCH 35/35] DO NOT SUBMIT: net: dsa: mxl862xx: legacy SFP API
+Subject: [PATCH 26/26] DO NOT SUBMIT: net: dsa: mxl862xx: legacy SFP API
  fallback for old firmware
 
 Re-introduce the SYS_MISC_SFP_SET-based PCS implementation as a
@@ -62,7 +62,7 @@ Signed-off-by: Daniel Golle <daniel@makrotopia.org>
  #define MXL862XX_XPCS_PCS_CONFIG	(MXL862XX_XPCS_MAGIC + 0x1)
 --- a/drivers/net/dsa/mxl862xx/mxl862xx-phylink.c
 +++ b/drivers/net/dsa/mxl862xx/mxl862xx-phylink.c
-@@ -52,6 +52,155 @@ static struct mxl862xx_pcs *pcs_to_mxl86
+@@ -52,6 +52,156 @@ static struct mxl862xx_pcs *pcs_to_mxl86
  	return container_of(pcs, struct mxl862xx_pcs, pcs);
  }
  
@@ -114,6 +114,7 @@ Signed-off-by: Daniel Golle <daniel@makrotopia.org>
 +}
 +
 +static void mxl862xx_legacy_pcs_get_state(struct phylink_pcs *pcs,
++					  unsigned int neg_mode,
 +					  struct phylink_link_state *state)
 +{
 +	struct mxl862xx_priv *priv = pcs_to_mxl862xx_pcs(pcs)->priv;
@@ -218,7 +219,7 @@ Signed-off-by: Daniel Golle <daniel@makrotopia.org>
  static int mxl862xx_xpcs_port_id(int port)
  {
  	return port >= 13;
-@@ -389,7 +538,10 @@ void mxl862xx_setup_pcs(struct mxl862xx_
+@@ -390,7 +540,10 @@ void mxl862xx_setup_pcs(struct mxl862xx_
  	pcs->priv = priv;
  	pcs->port = port;
  
@@ -228,9 +229,9 @@ Signed-off-by: Daniel Golle <daniel@makrotopia.org>
 +	else
 +		pcs->pcs.ops = &mxl862xx_legacy_pcs_ops;
  	pcs->pcs.poll = true;
- }
  
-@@ -401,9 +553,6 @@ mxl862xx_phylink_mac_select_pcs(struct p
+ 	/* Sub-ports only support QSGMII (quad mode with dedicated
+@@ -418,9 +571,6 @@ mxl862xx_phylink_mac_select_pcs(struct p
  	struct mxl862xx_priv *priv = dp->ds->priv;
  	int port = dp->index;
  
@@ -240,7 +241,7 @@ Signed-off-by: Daniel Golle <daniel@makrotopia.org>
  	switch (port) {
  	case 9 ... 16:
  		return &priv->serdes_ports[port - 9].pcs;
-@@ -534,7 +683,7 @@ void mxl862xx_serdes_get_stats(struct ds
+@@ -551,7 +701,7 @@ void mxl862xx_serdes_get_stats(struct ds
  }
  
  void mxl862xx_serdes_self_test(struct dsa_switch *ds, int port,

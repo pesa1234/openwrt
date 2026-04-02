@@ -1,7 +1,7 @@
-From 88f46eb32d1aed296af2005c3ed8f23a6eea64c3 Mon Sep 17 00:00:00 2001
+From e25f0886853607e4a6d1157ae84e43e8224cf3b7 Mon Sep 17 00:00:00 2001
 From: Daniel Golle <daniel@makrotopia.org>
 Date: Sun, 22 Mar 2026 00:57:44 +0000
-Subject: [PATCH 20/35] net: dsa: mxl862xx: add support for SerDes ports
+Subject: [PATCH 11/26] net: dsa: mxl862xx: add support for SerDes ports
 
 The MxL862xx has two XPCS/SerDes interfaces (XPCS0 for ports 9-12,
 XPCS1 for ports 13-16). Each can operate in various single-lane
@@ -576,7 +576,7 @@ Signed-off-by: Daniel Golle <daniel@makrotopia.org>
  #include "mxl862xx-phylink.h"
  
  void mxl862xx_phylink_get_caps(struct dsa_switch *ds, int port,
-@@ -19,8 +23,393 @@ void mxl862xx_phylink_get_caps(struct ds
+@@ -19,8 +23,410 @@ void mxl862xx_phylink_get_caps(struct ds
  	config->mac_capabilities = MAC_ASYM_PAUSE | MAC_SYM_PAUSE | MAC_10 |
  				   MAC_100 | MAC_1000 | MAC_2500FD;
  
@@ -808,6 +808,7 @@ Signed-off-by: Daniel Golle <daniel@makrotopia.org>
 +}
 +
 +static void mxl862xx_pcs_get_state(struct phylink_pcs *pcs,
++				   unsigned int neg_mode,
 +				   struct phylink_link_state *state)
 +{
 +	struct mxl862xx_priv *priv = pcs_to_mxl862xx_pcs(pcs)->priv;
@@ -845,7 +846,7 @@ Signed-off-by: Daniel Golle <daniel@makrotopia.org>
 +		bmsr = BMSR_LSTATUS;
 +		if (st.an_complete)
 +			bmsr |= BMSR_ANEGCOMPLETE;
-+		phylink_mii_c22_pcs_decode_state(state, bmsr, lpa);
++		phylink_mii_c22_pcs_decode_state(state, neg_mode, bmsr, lpa);
 +
 +		/* Override speed/duplex with firmware's resolved values
 +		 * for downshift detection.
@@ -950,6 +951,22 @@ Signed-off-by: Daniel Golle <daniel@makrotopia.org>
 +
 +	pcs->pcs.ops = &mxl862xx_pcs_ops;
 +	pcs->pcs.poll = true;
++
++	/* Sub-ports only support QSGMII (quad mode with dedicated
++	 * PHY_INTERFACE_MODE). Single-lane USXGMII is supported on main
++	 * ports only; quad USXGMII is not yet supported as Linux lacks the
++	 * infrastructure to signal TDM mode before AN.
++	 */
++	__set_bit(PHY_INTERFACE_MODE_QSGMII, pcs->pcs.supported_interfaces);
++	if (port != 9 && port != 13)
++		return;
++
++	__set_bit(PHY_INTERFACE_MODE_SGMII, pcs->pcs.supported_interfaces);
++	__set_bit(PHY_INTERFACE_MODE_1000BASEX, pcs->pcs.supported_interfaces);
++	__set_bit(PHY_INTERFACE_MODE_2500BASEX, pcs->pcs.supported_interfaces);
++	__set_bit(PHY_INTERFACE_MODE_10GBASER, pcs->pcs.supported_interfaces);
++	__set_bit(PHY_INTERFACE_MODE_10GKR, pcs->pcs.supported_interfaces);
++	__set_bit(PHY_INTERFACE_MODE_USXGMII, pcs->pcs.supported_interfaces);
 +}
 +
 +static struct phylink_pcs *
@@ -972,7 +989,7 @@ Signed-off-by: Daniel Golle <daniel@makrotopia.org>
  }
  
  static void mxl862xx_phylink_mac_config(struct phylink_config *config,
-@@ -48,4 +437,5 @@ const struct phylink_mac_ops mxl862xx_ph
+@@ -48,4 +454,5 @@ const struct phylink_mac_ops mxl862xx_ph
  	.mac_config = mxl862xx_phylink_mac_config,
  	.mac_link_down = mxl862xx_phylink_mac_link_down,
  	.mac_link_up = mxl862xx_phylink_mac_link_up,
@@ -990,7 +1007,7 @@ Signed-off-by: Daniel Golle <daniel@makrotopia.org>
  #endif /* __MXL862XX_PHYLINK_H */
 --- a/drivers/net/dsa/mxl862xx/mxl862xx.c
 +++ b/drivers/net/dsa/mxl862xx/mxl862xx.c
-@@ -729,7 +729,7 @@ static int mxl862xx_setup(struct dsa_swi
+@@ -684,7 +684,7 @@ static int mxl862xx_setup(struct dsa_swi
  	int n_user_ports = 0, max_vlans;
  	int ingress_finals, vid_rules;
  	struct dsa_port *dp;
@@ -999,7 +1016,7 @@ Signed-off-by: Daniel Golle <daniel@makrotopia.org>
  
  	ret = mxl862xx_reset(priv);
  	if (ret)
-@@ -739,6 +739,9 @@ static int mxl862xx_setup(struct dsa_swi
+@@ -694,6 +694,9 @@ static int mxl862xx_setup(struct dsa_swi
  	if (ret)
  		return ret;
  
@@ -1034,7 +1051,7 @@ Signed-off-by: Daniel Golle <daniel@makrotopia.org>
   * union mxl862xx_fw_version - firmware version for comparison and display
   * @major: firmware major version
   * @minor: firmware minor version
-@@ -291,6 +307,8 @@ union mxl862xx_fw_version {
+@@ -297,6 +313,8 @@ union mxl862xx_fw_version {
   *                      flooding)
   * @fw_version:         cached firmware version, populated at probe and
   *                      compared with MXL862XX_FW_VER_MIN()
@@ -1043,8 +1060,8 @@ Signed-off-by: Daniel Golle <daniel@makrotopia.org>
   * @ports:              per-port state, indexed by switch port number
   * @bridges:            maps DSA bridge number to firmware bridge ID;
   *                      zero means no firmware bridge allocated for that
-@@ -309,6 +327,7 @@ struct mxl862xx_priv {
- 	unsigned long crc_err;
+@@ -315,6 +333,7 @@ struct mxl862xx_priv {
+ 	unsigned long flags;
  	u16 drop_meter;
  	union mxl862xx_fw_version fw_version;
 +	struct mxl862xx_pcs serdes_ports[8];
