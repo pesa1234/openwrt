@@ -1,10 +1,47 @@
+--- a/Makefile
++++ b/Makefile
+@@ -1,5 +1,5 @@
+ # SPDX-License-Identifier: BSD-3-Clause-Clear
+-EXTRA_CFLAGS += -Werror -DCONFIG_MT76_LEDS
++ccflags-y += -Werror -DCONFIG_MT76_LEDS
+ obj-m := mt76.o
+ obj-$(CONFIG_MT76_USB) += mt76-usb.o
+ obj-$(CONFIG_MT76_SDIO) += mt76-sdio.o
+--- a/mt7603/Makefile
++++ b/mt7603/Makefile
+@@ -1,5 +1,5 @@
+ # SPDX-License-Identifier: BSD-3-Clause-Clear
+-EXTRA_CFLAGS += -Werror -DCONFIG_MT76_LEDS
++ccflags-y += -Werror -DCONFIG_MT76_LEDS
+ obj-m += mt7603e.o
+ 
+ mt7603e-y := \
+--- a/mt7615/Makefile
++++ b/mt7615/Makefile
+@@ -1,6 +1,6 @@
+ # SPDX-License-Identifier: BSD-3-Clause-Clear
+ 
+-EXTRA_CFLAGS += -DCONFIG_MT76_LEDS
++ccflags-y += -DCONFIG_MT76_LEDS
+ obj-$(CONFIG_MT7615_COMMON) += mt7615-common.o
+ obj-$(CONFIG_MT7615E) += mt7615e.o
+ obj-$(CONFIG_MT7663_USB_SDIO_COMMON) += mt7663-usb-sdio-common.o
+--- a/mt7915/Makefile
++++ b/mt7915/Makefile
+@@ -1,6 +1,6 @@
+ # SPDX-License-Identifier: BSD-3-Clause-Clear
+ 
+-EXTRA_CFLAGS += -DCONFIG_MT76_LEDS -DCONFIG_MTK_VENDOR
++ccflags-y += -DCONFIG_MT76_LEDS -DCONFIG_MTK_VENDOR
+ obj-$(CONFIG_MT7915E) += mt7915e.o
+ 
+ mt7915e-y := pci.o init.o dma.o eeprom.o main.o mcu.o mac.o \
 --- a/mt7915/mt7915.h
 +++ b/mt7915/mt7915.h
-@@ -886,6 +886,29 @@ int mt7915_mmio_wed_init(struct mt7915_d
+@@ -888,6 +888,27 @@ int mt7915_init_debugfs(struct mt7915_ph
  			 bool pci, int *irq);
  
  #ifdef CONFIG_MTK_VENDOR
-+////****fix for missing prototype
 +struct mt7915_muru;
 +struct mt7915_tm_rf_test_result;
 +struct mt7915_tm_rf_test_data;
@@ -22,11 +59,10 @@
 +			       u32 *sta_pause, u32 *dis_sta_map,
 +			       u32 dumptxd);
 +int mt7915_vow_pleinfo_read(struct mt7915_dev *dev);
-+void mt7915_tm_re_cal_event(struct mt7915_dev *dev, struct mt7915_tm_rf_test_result *result,
-+                            struct mt7915_tm_rf_test_data *data);
++void mt7915_tm_re_cal_event(struct mt7915_dev *dev,
++			    struct mt7915_tm_rf_test_result *result,
++			    struct mt7915_tm_rf_test_data *data);
 +
-+
-+////****end fix
  void mt7915_set_wireless_amsdu(struct ieee80211_hw *hw, u8 en);
  void mt7915_capi_sta_rc_work(void *data, struct ieee80211_sta *sta);
  void mt7915_set_wireless_vif(void *data, u8 *mac, struct ieee80211_vif *vif);
