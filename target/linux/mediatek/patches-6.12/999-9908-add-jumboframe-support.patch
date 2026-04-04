@@ -92,12 +92,12 @@
  		ring->page_pool = pp;
 +	} else if (mtk_page_pool_enabled(eth)) {
 +		if (rx_flag == MTK_RX_FLAGS_NORMAL && !ring_no && eth->netdev[0])
-+			netdev_warn(eth->netdev[0],
++			netdev_info(eth->netdev[0],
 +				    "jumbo-rx: disable page_pool ring=%d buf_size=%d limit=%lu\n",
 +				    ring_no, ring->buf_size,
 +				    (unsigned long)MTK_PP_MAX_BUF_SIZE);
 +		else if (rx_flag == MTK_RX_FLAGS_NORMAL && !ring_no)
-+			dev_warn(eth->dev,
++			dev_info(eth->dev,
 +				 "jumbo-rx: disable page_pool ring=%d buf_size=%d limit=%lu\n",
 +				 ring_no, ring->buf_size,
 +				 (unsigned long)MTK_PP_MAX_BUF_SIZE);
