@@ -1,0 +1,46 @@
+--- a/drivers/net/ethernet/mediatek/mtk_eth_soc.c
++++ b/drivers/net/ethernet/mediatek/mtk_eth_soc.c
+@@ -27,6 +27,7 @@
+ #include <linux/phy/phy.h>
+ #include <linux/jhash.h>
+ #include <linux/bitfield.h>
++#include <linux/ratelimit.h>
+ #include <net/dsa.h>
+ #include <net/dst_metadata.h>
+ #include <net/gso.h>
+@@ -4987,16 +4988,34 @@ static u16 mtk_select_queue(struct net_device *dev, struct sk_buff *skb,
+ 			    struct net_device *sb_dev)
+ {
+ 	struct mtk_mac *mac = netdev_priv(dev);
++	unsigned int skb_queue = skb_get_queue_mapping(skb);
+ 	unsigned int queue = 0;
+ 
+ 	if (netdev_uses_dsa(dev))
+-		queue = skb_get_queue_mapping(skb) + 3;
++		queue = skb_queue + 3;
++	else if (dev->real_num_tx_queues > 1)
++		queue = netdev_pick_tx(dev, skb, sb_dev);
+ 	else
+ 		queue = mac->id;
+ 
+ 	if (queue >= dev->num_tx_queues)
+ 		queue = 0;
+ 
++	if (dev->num_tx_queues > 1) {
++		static DEFINE_RATELIMIT_STATE(txq_rs,
++					      DEFAULT_RATELIMIT_INTERVAL,
++					      DEFAULT_RATELIMIT_BURST);
++
++		if (__ratelimit(&txq_rs))
++			netdev_info(dev,
++				    "cake-mq: mode=%s mac=%d sb=%s skb_q=%u txq=%u real=%u num=%u hash=0x%x\n",
++				    netdev_uses_dsa(dev) ? "dsa" :
++				    (dev->real_num_tx_queues > 1 ? "hash" : "fixed"),
++				    mac->id, sb_dev ? sb_dev->name : dev->name,
++				    skb_queue, queue, dev->real_num_tx_queues,
++				    dev->num_tx_queues, skb_get_hash_raw(skb));
++	}
++
+ 	return queue;
+ }
+ 
