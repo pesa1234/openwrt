@@ -10,17 +10,16 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
 
 --- a/src/ap/dfs.c
 +++ b/src/ap/dfs.c
-@@ -1734,9 +1734,11 @@ int hostapd_dfs_start_cac(struct hostapd
- 	/* TODO: How to check CAC time for ETSI weather channels? */
- 	iface->dfs_cac_ms = 60000;
+@@ -932,10 +932,10 @@ int hostapd_handle_dfs(struct hostapd_if
+ 	wpa_printf(MSG_DEBUG, "DFS start CAC on %d MHz%s", iface->freq,
+ 		   use_radar_background ? " (background)" : "");
  	wpa_msg(iface->bss[0]->msg_ctx, MSG_INFO, DFS_EVENT_CAC_START
--		"freq=%d chan=%d chan_offset=%d width=%d seg0=%d "
-+		"freq=%d chan=%d chan_offset=%d width=%s seg0=%d "
- 		"seg1=%d cac_time=%ds%s",
--		freq, (freq - 5000) / 5, chan_offset, chan_width, cf1, cf2,
-+		freq, (freq - 5000) / 5, chan_offset,
-+		channel_width_to_string(chan_width),
-+		(cf1 - 5000) / 5, cf2 ? (cf2 - 5000) / 5 : 0,
- 		iface->dfs_cac_ms / 1000,
- 		hostapd_dfs_is_background_event(iface, freq) ?
- 		" (background)" : "");
+-		"freq=%d chan=%d sec_chan=%d, width=%d, seg0=%d, seg1=%d, cac_time=%ds",
++		"freq=%d chan=%d sec_chan=%d, width=%s, seg0=%d, seg1=%d, cac_time=%ds",
+ 		iface->freq,
+ 		iface->conf->channel, iface->conf->secondary_channel,
+-		hostapd_get_oper_chwidth(iface->conf),
++		channel_width_to_string(hostapd_get_oper_chwidth(iface->conf)),
+ 		hostapd_get_oper_centr_freq_seg0_idx(iface->conf),
+ 		hostapd_get_oper_centr_freq_seg1_idx(iface->conf),
+ 		iface->dfs_cac_ms / 1000);

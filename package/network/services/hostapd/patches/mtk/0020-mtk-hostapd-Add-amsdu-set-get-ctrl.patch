@@ -149,7 +149,7 @@ Subject: [PATCH 020/149] mtk: hostapd: Add amsdu set get ctrl
  
 --- a/src/ap/hostapd.c
 +++ b/src/ap/hostapd.c
-@@ -2829,6 +2829,8 @@ dfs_offload:
+@@ -2832,6 +2832,8 @@ dfs_offload:
  		goto fail;
  	if (hostapd_drv_ibf_ctrl(hapd) < 0)
  		goto fail;
@@ -193,7 +193,7 @@ Subject: [PATCH 020/149] mtk: hostapd: Add amsdu set get ctrl
  
 --- a/src/drivers/driver.h
 +++ b/src/drivers/driver.h
-@@ -5677,6 +5677,15 @@ struct wpa_driver_ops {
+@@ -5679,6 +5679,15 @@ struct wpa_driver_ops {
  	 *
  	 */
  	int (*ibf_dump)(void *priv, u8 *ibf_enable);
@@ -211,7 +211,7 @@ Subject: [PATCH 020/149] mtk: hostapd: Add amsdu set get ctrl
  /**
 --- a/src/drivers/driver_nl80211.c
 +++ b/src/drivers/driver_nl80211.c
-@@ -16024,6 +16024,118 @@ fail:
+@@ -16026,6 +16026,118 @@ fail:
  	return -ENOBUFS;
  }
  
@@ -330,7 +330,7 @@ Subject: [PATCH 020/149] mtk: hostapd: Add amsdu set get ctrl
  const struct wpa_driver_ops wpa_driver_nl80211_ops = {
  	.name = "nl80211",
  	.desc = "Linux nl80211/cfg80211",
-@@ -16211,4 +16323,6 @@ const struct wpa_driver_ops wpa_driver_n
+@@ -16213,4 +16325,6 @@ const struct wpa_driver_ops wpa_driver_n
  	.three_wire_ctrl = nl80211_enable_three_wire,
  	.ibf_ctrl = nl80211_ibf_enable,
  	.ibf_dump = nl80211_ibf_dump,
@@ -349,7 +349,7 @@ Subject: [PATCH 020/149] mtk: hostapd: Add amsdu set get ctrl
  
 --- a/src/drivers/driver_nl80211_capa.c
 +++ b/src/drivers/driver_nl80211_capa.c
-@@ -1180,6 +1180,9 @@ static int wiphy_info_handler(struct nl_
+@@ -1184,6 +1184,9 @@ static int wiphy_info_handler(struct nl_
  				case MTK_NL80211_VENDOR_SUBCMD_IBF_CTRL:
  					drv->mtk_ibf_vendor_cmd_avail = 1;
  					break;

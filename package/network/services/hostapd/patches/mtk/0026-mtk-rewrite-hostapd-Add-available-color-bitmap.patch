@@ -197,7 +197,7 @@ Signed-off-by: Yi-Chia Hsieh <yi-chia.hsieh@mediatek.com>
  #define ETH_ALEN 6
 --- a/src/drivers/driver.h
 +++ b/src/drivers/driver.h
-@@ -5686,6 +5686,14 @@ struct wpa_driver_ops {
+@@ -5688,6 +5688,14 @@ struct wpa_driver_ops {
  	 */
  	int (*amsdu_ctrl)(void *priv, u8 amsdu);
  	int (*amsdu_dump)(void *priv, u8 *amsdu);
@@ -214,7 +214,7 @@ Signed-off-by: Yi-Chia Hsieh <yi-chia.hsieh@mediatek.com>
  /**
 --- a/src/drivers/driver_nl80211.c
 +++ b/src/drivers/driver_nl80211.c
-@@ -15174,6 +15174,71 @@ static int nl80211_dpp_listen(void *priv
+@@ -15176,6 +15176,71 @@ static int nl80211_dpp_listen(void *priv
  }
  #endif /* CONFIG_DPP */
  
@@ -286,7 +286,7 @@ Signed-off-by: Yi-Chia Hsieh <yi-chia.hsieh@mediatek.com>
  
  static int nl80211_link_add(void *priv, u8 link_id, const u8 *addr,
  			    void *bss_ctx)
-@@ -16325,4 +16390,5 @@ const struct wpa_driver_ops wpa_driver_n
+@@ -16327,4 +16392,5 @@ const struct wpa_driver_ops wpa_driver_n
  	.ibf_dump = nl80211_ibf_dump,
  	.amsdu_ctrl = nl80211_enable_amsdu,
  	.amsdu_dump = nl80211_dump_amsdu,
@@ -304,7 +304,7 @@ Signed-off-by: Yi-Chia Hsieh <yi-chia.hsieh@mediatek.com>
  
 --- a/src/drivers/driver_nl80211_capa.c
 +++ b/src/drivers/driver_nl80211_capa.c
-@@ -1183,6 +1183,9 @@ static int wiphy_info_handler(struct nl_
+@@ -1187,6 +1187,9 @@ static int wiphy_info_handler(struct nl_
  				case MTK_NL80211_VENDOR_SUBCMD_WIRELESS_CTRL:
  					drv->mtk_wireless_vendor_cmd_avail = 1;
  					break;

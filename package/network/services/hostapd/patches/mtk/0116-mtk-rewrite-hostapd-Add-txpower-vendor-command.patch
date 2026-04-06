@@ -41,7 +41,7 @@ control.
  			   "Line %d: unknown configuration item '%s'",
 --- a/src/ap/hostapd.c
 +++ b/src/ap/hostapd.c
-@@ -2831,6 +2831,8 @@ dfs_offload:
+@@ -2834,6 +2834,8 @@ dfs_offload:
  		goto fail;
  	if (hostapd_drv_amsdu_ctrl(hapd) < 0)
  		goto fail;
@@ -93,7 +93,7 @@ control.
  
 --- a/src/drivers/driver.h
 +++ b/src/drivers/driver.h
-@@ -5604,6 +5604,15 @@ struct wpa_driver_ops {
+@@ -5606,6 +5606,15 @@ struct wpa_driver_ops {
  #endif /* CONFIG_TESTING_OPTIONS */
  
  	/**
@@ -125,7 +125,7 @@ control.
  static struct nl_sock * nl_create_handle(struct nl_cb *cb, const char *dbg)
  {
  	struct nl_sock *handle;
-@@ -16201,6 +16208,49 @@ fail:
+@@ -16203,6 +16210,49 @@ fail:
  	return -ENOBUFS;
  }
  
@@ -175,7 +175,7 @@ control.
  const struct wpa_driver_ops wpa_driver_nl80211_ops = {
  	.name = "nl80211",
  	.desc = "Linux nl80211/cfg80211",
-@@ -16388,6 +16438,7 @@ const struct wpa_driver_ops wpa_driver_n
+@@ -16390,6 +16440,7 @@ const struct wpa_driver_ops wpa_driver_n
  	.three_wire_ctrl = nl80211_enable_three_wire,
  	.ibf_ctrl = nl80211_ibf_enable,
  	.ibf_dump = nl80211_ibf_dump,
@@ -185,7 +185,7 @@ control.
  	.get_aval_color_bmp = nl80211_get_aval_color_bmp,
 --- a/src/drivers/driver_nl80211_capa.c
 +++ b/src/drivers/driver_nl80211_capa.c
-@@ -1186,6 +1186,9 @@ static int wiphy_info_handler(struct nl_
+@@ -1190,6 +1190,9 @@ static int wiphy_info_handler(struct nl_
  				case MTK_NL80211_VENDOR_SUBCMD_BSS_COLOR_CTRL :
  					drv->mtk_bss_color_vendor_cmd_avail = 1;
  					break;

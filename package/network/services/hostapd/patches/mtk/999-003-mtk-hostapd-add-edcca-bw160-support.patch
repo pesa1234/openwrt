@@ -70,7 +70,7 @@
  
 --- a/src/drivers/driver_nl80211.c
 +++ b/src/drivers/driver_nl80211.c
-@@ -15661,8 +15661,8 @@ static int nl80211_configure_edcca_thres
+@@ -15663,8 +15663,8 @@ static int nl80211_configure_edcca_thres
  	}
  
  	wpa_printf(MSG_INFO,
@@ -81,7 +81,7 @@
  
  	if (!(msg = nl80211_drv_msg(drv, 0, NL80211_CMD_VENDOR)) ||
  	    nla_put_u32(msg, NL80211_ATTR_VENDOR_ID, OUI_MTK) ||
-@@ -15672,7 +15672,8 @@ static int nl80211_configure_edcca_thres
+@@ -15674,7 +15674,8 @@ static int nl80211_configure_edcca_thres
  	    nla_put_u8(msg, MTK_VENDOR_ATTR_EDCCA_CTRL_MODE, EDCCA_CTRL_SET_THRES) ||
  	    nla_put_u8(msg, MTK_VENDOR_ATTR_EDCCA_CTRL_PRI20_VAL, threshold[0] & 0xff) ||
  	    nla_put_u8(msg, MTK_VENDOR_ATTR_EDCCA_CTRL_SEC40_VAL, threshold[1] & 0xff) ||
@@ -91,7 +91,7 @@
  		wpa_printf (MSG_ERROR, "Prepare nl80211 msg fail");
  		nlmsg_free(msg);
  		return -ENOBUFS;
-@@ -15730,6 +15731,14 @@ static int edcca_info_handler(struct nl_
+@@ -15732,6 +15733,14 @@ static int edcca_info_handler(struct nl_
  		return NL_SKIP;
  	}
  

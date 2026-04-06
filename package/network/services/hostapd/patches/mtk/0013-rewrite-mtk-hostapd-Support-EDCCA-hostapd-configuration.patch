@@ -260,7 +260,7 @@ edcca_enable and edcca_compensation and implement edcca related handlers.
 +}
 --- a/src/ap/hostapd.c
 +++ b/src/ap/hostapd.c
-@@ -2817,6 +2817,13 @@ dfs_offload:
+@@ -2820,6 +2820,13 @@ dfs_offload:
  	}
  #endif /* CONFIG_MESH */
  
@@ -315,7 +315,7 @@ edcca_enable and edcca_compensation and implement edcca related handlers.
  
  
  #ifndef NETLINK_CAP_ACK
-@@ -12961,7 +12963,6 @@ wpa_driver_nl80211_join_mesh(void *priv,
+@@ -12963,7 +12965,6 @@ wpa_driver_nl80211_join_mesh(void *priv,
  	return ret;
  }
  
@@ -323,7 +323,7 @@ edcca_enable and edcca_compensation and implement edcca related handlers.
  static int wpa_driver_nl80211_leave_mesh(void *priv)
  {
  	struct i802_bss *bss = priv;
-@@ -15413,6 +15414,179 @@ wpa_driver_get_multi_hw_info(void *priv,
+@@ -15415,6 +15416,179 @@ wpa_driver_get_multi_hw_info(void *priv,
  	return nl80211_get_multi_hw_info(bss, num_multi_hws);
  }
  
@@ -503,7 +503,7 @@ edcca_enable and edcca_compensation and implement edcca related handlers.
  
  #ifdef CONFIG_NAN
  
-@@ -15781,4 +15955,8 @@ const struct wpa_driver_ops wpa_driver_n
+@@ -15783,4 +15957,8 @@ const struct wpa_driver_ops wpa_driver_n
  	.nan_stop = wpa_driver_nl80211_nan_stop,
  	.nan_change_config = wpa_driver_nl80211_nan_change_config,
  #endif /* CONFIG_NAN */
@@ -522,7 +522,7 @@ edcca_enable and edcca_compensation and implement edcca related handlers.
  
  
  static int protocol_feature_handler(struct nl_msg *msg, void *arg)
-@@ -1165,6 +1166,12 @@ static int wiphy_info_handler(struct nl_
+@@ -1169,6 +1170,12 @@ static int wiphy_info_handler(struct nl_
  					break;
  				}
  #endif /* CONFIG_DRIVER_NL80211_BRCM */
@@ -595,7 +595,7 @@ edcca_enable and edcca_compensation and implement edcca related handlers.
  {
 --- a/src/drivers/driver.h
 +++ b/src/drivers/driver.h
-@@ -5633,6 +5633,10 @@ struct wpa_driver_ops {
+@@ -5635,6 +5635,10 @@ struct wpa_driver_ops {
  	 */
  	void (*nan_stop)(void *priv);
  #endif /* CONFIG_NAN */
