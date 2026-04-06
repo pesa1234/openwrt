@@ -877,6 +877,30 @@ enable_HQoS()
 	
 }
 
+cake_mq_setup()
+{
+	CAKE_SYNC_TIME_PATH="/sys/kernel/debug/cake_mq/sync_time_ns"
+	value="$1"
+
+	[ -f "$CAKE_SYNC_TIME_PATH" ] || return 0
+
+	if [ -z "$value" ]; then
+		value=$(uci get advanced.@defaults[0].cake_sync_time_ns 2>/dev/null || true)
+	fi
+
+	[ -n "$value" ] || return 0
+
+	case "$value" in
+		''|*[!0-9]*)
+			logger -t advanced_setup "invalid cake_mq sync_time value '$value'"
+			return 1
+			;;
+	esac
+
+	echo "$value" > "$CAKE_SYNC_TIME_PATH"
+	logger -t advanced_setup "cake_mq sync_time set to $(cat "$CAKE_SYNC_TIME_PATH" 2>/dev/null)"
+}
+
 usb_setup()
 {
 	usb2=$(uci get advanced.@defaults[0].usb_2 2>/dev/null || echo "x")
@@ -925,6 +949,7 @@ start_service() {
 	fi
 		smp_mt76
 		enable_HQoS
+		cake_mq_setup
 	usb_setup
 		hw_atf_setup
     logger -t advanced_setup "advanced_setup finished"
@@ -949,6 +974,10 @@ reload_service() {
 			logger -t advanced_setup "advanced_setup wed"
 			reprobe_mt7915e
 			;;
+		cake)
+			logger -t advanced_setup "advanced_setup cake"
+			cake_mq_setup "$2"
+			;;
         *)
 			logger -t advanced_setup "advanced_setup generic"
 			if [ ! -f /tmp/smp_affinity_started ]; then
@@ -959,6 +988,7 @@ reload_service() {
 			fi
 				smp_mt76
 				enable_HQoS
+				cake_mq_setup
 				usb_setup
 				hw_atf_setup
 			logger -t advanced_setup "advanced_setup finished"
