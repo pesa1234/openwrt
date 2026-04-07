@@ -1,13 +1,13 @@
 --- a/drivers/net/ethernet/mediatek/mtk_eth_soc.c
 +++ b/drivers/net/ethernet/mediatek/mtk_eth_soc.c
-@@ -27,6 +27,7 @@
+@@ -28,6 +28,7 @@
  #include <linux/phy/phy.h>
  #include <linux/jhash.h>
  #include <linux/bitfield.h>
 +#include <linux/ratelimit.h>
+ #include <linux/ethtool.h>
+ #include <linux/netlink.h>
  #include <net/dsa.h>
- #include <net/dst_metadata.h>
- #include <net/gso.h>
 @@ -4987,16 +4988,34 @@ static u16 mtk_select_queue(struct net_device *dev, struct sk_buff *skb,
  			    struct net_device *sb_dev)
  {
