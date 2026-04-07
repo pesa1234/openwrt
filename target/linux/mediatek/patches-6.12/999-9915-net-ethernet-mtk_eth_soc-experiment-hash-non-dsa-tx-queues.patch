@@ -1,46 +1,81 @@
 --- a/drivers/net/ethernet/mediatek/mtk_eth_soc.c
 +++ b/drivers/net/ethernet/mediatek/mtk_eth_soc.c
-@@ -28,6 +28,7 @@
- #include <linux/phy/phy.h>
+@@ -29,6 +29,7 @@
  #include <linux/jhash.h>
  #include <linux/bitfield.h>
-+#include <linux/ratelimit.h>
- #include <linux/ethtool.h>
- #include <linux/netlink.h>
  #include <net/dsa.h>
-@@ -4987,16 +4988,34 @@ static u16 mtk_select_queue(struct net_device *dev, struct sk_buff *skb,
- 			    struct net_device *sb_dev)
- {
- 	struct mtk_mac *mac = netdev_priv(dev);
-+	unsigned int skb_queue = skb_get_queue_mapping(skb);
- 	unsigned int queue = 0;
- 
- 	if (netdev_uses_dsa(dev))
--		queue = skb_get_queue_mapping(skb) + 3;
-+		queue = skb_queue + 3;
-+	else if (dev->real_num_tx_queues > 1)
-+		queue = netdev_pick_tx(dev, skb, sb_dev);
++#include <net/sch_generic.h>
+ #include <net/dst_metadata.h>
+ #include <net/gso.h>
+ #include <net/checksum.h>
+@@ -4981,7 +4982,55 @@
  	else
- 		queue = mac->id;
+ 		mtk_m32(mac->hw, MAC_MCR_EEE100M | MAC_MCR_EEE1G, 0, MTK_MAC_MCR(mac->id));
  
- 	if (queue >= dev->num_tx_queues)
- 		queue = 0;
- 
-+	if (dev->num_tx_queues > 1) {
-+		static DEFINE_RATELIMIT_STATE(txq_rs,
-+					      DEFAULT_RATELIMIT_INTERVAL,
-+					      DEFAULT_RATELIMIT_BURST);
+-	return 0;
++return 0;
++}
 +
-+		if (__ratelimit(&txq_rs))
-+			netdev_info(dev,
-+				    "cake-mq: mode=%s mac=%d sb=%s skb_q=%u txq=%u real=%u num=%u hash=0x%x\n",
-+				    netdev_uses_dsa(dev) ? "dsa" :
-+				    (dev->real_num_tx_queues > 1 ? "hash" : "fixed"),
-+				    mac->id, sb_dev ? sb_dev->name : dev->name,
-+				    skb_queue, queue, dev->real_num_tx_queues,
-+				    dev->num_tx_queues, skb_get_hash_raw(skb));
++static u16 mtk_tx_hash(struct net_device *dev, struct sk_buff *skb,
++		       struct net_device *sb_dev)
++{
++	u32 hash;
++	u16 qoffset = 0;
++	u16 qcount = dev->real_num_tx_queues;
++
++	sb_dev = sb_dev ? : dev;
++
++	if (dev->num_tc) {
++		u8 tc = netdev_get_prio_tc_map(dev, skb->priority);
++
++		qoffset = sb_dev->tc_to_txq[tc].offset;
++		qcount = sb_dev->tc_to_txq[tc].count;
++		if (unlikely(!qcount)) {
++			qoffset = 0;
++			qcount = dev->real_num_tx_queues;
++		}
 +	}
 +
- 	return queue;
++	if (skb_rx_queue_recorded(skb)) {
++		hash = skb_get_rx_queue(skb);
++		if (hash >= qoffset)
++			hash -= qoffset;
++		while (unlikely(hash >= qcount))
++			hash -= qcount;
++		return hash + qoffset;
++	}
++
++	return reciprocal_scale(skb_get_hash(skb), qcount) + qoffset;
++}
++
++static bool mtk_is_cake_txq(struct net_device *dev, unsigned int queue)
++{
++	struct netdev_queue *txq = netdev_get_tx_queue(dev, queue);
++	struct Qdisc *qdisc;
++	bool is_cake = false;
++
++	rcu_read_lock();
++	qdisc = rcu_dereference(txq->qdisc_sleeping);
++	if (qdisc && qdisc->ops && qdisc->ops->id &&
++	    !strcmp(qdisc->ops->id, "cake"))
++		is_cake = true;
++	rcu_read_unlock();
++
++	return is_cake;
  }
+ 
+ static u16 mtk_select_queue(struct net_device *dev, struct sk_buff *skb,
+@@ -4992,6 +5041,13 @@
+ 
+ 	if (netdev_uses_dsa(dev))
+ 		queue = skb_get_queue_mapping(skb) + 3;
++	else if (dev->real_num_tx_queues > 1) {
++		queue = mtk_tx_hash(dev, skb, sb_dev);
++		if (mtk_is_cake_txq(dev, queue))
++			netdev_info_once(dev,
++					 "cake-mq: non-DSA packet-hash TX selection active on %u queues\n",
++					 dev->real_num_tx_queues);
++	}
+ 	else
+ 		queue = mac->id;
  
