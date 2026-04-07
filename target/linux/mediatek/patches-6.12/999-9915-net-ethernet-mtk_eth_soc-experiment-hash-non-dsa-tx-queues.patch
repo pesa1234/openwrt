@@ -1,21 +1,9 @@
 --- a/drivers/net/ethernet/mediatek/mtk_eth_soc.c
 +++ b/drivers/net/ethernet/mediatek/mtk_eth_soc.c
-@@ -29,6 +29,7 @@
- #include <linux/jhash.h>
- #include <linux/bitfield.h>
- #include <net/dsa.h>
-+#include <net/sch_generic.h>
- #include <net/dst_metadata.h>
- #include <net/gso.h>
- #include <net/checksum.h>
-@@ -4981,7 +4982,55 @@
- 	else
- 		mtk_m32(mac->hw, MAC_MCR_EEE100M | MAC_MCR_EEE1G, 0, MTK_MAC_MCR(mac->id));
+@@ -4984,6 +4984,38 @@
+ 	return 0;
+ }
  
--	return 0;
-+return 0;
-+}
-+
 +static u16 mtk_tx_hash(struct net_device *dev, struct sk_buff *skb,
 +		       struct net_device *sb_dev)
 +{
@@ -48,34 +36,15 @@
 +	return reciprocal_scale(skb_get_hash(skb), qcount) + qoffset;
 +}
 +
-+static bool mtk_is_cake_txq(struct net_device *dev, unsigned int queue)
-+{
-+	struct netdev_queue *txq = netdev_get_tx_queue(dev, queue);
-+	struct Qdisc *qdisc;
-+	bool is_cake = false;
-+
-+	rcu_read_lock();
-+	qdisc = rcu_dereference(txq->qdisc_sleeping);
-+	if (qdisc && qdisc->ops && qdisc->ops->id &&
-+	    !strcmp(qdisc->ops->id, "cake"))
-+		is_cake = true;
-+	rcu_read_unlock();
-+
-+	return is_cake;
- }
- 
  static u16 mtk_select_queue(struct net_device *dev, struct sk_buff *skb,
-@@ -4992,6 +5041,13 @@
+ 			    struct net_device *sb_dev)
+ {
+@@ -4992,6 +5024,8 @@
  
  	if (netdev_uses_dsa(dev))
  		queue = skb_get_queue_mapping(skb) + 3;
-+	else if (dev->real_num_tx_queues > 1) {
++	else if (dev->real_num_tx_queues > 1)
 +		queue = mtk_tx_hash(dev, skb, sb_dev);
-+		if (mtk_is_cake_txq(dev, queue))
-+			netdev_info_once(dev,
-+					 "cake-mq: non-DSA packet-hash TX selection active on %u queues\n",
-+					 dev->real_num_tx_queues);
-+	}
  	else
  		queue = mac->id;
  
