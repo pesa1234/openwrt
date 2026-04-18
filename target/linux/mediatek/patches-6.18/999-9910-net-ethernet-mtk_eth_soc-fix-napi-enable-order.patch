@@ -1,6 +1,6 @@
 --- a/drivers/net/ethernet/mediatek/mtk_eth_soc.c
 +++ b/drivers/net/ethernet/mediatek/mtk_eth_soc.c
-@@ -5005,6 +5005,22 @@ static void mtk_pending_work(struct work
+@@ -5138,6 +5138,22 @@ static void mtk_pending_work(struct work
  	rtnl_unlock();
  }
  
@@ -23,7 +23,7 @@
  static int mtk_free_dev(struct mtk_eth *eth)
  {
  	int i;
-@@ -5030,12 +5046,15 @@ static int mtk_unreg_dev(struct mtk_eth
+@@ -5163,12 +5179,15 @@ static int mtk_unreg_dev(struct mtk_eth
  
  	for (i = 0; i < MTK_MAX_DEVS; i++) {
  		struct mtk_mac *mac;
@@ -40,7 +40,7 @@
  	}
  
  	return 0;
-@@ -6061,20 +6080,6 @@ static int mtk_probe(struct platform_dev
+@@ -6154,20 +6173,6 @@ static int mtk_probe(struct platform_dev
  		}
  	}
  
@@ -55,13 +55,13 @@
 -		} else
 -			netif_info(eth, probe, eth->netdev[i],
 -				   "mediatek frame engine at 0x%08lx, irq %d\n",
--				   eth->netdev[i]->base_addr, eth->irq_fe[0]);
+-				   eth->netdev[i]->base_addr, eth->irq_fe[MTK_FE_IRQ_SHARED]);
 -	}
 -
  	/* we run 2 devices on the same DMA ring so we need a dummy device
  	 * for NAPI to work
  	 */
-@@ -6082,9 +6087,10 @@ static int mtk_probe(struct platform_dev
+@@ -6175,9 +6180,10 @@ static int mtk_probe(struct platform_dev
  	if (!eth->dummy_dev) {
  		err = -ENOMEM;
  		dev_err(eth->dev, "failed to allocate dummy device\n");
@@ -74,7 +74,7 @@
  	netif_napi_add_weight(eth->dummy_dev, &eth->rx_napi[0].napi, mtk_napi_rx,
  			      MTK_NAPI_WEIGHT);
  
-@@ -6095,6 +6101,21 @@ static int mtk_probe(struct platform_dev
+@@ -6188,6 +6194,21 @@ static int mtk_probe(struct platform_dev
  					      mtk_napi_rx, MTK_NAPI_WEIGHT);
  	}
  
@@ -96,7 +96,7 @@
  	platform_set_drvdata(pdev, eth);
  	schedule_delayed_work(&eth->reset.monitor_work,
  			      MTK_DMA_MONITOR_TIMEOUT);
-@@ -6103,6 +6124,9 @@ static int mtk_probe(struct platform_dev
+@@ -6196,6 +6217,9 @@ static int mtk_probe(struct platform_dev
  
  err_unreg_netdev:
  	mtk_unreg_dev(eth);
@@ -106,7 +106,7 @@
  err_deinit_ppe:
  	mtk_ppe_deinit(eth);
  	mtk_mdio_cleanup(eth);
-@@ -6141,13 +6165,7 @@ static void mtk_remove(struct platform_d
+@@ -6234,13 +6258,7 @@ static void mtk_remove(struct platform_d
  	mtk_wed_exit();
  	mtk_hw_deinit(eth);
  

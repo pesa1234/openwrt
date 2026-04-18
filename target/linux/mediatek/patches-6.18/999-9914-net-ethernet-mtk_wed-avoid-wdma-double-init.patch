@@ -1,6 +1,6 @@
 --- a/drivers/net/ethernet/mediatek/mtk_wed.c
 +++ b/drivers/net/ethernet/mediatek/mtk_wed.c
-@@ -1930,31 +1930,33 @@ mtk_wed_ring_alloc(struct mtk_wed_device
+@@ -1916,31 +1916,33 @@ mtk_wed_ring_alloc(struct mtk_wed_device
  }
  
  static int
@@ -54,7 +54,7 @@
  
  	return 0;
  }
-@@ -1969,8 +1971,9 @@ mtk_wed_wdma_tx_ring_setup(struct mtk_we
+@@ -1955,8 +1957,9 @@ mtk_wed_wdma_tx_ring_setup(struct mtk_we
  		return -EINVAL;
  
  	wdma = &dev->tx_wdma[idx];
@@ -66,7 +66,7 @@
  		return -ENOMEM;
  
  	if (mtk_wed_is_v3_or_greater(dev->hw)) {
-@@ -2392,10 +2395,6 @@ mtk_wed_start(struct mtk_wed_device *dev
+@@ -2378,10 +2381,6 @@ mtk_wed_start(struct mtk_wed_device *dev
  	if (mtk_wed_get_rx_capa(dev) && mtk_wed_rx_buffer_alloc(dev))
  		return;
  
@@ -77,7 +77,7 @@
  	if (dev->wlan.hw_rro) {
  		for (i = 0; i < MTK_WED_RX_PAGE_QUEUES; i++) {
  			u32 addr = MTK_WED_RRO_MSDU_PG_CTRL0(i) +
-@@ -2551,12 +2550,12 @@ mtk_wed_tx_ring_setup(struct mtk_wed_dev
+@@ -2537,12 +2536,12 @@ mtk_wed_tx_ring_setup(struct mtk_wed_dev
  	if (WARN_ON(idx >= ARRAY_SIZE(dev->tx_ring)))
  		return -EINVAL;
  
@@ -94,7 +94,7 @@
  		return -ENOMEM;
  
  	ring->reg_base = MTK_WED_RING_TX(idx);
-@@ -2627,8 +2626,9 @@ mtk_wed_rx_ring_setup(struct mtk_wed_dev
+@@ -2613,8 +2612,9 @@ mtk_wed_rx_ring_setup(struct mtk_wed_dev
  	if (WARN_ON(idx >= ARRAY_SIZE(dev->rx_ring)))
  		return -EINVAL;
  

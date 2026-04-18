@@ -1,6 +1,6 @@
 --- a/drivers/net/ethernet/mediatek/mtk_eth_soc.c
 +++ b/drivers/net/ethernet/mediatek/mtk_eth_soc.c
-@@ -4984,6 +4984,38 @@
+@@ -5510,6 +5510,43 @@ static int mtk_set_rxfh(struct net_devic
  	return 0;
  }
  
@@ -9,6 +9,7 @@
 +{
 +	u32 hash;
 +	u16 qoffset = 0;
++	u16 rcount = READ_ONCE(dev->real_num_rx_queues);
 +	u16 qcount = dev->real_num_tx_queues;
 +
 +	sb_dev = sb_dev ? : dev;
@@ -24,7 +25,11 @@
 +		}
 +	}
 +
-+	if (skb_rx_queue_recorded(skb)) {
++	/* On single-RX-queue devices the recorded rx queue is usually 0 for
++	 * almost all forwarded traffic, which collapses most packets onto one
++	 * TX queue. Prefer the per-flow hash in that case.
++	 */
++	if (rcount > 1 && skb_rx_queue_recorded(skb)) {
 +		hash = skb_get_rx_queue(skb);
 +		if (hash >= qoffset)
 +			hash -= qoffset;
@@ -39,7 +44,7 @@
  static u16 mtk_select_queue(struct net_device *dev, struct sk_buff *skb,
  			    struct net_device *sb_dev)
  {
-@@ -4992,6 +5024,8 @@
+@@ -5518,6 +5555,8 @@ static u16 mtk_select_queue(struct net_d
  
  	if (netdev_uses_dsa(dev))
  		queue = skb_get_queue_mapping(skb) + 3;

@@ -32,7 +32,7 @@
  }
  
  static void
-@@ -1930,6 +1943,8 @@ mtk_wed_wdma_rx_ring_setup(struct mtk_we
+@@ -1916,6 +1929,8 @@ mtk_wed_wdma_rx_ring_setup(struct mtk_we
  					 dev->hw->soc->wdma_desc_size, true))
  		return -ENOMEM;
  
@@ -41,7 +41,7 @@
  	wdma_w32(dev, MTK_WDMA_RING_RX(idx) + MTK_WED_RING_OFS_BASE,
  		 wdma->desc_phys);
  	wdma_w32(dev, MTK_WDMA_RING_RX(idx) + MTK_WED_RING_OFS_COUNT,
-@@ -1976,6 +1991,8 @@ mtk_wed_wdma_tx_ring_setup(struct mtk_we
+@@ -1962,6 +1977,8 @@ mtk_wed_wdma_tx_ring_setup(struct mtk_we
  		}
  	}
  
@@ -50,7 +50,7 @@
  	wdma_w32(dev, MTK_WDMA_RING_TX(idx) + MTK_WED_RING_OFS_BASE,
  		 wdma->desc_phys);
  	wdma_w32(dev, MTK_WDMA_RING_TX(idx) + MTK_WED_RING_OFS_COUNT,
-@@ -2544,6 +2561,7 @@ mtk_wed_tx_ring_setup(struct mtk_wed_dev
+@@ -2530,6 +2547,7 @@ mtk_wed_tx_ring_setup(struct mtk_wed_dev
  
  	ring->reg_base = MTK_WED_RING_TX(idx);
  	ring->wpdma = regs;

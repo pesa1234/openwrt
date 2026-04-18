@@ -1,0 +1,185 @@
+--- a/drivers/net/ifb.c
++++ b/drivers/net/ifb.c
+@@ -77,6 +77,8 @@ static const struct ifb_q_stats_desc ifb
+ static netdev_tx_t ifb_xmit(struct sk_buff *skb, struct net_device *dev);
+ static int ifb_open(struct net_device *dev);
+ static int ifb_close(struct net_device *dev);
++static u16 ifb_select_queue(struct net_device *dev, struct sk_buff *skb,
++			    struct net_device *sb_dev);
+ 
+ static void ifb_update_q_stats(struct ifb_q_stats *stats, int len)
+ {
+@@ -278,6 +280,7 @@ static const struct net_device_ops ifb_n
+ 	.ndo_stop	= ifb_close,
+ 	.ndo_get_stats64 = ifb_stats64,
+ 	.ndo_start_xmit	= ifb_xmit,
++	.ndo_select_queue = ifb_select_queue,
+ 	.ndo_validate_addr = eth_validate_addr,
+ 	.ndo_init	= ifb_dev_init,
+ };
+@@ -336,6 +339,21 @@ static void ifb_setup(struct net_device
+ 	netif_set_tso_max_size(dev, GSO_MAX_SIZE);
+ }
+ 
++static u16 ifb_select_queue(struct net_device *dev, struct sk_buff *skb,
++			    struct net_device *sb_dev)
++{
++	u16 qcount = dev->real_num_tx_queues;
++
++	if (qcount <= 1)
++		return 0;
++
++	/* Redirected ingress packets often share the same recorded RX queue.
++	 * Use the packet flow hash so multiqueue IFBs can spread them across
++	 * their TX queues instead of collapsing onto a single queue.
++	 */
++	return reciprocal_scale(skb_get_hash(skb), qcount);
++}
++
+ static netdev_tx_t ifb_xmit(struct sk_buff *skb, struct net_device *dev)
+ {
+ 	struct ifb_dev_private *dp = netdev_priv(dev);
+--- a/net/sched/sch_cake.c
++++ b/net/sched/sch_cake.c
+@@ -83,6 +83,12 @@
+ #define CAKE_FLOW_MASK 63
+ #define CAKE_FLOW_NAT_FLAG 64
+ static u64 g_sync_time_ns = 200*NSEC_PER_USEC;
++static unsigned int cake_mq_queue_count(const struct net_device *dev)
++{
++	unsigned int ntx = READ_ONCE(dev->real_num_tx_queues);
++
++	return ntx ? ntx : READ_ONCE(dev->num_tx_queues);
++}
+ static struct dentry *cake_mq_debugfs;
+ 
+ /* struct cobalt_params - contains codel and blue parameters
+@@ -216,6 +222,9 @@ struct cake_sched_config {
+ 	u8		flow_mode;
+ 	u8		atm_mode;
+ 	u8		ack_filter;
++	spinlock_t	sync_lock;
++	u64		shared_last_checked;
++	u32		shared_active_queues;
+ 	u8		is_shared;
+ };
+ 
+@@ -2013,7 +2022,8 @@ static struct sk_buff *cake_dequeue(stru
+ 	struct cake_sched_data *q = qdisc_priv(sch);
+ 	struct cake_tin_data *b = &q->tins[q->cur_tin];
+ 	enum skb_drop_reason reason;
+-	ktime_t now = ktime_get();
++	struct cake_sched_config *cfg = q->config;
++	ktime_t now;
+ 	struct cake_flow *flow;
+ 	struct list_head *head;
+ 	bool first_flow = true;
+@@ -2021,42 +2031,62 @@ static struct sk_buff *cake_dequeue(stru
+ 	u64 delay;
+ 	u32 len;
+ 
+-	if (q->config->is_shared && q->rate_ns &&
+-	    now - q->last_checked_active >= g_sync_time_ns) {
+-		struct net_device *dev = qdisc_dev(sch);
+-		struct cake_sched_data *other_priv;
+-		u64 new_rate = q->config->rate_bps;
+-		u64 other_qlen, other_last_active;
+-		struct Qdisc *other_sch;
+-		u32 num_active_qs = 1;
+-		unsigned int ntx;
+-
+-		for (ntx = 0; ntx < dev->num_tx_queues; ntx++) {
+-			other_sch = rcu_dereference(netdev_get_tx_queue(dev, ntx)->qdisc_sleeping);
+-			other_priv = qdisc_priv(other_sch);
++	if (!sch->q.qlen)
++		return NULL;
+ 
+-			if (other_priv == q)
+-				continue;
++	now = ktime_get();
++
++	if (cfg->is_shared && q->rate_ns) {
++		u64 last_checked = READ_ONCE(cfg->shared_last_checked);
++		u32 active_queues = READ_ONCE(cfg->shared_active_queues);
++
++		if (now - last_checked >= g_sync_time_ns &&
++		    spin_trylock(&cfg->sync_lock)) {
++			struct net_device *dev = qdisc_dev(sch);
++			struct cake_sched_data *other_priv;
++			struct Qdisc *other_sch;
++			unsigned int ntx;
++			u32 num_active_qs = 1;
++			u64 other_qlen, other_last_active;
++
++			last_checked = cfg->shared_last_checked;
++			active_queues = cfg->shared_active_queues;
++
++			if (now - last_checked >= g_sync_time_ns) {
++				for (ntx = 0; ntx < cake_mq_queue_count(dev); ntx++) {
++					other_sch = rcu_dereference(netdev_get_tx_queue(dev, ntx)->qdisc_sleeping);
++					other_priv = qdisc_priv(other_sch);
++
++					if (other_priv == q)
++						continue;
+ 
+-			other_qlen = READ_ONCE(other_sch->q.qlen);
+-			other_last_active = READ_ONCE(other_priv->last_active);
++					other_qlen = READ_ONCE(other_sch->q.qlen);
++					other_last_active = READ_ONCE(other_priv->last_active);
+ 
+-			if (other_qlen || other_last_active > q->last_checked_active)
+-				num_active_qs++;
++					if (other_qlen || other_last_active > last_checked)
++						num_active_qs++;
++				}
++
++				WRITE_ONCE(cfg->shared_last_checked, now);
++				WRITE_ONCE(cfg->shared_active_queues, num_active_qs);
++				active_queues = num_active_qs;
++			}
++
++			spin_unlock(&cfg->sync_lock);
+ 		}
+ 
+-		if (num_active_qs > 1)
+-			new_rate = div64_u64(q->config->rate_bps, num_active_qs);
++		if (q->active_queues != active_queues) {
++			u64 new_rate = cfg->rate_bps;
++
++			if (active_queues > 1)
++				new_rate = div64_u64(cfg->rate_bps, active_queues);
+ 
+-		cake_configure_rates(sch, new_rate, true);
+-		q->last_checked_active = now;
+-		q->active_queues = num_active_qs;
++			cake_configure_rates(sch, new_rate, true);
++			q->active_queues = active_queues;
++		}
+ 	}
+ 
+ begin:
+-	if (!sch->q.qlen)
+-		return NULL;
+-
+ 	/* global hard shaper */
+ 	if (ktime_after(q->time_next_packet, now) &&
+ 	    ktime_after(q->failsafe_next_packet, now)) {
+@@ -2818,6 +2848,9 @@ static void cake_config_init(struct cake
+ 			       * for 5 to 10% of interval
+ 			       */
+ 	q->rate_flags |= CAKE_FLAG_SPLIT_GSO;
++	spin_lock_init(&q->sync_lock);
++	q->shared_last_checked = 0;
++	q->shared_active_queues = 1;
+ 	q->is_shared = is_shared;
+ 	q->sync_time = 200 * NSEC_PER_USEC;
+ }
+@@ -2895,6 +2928,8 @@ static void cake_config_replace(struct Q
+ 	struct cake_sched_data *qd = qdisc_priv(sch);
+ 
+ 	qd->config = cfg;
++	if (cfg->is_shared)
++		qd->active_queues = READ_ONCE(cfg->shared_active_queues);
+ 	cake_reconfigure(sch);
+ }
+ 
