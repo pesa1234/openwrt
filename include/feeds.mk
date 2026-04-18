@@ -49,6 +49,8 @@ endef
 # 1: destination file
 define FeedSourcesAppendAPK
 ( \
+  echo '# This file is auto-generated and build-specific, any changes will be intentionally lost in sysupgrade.'; \
+  echo '# Add your custom feeds to /etc/apk/repositories.d/customfeeds.list'; \
   echo '%U/$(DATE)_$(VERSION_CODE)_$(BRANCH)/targets/%S/packages/packages.adb'; \
   $(strip $(if $(CONFIG_PER_FEED_REPO), \
 	echo '$(OWRT_LINK)/%A/base/packages.adb'; \
