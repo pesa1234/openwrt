@@ -30,7 +30,7 @@ minimize the delay of the work queue by setting the delay to zero.
  
  static DEFINE_MUTEX(flowtable_lock);
  static LIST_HEAD(flowtables);
-@@ -598,6 +599,86 @@ void nf_flow_table_cleanup(struct net_de
+@@ -745,6 +746,86 @@ void nf_flow_table_cleanup(struct net_de
  }
  EXPORT_SYMBOL_GPL(nf_flow_table_cleanup);
  
@@ -117,7 +117,7 @@ minimize the delay of the work queue by setting the delay to zero.
  void nf_flow_table_free(struct nf_flowtable *flow_table)
  {
  	mutex_lock(&flowtable_lock);
-@@ -688,6 +769,10 @@ static int __init nf_flow_table_module_i
+@@ -835,6 +916,10 @@ static int __init nf_flow_table_module_i
  	if (ret)
  		goto out_offload;
  
@@ -128,7 +128,7 @@ minimize the delay of the work queue by setting the delay to zero.
  	ret = nf_flow_register_bpf();
  	if (ret)
  		goto out_bpf;
-@@ -699,6 +784,8 @@ static int __init nf_flow_table_module_i
+@@ -846,6 +931,8 @@ static int __init nf_flow_table_module_i
  	return 0;
  
  out_bpf:
@@ -137,7 +137,7 @@ minimize the delay of the work queue by setting the delay to zero.
  	nf_flow_table_offload_exit();
  out_offload:
  	unregister_pernet_subsys(&nf_flow_table_net_ops);
-@@ -707,6 +794,7 @@ out_offload:
+@@ -854,6 +941,7 @@ out_offload:
  
  static void __exit nf_flow_table_module_exit(void)
  {
