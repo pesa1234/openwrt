@@ -1,6 +1,8 @@
---- a/drivers/net/ethernet/mediatek/mtk_eth_soc.c
-+++ b/drivers/net/ethernet/mediatek/mtk_eth_soc.c
-@@ -5457,6 +5457,43 @@ static int mtk_set_rxfh(struct net_devic
+Index: linux-6.18.21/drivers/net/ethernet/mediatek/mtk_eth_soc.c
+===================================================================
+--- linux-6.18.21.orig/drivers/net/ethernet/mediatek/mtk_eth_soc.c
++++ linux-6.18.21/drivers/net/ethernet/mediatek/mtk_eth_soc.c
+@@ -5511,6 +5511,43 @@ static int mtk_set_rxfh(struct net_devic
  	return 0;
  }
  
@@ -44,12 +46,12 @@
  static u16 mtk_select_queue(struct net_device *dev, struct sk_buff *skb,
  			    struct net_device *sb_dev)
  {
-@@ -5465,6 +5502,8 @@ static u16 mtk_select_queue(struct net_d
- 
- 	if (netdev_uses_dsa(dev))
- 		queue = skb_get_queue_mapping(skb) + 3;
-+	else if (dev->real_num_tx_queues > 1)
+@@ -5523,6 +5560,8 @@ static u16 mtk_select_queue(struct net_d
+ 		if (dp_idx < MTK_DSA_USER_PORT_MAX)
+ 			queue = mac->dsa_queue_base +
+ 				mac->dsa_port_rank[dp_idx];
++	} else if (dev->real_num_tx_queues > 1) {
 +		queue = mtk_tx_hash(dev, skb, sb_dev);
- 	else
+ 	} else {
  		queue = mac->id;
- 
+ 	}
