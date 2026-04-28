@@ -742,6 +742,107 @@ wait_for_mt7915e_runtime()
 	return 1
 }
 
+mt7915e_module_has_token()
+{
+	local module_file="$1"
+	local wanted="$2"
+	local token
+
+	[ -e "$module_file" ] || return 1
+
+	set -- $(cat "$module_file" 2>/dev/null)
+	for token in "$@"; do
+		[ "$token" = "$wanted" ] && return 0
+	done
+
+	return 1
+}
+
+append_mt7915e_module_token()
+{
+	local token="$1"
+
+	case " $new_line " in
+		*" $token "*)
+			;;
+		*)
+			new_line="$new_line $token"
+			;;
+	esac
+}
+
+sync_mt7915e_wed_module_options()
+{
+	MODULE_FILE="/etc/modules.d/mt7915e"
+	wed=$(uci -q get advanced.@defaults[0].wed_offloading 2>/dev/null)
+
+	if [ -z "$wed" ]; then
+		if mt7915e_module_has_token "$MODULE_FILE" "wed_enable=1"; then
+			wed=1
+		else
+			wed=0
+		fi
+
+		uci set advanced.@defaults[0].wed_offloading="$wed" 2>/dev/null
+		uci commit advanced 2>/dev/null
+	fi
+
+	case "$wed" in
+		1|on|true|yes|enabled)
+			wed=1
+			;;
+		*)
+			wed=0
+			;;
+	esac
+
+	if [ -e "$MODULE_FILE" ]; then
+		old_content=$(cat "$MODULE_FILE" 2>/dev/null)
+		new_line="mt7915e"
+		wed_token_added=0
+
+		set -- $old_content
+		for token in "$@"; do
+			case "$token" in
+				mt7915e)
+					;;
+				wed_enable=*)
+					if [ "$wed" = "1" ] && [ "$wed_token_added" = "0" ]; then
+						append_mt7915e_module_token "wed_enable=1"
+						wed_token_added=1
+					fi
+					;;
+				*)
+					append_mt7915e_module_token "$token"
+					;;
+			esac
+		done
+
+		if [ "$wed" = "1" ] && [ "$wed_token_added" = "0" ]; then
+			append_mt7915e_module_token "wed_enable=1"
+		fi
+
+		if [ "$old_content" != "$new_line" ]; then
+			printf '%s\n' "$new_line" > "$MODULE_FILE"
+			logger -t advanced_setup "updated $MODULE_FILE to '$new_line'; reboot required for WED mode change"
+			echo "0"
+			return 0
+		fi
+	fi
+
+	if [ -e /sys/module/mt7915e/parameters/wed_enable ]; then
+		runtime_wed=$(cat /sys/module/mt7915e/parameters/wed_enable 2>/dev/null)
+		if { [ "$wed" = "1" ] && [ "$runtime_wed" != "Y" ]; } || \
+		   { [ "$wed" = "0" ] && [ "$runtime_wed" != "N" ]; }; then
+			logger -t advanced_setup "mt7915e runtime WED state '$runtime_wed' differs from UCI '$wed'; reboot required"
+			echo "0"
+			return 0
+		fi
+	fi
+
+	echo "0"
+}
+
 reprobe_mt7915e()
 {
 	local reprobe_ok=0
@@ -781,10 +882,7 @@ reprobe_mt7915e()
 		return 1
 	fi
 
-	smp_mt76
-	enable_HQoS
-	usb_setup
-	hw_atf_setup
+	advanced_runtime_setup
 
 	logger -t advanced_setup "mt7915e reprobe completed"
 	return 0
@@ -793,8 +891,28 @@ reprobe_mt7915e()
 sync_mt7915e_airtime_module_options()
 {
 	MODULE_FILE="/etc/modules.d/mt7915e"
-	atf=$(uci get advanced.@defaults[0].atf_enable 2>/dev/null || echo "0")
-	hwatf=$(uci get advanced.@defaults[0].hw_atf_enable 2>/dev/null || echo "0")
+	atf=$(uci -q get advanced.@defaults[0].atf_enable 2>/dev/null)
+	hwatf=$(uci -q get advanced.@defaults[0].hw_atf_enable 2>/dev/null || echo "0")
+
+	if [ -z "$atf" ]; then
+		if mt7915e_module_has_token "$MODULE_FILE" "expose_airtime_fairness=0"; then
+			atf=1
+		else
+			atf=0
+		fi
+
+		uci set advanced.@defaults[0].atf_enable="$atf" 2>/dev/null
+		uci commit advanced 2>/dev/null
+	fi
+
+	case "$atf" in
+		1|on|true|yes|enabled)
+			atf=1
+			;;
+		*)
+			atf=0
+			;;
+	esac
 
 	if [ "$atf" != "1" ] && [ "$hwatf" = "1" ]; then
 		logger -t advanced_setup "HW-ATF requires ATF; forcing hw_atf_enable=0"
@@ -806,59 +924,128 @@ sync_mt7915e_airtime_module_options()
 	if [ -e "$MODULE_FILE" ]; then
 		old_content=$(cat "$MODULE_FILE" 2>/dev/null)
 		new_line="mt7915e"
+		atf_token_added=0
 
 		set -- $old_content
 		for token in "$@"; do
 			case "$token" in
-				mt7915e|expose_airtime_fairness=*)
+				mt7915e)
+					;;
+				expose_airtime_fairness=*)
+					if [ "$atf" = "1" ] && [ "$atf_token_added" = "0" ]; then
+						append_mt7915e_module_token "expose_airtime_fairness=0"
+						atf_token_added=1
+					fi
 					;;
 				*)
-					case " $new_line " in
-						*" $token "*)
-							;;
-						*)
-							new_line="$new_line $token"
-							;;
-					esac
+					append_mt7915e_module_token "$token"
 					;;
 			esac
 		done
 
-		if [ "$atf" = "1" ]; then
-			new_line="$new_line expose_airtime_fairness=0"
+		if [ "$atf" = "1" ] && [ "$atf_token_added" = "0" ]; then
+			append_mt7915e_module_token "expose_airtime_fairness=0"
 		fi
 
 		if [ "$old_content" != "$new_line" ]; then
 			printf '%s\n' "$new_line" > "$MODULE_FILE"
-			logger -t advanced_setup "updated $MODULE_FILE to '$new_line'; mt7915e reprobe required for Airtime Fairness mode change"
-			echo "1"
+			logger -t advanced_setup "updated $MODULE_FILE to '$new_line'; reboot required for Airtime Fairness mode change"
+			echo "0"
 			return 0
 		fi
+	fi
+
+	if mt7915e_airtime_reboot_required; then
+		runtime_atf=$(cat /sys/module/mt7915e/parameters/expose_airtime_fairness 2>/dev/null)
+		logger -t advanced_setup "mt7915e runtime Airtime Fairness state '$runtime_atf' differs from UCI '$atf'; reboot required"
 	fi
 
 	echo "0"
 }
 
+mt7915e_airtime_reboot_required()
+{
+	local atf
+	local runtime_atf
+
+	[ -e /sys/module/mt7915e/parameters/expose_airtime_fairness ] || return 1
+
+	atf=$(uci -q get advanced.@defaults[0].atf_enable 2>/dev/null || echo "0")
+	case "$atf" in
+		1|on|true|yes|enabled)
+			atf=1
+			;;
+		*)
+			atf=0
+			;;
+	esac
+
+	runtime_atf=$(cat /sys/module/mt7915e/parameters/expose_airtime_fairness 2>/dev/null)
+
+	{ [ "$atf" = "1" ] && [ "$runtime_atf" != "N" ]; } || \
+	{ [ "$atf" = "0" ] && [ "$runtime_atf" != "Y" ]; }
+}
+
+sync_mt7915e_module_options()
+{
+	local wed_changed
+	local atf_changed
+
+	wed_changed=$(sync_mt7915e_wed_module_options)
+	atf_changed=$(sync_mt7915e_airtime_module_options)
+
+	if [ "$wed_changed" = "1" ] || [ "$atf_changed" = "1" ]; then
+		echo "1"
+	else
+		echo "0"
+	fi
+}
+
 hw_atf_setup()
 {
-	FILE="/sys/kernel/debug/ieee80211/phy0/mt76/vow"
-	sync_mt7915e_airtime_module_options >/dev/null
+	local FILE
+	local found=0
 
-	if [ -e "$FILE" ]; then
-		logger -s "smp_affinity: HW-ATF available"
+	atf=$(uci get advanced.@defaults[0].atf_enable 2>/dev/null || echo "0")
+	hwatf=$(uci get advanced.@defaults[0].hw_atf_enable 2>/dev/null || echo "0")
+
+	if [ "$atf" != "1" ] && [ "$hwatf" = "1" ]; then
+		hwatf=0
+	fi
+
+	if mt7915e_airtime_reboot_required; then
+		logger -t advanced_setup "skipping HW-ATF runtime setup; reboot required for Airtime Fairness mode change"
+		return 0
+	fi
+
+	for FILE in /sys/kernel/debug/ieee80211/*/mt76/vow; do
+		[ -e "$FILE" ] || continue
+		found=1
+		logger -s "smp_affinity: HW-ATF available at $FILE"
 		if [ "$atf" = "1" ]; then
-			echo 'vow_atf_en=1' > /sys/kernel/debug/ieee80211/phy0/mt76/vow
+			echo 'vow_atf_en=1' > "$FILE"
 		else
-			echo 'vow_atf_en=0' > /sys/kernel/debug/ieee80211/phy0/mt76/vow
+			echo 'vow_atf_en=0' > "$FILE"
 		fi
 		
 		if [ "$atf" = "1" ] && [ "$hwatf" = "1" ]; then
-			echo 'vow_watf_en=1' > /sys/kernel/debug/ieee80211/phy0/mt76/vow
+			echo 'vow_watf_en=1' > "$FILE"
 		else
-			echo 'vow_watf_en=0' > /sys/kernel/debug/ieee80211/phy0/mt76/vow
+			echo 'vow_watf_en=0' > "$FILE"
 		fi
-		echo 'show_vow_info' > /sys/kernel/debug/ieee80211/phy0/mt76/vow
-	fi
+		echo 'show_vow_info' > "$FILE"
+	done
+
+	[ "$found" -eq 1 ] || return 0
+}
+
+advanced_runtime_setup()
+{
+	smp_mt76
+	enable_HQoS
+	cake_mq_setup
+	usb_setup
+	hw_atf_setup
 }
 
 enable_HQoS()
@@ -947,32 +1134,31 @@ start_service() {
 		sleep $delay
 		echo 1 > /tmp/smp_affinity_started
 	fi
-		smp_mt76
-		enable_HQoS
-		cake_mq_setup
-	usb_setup
-		hw_atf_setup
+	if [ "$(sync_mt7915e_module_options)" = "1" ]; then
+		reprobe_mt7915e
+	else
+		advanced_runtime_setup
+	fi
     logger -t advanced_setup "advanced_setup finished"
 }
 
 reload_service() {
     trigger="$1"
     case "$trigger" in
-        atf)
-			logger -t advanced_setup "advanced_setup atf"
-			if [ "$(sync_mt7915e_airtime_module_options)" = "1" ]; then
-				reprobe_mt7915e
-			else
-				hw_atf_setup
-			fi
-            ;;
+	        atf)
+				logger -t advanced_setup "advanced_setup atf"
+				sync_mt7915e_airtime_module_options >/dev/null
+				if ! mt7915e_airtime_reboot_required; then
+					hw_atf_setup
+				fi
+	            ;;
         usb)
 			logger -t advanced_setup "advanced_setup usb"
             usb_setup
             ;;
-        wed)
+	        wed)
 			logger -t advanced_setup "advanced_setup wed"
-			reprobe_mt7915e
+			sync_mt7915e_wed_module_options >/dev/null
 			;;
 		cake)
 			logger -t advanced_setup "advanced_setup cake"
@@ -986,11 +1172,11 @@ reload_service() {
 				sleep $delay
 				echo 1 > /tmp/smp_affinity_started
 			fi
-				smp_mt76
-				enable_HQoS
-				cake_mq_setup
-				usb_setup
-				hw_atf_setup
+			if [ "$(sync_mt7915e_module_options)" = "1" ]; then
+				reprobe_mt7915e
+			else
+				advanced_runtime_setup
+			fi
 			logger -t advanced_setup "advanced_setup finished"
             ;;
     esac
