@@ -67,7 +67,7 @@
  static void mtk_set_queue_speed(struct mtk_eth *eth, unsigned int idx,
  				int speed)
  {
-@@ -3078,7 +3103,7 @@ static int mtk_rx_alloc(struct mtk_eth *
+@@ -3083,7 +3108,7 @@ static int mtk_rx_alloc(struct mtk_eth *
  		rx_data_len = MTK_MAX_LRO_RX_LENGTH;
  		rx_dma_size = MTK_HW_LRO_DMA_SIZE;
  	} else {
@@ -76,7 +76,7 @@
  		rx_dma_size = soc->rx.dma_size;
  	}
  
-@@ -3089,7 +3114,8 @@ static int mtk_rx_alloc(struct mtk_eth *
+@@ -3094,7 +3119,8 @@ static int mtk_rx_alloc(struct mtk_eth *
  	if (!ring->data)
  		return -ENOMEM;
  
@@ -86,7 +86,7 @@
  		struct page_pool *pp;
  
  		pp = mtk_create_page_pool(eth, &ring->xdp_q, ring_no,
-@@ -3098,6 +3124,17 @@ static int mtk_rx_alloc(struct mtk_eth *
+@@ -3103,6 +3129,17 @@ static int mtk_rx_alloc(struct mtk_eth *
  			return PTR_ERR(pp);
  
  		ring->page_pool = pp;
@@ -104,13 +104,42 @@
  	}
  
  	ring->in_sram = rx_flag == MTK_RX_FLAGS_NORMAL && !!eth->sram_pool;
-@@ -4839,9 +4876,29 @@ static void mtk_uninit(struct net_device
+@@ -4078,6 +4115,17 @@ static int mtk_max_gmac_mtu(struct mtk_e
+ 	return max_mtu;
+ }
+ 
++static int mtk_mtu_to_rx_buf_len(int mtu)
++{
++	int length = mtu + MTK_RX_ETH_HLEN;
++
++	if (length <= MTK_MAX_RX_LENGTH)
++		return MTK_MAX_RX_LENGTH;
++
++	return DIV_ROUND_UP(length, MTK_MAX_RX_LENGTH_UNIT) *
++	       MTK_MAX_RX_LENGTH_UNIT;
++}
++
+ static int mtk_open(struct net_device *dev)
+ {
+ 	struct mtk_mac *mac = netdev_priv(dev);
+@@ -4269,7 +4317,8 @@ static int mtk_xdp_setup(struct net_devi
+ 		return -EOPNOTSUPP;
+ 	}
+ 
+-	if (dev->mtu > MTK_PP_MAX_BUF_SIZE) {
++	if (prog &&
++	    mtk_mtu_to_rx_buf_len(mtk_max_gmac_mtu(eth)) > MTK_PP_MAX_BUF_SIZE) {
+ 		NL_SET_ERR_MSG_MOD(extack, "MTU too large for XDP");
+ 		return -EOPNOTSUPP;
+ 	}
+@@ -4911,24 +4960,97 @@ static void mtk_uninit(struct net_device
  
  static int mtk_change_mtu(struct net_device *dev, int new_mtu)
  {
 -	int length = new_mtu + MTK_RX_ETH_HLEN;
  	struct mtk_mac *mac = netdev_priv(dev);
  	struct mtk_eth *eth = mac->hw;
+-	int max_mtu, i;
 +	bool need_update, running[MTK_MAX_DEVS] = { 0 };
 +	int i, mtu, length, max_mtu = 0, rx_buf_len, err = 0;
 +
@@ -128,24 +157,20 @@
 +	}
 +
 +	length = max_mtu + MTK_RX_ETH_HLEN;
++	rx_buf_len = mtk_mtu_to_rx_buf_len(max_mtu);
 +
 +	netdev_info(dev,
 +		    "jumbo-mtu: request old_mtu=%u new_mtu=%d max_mtu=%d length=%d cur_rx_buf_len=%u\n",
 +		    dev->mtu, new_mtu, max_mtu, length, eth->rx_buf_len);
  
  	if (rcu_access_pointer(eth->prog) &&
- 	    length > MTK_PP_MAX_BUF_SIZE) {
-@@ -4849,9 +4906,68 @@ static int mtk_change_mtu(struct net_dev
+-	    length > MTK_PP_MAX_BUF_SIZE) {
++	    rx_buf_len > MTK_PP_MAX_BUF_SIZE) {
+ 		netdev_err(dev, "Invalid MTU for XDP mode\n");
  		return -EINVAL;
  	}
  
 -	mtk_set_mcr_max_rx(mac, length);
-+	if (length <= MTK_MAX_RX_LENGTH)
-+		rx_buf_len = MTK_MAX_RX_LENGTH;
-+	else
-+		rx_buf_len = DIV_ROUND_UP(length, MTK_MAX_RX_LENGTH_UNIT) *
-+			     MTK_MAX_RX_LENGTH_UNIT;
-+
 +	need_update = rx_buf_len != eth->rx_buf_len;
 +
 +	netdev_info(dev,
@@ -173,6 +198,10 @@
 +	eth->rx_buf_len = rx_buf_len;
 +
  	WRITE_ONCE(dev->mtu, new_mtu);
+ 
+ 	max_mtu = mtk_max_gmac_mtu(eth);
+ 	for (i = 0; i < ARRAY_SIZE(eth->ppe); i++)
+ 		mtk_ppe_update_mtu(eth->ppe[i], max_mtu);
  
 +	for (i = 0; i < MTK_MAX_DEVS; i++) {
 +		struct mtk_mac *mac_i;
@@ -205,7 +234,7 @@
  	return 0;
  }
  
-@@ -5600,7 +5716,7 @@ no_pcs:
+@@ -5723,7 +5845,7 @@ no_pcs:
  
  	mac->phylink = phylink;
  
@@ -214,7 +243,7 @@
  
  	if (MTK_HAS_CAPS(eth->soc->caps, MTK_QDMA)) {
  		mac->device_notifier.notifier_call = mtk_device_event;
-@@ -5754,6 +5870,7 @@ static int mtk_probe(struct platform_dev
+@@ -5877,6 +5999,7 @@ static int mtk_probe(struct platform_dev
  	spin_lock_init(&eth->tx_irq_lock);
  	spin_lock_init(&eth->rx_irq_lock);
  	spin_lock_init(&eth->dim_lock);
@@ -224,8 +253,8 @@
  	INIT_WORK(&eth->rx_dim.work, mtk_dim_rx);
 --- a/drivers/net/ethernet/mediatek/mtk_eth_soc.h
 +++ b/drivers/net/ethernet/mediatek/mtk_eth_soc.h
-@@ -28,7 +28,9 @@
- #define MTK_QDMA_NUM_QUEUES	16
+@@ -36,7 +36,9 @@
+ #define MTK_QTX_PER_PAGE	16
  #define MTK_QDMA_PAGE_SIZE	2048
  #define MTK_MAX_RX_LENGTH	1536
 +#define MTK_MAX_RX_LENGTH_UNIT	1024
@@ -234,7 +263,7 @@
  #define MTK_TX_DMA_BUF_LEN	0x3fff
  #define MTK_TX_DMA_BUF_LEN_V2	0xffff
  #define MTK_QDMA_RING_SIZE	2048
-@@ -491,6 +493,8 @@
+@@ -499,6 +501,8 @@
  
  /* Mac control registers */
  #define MTK_MAC_MCR(x)		(0x10100 + (x * 0x100))
@@ -243,7 +272,7 @@
  #define MAC_MCR_MAX_RX_MASK	GENMASK(25, 24)
  #define MAC_MCR_MAX_RX(_x)	(MAC_MCR_MAX_RX_MASK & ((_x) << 24))
  #define MAC_MCR_MAX_RX_1518	0x0
-@@ -1093,6 +1097,7 @@ enum mkt_eth_capabilities {
+@@ -1101,6 +1105,7 @@ enum mkt_eth_capabilities {
  	MTK_SRAM_BIT,
  	MTK_XGMAC_BIT,
  	MTK_XGMAC_V2_BIT,
@@ -251,7 +280,7 @@
  	MTK_36BIT_DMA_BIT,
  
  	/* MUX BITS*/
-@@ -1144,6 +1149,7 @@ enum mkt_eth_capabilities {
+@@ -1152,6 +1157,7 @@ enum mkt_eth_capabilities {
  #define MTK_SRAM		BIT_ULL(MTK_SRAM_BIT)
  #define MTK_XGMAC		BIT_ULL(MTK_XGMAC_BIT)
  #define MTK_XGMAC_V2		BIT_ULL(MTK_XGMAC_V2_BIT)
@@ -259,7 +288,7 @@
  #define MTK_36BIT_DMA	BIT_ULL(MTK_36BIT_DMA_BIT)
  
  #define MTK_ETH_MUX_GDM1_TO_GMAC1_ESW		\
-@@ -1251,7 +1257,8 @@ enum mkt_eth_capabilities {
+@@ -1259,7 +1265,8 @@ enum mkt_eth_capabilities {
  
  #define MT7986_CAPS  (MTK_GMAC1_SGMII | MTK_GMAC2_SGMII | \
  		      MTK_MUX_GMAC12_TO_GEPHY_SGMII | MTK_QDMA | \
@@ -269,7 +298,7 @@
  
  #define MT7987_CAPS  (MTK_36BIT_DMA | MTK_GMAC1_SGMII | \
  		      MTK_GMAC2_2P5GPHY_V2 | MTK_GMAC2_SGMII | MTK_GMAC3_SGMII | \
-@@ -1488,6 +1495,7 @@ struct mtk_eth {
+@@ -1497,6 +1504,7 @@ struct mtk_eth {
  
  	spinlock_t			dim_lock;
  

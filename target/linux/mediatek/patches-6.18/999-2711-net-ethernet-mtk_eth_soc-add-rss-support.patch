@@ -8,10 +8,8 @@ Subject: [PATCH] net: ethernet: mtk_eth_soc: add rss support
  drivers/net/ethernet/mediatek/mtk_eth_soc.h |  93 +++-
  2 files changed, 468 insertions(+), 136 deletions(-)
 
-Index: linux-6.18.21/drivers/net/ethernet/mediatek/mtk_eth_soc.c
-===================================================================
---- linux-6.18.21.orig/drivers/net/ethernet/mediatek/mtk_eth_soc.c
-+++ linux-6.18.21/drivers/net/ethernet/mediatek/mtk_eth_soc.c
+--- a/drivers/net/ethernet/mediatek/mtk_eth_soc.c
++++ b/drivers/net/ethernet/mediatek/mtk_eth_soc.c
 @@ -28,6 +28,8 @@
  #include <linux/phy/phy.h>
  #include <linux/jhash.h>
@@ -486,8 +484,8 @@ Index: linux-6.18.21/drivers/net/ethernet/mediatek/mtk_eth_soc.c
  }
  #endif
  
-@@ -3957,9 +4076,17 @@ static int mtk_open(struct net_device *d
- 		}
+@@ -3972,9 +4091,17 @@ static int mtk_open(struct net_device *d
+ 			mtk_ppe_update_mtu(eth->ppe[i], mtu);
  
  		napi_enable(&eth->tx_napi);
 -		napi_enable(&eth->rx_napi);
@@ -506,7 +504,7 @@ Index: linux-6.18.21/drivers/net/ethernet/mediatek/mtk_eth_soc.c
  		refcount_set(&eth->dma_refcnt, 1);
  	} else {
  		refcount_inc(&eth->dma_refcnt);
-@@ -4044,9 +4171,16 @@ static int mtk_stop(struct net_device *d
+@@ -4059,9 +4186,16 @@ static int mtk_stop(struct net_device *d
  		mtk_gdm_config(eth, i, MTK_GDMA_DROP_ALL);
  
  	mtk_tx_irq_disable(eth, MTK_TX_DONE_INT);
@@ -525,7 +523,7 @@ Index: linux-6.18.21/drivers/net/ethernet/mediatek/mtk_eth_soc.c
  
  	cancel_work_sync(&eth->rx_dim.work);
  	cancel_work_sync(&eth->tx_dim.work);
-@@ -4166,9 +4300,7 @@ static void mtk_dim_rx(struct work_struc
+@@ -4181,9 +4315,7 @@ static void mtk_dim_rx(struct work_struc
  						dim->profile_ix);
  	spin_lock_bh(&eth->dim_lock);
  
@@ -536,7 +534,7 @@ Index: linux-6.18.21/drivers/net/ethernet/mediatek/mtk_eth_soc.c
  
  	cur = min_t(u32, DIV_ROUND_UP(cur_profile.usec, 20), MTK_PDMA_DELAY_PTIME_MASK);
  	val |= cur << MTK_PDMA_DELAY_RX_PTIME_SHIFT;
-@@ -4176,9 +4308,19 @@ static void mtk_dim_rx(struct work_struc
+@@ -4191,9 +4323,19 @@ static void mtk_dim_rx(struct work_struc
  	cur = min_t(u32, cur_profile.pkts, MTK_PDMA_DELAY_PINT_MASK);
  	val |= cur << MTK_PDMA_DELAY_RX_PINT_SHIFT;
  
@@ -558,7 +556,7 @@ Index: linux-6.18.21/drivers/net/ethernet/mediatek/mtk_eth_soc.c
  
  	spin_unlock_bh(&eth->dim_lock);
  
-@@ -4197,9 +4339,7 @@ static void mtk_dim_tx(struct work_struc
+@@ -4212,9 +4354,7 @@ static void mtk_dim_tx(struct work_struc
  						dim->profile_ix);
  	spin_lock_bh(&eth->dim_lock);
  
@@ -569,7 +567,7 @@ Index: linux-6.18.21/drivers/net/ethernet/mediatek/mtk_eth_soc.c
  
  	cur = min_t(u32, DIV_ROUND_UP(cur_profile.usec, 20), MTK_PDMA_DELAY_PTIME_MASK);
  	val |= cur << MTK_PDMA_DELAY_TX_PTIME_SHIFT;
-@@ -4207,9 +4347,16 @@ static void mtk_dim_tx(struct work_struc
+@@ -4222,9 +4362,16 @@ static void mtk_dim_tx(struct work_struc
  	cur = min_t(u32, cur_profile.pkts, MTK_PDMA_DELAY_PINT_MASK);
  	val |= cur << MTK_PDMA_DELAY_TX_PINT_SHIFT;
  
@@ -588,7 +586,7 @@ Index: linux-6.18.21/drivers/net/ethernet/mediatek/mtk_eth_soc.c
  
  	spin_unlock_bh(&eth->dim_lock);
  
-@@ -4477,6 +4624,25 @@ out:
+@@ -4492,6 +4639,25 @@ out:
  			      MTK_DMA_MONITOR_TIMEOUT);
  }
  
@@ -614,7 +612,7 @@ Index: linux-6.18.21/drivers/net/ethernet/mediatek/mtk_eth_soc.c
  static int mtk_hw_init(struct mtk_eth *eth, bool reset)
  {
  	u32 dma_mask = ETHSYS_DMA_AG_MAP_PDMA | ETHSYS_DMA_AG_MAP_QDMA |
-@@ -4582,11 +4748,16 @@ static int mtk_hw_init(struct mtk_eth *e
+@@ -4597,11 +4763,16 @@ static int mtk_hw_init(struct mtk_eth *e
  	mtk_rx_irq_disable(eth, ~0);
  
  	/* FE int grouping */
@@ -635,7 +633,7 @@ Index: linux-6.18.21/drivers/net/ethernet/mediatek/mtk_eth_soc.c
  
  	if (mtk_is_netsys_v3_or_greater(eth)) {
  		/* PSE dummy page mechanism */
-@@ -5041,6 +5212,8 @@ static void mtk_get_ethtool_stats(struct
+@@ -5061,6 +5232,8 @@ static void mtk_get_ethtool_stats(struct
  static int mtk_get_rxnfc(struct net_device *dev, struct ethtool_rxnfc *cmd,
  			 u32 *rule_locs)
  {
@@ -644,7 +642,7 @@ Index: linux-6.18.21/drivers/net/ethernet/mediatek/mtk_eth_soc.c
  	int ret = -EOPNOTSUPP;
  
  	switch (cmd->cmd) {
-@@ -5048,6 +5221,9 @@ static int mtk_get_rxnfc(struct net_devi
+@@ -5068,6 +5241,9 @@ static int mtk_get_rxnfc(struct net_devi
  		if (dev->hw_features & NETIF_F_LRO) {
  			cmd->data = MTK_MAX_RX_RING_NUM;
  			ret = 0;
@@ -654,7 +652,7 @@ Index: linux-6.18.21/drivers/net/ethernet/mediatek/mtk_eth_soc.c
  		}
  		break;
  	case ETHTOOL_GRXCLSRLCNT:
-@@ -5122,6 +5298,99 @@ static int mtk_set_eee(struct net_device
+@@ -5142,6 +5318,99 @@ static int mtk_set_eee(struct net_device
  	return phylink_ethtool_set_eee(mac->phylink, eee);
  }
  
@@ -754,7 +752,7 @@ Index: linux-6.18.21/drivers/net/ethernet/mediatek/mtk_eth_soc.c
  static u16 mtk_select_queue(struct net_device *dev, struct sk_buff *skb,
  			    struct net_device *sb_dev)
  {
-@@ -5159,6 +5428,10 @@ static const struct ethtool_ops mtk_etht
+@@ -5179,6 +5448,10 @@ static const struct ethtool_ops mtk_etht
  	.set_pauseparam		= mtk_set_pauseparam,
  	.get_rxnfc		= mtk_get_rxnfc,
  	.set_rxnfc		= mtk_set_rxnfc,
@@ -765,7 +763,7 @@ Index: linux-6.18.21/drivers/net/ethernet/mediatek/mtk_eth_soc.c
  	.get_eee		= mtk_get_eee,
  	.set_eee		= mtk_set_eee,
  };
-@@ -5194,6 +5467,7 @@ static int mtk_add_mac(struct mtk_eth *e
+@@ -5214,6 +5487,7 @@ static int mtk_add_mac(struct mtk_eth *e
  	int id, err, count, i;
  	unsigned int sid;
  	int txqs = 1;
@@ -773,7 +771,7 @@ Index: linux-6.18.21/drivers/net/ethernet/mediatek/mtk_eth_soc.c
  	u32 val;
  
  	if (!_id) {
-@@ -5215,7 +5489,10 @@ static int mtk_add_mac(struct mtk_eth *e
+@@ -5235,7 +5509,10 @@ static int mtk_add_mac(struct mtk_eth *e
  	if (MTK_HAS_CAPS(eth->soc->caps, MTK_QDMA))
  		txqs = eth->soc->num_tx_queues;
  
@@ -785,7 +783,7 @@ Index: linux-6.18.21/drivers/net/ethernet/mediatek/mtk_eth_soc.c
  	if (!eth->netdev[id]) {
  		dev_err(eth->dev, "alloc_etherdev failed\n");
  		return -ENOMEM;
-@@ -5398,7 +5675,7 @@ no_pcs:
+@@ -5418,7 +5695,7 @@ no_pcs:
  	eth->netdev[id]->features |= eth->soc->hw_features;
  	eth->netdev[id]->ethtool_ops = &mtk_ethtool_ops;
  
@@ -794,7 +792,7 @@ Index: linux-6.18.21/drivers/net/ethernet/mediatek/mtk_eth_soc.c
  	eth->netdev[id]->dev.of_node = np;
  
  	phylink = phylink_create(&mac->phylink_config,
-@@ -5736,20 +6013,44 @@ static int mtk_probe(struct platform_dev
+@@ -5756,20 +6033,44 @@ static int mtk_probe(struct platform_dev
  			goto err_deinit_hw;
  	}
  
@@ -844,7 +842,7 @@ Index: linux-6.18.21/drivers/net/ethernet/mediatek/mtk_eth_soc.c
  	}
  	if (err)
  		goto err_free_dev;
-@@ -5793,7 +6094,7 @@ static int mtk_probe(struct platform_dev
+@@ -5813,7 +6114,7 @@ static int mtk_probe(struct platform_dev
  		} else
  			netif_info(eth, probe, eth->netdev[i],
  				   "mediatek frame engine at 0x%08lx, irq %d\n",
@@ -853,7 +851,7 @@ Index: linux-6.18.21/drivers/net/ethernet/mediatek/mtk_eth_soc.c
  	}
  
  	/* we run 2 devices on the same DMA ring so we need a dummy device
-@@ -5802,13 +6103,17 @@ static int mtk_probe(struct platform_dev
+@@ -5822,13 +6123,17 @@ static int mtk_probe(struct platform_dev
  	eth->dummy_dev = alloc_netdev_dummy(0);
  	if (!eth->dummy_dev) {
  		err = -ENOMEM;
@@ -875,7 +873,7 @@ Index: linux-6.18.21/drivers/net/ethernet/mediatek/mtk_eth_soc.c
  
  	platform_set_drvdata(pdev, eth);
  	schedule_delayed_work(&eth->reset.monitor_work,
-@@ -5852,7 +6157,12 @@ static void mtk_remove(struct platform_d
+@@ -5872,7 +6177,12 @@ static void mtk_remove(struct platform_d
  	mtk_hw_deinit(eth);
  
  	netif_napi_del(&eth->tx_napi);
@@ -889,7 +887,7 @@ Index: linux-6.18.21/drivers/net/ethernet/mediatek/mtk_eth_soc.c
  	mtk_cleanup(eth);
  	free_netdev(eth->dummy_dev);
  	mtk_mdio_cleanup(eth);
-@@ -5869,6 +6179,7 @@ static const struct mtk_soc_data mt2701_
+@@ -5889,6 +6199,7 @@ static const struct mtk_soc_data mt2701_
  	.required_pctl = true,
  	.version = 1,
  	.num_tx_queues = 16,
@@ -897,7 +895,7 @@ Index: linux-6.18.21/drivers/net/ethernet/mediatek/mtk_eth_soc.c
  	.tx = {
  		DESC_SIZE(struct mtk_tx_dma),
  		.dma_max_len = MTK_TX_DMA_BUF_LEN,
-@@ -5878,7 +6189,6 @@ static const struct mtk_soc_data mt2701_
+@@ -5898,7 +6209,6 @@ static const struct mtk_soc_data mt2701_
  	},
  	.rx = {
  		DESC_SIZE(struct mtk_rx_dma),
@@ -905,7 +903,7 @@ Index: linux-6.18.21/drivers/net/ethernet/mediatek/mtk_eth_soc.c
  		.dma_l4_valid = RX_DMA_L4_VALID,
  		.dma_size = MTK_DMA_SIZE(512),
  		.dma_max_len = MTK_TX_DMA_BUF_LEN,
-@@ -5898,6 +6208,7 @@ static const struct mtk_soc_data mt7621_
+@@ -5918,6 +6228,7 @@ static const struct mtk_soc_data mt7621_
  	.hash_offset = 2,
  	.num_tx_queues = 16,
  	.foe_entry_size = MTK_FOE_ENTRY_V1_SIZE,
@@ -913,7 +911,7 @@ Index: linux-6.18.21/drivers/net/ethernet/mediatek/mtk_eth_soc.c
  	.tx = {
  		DESC_SIZE(struct mtk_tx_dma),
  		.dma_max_len = MTK_TX_DMA_BUF_LEN,
-@@ -5907,7 +6218,6 @@ static const struct mtk_soc_data mt7621_
+@@ -5927,7 +6238,6 @@ static const struct mtk_soc_data mt7621_
  	},
  	.rx = {
  		DESC_SIZE(struct mtk_rx_dma),
@@ -921,7 +919,7 @@ Index: linux-6.18.21/drivers/net/ethernet/mediatek/mtk_eth_soc.c
  		.dma_l4_valid = RX_DMA_L4_VALID,
  		.dma_size = MTK_DMA_SIZE(512),
  		.dma_max_len = MTK_TX_DMA_BUF_LEN,
-@@ -5929,6 +6239,7 @@ static const struct mtk_soc_data mt7622_
+@@ -5949,6 +6259,7 @@ static const struct mtk_soc_data mt7622_
  	.has_accounting = true,
  	.num_tx_queues = 16,
  	.foe_entry_size = MTK_FOE_ENTRY_V1_SIZE,
@@ -929,7 +927,7 @@ Index: linux-6.18.21/drivers/net/ethernet/mediatek/mtk_eth_soc.c
  	.tx = {
  		DESC_SIZE(struct mtk_tx_dma),
  		.dma_max_len = MTK_TX_DMA_BUF_LEN,
-@@ -5938,7 +6249,6 @@ static const struct mtk_soc_data mt7622_
+@@ -5958,7 +6269,6 @@ static const struct mtk_soc_data mt7622_
  	},
  	.rx = {
  		DESC_SIZE(struct mtk_rx_dma),
@@ -937,7 +935,7 @@ Index: linux-6.18.21/drivers/net/ethernet/mediatek/mtk_eth_soc.c
  		.dma_l4_valid = RX_DMA_L4_VALID,
  		.dma_size = MTK_DMA_SIZE(512),
  		.dma_max_len = MTK_TX_DMA_BUF_LEN,
-@@ -5959,6 +6269,7 @@ static const struct mtk_soc_data mt7623_
+@@ -5979,6 +6289,7 @@ static const struct mtk_soc_data mt7623_
  	.num_tx_queues = 16,
  	.foe_entry_size = MTK_FOE_ENTRY_V1_SIZE,
  	.disable_pll_modes = true,
@@ -945,7 +943,7 @@ Index: linux-6.18.21/drivers/net/ethernet/mediatek/mtk_eth_soc.c
  	.tx = {
  		DESC_SIZE(struct mtk_tx_dma),
  		.dma_max_len = MTK_TX_DMA_BUF_LEN,
-@@ -5968,7 +6279,6 @@ static const struct mtk_soc_data mt7623_
+@@ -5988,7 +6299,6 @@ static const struct mtk_soc_data mt7623_
  	},
  	.rx = {
  		DESC_SIZE(struct mtk_rx_dma),
@@ -953,7 +951,7 @@ Index: linux-6.18.21/drivers/net/ethernet/mediatek/mtk_eth_soc.c
  		.dma_l4_valid = RX_DMA_L4_VALID,
  		.dma_size = MTK_DMA_SIZE(512),
  		.dma_max_len = MTK_TX_DMA_BUF_LEN,
-@@ -5986,6 +6296,7 @@ static const struct mtk_soc_data mt7629_
+@@ -6006,6 +6316,7 @@ static const struct mtk_soc_data mt7629_
  	.has_accounting = true,
  	.version = 1,
  	.num_tx_queues = 16,
@@ -961,7 +959,7 @@ Index: linux-6.18.21/drivers/net/ethernet/mediatek/mtk_eth_soc.c
  	.tx = {
  		DESC_SIZE(struct mtk_tx_dma),
  		.dma_max_len = MTK_TX_DMA_BUF_LEN,
-@@ -5995,7 +6306,6 @@ static const struct mtk_soc_data mt7629_
+@@ -6015,7 +6326,6 @@ static const struct mtk_soc_data mt7629_
  	},
  	.rx = {
  		DESC_SIZE(struct mtk_rx_dma),
@@ -969,7 +967,7 @@ Index: linux-6.18.21/drivers/net/ethernet/mediatek/mtk_eth_soc.c
  		.dma_l4_valid = RX_DMA_L4_VALID,
  		.dma_size = MTK_DMA_SIZE(512),
  		.dma_max_len = MTK_TX_DMA_BUF_LEN,
-@@ -6017,6 +6327,7 @@ static const struct mtk_soc_data mt7981_
+@@ -6037,6 +6347,7 @@ static const struct mtk_soc_data mt7981_
  	.has_accounting = true,
  	.num_tx_queues = 16,
  	.foe_entry_size = MTK_FOE_ENTRY_V2_SIZE,
@@ -977,7 +975,7 @@ Index: linux-6.18.21/drivers/net/ethernet/mediatek/mtk_eth_soc.c
  	.tx = {
  		DESC_SIZE(struct mtk_tx_dma_v2),
  		.dma_max_len = MTK_TX_DMA_BUF_LEN_V2,
-@@ -6026,7 +6337,6 @@ static const struct mtk_soc_data mt7981_
+@@ -6046,7 +6357,6 @@ static const struct mtk_soc_data mt7981_
  	},
  	.rx = {
  		DESC_SIZE(struct mtk_rx_dma),
@@ -985,7 +983,7 @@ Index: linux-6.18.21/drivers/net/ethernet/mediatek/mtk_eth_soc.c
  		.dma_l4_valid = RX_DMA_L4_VALID_V2,
  		.dma_max_len = MTK_TX_DMA_BUF_LEN,
  		.dma_len_offset = 16,
-@@ -6048,16 +6358,16 @@ static const struct mtk_soc_data mt7986_
+@@ -6068,16 +6378,16 @@ static const struct mtk_soc_data mt7986_
  	.has_accounting = true,
  	.num_tx_queues = 16,
  	.foe_entry_size = MTK_FOE_ENTRY_V2_SIZE,
@@ -1004,7 +1002,7 @@ Index: linux-6.18.21/drivers/net/ethernet/mediatek/mtk_eth_soc.c
  		.dma_l4_valid = RX_DMA_L4_VALID_V2,
  		.dma_max_len = MTK_TX_DMA_BUF_LEN,
  		.dma_len_offset = 16,
-@@ -6079,6 +6389,7 @@ static const struct mtk_soc_data mt7987_
+@@ -6099,6 +6409,7 @@ static const struct mtk_soc_data mt7987_
  	.has_accounting = true,
  	.num_tx_queues = 32,
  	.foe_entry_size = MTK_FOE_ENTRY_V3_SIZE,
@@ -1012,7 +1010,7 @@ Index: linux-6.18.21/drivers/net/ethernet/mediatek/mtk_eth_soc.c
  	.tx = {
  		DESC_SIZE(struct mtk_tx_dma_v2),
  		.dma_max_len = MTK_TX_DMA_BUF_LEN_V2,
-@@ -6088,11 +6399,10 @@ static const struct mtk_soc_data mt7987_
+@@ -6108,11 +6419,10 @@ static const struct mtk_soc_data mt7987_
  	},
  	.rx = {
  		DESC_SIZE(struct mtk_rx_dma_v2),
@@ -1025,7 +1023,7 @@ Index: linux-6.18.21/drivers/net/ethernet/mediatek/mtk_eth_soc.c
  	},
  };
  
-@@ -6110,6 +6420,7 @@ static const struct mtk_soc_data mt7988_
+@@ -6130,6 +6440,7 @@ static const struct mtk_soc_data mt7988_
  	.has_accounting = true,
  	.num_tx_queues = 32,
  	.foe_entry_size = MTK_FOE_ENTRY_V3_SIZE,
@@ -1033,7 +1031,7 @@ Index: linux-6.18.21/drivers/net/ethernet/mediatek/mtk_eth_soc.c
  	.tx = {
  		DESC_SIZE(struct mtk_tx_dma_v2),
  		.dma_max_len = MTK_TX_DMA_BUF_LEN_V2,
-@@ -6119,7 +6430,6 @@ static const struct mtk_soc_data mt7988_
+@@ -6139,7 +6450,6 @@ static const struct mtk_soc_data mt7988_
  	},
  	.rx = {
  		DESC_SIZE(struct mtk_rx_dma_v2),
@@ -1041,7 +1039,7 @@ Index: linux-6.18.21/drivers/net/ethernet/mediatek/mtk_eth_soc.c
  		.dma_l4_valid = RX_DMA_L4_VALID_V2,
  		.dma_max_len = MTK_TX_DMA_BUF_LEN_V2,
  		.dma_len_offset = 8,
-@@ -6134,6 +6444,7 @@ static const struct mtk_soc_data rt5350_
+@@ -6154,6 +6464,7 @@ static const struct mtk_soc_data rt5350_
  	.required_clks = MT7628_CLKS_BITMAP,
  	.required_pctl = false,
  	.version = 1,
@@ -1049,7 +1047,7 @@ Index: linux-6.18.21/drivers/net/ethernet/mediatek/mtk_eth_soc.c
  	.tx = {
  		DESC_SIZE(struct mtk_tx_dma),
  		.dma_max_len = MTK_TX_DMA_BUF_LEN,
-@@ -6142,7 +6453,6 @@ static const struct mtk_soc_data rt5350_
+@@ -6162,7 +6473,6 @@ static const struct mtk_soc_data rt5350_
  	},
  	.rx = {
  		DESC_SIZE(struct mtk_rx_dma),
@@ -1057,10 +1055,8 @@ Index: linux-6.18.21/drivers/net/ethernet/mediatek/mtk_eth_soc.c
  		.dma_l4_valid = RX_DMA_L4_VALID_PDMA,
  		.dma_max_len = MTK_TX_DMA_BUF_LEN,
  		.dma_len_offset = 16,
-Index: linux-6.18.21/drivers/net/ethernet/mediatek/mtk_eth_soc.h
-===================================================================
---- linux-6.18.21.orig/drivers/net/ethernet/mediatek/mtk_eth_soc.h
-+++ linux-6.18.21/drivers/net/ethernet/mediatek/mtk_eth_soc.h
+--- a/drivers/net/ethernet/mediatek/mtk_eth_soc.h
++++ b/drivers/net/ethernet/mediatek/mtk_eth_soc.h
 @@ -86,6 +86,8 @@
  #define	MTK_HW_LRO_BW_THRE		3000
  #define	MTK_HW_LRO_REPLACE_DELTA	1000
