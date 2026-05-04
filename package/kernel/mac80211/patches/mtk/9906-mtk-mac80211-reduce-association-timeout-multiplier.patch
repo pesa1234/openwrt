@@ -1,6 +1,6 @@
 --- a/net/mac80211/mlme.c
 +++ b/net/mac80211/mlme.c
-@@ -8449,7 +8449,7 @@ void ieee80211_sta_work(struct ieee80211
+@@ -8485,7 +8485,7 @@ void ieee80211_sta_work(struct ieee80211
  			 */
  			if (status_acked) {
  				ifmgd->assoc_data->timeout =

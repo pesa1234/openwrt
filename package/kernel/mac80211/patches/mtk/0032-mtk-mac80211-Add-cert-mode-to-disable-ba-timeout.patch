@@ -50,7 +50,7 @@ Signed-off-by: Michael-CY Lee <michael-cy.lee@mediatek.com>
  			tid_tx->last_tx = jiffies;
 --- a/net/mac80211/debugfs.c
 +++ b/net/mac80211/debugfs.c
-@@ -448,6 +448,54 @@ static const struct file_operations rese
+@@ -444,6 +444,54 @@ static const struct file_operations rese
  };
  #endif
  
@@ -105,7 +105,7 @@ Signed-off-by: Michael-CY Lee <michael-cy.lee@mediatek.com>
  static const char *hw_flag_names[] = {
  #define FLAG(F)	[IEEE80211_HW_##F] = #F
  	FLAG(HAS_RATE_CONTROL),
-@@ -721,6 +769,7 @@ void debugfs_hw_add(struct ieee80211_loc
+@@ -717,6 +765,7 @@ void debugfs_hw_add(struct ieee80211_loc
  	debugfs_create_u32("aql_threshold", 0600,
  			   phyd, &local->aql_threshold);
  
