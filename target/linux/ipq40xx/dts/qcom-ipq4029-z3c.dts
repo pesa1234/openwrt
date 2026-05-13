@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: GPL-2.0-only
-// Device Tree Source for Meraki Z3 (Fuzzy Cricket)
+// Device Tree Source for Meraki Z3C (Heart of Gold)
 
 #include "qcom-ipq4029-meraki-insect.dtsi"
 
 / {
-	model = "Meraki Z3 Router";
-	compatible = "meraki,z3";
+	model = "Meraki Z3C LTE Router";
+	compatible = "meraki,z3c";
 
 	soc {
 		ess_tcsr@1953000 {
@@ -25,7 +25,7 @@
 		compatible = "gpio-leds";
 
 		power_orange: power {
-			color = <LED_COLOR_ID_AMBER>;
+			color = <LED_COLOR_ID_ORANGE>;
 			function = LED_FUNCTION_POWER;
 			gpios = <&tlmm 49 GPIO_ACTIVE_LOW>;
 			panic-indicator;
@@ -109,6 +109,46 @@
 			function = LED_FUNCTION_LAN;
 			function-enumerator = <9>;
 			gpios = <&tlmm 32 GPIO_ACTIVE_LOW>;
+		};
+	};
+
+	gpio_export {
+		compatible = "gpio-export";
+
+		lte_en {
+			gpio-export,name = "lte_en";
+			gpio-export,output = <1>;
+			gpios = <&tlmm 39 GPIO_ACTIVE_LOW>;
+		};
+
+		lte_rst {
+			gpio-export,name = "lte_rst";
+			gpio-export,output = <0>;
+			gpios = <&tlmm 41 GPIO_ACTIVE_HIGH>;
+		};
+
+		ble_rst {
+			gpio-export,name = "ble_rst";
+			gpio-export,output = <0>;
+			gpios = <&tlmm 42 GPIO_ACTIVE_HIGH>;
+		};
+
+		pse_det {
+			gpio-export,name = "pse_det";
+			gpio-export,input = <0>;
+			gpios = <&tlmm 43 GPIO_ACTIVE_LOW>;
+		};
+
+		ble_load {
+			gpio-export,name = "ble_load";
+			gpio-export,output = <1>;
+			gpios = <&tlmm 52 GPIO_ACTIVE_LOW>;
+		};
+
+		lte_estop {
+			gpio-export,name = "lte_estop";
+			gpio-export,output = <0>;
+			gpios = <&tlmm 61 GPIO_ACTIVE_HIGH>;
 		};
 	};
 };

@@ -102,7 +102,7 @@ Signed-off-by: Christian Marangi <ansuelsmth@gmail.com>
  #include <linux/phy.h>
  #include <linux/phy_fixed.h>
  #include <linux/phylink.h>
-@@ -62,6 +63,7 @@ struct phylink {
+@@ -67,6 +68,7 @@ struct phylink {
  
  	/* List of available PCS */
  	struct list_head pcs_list;
@@ -110,7 +110,7 @@ Signed-off-by: Christian Marangi <ansuelsmth@gmail.com>
  
  	/* What interface are supported by the current link.
  	 * Can change on removal or addition of new PCS.
-@@ -1955,6 +1957,51 @@ int phylink_set_fixed_link(struct phylin
+@@ -2039,6 +2041,51 @@ int phylink_set_fixed_link(struct phylin
  }
  EXPORT_SYMBOL_GPL(phylink_set_fixed_link);
  
@@ -162,7 +162,7 @@ Signed-off-by: Christian Marangi <ansuelsmth@gmail.com>
  /**
   * phylink_create() - create a phylink instance
   * @config: a pointer to the target &struct phylink_config
-@@ -2010,6 +2057,11 @@ struct phylink *phylink_create(struct ph
+@@ -2099,6 +2146,11 @@ struct phylink *phylink_create(struct ph
  				 pl->supported_interfaces,
  				 pcs->supported_interfaces);
  

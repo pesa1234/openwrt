@@ -29,15 +29,15 @@ Signed-off-by: Christian Marangi <ansuelsmth@gmail.com>
 
 --- a/drivers/net/phy/phylink.c
 +++ b/drivers/net/phy/phylink.c
-@@ -88,6 +88,7 @@ struct phylink {
- 	bool suspend_link_up;
- 	bool force_major_config;
+@@ -93,6 +93,7 @@ struct phylink {
+ 	bool using_mac_select_pcs;
  	bool major_config_failed;
+ 	bool force_major_config;
 +	bool reconfig_interface;
- 	bool mac_supports_eee_ops;
- 	bool mac_supports_eee;
- 	bool phy_enable_tx_lpi;
-@@ -919,6 +920,55 @@ static void phylink_resolve_an_pause(str
+ 
+ 	struct sfp_bus *sfp_bus;
+ 	bool sfp_may_have_phy;
+@@ -1064,6 +1065,55 @@ static void phylink_resolve_an_pause(str
  	}
  }
  
@@ -93,8 +93,8 @@ Signed-off-by: Christian Marangi <ansuelsmth@gmail.com>
  static unsigned int phylink_pcs_inband_caps(struct phylink_pcs *pcs,
  				    phy_interface_t interface)
  {
-@@ -1732,6 +1782,10 @@ static void phylink_resolve(struct work_
- 		if (phy)
+@@ -1818,6 +1868,10 @@ static void phylink_resolve(struct work_
+ 		if (pl->phydev)
  			link_state.link &= pl->phy_state.link;
  
 +		/* Force mac_config if we need to reconfig the interface */
@@ -102,9 +102,9 @@ Signed-off-by: Christian Marangi <ansuelsmth@gmail.com>
 +			mac_config = true;
 +
  		/* Only update if the PHY link is up */
- 		if (phy && pl->phy_state.link) {
+ 		if (pl->phydev && pl->phy_state.link) {
  			/* If the interface has changed, force a link down
-@@ -1766,7 +1820,7 @@ static void phylink_resolve(struct work_
+@@ -1852,7 +1906,7 @@ static void phylink_resolve(struct work_
  		phylink_apply_manual_flow(pl, &link_state);
  
  	if ((mac_config && link_state.interface != pl->link_config.interface) ||
@@ -113,7 +113,7 @@ Signed-off-by: Christian Marangi <ansuelsmth@gmail.com>
  		/* The interface has changed or a forced major configuration
  		 * was requested, so force the link down and then reconfigure.
  		 */
-@@ -1777,6 +1831,7 @@ static void phylink_resolve(struct work_
+@@ -1863,6 +1917,7 @@ static void phylink_resolve(struct work_
  		phylink_major_config(pl, false, &link_state);
  		pl->link_config.interface = link_state.interface;
  		pl->force_major_config = false;
@@ -123,7 +123,7 @@ Signed-off-by: Christian Marangi <ansuelsmth@gmail.com>
  	/* If configuration of the interface failed, force the link down
 --- a/include/linux/phylink.h
 +++ b/include/linux/phylink.h
-@@ -717,6 +717,8 @@ void phylink_disconnect_phy(struct phyli
+@@ -632,6 +632,8 @@ void phylink_disconnect_phy(struct phyli
  int phylink_set_fixed_link(struct phylink *,
  			   const struct phylink_link_state *);
  
