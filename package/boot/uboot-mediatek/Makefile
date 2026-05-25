@@ -421,6 +421,18 @@ define U-Boot/mt7981_glinet_gl-xe3000
   DEPENDS:=+trusted-firmware-a-mt7981-emmc-ddr4
 endef
 
+define U-Boot/mt7981_globitel_bt-r320
+  NAME:=Globitel BT-R320
+  BUILD_SUBTARGET:=filogic
+  BUILD_DEVICES:=globitel_bt-r320
+  UBOOT_CONFIG:=mt7981_globitel_bt-r320
+  UBOOT_IMAGE:=u-boot.fip
+  BL2_BOOTDEV:=emmc
+  BL2_SOC:=mt7981
+  BL2_DDRTYPE:=ddr4
+  DEPENDS:=+trusted-firmware-a-mt7981-emmc-ddr4
+endef
+
 define U-Boot/mt7981_h3c_magic-nx30-pro
   NAME:=H3C Magic NX30 Pro
   BUILD_SUBTARGET:=filogic
@@ -656,6 +668,18 @@ define U-Boot/mt7981_snr_snr-cpe-ax2
   BUILD_SUBTARGET:=filogic
   BUILD_DEVICES:=snr_snr-cpe-ax2
   UBOOT_CONFIG:=mt7981_snr_snr-cpe-ax2
+  UBOOT_IMAGE:=u-boot.fip
+  BL2_BOOTDEV:=spim-nand
+  BL2_SOC:=mt7981
+  BL2_DDRTYPE:=ddr3
+  DEPENDS:=+trusted-firmware-a-mt7981-spim-nand-ddr3
+endef
+
+define U-Boot/mt7981_wavlink_wl-wnt100x3
+  NAME:=WAVLINK WL-WNT100X3
+  BUILD_SUBTARGET:=filogic
+  BUILD_DEVICES:=wavlink_wl-wnt100x3-ubootmod
+  UBOOT_CONFIG:=mt7981_wavlink_wl-wnt100x3
   UBOOT_IMAGE:=u-boot.fip
   BL2_BOOTDEV:=spim-nand
   BL2_SOC:=mt7981
@@ -1219,6 +1243,7 @@ UBOOT_TARGETS := \
 	mt7981_glinet_gl-mt2500 \
 	mt7981_glinet_gl-x3000 \
 	mt7981_glinet_gl-xe3000 \
+	mt7981_globitel_bt-r320 \
 	mt7981_h3c_magic-nx30-pro \
 	mt7981_imou_hx21 \
 	mt7981_jcg_q30-pro \
@@ -1238,6 +1263,7 @@ UBOOT_TARGETS := \
 	mt7981_qihoo_360t7 \
 	mt7981_qihoo_360t7-ubi \
 	mt7981_snr_snr-cpe-ax2 \
+	mt7981_wavlink_wl-wnt100x3 \
 	mt7981_xiaomi_mi-router-ax3000t \
 	mt7981_xiaomi_mi-router-wr30u \
 	mt7986_acer_predator-w6x \
