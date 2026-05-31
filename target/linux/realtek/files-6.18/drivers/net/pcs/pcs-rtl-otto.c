@@ -5,14 +5,16 @@
 #include <linux/of.h>
 #include <linux/of_mdio.h>
 #include <linux/of_platform.h>
+#include <linux/pcs/pcs-provider.h>
 #include <linux/phy.h>
 #include <linux/phy/phy-common-props.h>
 #include <linux/phylink.h>
 #include <linux/platform_device.h>
+#include <linux/property.h>
 #include <linux/regmap.h>
+#include <linux/rtnetlink.h>
 
 #define RTPCS_SDS_CNT				14
-#define RTPCS_PORT_CNT				57
 #define RTPCS_MAX_LINKS_PER_SDS			8
 
 #define RTPCS_SPEED_10				0
@@ -212,7 +214,7 @@ struct rtpcs_sds_regs {
 
 struct rtpcs_serdes {
 	struct rtpcs_ctrl *ctrl;
-	struct device_node *of_node;
+	struct fwnode_handle *fwnode;
 	const struct rtpcs_sds_ops *ops;
 	const struct rtpcs_sds_regs *regs;
 	enum rtpcs_sds_type type;
@@ -221,6 +223,8 @@ struct rtpcs_serdes {
 		struct regmap_field *mac_mode_force;	/* nullable, 931x only */
 		struct regmap_field *usxgmii_submode;	/* nullable, 93xx only */
 	} swcore_regs;
+	struct rtpcs_link *link[RTPCS_MAX_LINKS_PER_SDS];
+	s16 link_port[RTPCS_MAX_LINKS_PER_SDS];
 
 	enum rtpcs_sds_mode hw_mode;
 	u8 id;
@@ -234,7 +238,6 @@ struct rtpcs_ctrl {
 	struct mii_bus *bus;
 	const struct rtpcs_config *cfg;
 	struct rtpcs_serdes serdes[RTPCS_SDS_CNT];
-	struct rtpcs_link *link[RTPCS_PORT_CNT];
 	struct mutex lock;
 
 	/* meaning and source may be family-specific */
@@ -3991,16 +3994,14 @@ static int rtpcs_sds_config_polarity(struct rtpcs_serdes *sds, phy_interface_t i
 	unsigned int rx_pol, tx_pol;
 	int ret;
 
-	if (!sds->of_node)
+	if (!sds->fwnode)
 		return 0;
 
-	ret = phy_get_manual_rx_polarity(of_fwnode_handle(sds->of_node), phy_modes(if_mode),
-					 &rx_pol);
+	ret = phy_get_manual_rx_polarity(sds->fwnode, phy_modes(if_mode), &rx_pol);
 	if (ret < 0)
 		return ret;
 
-	ret = phy_get_manual_tx_polarity(of_fwnode_handle(sds->of_node), phy_modes(if_mode),
-					 &tx_pol);
+	ret = phy_get_manual_tx_polarity(sds->fwnode, phy_modes(if_mode), &tx_pol);
 	if (ret < 0)
 		return ret;
 
@@ -4134,72 +4135,6 @@ out:
 	return ret;
 }
 
-struct phylink_pcs *rtpcs_create(struct device *dev, struct device_node *np, int port);
-struct phylink_pcs *rtpcs_create(struct device *dev, struct device_node *np, int port)
-{
-	struct platform_device *pdev;
-	struct device_node *pcs_np;
-	struct rtpcs_serdes *sds;
-	struct rtpcs_ctrl *ctrl;
-	struct rtpcs_link *link;
-	u32 sds_id;
-
-	if (!np || !of_device_is_available(np))
-		return ERR_PTR(-ENODEV);
-
-	pcs_np = of_get_parent(np);
-	if (!pcs_np)
-		return ERR_PTR(-ENODEV);
-
-	if (!of_device_is_available(pcs_np)) {
-		of_node_put(pcs_np);
-		return ERR_PTR(-ENODEV);
-	}
-
-	pdev = of_find_device_by_node(pcs_np);
-	of_node_put(pcs_np);
-	if (!pdev)
-		return ERR_PTR(-EPROBE_DEFER);
-
-	ctrl = platform_get_drvdata(pdev);
-	if (!ctrl) {
-		put_device(&pdev->dev);
-		return ERR_PTR(-EPROBE_DEFER);
-	}
-
-	if (port < 0 || port > ctrl->cfg->cpu_port)
-		return ERR_PTR(-EINVAL);
-
-	if (of_property_read_u32(np, "reg", &sds_id))
-		return ERR_PTR(-EINVAL);
-	if (sds_id >= ctrl->cfg->serdes_count)
-		return ERR_PTR(-EINVAL);
-
-	sds = &ctrl->serdes[sds_id];
-	if (rtpcs_sds_read(sds, 0, 0) < 0)
-		return ERR_PTR(-EINVAL);
-
-	link = devm_kzalloc(ctrl->dev, sizeof(*link), GFP_KERNEL);
-	if (!link) {
-		put_device(&pdev->dev);
-		return ERR_PTR(-ENOMEM);
-	}
-
-	device_link_add(dev, ctrl->dev, DL_FLAG_AUTOREMOVE_CONSUMER);
-
-	link->ctrl = ctrl;
-	link->port = port;
-	link->sds = sds;
-	link->pcs.ops = ctrl->cfg->pcs_ops;
-
-	ctrl->link[port] = link;
-
-	dev_dbg(ctrl->dev, "phylink_pcs created, port %d, sds %d\n", port, sds_id);
-
-	return &link->pcs;
-}
-EXPORT_SYMBOL(rtpcs_create);
-
 static struct mii_bus *rtpcs_probe_serdes_bus(struct rtpcs_ctrl *ctrl)
 {
 	struct device_node *np;
@@ -4227,46 +4162,140 @@ static struct mii_bus *rtpcs_probe_serdes_bus(struct rtpcs_ctrl *ctrl)
 	return bus;
 }
 
-static void rtpcs_sds_put_of_node(void *data)
+static void rtpcs_sds_put_fwnode(void *data)
 {
 	struct rtpcs_serdes *sds = data;
 
-	of_node_put(sds->of_node);
+	fwnode_handle_put(sds->fwnode);
 }
 
-static void rtpcs_count_links(struct rtpcs_ctrl *ctrl)
+static void rtpcs_del_provider_action(void *data)
 {
-	struct device_node *consumer __free(device_node) = NULL;
-	struct of_phandle_args args;
+	struct rtpcs_serdes *sds = data;
 
-	for_each_node_with_property(consumer, "pcs-handle") {
-		int idx = 0;
+	fwnode_pcs_del_provider(sds->fwnode);
 
-		if (!of_device_is_available(consumer))
+	rtnl_lock();
+	for (int i = 0; i < RTPCS_MAX_LINKS_PER_SDS; i++) {
+		if (!sds->link[i])
 			continue;
 
-		while (!of_parse_phandle_with_args(consumer, "pcs-handle",
-						   "#pcs-cells", idx++, &args)) {
-			struct device_node *arg_np __free(device_node) = args.np;
-
-			for (int s = 0; s < ctrl->cfg->serdes_count; s++) {
-				struct rtpcs_serdes *sds = &ctrl->serdes[s];
-
-				if (arg_np != sds->of_node)
-					continue;
-
-				if (sds->num_of_links >= RTPCS_MAX_LINKS_PER_SDS) {
-					dev_warn(ctrl->dev,
-						 "%pOF: pcs-handle to sds%u exceeds max %u, clamping\n",
-						 consumer, sds->id, RTPCS_MAX_LINKS_PER_SDS);
-					break;
-				}
-
-				sds->num_of_links++;
-				break;
-			}
-		}
+		phylink_release_pcs(&sds->link[i]->pcs);
 	}
+	rtnl_unlock();
+}
+
+static struct rtpcs_serdes *rtpcs_find_serdes(struct rtpcs_ctrl *ctrl,
+					      struct fwnode_handle *fwnode)
+{
+	for (int i = 0; i < ctrl->cfg->serdes_count; i++) {
+		if (ctrl->serdes[i].fwnode == fwnode)
+			return &ctrl->serdes[i];
+	}
+	return NULL;
+}
+
+/*
+ * Walk the sibling switch's ethernet-ports subtree to learn which MAC port
+ * each (SerDes, link_idx) pair serves. Same "backwards" topology lookup the
+ * sibling MDIO driver does for phy-handle: the DT already encodes the
+ * mapping via per-port pcs-handle properties, so the driver doesn't need a
+ * parallel per-SoC table. pcs_get_state still needs the port number to
+ * index MAC-side link status registers; it reads link_port[] populated
+ * here.
+ */
+static int rtpcs_map_links(struct device *dev, struct rtpcs_ctrl *ctrl)
+{
+	struct fwnode_handle *fw_dev = dev_fwnode(dev);
+	struct fwnode_handle *fw_parent __free(fwnode_handle) = fwnode_get_parent(fw_dev);
+	if (!fw_parent)
+		return -ENODEV;
+
+	struct fwnode_handle *fw_switch __free(fwnode_handle) =
+		fwnode_get_named_child_node(fw_parent, "ethernet-switch");
+	if (!fw_switch)
+		return dev_err_probe(dev, -ENODEV, "%pfwP missing ethernet-switch\n", fw_parent);
+
+	struct fwnode_handle *fw_ports __free(fwnode_handle) =
+		fwnode_get_named_child_node(fw_switch, "ethernet-ports");
+	if (!fw_ports)
+		return dev_err_probe(dev, -ENODEV, "%pfwP missing ethernet-ports\n", fw_switch);
+
+	fwnode_for_each_child_node_scoped(fw_ports, fw_port) {
+		struct fwnode_reference_args args;
+		struct rtpcs_serdes *sds;
+		int link_idx, ret;
+		u32 pn;
+
+		if (fwnode_property_read_u32(fw_port, "reg", &pn))
+			continue;
+
+		ret = fwnode_property_get_reference_args(fw_port, "pcs-handle", "#pcs-cells",
+							 -1, 0, &args);
+		if (ret)
+			continue;
+
+		struct fwnode_handle *fw_pcs __free(fwnode_handle) = args.fwnode;
+		link_idx = args.args[0];
+
+		if (link_idx >= RTPCS_MAX_LINKS_PER_SDS)
+			return dev_err_probe(dev, -ERANGE,
+					     "%pfwP: pcs-handle link %d exceeds max %u\n",
+					     fw_port, link_idx, RTPCS_MAX_LINKS_PER_SDS);
+
+		sds = rtpcs_find_serdes(ctrl, fw_pcs);
+		if (!sds)
+			continue;
+
+		if (sds->link_port[link_idx] >= 0)
+			return dev_err_probe(dev, -EEXIST,
+					     "%pfwP: sds%u link %d already assigned to port %d\n",
+					     fw_port, sds->id, link_idx, sds->link_port[link_idx]);
+
+		sds->link_port[link_idx] = pn;
+		sds->num_of_links++;
+	}
+
+	return 0;
+}
+
+static struct phylink_pcs *rtpcs_pcs_get(struct fwnode_reference_args *pcsspec, void *data)
+{
+	struct rtpcs_serdes *sds = data;
+	struct rtpcs_link *link;
+	unsigned int link_idx;
+	struct device *dev;
+
+	dev = sds->ctrl->dev;
+	if (!pcsspec->nargs) {
+		dev_err(dev, "invalid number of cells in 'pcs' property\n");
+		return ERR_PTR(-EINVAL);
+	}
+
+	link_idx = pcsspec->args[0];
+	if (link_idx >= RTPCS_MAX_LINKS_PER_SDS)
+		return ERR_PTR(-EINVAL);
+
+	if (sds->link_port[link_idx] < 0) {
+		dev_err(dev, "sds %u link %d not associated with any port\n",
+			sds->id, link_idx);
+		return ERR_PTR(-ENODEV);
+	}
+
+	if (!sds->link[link_idx]) {
+		link = devm_kzalloc(dev, sizeof(*link), GFP_KERNEL);
+		if (!link)
+			return ERR_PTR(-ENOMEM);
+
+		link->ctrl = sds->ctrl;
+		link->port = sds->link_port[link_idx];
+		link->sds = sds;
+		link->pcs.ops = sds->ctrl->cfg->pcs_ops;
+
+		sds->link[link_idx] = link;
+	}
+
+	return &sds->link[link_idx]->pcs;
 }
 
 static int rtpcs_probe(struct platform_device *pdev)
@@ -4302,6 +4331,8 @@ static int rtpcs_probe(struct platform_device *pdev)
 		sds->id = i;
 		sds->ops = ctrl->cfg->sds_ops;
 		sds->regs = ctrl->cfg->sds_regs;
+		for (int j = 0; j < RTPCS_MAX_LINKS_PER_SDS; j++)
+			sds->link_port[j] = -1;
 
 		ret = ctrl->cfg->sds_probe(sds);
 		if (ret)
@@ -4317,13 +4348,15 @@ static int rtpcs_probe(struct platform_device *pdev)
 			return -EINVAL;
 
 		sds = &ctrl->serdes[sds_id];
-		sds->of_node = of_node_get(child);
-		ret = devm_add_action_or_reset(dev, rtpcs_sds_put_of_node, sds);
+		sds->fwnode = fwnode_handle_get(of_fwnode_handle(child));
+		ret = devm_add_action_or_reset(dev, rtpcs_sds_put_fwnode, sds);
 		if (ret)
 			return ret;
 	}
 
-	rtpcs_count_links(ctrl);
+	ret = rtpcs_map_links(dev, ctrl);
+	if (ret)
+		return ret;
 
 	if (ctrl->cfg->init) {
 		ret = ctrl->cfg->init(ctrl);
@@ -4331,14 +4364,23 @@ static int rtpcs_probe(struct platform_device *pdev)
 			return ret;
 	}
 
-	/*
-	 * rtpcs_create() relies on that fact that data is attached to the platform device to
-	 * determine if the driver is ready. Do this after everything is initialized properly.
-	 */
 	platform_set_drvdata(pdev, ctrl);
 
-	dev_info(dev, "Realtek PCS driver initialized\n");
+	for (i = 0; i < ctrl->cfg->serdes_count; i++) {
+		sds = &ctrl->serdes[i];
+		if (!sds->fwnode)
+			continue;
 
+		ret = fwnode_pcs_add_provider(sds->fwnode, rtpcs_pcs_get, sds);
+		if (ret)
+			return ret;
+		ret = devm_add_action_or_reset(dev, rtpcs_del_provider_action,
+					       sds);
+		if (ret)
+			return ret;
+	}
+
+	dev_info(dev, "Realtek PCS driver initialized\n");
 	return 0;
 }
 
