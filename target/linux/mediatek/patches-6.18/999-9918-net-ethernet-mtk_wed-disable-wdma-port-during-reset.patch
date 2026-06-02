@@ -1,0 +1,68 @@
+From: Bo-Cun Chen <bc-bocun.chen@mediatek.com>
+Subject: [PATCH] net: ethernet: mtk_wed: disable WDMA port during reset
+
+Prevent packets from entering WDMA while WED is resetting after WiFi L1
+SER. MediaTek notes that leaving the WDMA port enabled during this path
+can leave incomplete packets stuck in PSE and disturb buffer accounting.
+
+Signed-off-by: Bo-Cun Chen <bc-bocun.chen@mediatek.com>
+[adapted for OpenWrt 6.18 by keeping the required PSE_WDMA_PORT helper]
+Signed-off-by: Codex <codex@openai.com>
+---
+ drivers/net/ethernet/mediatek/mtk_eth_soc.h | 18 ++++++++++++++++++
+ drivers/net/ethernet/mediatek/mtk_wed.c     |  3 +++
+ 2 files changed, 21 insertions(+)
+
+--- a/drivers/net/ethernet/mediatek/mtk_eth_soc.h
++++ b/drivers/net/ethernet/mediatek/mtk_eth_soc.h
+@@ -963,6 +963,10 @@ enum mtk_pse_port {
+ 	PSE_PORT_MAX
+ };
+ 
++#define PSE_WDMA_PORT(x)	(((x) == 0) ? PSE_WDMA0_PORT : \
++				 ((x) == 1) ? PSE_WDMA1_PORT : \
++					       PSE_WDMA2_PORT)
++
+ /* GMAC Identifier */
+ enum mtk_gmac_id {
+ 	MTK_GMAC1_ID = 0,
+@@ -1701,6 +1705,20 @@ void mtk_w32(struct mtk_eth *eth, u32 va
+ u32 mtk_r32(struct mtk_eth *eth, unsigned reg);
+ u32 mtk_m32(struct mtk_eth *eth, u32 mask, u32 set, unsigned int reg);
+ 
++static inline void mtk_pse_wdma_enable(struct mtk_eth *eth, int id, bool enable)
++{
++	u32 port = PSE_WDMA_PORT(id);
++	u32 val;
++
++	val = mtk_r32(eth, MTK_FE_GLO_CFG(port));
++	if (enable)
++		val &= ~MTK_FE_LINK_DOWN_P(port);
++	else
++		val |= MTK_FE_LINK_DOWN_P(port);
++
++	mtk_w32(eth, val, MTK_FE_GLO_CFG(port));
++}
++
+ int mtk_gmac_sgmii_path_setup(struct mtk_eth *eth, int mac_id);
+ int mtk_gmac_2p5gphy_path_setup(struct mtk_eth *eth, int mac_id);
+ int mtk_gmac_gephy_path_setup(struct mtk_eth *eth, int mac_id);
+--- a/drivers/net/ethernet/mediatek/mtk_wed.c
++++ b/drivers/net/ethernet/mediatek/mtk_wed.c
+@@ -1757,6 +1757,8 @@ mtk_wed_reset_dma(struct mtk_wed_device
+ 	u32 val;
+ 	int i;
+ 
++	mtk_pse_wdma_enable(dev->hw->eth, dev->wdma_idx, false);
++
+ 	for (i = 0; i < ARRAY_SIZE(dev->tx_ring); i++) {
+ 		if (!dev->tx_ring[i].desc)
+ 			continue;
+@@ -2429,6 +2431,7 @@ mtk_wed_start(struct mtk_wed_device *dev
+ 	mtk_wed_amsdu_init(dev);
+ 
+ 	mtk_wed_dma_enable(dev);
++	mtk_pse_wdma_enable(dev->hw->eth, dev->wdma_idx, true);
+ 	dev->running = true;
+ }
+ 

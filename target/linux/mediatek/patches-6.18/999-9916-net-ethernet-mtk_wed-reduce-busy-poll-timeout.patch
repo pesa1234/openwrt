@@ -1,0 +1,26 @@
+From 0ac69abdc5ae24353157ec1c8fb41c051bf0da85 Mon Sep 17 00:00:00 2001
+From: Rex Lu <rex.lu@mediatek.com>
+Date: Mon, 1 Jun 2026 13:47:30 +0800
+Subject: [PATCH] net: ethernet: mtk_wed: reduce busy poll timeout
+
+Reduce the WED busy poll interval from 15 ms to 1 ms. MediaTek notes
+that the longer interval can make L1 SER spend several seconds under
+heavy bidirectional traffic, delaying WED idle state recovery and causing
+station disconnects.
+
+Signed-off-by: Rex Lu <rex.lu@mediatek.com>
+---
+ drivers/net/ethernet/mediatek/mtk_wed.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/drivers/net/ethernet/mediatek/mtk_wed.c
++++ b/drivers/net/ethernet/mediatek/mtk_wed.c
+@@ -276,7 +276,7 @@ mtk_wed_check_busy(struct mtk_wed_device
+ static int
+ mtk_wed_poll_busy(struct mtk_wed_device *dev, u32 reg, u32 mask)
+ {
+-	int sleep = 15000;
++	int sleep = 1000;
+ 	int timeout = 100 * sleep;
+ 	u32 val;
+ 
