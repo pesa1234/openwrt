@@ -1,0 +1,34 @@
+From 46738ad764470233b59825a7689ba2acfcad65c7 Mon Sep 17 00:00:00 2001
+From: Shayne Chen <shayne.chen@mediatek.com>
+Date: Wed, 20 May 2026 10:51:33 +0800
+Subject: [PATCH] mtk: hostapd: carry MBSSID IE during CSA and color change
+
+Always include the MBSSID IE in CSA and color-change beacon data. Without
+it, non-transmitted BSSes can fail channel switch handling because the CSA
+beacon does not carry the MBSSID information.
+
+Signed-off-by: Shayne Chen <shayne.chen@mediatek.com>
+---
+ src/drivers/driver_nl80211.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+--- a/src/drivers/driver_nl80211.c
++++ b/src/drivers/driver_nl80211.c
+@@ -12141,7 +12141,7 @@ static int nl80211_switch_channel(void *
+ 	if (!beacon_csa)
+ 		goto fail;
+ 
+-	ret = set_beacon_data(msg, &settings->beacon_csa, true);
++	ret = set_beacon_data(msg, &settings->beacon_csa, false);
+ 	if (ret)
+ 		goto error;
+ 
+@@ -12229,7 +12229,7 @@ static int nl80211_switch_color(void *pr
+ 		goto error;
+ 	}
+ 
+-	ret = set_beacon_data(msg, &settings->beacon_cca, true);
++	ret = set_beacon_data(msg, &settings->beacon_cca, false);
+ 	if (ret)
+ 		goto error;
+ 
