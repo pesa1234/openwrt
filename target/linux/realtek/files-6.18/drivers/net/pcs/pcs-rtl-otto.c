@@ -84,7 +84,6 @@
 #define RTPCS_93XX_SDS_MODE_QSGMII		0x06
 #define RTPCS_93XX_SDS_MODE_USXGMII		0x0d
 #define RTPCS_93XX_SDS_MODE_XSGMII		0x10
-#define RTPCS_93XX_SDS_MODE_HISGMII		0x12
 #define RTPCS_93XX_SDS_MODE_2500BASEX		0x16
 #define RTPCS_93XX_SDS_MODE_10GBASER		0x1a
 #define RTPCS_93XX_SDS_MODE_OFF			0x1f
@@ -130,9 +129,7 @@ enum rtpcs_sds_mode {
 
 	/* mii modes */
 	RTPCS_SDS_MODE_SGMII,
-	RTPCS_SDS_MODE_HISGMII,
 	RTPCS_SDS_MODE_QSGMII,
-	RTPCS_SDS_MODE_QHSGMII,
 	RTPCS_SDS_MODE_XSGMII,
 
 	RTPCS_SDS_MODE_USXGMII_10GSXGMII,
@@ -218,6 +215,7 @@ struct rtpcs_serdes {
 	const struct rtpcs_sds_ops *ops;
 	const struct rtpcs_sds_regs *regs;
 	enum rtpcs_sds_type type;
+	DECLARE_BITMAP(supported_modes, RTPCS_SDS_MODE_MAX);
 	struct {
 		struct regmap_field *mac_mode;
 		struct regmap_field *mac_mode_force;	/* nullable, 931x only */
@@ -496,10 +494,11 @@ static int rtpcs_sds_determine_hw_mode(struct rtpcs_serdes *sds,
 		*hw_mode = RTPCS_SDS_MODE_USXGMII_10GQXGMII;
 		break;
 	default:
-		return -ENOTSUPP;
+		return -EOPNOTSUPP;
 	}
 
-	/* TODO: check if the particular SerDes supports the mode */
+	if (!test_bit(*hw_mode, sds->supported_modes))
+		return -EOPNOTSUPP;
 
 	return 0;
 }
@@ -787,21 +786,16 @@ static void rtpcs_838x_sds_reset(struct rtpcs_serdes *sds)
 	dev_info(sds->ctrl->dev, "SerDes %d reset\n", sds->id);
 }
 
-static bool rtpcs_838x_sds_is_hw_mode_supported(struct rtpcs_serdes *sds,
-						enum rtpcs_sds_mode hw_mode)
+static void rtpcs_838x_sds_fill_caps(struct rtpcs_serdes *sds)
 {
-	switch (sds->id) {
-	case 0 ... 3:
-		return hw_mode == RTPCS_SDS_MODE_QSGMII;
-	case 4:
-		return hw_mode == RTPCS_SDS_MODE_QSGMII ||
-		       hw_mode == RTPCS_SDS_MODE_SGMII ||
-		       hw_mode == RTPCS_SDS_MODE_1000BASEX;
-	case 5:
-		return hw_mode == RTPCS_SDS_MODE_SGMII ||
-		       hw_mode == RTPCS_SDS_MODE_1000BASEX;
-	default:
-		return false;
+	__set_bit(RTPCS_SDS_MODE_OFF, sds->supported_modes);
+
+	if (sds->id <= 4)
+		__set_bit(RTPCS_SDS_MODE_QSGMII, sds->supported_modes);
+
+	if (sds->id >= 4) {
+		__set_bit(RTPCS_SDS_MODE_SGMII, sds->supported_modes);
+		__set_bit(RTPCS_SDS_MODE_1000BASEX, sds->supported_modes);
 	}
 }
 
@@ -917,6 +911,8 @@ static int rtpcs_838x_sds_probe(struct rtpcs_serdes *sds)
 
 	sds->type = RTPCS_SDS_TYPE_5G;
 
+	rtpcs_838x_sds_fill_caps(sds);
+
 	/*
 	 * SDS_MODE_SEL packs 5-bit fields in reverse order: SDS 0 at [25:29],
 	 * SDS 5 at [0:4].
@@ -939,9 +935,6 @@ static int rtpcs_838x_setup_serdes(struct rtpcs_serdes *sds,
 				   enum rtpcs_sds_mode hw_mode)
 {
 	int ret;
-
-	if (!rtpcs_838x_sds_is_hw_mode_supported(sds, hw_mode))
-		return -ENOTSUPP;
 
 	rtpcs_838x_sds_deactivate(sds);
 
@@ -1037,6 +1030,22 @@ static void rtpcs_839x_sds_reset(struct rtpcs_serdes *sds)
 	rtpcs_sds_write(odd_sds, 0x0, 0x3, 0x7106);
 }
 
+static void rtpcs_839x_sds_fill_caps(struct rtpcs_serdes *sds)
+{
+	__set_bit(RTPCS_SDS_MODE_OFF, sds->supported_modes);
+
+	if (sds->id <= 12)
+		__set_bit(RTPCS_SDS_MODE_QSGMII, sds->supported_modes);
+
+	/* Uncomment this when modes are supported
+	if (sds->id >= 12) {
+		__set_bit(RTPCS_SDS_MODE_SGMII, sds->supported_modes);
+		__set_bit(RTPCS_SDS_MODE_100BASEX, sds->supported_modes);
+		__set_bit(RTPCS_SDS_MODE_1000BASEX, sds->supported_modes);
+	}
+	*/
+}
+
 static int rtpcs_839x_sds_probe(struct rtpcs_serdes *sds)
 {
 	u8 id = sds->id;
@@ -1054,6 +1063,8 @@ static int rtpcs_839x_sds_probe(struct rtpcs_serdes *sds)
 		sds->type = RTPCS_SDS_TYPE_10G;
 	else
 		sds->type = RTPCS_SDS_TYPE_5G;
+
+	rtpcs_839x_sds_fill_caps(sds);
 
 	/*
 	 * This function is quite "mystic". It has been taken over from the vendor SDK function
@@ -1210,7 +1221,6 @@ static const s16 rtpcs_93xx_sds_hw_mode_vals[RTPCS_SDS_MODE_MAX] = {
 	[RTPCS_SDS_MODE_2500BASEX]		= RTPCS_93XX_SDS_MODE_2500BASEX,
 	[RTPCS_SDS_MODE_10GBASER]		= RTPCS_93XX_SDS_MODE_10GBASER,
 	[RTPCS_SDS_MODE_QSGMII]			= RTPCS_93XX_SDS_MODE_QSGMII,
-	[RTPCS_SDS_MODE_HISGMII]		= RTPCS_93XX_SDS_MODE_HISGMII,
 	[RTPCS_SDS_MODE_XSGMII]			= RTPCS_93XX_SDS_MODE_XSGMII,
 	[RTPCS_SDS_MODE_USXGMII_10GSXGMII]	= RTPCS_93XX_SDS_MODE_USXGMII,
 	[RTPCS_SDS_MODE_USXGMII_10GDXGMII]	= RTPCS_93XX_SDS_MODE_USXGMII,
@@ -1532,6 +1542,34 @@ static int rtpcs_93xx_sds_set_ip_mode(struct rtpcs_serdes *sds, enum rtpcs_sds_m
 
 	/* BIT(0) is force mode enable bit */
 	return rtpcs_sds_write_bits(sds, 0x1f, 0x09, 11, 6, raw << 1 | BIT(0));
+}
+
+static void rtpcs_93xx_sds_fill_caps(struct rtpcs_serdes *sds)
+{
+	__set_bit(RTPCS_SDS_MODE_OFF, sds->supported_modes);
+
+	switch (sds->type) {
+	case RTPCS_SDS_TYPE_5G:
+		__set_bit(RTPCS_SDS_MODE_QSGMII, sds->supported_modes);
+		break;
+	case RTPCS_SDS_TYPE_10G:
+		__set_bit(RTPCS_SDS_MODE_SGMII, sds->supported_modes);
+		__set_bit(RTPCS_SDS_MODE_XSGMII, sds->supported_modes);
+		__set_bit(RTPCS_SDS_MODE_USXGMII_10GSXGMII, sds->supported_modes);
+		__set_bit(RTPCS_SDS_MODE_USXGMII_10GDXGMII, sds->supported_modes);
+		__set_bit(RTPCS_SDS_MODE_USXGMII_10GQXGMII, sds->supported_modes);
+		__set_bit(RTPCS_SDS_MODE_USXGMII_5GSXGMII, sds->supported_modes);
+		__set_bit(RTPCS_SDS_MODE_USXGMII_5GDXGMII, sds->supported_modes);
+		__set_bit(RTPCS_SDS_MODE_USXGMII_2_5GSXGMII, sds->supported_modes);
+
+		__set_bit(RTPCS_SDS_MODE_1000BASEX, sds->supported_modes);
+		__set_bit(RTPCS_SDS_MODE_2500BASEX, sds->supported_modes);
+		__set_bit(RTPCS_SDS_MODE_10GBASER, sds->supported_modes);
+		break;
+	case RTPCS_SDS_TYPE_UNKNOWN:
+	default:
+		break;
+	}
 }
 
 /* RTL930X */
@@ -3121,6 +3159,8 @@ static int rtpcs_930x_sds_probe(struct rtpcs_serdes *sds)
 	else
 		sds->type = RTPCS_SDS_TYPE_UNKNOWN;
 
+	rtpcs_93xx_sds_fill_caps(sds);
+
 	sds->swcore_regs.mac_mode = devm_regmap_field_alloc(dev, map,
 							    rtpcs_930x_mac_mode_fields[id]);
 	if (IS_ERR(sds->swcore_regs.mac_mode))
@@ -3191,7 +3231,6 @@ static void rtpcs_931x_sds_clear_symerr(struct rtpcs_serdes *sds,
 {
 	switch (hw_mode) {
 	case RTPCS_SDS_MODE_SGMII:
-	case RTPCS_SDS_MODE_HISGMII:
 	case RTPCS_SDS_MODE_XSGMII:
 		for (int i = 0; i < 4; ++i) {
 			rtpcs_sds_write_bits(sds, 0x41, 0x18, 2, 0, i);
@@ -3522,7 +3561,6 @@ static int rtpcs_931x_sds_link_sts_get(struct rtpcs_serdes *sds)
 		break;
 
 	case RTPCS_SDS_MODE_SGMII:
-	case RTPCS_SDS_MODE_HISGMII:
 	case RTPCS_SDS_MODE_2500BASEX:
 		sts = rtpcs_sds_read_bits(sds, 0x41, 29, 8, 0);
 		latch_sts = rtpcs_sds_read_bits(sds, 0x41, 30, 8, 0);
@@ -3943,6 +3981,8 @@ static int rtpcs_931x_sds_probe(struct rtpcs_serdes *sds)
 	else
 		sds->type = RTPCS_SDS_TYPE_UNKNOWN;
 
+	rtpcs_93xx_sds_fill_caps(sds);
+
 	/*
 	 * Width is 7 bits (lsb..lsb+6) so every MAC mode write also clears
 	 * bit 5 (FEC enable) and bit 6 (10G speedup). These are mode-dependent
@@ -4207,14 +4247,9 @@ static struct rtpcs_serdes *rtpcs_find_serdes(struct rtpcs_ctrl *ctrl,
 static int rtpcs_map_links(struct device *dev, struct rtpcs_ctrl *ctrl)
 {
 	struct fwnode_handle *fw_dev = dev_fwnode(dev);
-	struct fwnode_handle *fw_parent __free(fwnode_handle) = fwnode_get_parent(fw_dev);
-	if (!fw_parent)
-		return -ENODEV;
-
-	struct fwnode_handle *fw_switch __free(fwnode_handle) =
-		fwnode_get_named_child_node(fw_parent, "ethernet-switch");
+	struct fwnode_handle *fw_switch __free(fwnode_handle) = fwnode_get_parent(fw_dev);
 	if (!fw_switch)
-		return dev_err_probe(dev, -ENODEV, "%pfwP missing ethernet-switch\n", fw_parent);
+		return -ENODEV;
 
 	struct fwnode_handle *fw_ports __free(fwnode_handle) =
 		fwnode_get_named_child_node(fw_switch, "ethernet-ports");
