@@ -1,0 +1,44 @@
+From e92d633566fa6c470e749910cf035b1b9cebd0e0 Mon Sep 17 00:00:00 2001
+From: developer <developer@mediatek.com>
+Date: Fri, 8 May 2026 10:36:10 +0800
+Subject: [PATCH] arm64: dts: mediatek: add PMU support for MT7981/MT7986
+
+Add Cortex-A53 PMU nodes for MT7981 and MT7986 so perf can use hardware
+performance counters for profiling.
+
+Signed-off-by: developer <developer@mediatek.com>
+---
+ arch/arm64/boot/dts/mediatek/mt7981b.dtsi | 6 ++++++
+ arch/arm64/boot/dts/mediatek/mt7986a.dtsi | 6 ++++++
+ 2 files changed, 12 insertions(+)
+
+--- a/arch/arm64/boot/dts/mediatek/mt7981b.dtsi
++++ b/arch/arm64/boot/dts/mediatek/mt7981b.dtsi
+@@ -45,6 +45,12 @@
+ 		method = "smc";
+ 	};
+ 
++	pmu {
++		compatible = "arm,cortex-a53-pmu";
++		interrupt-parent = <&gic>;
++		interrupts = <GIC_PPI 7 IRQ_TYPE_LEVEL_LOW>;
++	};
++
+ 	fan: pwm-fan {
+ 		compatible = "pwm-fan";
+ 		/* cooling level (0, 1, 2, 3) : (0% duty, 50% duty, 75% duty, 100% duty) */
+--- a/arch/arm64/boot/dts/mediatek/mt7986a.dtsi
++++ b/arch/arm64/boot/dts/mediatek/mt7986a.dtsi
+@@ -61,6 +61,12 @@
+ 		method = "smc";
+ 	};
+ 
++	pmu {
++		compatible = "arm,cortex-a53-pmu";
++		interrupt-parent = <&gic>;
++		interrupts = <GIC_PPI 7 IRQ_TYPE_LEVEL_LOW>;
++	};
++
+ 	reserved-memory {
+ 		#address-cells = <2>;
+ 		#size-cells = <2>;
