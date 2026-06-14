@@ -46,20 +46,24 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  	u32 tx_queued;
 --- a/mt76_connac_mcu.c
 +++ b/mt76_connac_mcu.c
-@@ -2820,6 +2820,7 @@ int mt76_connac_mcu_bss_basic_tlv(struct
+@@ -2820,6 +2820,9 @@ int mt76_connac_mcu_bss_basic_tlv(struct
  	u32 type = vif->p2p ? NETWORK_P2P : NETWORK_INFRA;
  	struct bss_info_basic *bss;
  	struct tlv *tlv;
++#ifdef CONFIG_NL80211_TESTMODE
 +	struct mt76_testmode_data *td = &phy->test;
++#endif
  
  	tlv = mt76_connac_mcu_add_tlv(skb, BSS_INFO_BASIC, sizeof(*bss));
  	bss = (struct bss_info_basic *)tlv;
-@@ -2879,6 +2880,8 @@ int mt76_connac_mcu_bss_basic_tlv(struct
+@@ -2879,6 +2882,10 @@ int mt76_connac_mcu_bss_basic_tlv(struct
  		bss->dtim_period = vif->bss_conf.dtim_period;
  		bss->phy_mode = mt76_connac_get_phy_mode(phy, vif,
  							 chandef->chan->band, NULL);
++#ifdef CONFIG_NL80211_TESTMODE
 +	} else if (td->bf_en) {
 +		memcpy(bss->bssid, vif->addr, ETH_ALEN);
++#endif
  	} else {
  		memcpy(bss->bssid, phy->macaddr, ETH_ALEN);
  	}
@@ -192,20 +196,21 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  	case MCU_EXT_EVENT_RF_TEST:
  		mt7915_tm_rf_test_event(dev, skb);
  		break;
-@@ -820,11 +822,22 @@ int mt7915_mcu_add_bss_info(struct mt791
+@@ -820,11 +822,23 @@ int mt7915_mcu_add_bss_info(struct mt791
  	if (enable)
  		mt76_connac_mcu_bss_omac_tlv(skb, vif);
  
 -	mt76_connac_mcu_bss_basic_tlv(skb, vif, NULL, phy->mt76,
 -				      mvif->sta.wcid.idx, enable);
 +	if (vif->type == NL80211_IFTYPE_MONITOR) {
-+		struct mt76_testmode_data *td = &phy->mt76->test;
-+		struct mt76_wcid *wcid;
++		struct mt76_wcid *wcid = &mvif->sta.wcid;
 +
-+		if (!td->aid || list_empty(&td->tm_entry_list))
-+			wcid = &mvif->sta.wcid;
-+		else
++#ifdef CONFIG_NL80211_TESTMODE
++		struct mt76_testmode_data *td = &phy->mt76->test;
++
++		if (td->aid && !list_empty(&td->tm_entry_list))
 +			wcid = list_first_entry(&td->tm_entry_list, struct mt76_wcid, list);
++#endif
  
 -	if (vif->type == NL80211_IFTYPE_MONITOR)
 +		mt76_connac_mcu_bss_basic_tlv(skb, vif, NULL, phy->mt76,
