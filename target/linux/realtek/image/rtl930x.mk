@@ -12,6 +12,17 @@ define Device/d-link_dgs-1250-28x
 endef
 TARGET_DEVICES += d-link_dgs-1250-28x
 
+define Device/sirivision_sr-st3408f
+  SOC := rtl9303
+  UIMAGE_MAGIC := 0x93000000
+  DEVICE_VENDOR := Sirivision
+  DEVICE_MODEL := SR-ST3408F
+  DEVICE_PACKAGES := kmod-phy-realtek rtl8261n-firmware
+  IMAGE_SIZE := 13312k
+  $(Device/kernel-lzma)
+endef
+TARGET_DEVICES += sirivision_sr-st3408f
+
 define Device/hasivo_f1100w-4sx-4xgt-common
   SOC := rtl9303
   DEVICE_VENDOR := Hasivo
@@ -68,6 +79,23 @@ define Device/hasivo_s600wp-5gt-2sx-se
   $(Device/kernel-lzma)
 endef
 TARGET_DEVICES += hasivo_s600wp-5gt-2sx-se
+
+define Device/horaco_zx-swtgw2c8f
+  SOC := rtl9303
+  UIMAGE_MAGIC := 0x83800000
+  DEVICE_VENDOR := Horaco
+  DEVICE_MODEL := ZX-SWTGW2C8F
+  IMAGE_SIZE := 12288k
+  $(Device/kernel-lzma)
+  IMAGES += factory.bix
+  IMAGE/factory.bix := \
+	append-kernel | \
+	pad-to 64k | \
+	append-rootfs | \
+	pad-rootfs | \
+	check-size
+endef
+TARGET_DEVICES += horaco_zx-swtgw2c8f
 
 define Device/plasmacloud-common
   SOC := rtl9302
