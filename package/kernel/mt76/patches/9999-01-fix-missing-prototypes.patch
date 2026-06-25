@@ -29,7 +29,7 @@
  mt7915e-y := pci.o init.o dma.o eeprom.o main.o mcu.o mac.o \
 --- a/mt7915/mt7915.h
 +++ b/mt7915/mt7915.h
-@@ -888,6 +888,27 @@ int mt7915_init_debugfs(struct mt7915_ph
+@@ -886,6 +886,27 @@ int mt7915_mmio_wed_init(struct mt7915_d
  			 bool pci, int *irq);
  
  #ifdef CONFIG_MTK_VENDOR

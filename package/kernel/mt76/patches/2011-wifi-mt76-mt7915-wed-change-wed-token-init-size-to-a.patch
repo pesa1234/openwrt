@@ -52,7 +52,7 @@ Signed-off-by: sujuan.chen <sujuan.chen@mediatek.com>
  
 --- a/mt7915/mcu.c
 +++ b/mt7915/mcu.c
-@@ -2474,6 +2474,9 @@ mt7915_mcu_init_rx_airtime(struct mt7915
+@@ -2493,6 +2493,9 @@ mt7915_mcu_init_rx_airtime(struct mt7915
  static int mt7915_red_set_watermark(struct mt7915_dev *dev)
  {
  #define RED_GLOBAL_TOKEN_WATERMARK 2
@@ -62,7 +62,7 @@ Signed-off-by: sujuan.chen <sujuan.chen@mediatek.com>
  	struct {
  		__le32 args[3];
  		u8 cmd;
-@@ -2487,8 +2490,8 @@ static int mt7915_red_set_watermark(stru
+@@ -2506,8 +2509,8 @@ static int mt7915_red_set_watermark(stru
  		.args[0] = cpu_to_le32(MCU_WA_PARAM_RED_SETTING),
  		.cmd = RED_GLOBAL_TOKEN_WATERMARK,
  		.len = cpu_to_le16(sizeof(req) - sizeof(req.args)),
@@ -116,7 +116,7 @@ Signed-off-by: sujuan.chen <sujuan.chen@mediatek.com>
  #define MT7915_CFEND_RATE_DEFAULT	0x49	/* OFDM 24M */
 --- a/tx.c
 +++ b/tx.c
-@@ -867,7 +867,7 @@ int mt76_token_consume(struct mt76_dev *
+@@ -944,7 +944,7 @@ int mt76_token_consume(struct mt76_dev *
  		       u8 phy_idx)
  {
  	struct mt76_phy *phy = phy_idx < __MT_MAX_BAND ? dev->phys[phy_idx] : NULL;
@@ -125,7 +125,7 @@ Signed-off-by: sujuan.chen <sujuan.chen@mediatek.com>
  
  	spin_lock_bh(&dev->token_lock);
  	
-@@ -877,10 +877,12 @@ int mt76_token_consume(struct mt76_dev *
+@@ -954,10 +954,12 @@ int mt76_token_consume(struct mt76_dev *
  		return -EINVAL;
  	}
  
@@ -141,7 +141,7 @@ Signed-off-by: sujuan.chen <sujuan.chen@mediatek.com>
  		dev->token_count++;
  		if (dev->num_phy > 1 && phy) {
  			(*ptxwi)->phy_idx = phy_idx;
-@@ -893,12 +895,6 @@ int mt76_token_consume(struct mt76_dev *
+@@ -970,12 +972,6 @@ int mt76_token_consume(struct mt76_dev *
  		}
  	}
  
@@ -154,7 +154,7 @@ Signed-off-by: sujuan.chen <sujuan.chen@mediatek.com>
  	if (dev->token_count >= dev->token_size - MT76_TOKEN_FREE_THR)
  		__mt76_set_tx_blocked(dev, true);
  
-@@ -945,12 +941,6 @@ mt76_token_release(struct mt76_dev *dev,
+@@ -1022,12 +1018,6 @@ mt76_token_release(struct mt76_dev *dev,
  				wake_up(&dev->tx_wait);
  		}
  
@@ -166,7 +166,7 @@ Signed-off-by: sujuan.chen <sujuan.chen@mediatek.com>
 -#endif
  	}
  
- 	if (dev->token_count < dev->token_size - MT76_TOKEN_FREE_THR &&
+ 	if (wake && dev->token_count < dev->token_size - MT76_TOKEN_FREE_THR &&
 --- a/wed.c
 +++ b/wed.c
 @@ -83,7 +83,7 @@ int mt76_wed_offload_enable(struct mtk_w

@@ -16,7 +16,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
 
 --- a/mt76_connac_mcu.h
 +++ b/mt76_connac_mcu.h
-@@ -1287,7 +1287,7 @@ enum {
+@@ -1289,7 +1289,7 @@ enum {
  	MCU_EXT_CMD_SMESH_CTRL = 0xae,
  	MCU_EXT_CMD_RX_STAT_USER_CTRL = 0xb3,
  	MCU_EXT_CMD_SET_QOS_MAP = 0xb4,
@@ -27,7 +27,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  	MCU_EXT_CMD_CSI_CTRL = 0xc2,
 --- a/mt7915/mcu.c
 +++ b/mt7915/mcu.c
-@@ -4808,37 +4808,33 @@ void mt7915_mcu_set_dynalgo(struct mt791
+@@ -4835,37 +4835,33 @@ void mt7915_mcu_set_dynalgo(struct mt791
  			&req, sizeof(req), false);
  }
  
@@ -90,7 +90,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  void mt7915_mcu_set_bypass_smthint(struct mt7915_phy *phy, u8 val)
 --- a/mt7915/mcu.h
 +++ b/mt7915/mcu.h
-@@ -863,6 +863,35 @@ struct mt7915_mcu_rdd_ipi_scan {
+@@ -872,6 +872,35 @@ struct mt7915_mcu_rdd_ipi_scan {
  	u8 tx_assert_time;						/* unit: us */
  } __packed;
  

@@ -33,7 +33,7 @@ mt76 feature setup path.
  	phy->dev = dev;
 --- a/mt76.h
 +++ b/mt76.h
-@@ -1070,6 +1070,7 @@ struct mt76_dev {
+@@ -1072,6 +1072,7 @@ struct mt76_dev {
  	u16 token_size;
  	u16 token_threshold;
  	u8 num_phy;
@@ -55,7 +55,7 @@ mt76 feature setup path.
  static const u32 mt7915_reg[] = {
  	[INT_SOURCE_CSR]		= 0xd7010,
  	[INT_MASK_CSR]			= 0xd7014,
-@@ -958,6 +963,7 @@ struct mt7915_dev *mt7915_mmio_probe(str
+@@ -959,6 +964,7 @@ struct mt7915_dev *mt7915_mmio_probe(str
  		return ERR_PTR(-ENOMEM);
  
  	dev = container_of(mdev, struct mt7915_dev, mt76);

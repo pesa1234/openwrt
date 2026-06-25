@@ -39,7 +39,7 @@ Signed-off-by: Bo Jiao <Bo.Jiao@mediatek.com>
  enum mt76_wed_type {
  	MT76_WED_Q_TX,
  	MT76_WED_Q_TXFREE,
-@@ -955,6 +963,9 @@ struct mt76_dev {
+@@ -957,6 +965,9 @@ struct mt76_dev {
  	struct device *dma_dev;
  
  	struct mt76_mcu mcu;
@@ -51,7 +51,7 @@ Signed-off-by: Bo Jiao <Bo.Jiao@mediatek.com>
  	struct net_device *tx_napi_dev;
 --- a/mt76_connac_mcu.c
 +++ b/mt76_connac_mcu.c
-@@ -3040,6 +3040,9 @@ int mt76_connac2_load_ram(struct mt76_de
+@@ -3069,6 +3069,9 @@ int mt76_connac2_load_ram(struct mt76_de
  		goto out;
  	}
  
@@ -61,7 +61,7 @@ Signed-off-by: Bo Jiao <Bo.Jiao@mediatek.com>
  	snprintf(dev->hw->wiphy->fw_version,
  		 sizeof(dev->hw->wiphy->fw_version),
  		 "%.10s-%.15s", hdr->fw_ver, hdr->build_date);
-@@ -3069,6 +3072,9 @@ int mt76_connac2_load_ram(struct mt76_de
+@@ -3098,6 +3101,9 @@ int mt76_connac2_load_ram(struct mt76_de
  		goto out;
  	}
  
@@ -71,7 +71,7 @@ Signed-off-by: Bo Jiao <Bo.Jiao@mediatek.com>
  	snprintf(dev->hw->wiphy->fw_version,
  		 sizeof(dev->hw->wiphy->fw_version),
  		 "%.10s-%.15s", hdr->fw_ver, hdr->build_date);
-@@ -3139,6 +3145,9 @@ int mt76_connac2_load_patch(struct mt76_
+@@ -3168,6 +3174,9 @@ int mt76_connac2_load_patch(struct mt76_
  	dev_info(dev->dev, "HW/SW Version: 0x%x, Build Time: %.16s",
  		 be32_to_cpu(hdr->hw_sw_ver), hdr->build_date);
  
@@ -207,11 +207,7 @@ Signed-off-by: Bo Jiao <Bo.Jiao@mediatek.com>
 +		mt76_clear(dev, MT_MCU_WM_EXCP_PC_CTRL, BIT(0));
 +		mt76_clear(dev, MT_MCU_WM_EXCP_LR_CTRL, BIT(0));
 +	}
- 
--	oldest = (u32)mt76_get_field(dev, 0x89050200, GENMASK(20, 16)) + 2;
--	for (i = 0; i < 16; i++) {
--		idx = ((oldest + 2 * i + 1) % 32);
--		dump->call_stack[i] = mt76_rr(dev, 0x89050204 + idx * 4);
++
 +	/* read PC log */
 +	dump->pc_dbg_ctrl = mt76_rr(dev, MT_MCU_WM_EXCP_PC_CTRL);
 +	dump->pc_cur_idx = FIELD_GET(MT_MCU_WM_EXCP_PC_CTRL_IDX_STATUS,
@@ -220,7 +216,11 @@ Signed-off-by: Bo Jiao <Bo.Jiao@mediatek.com>
 +		reg = MT_MCU_WM_EXCP_PC_LOG + i * 4;
 +		dump->pc_stack[i] = mt76_rr(dev, reg);
 +	}
-+
+ 
+-	oldest = (u32)mt76_get_field(dev, 0x89050200, GENMASK(20, 16)) + 2;
+-	for (i = 0; i < 16; i++) {
+-		idx = ((oldest + 2 * i + 1) % 32);
+-		dump->call_stack[i] = mt76_rr(dev, 0x89050204 + idx * 4);
 +	/* read LR log */
 +	dump->lr_dbg_ctrl = mt76_rr(dev, MT_MCU_WM_EXCP_LR_CTRL);
 +	dump->lr_cur_idx = FIELD_GET(MT_MCU_WM_EXCP_LR_CTRL_IDX_STATUS,
@@ -395,15 +395,15 @@ Signed-off-by: Bo Jiao <Bo.Jiao@mediatek.com>
 -	}
 +	int i;
 +	struct mt7915_crash_data *crash_data;
- 
--	vfree(dev->coredump.crash_data);
--	dev->coredump.crash_data = NULL;
++
 +	for (i = 0; i < __MT76_RAM_TYPE_MAX; i++) {
 +		crash_data = dev->coredump.crash_data[i];
 +
 +		if (!crash_data)
 +			continue;
-+
+ 
+-	vfree(dev->coredump.crash_data);
+-	dev->coredump.crash_data = NULL;
 +		if (crash_data->memdump_buf)
 +			vfree(crash_data->memdump_buf);
 +

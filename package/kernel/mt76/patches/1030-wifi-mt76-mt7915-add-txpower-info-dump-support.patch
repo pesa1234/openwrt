@@ -104,7 +104,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  mt7915_twt_stats(struct seq_file *s, void *data)
  {
  	struct mt7915_dev *dev = dev_get_drvdata(s->private);
-@@ -1415,6 +1500,8 @@ int mt7915_init_debugfs(struct mt7915_ph
+@@ -1414,6 +1499,8 @@ int mt7915_init_debugfs(struct mt7915_ph
  			    &mt7915_txpower_fops);
  	debugfs_create_file("txpower_path", 0400, dir, phy,
  			    &mt7915_txpower_path_fops);
@@ -115,9 +115,9 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  	debugfs_create_file("rf_regval", 0600, dir, dev, &fops_rf_regval);
 --- a/mt7915/mcu.c
 +++ b/mt7915/mcu.c
-@@ -3689,6 +3689,8 @@ int mt7915_mcu_get_txpower_sku(struct mt
- 			txpower[i] = res[i][req.band_idx];
- 	} else if (category == TX_POWER_INFO_PATH) {
+@@ -3716,6 +3716,8 @@ int mt7915_mcu_get_txpower_sku(struct mt
+ 			return -EINVAL;
+ 		}
  		memcpy(txpower, skb->data + 4, len);
 +	} else if (category == TX_POWER_INFO_BASIC) {
 +		memcpy(txpower, skb->data, len);
@@ -126,7 +126,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  	dev_kfree_skb(skb);
 --- a/mt7915/mcu.h
 +++ b/mt7915/mcu.h
-@@ -482,7 +482,8 @@ enum {
+@@ -491,7 +491,8 @@ enum {
  };
  
  enum {

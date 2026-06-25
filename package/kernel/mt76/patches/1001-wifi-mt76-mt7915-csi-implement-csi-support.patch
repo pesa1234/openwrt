@@ -28,7 +28,7 @@ Subject: [PATCH 1001/1052] wifi: mt76: mt7915: csi: implement csi support
  };
  
  /* unified event table */
-@@ -1280,6 +1281,7 @@ enum {
+@@ -1282,6 +1283,7 @@ enum {
  	MCU_EXT_CMD_PHY_STAT_INFO = 0xad,
  	MCU_EXT_CMD_SET_QOS_MAP = 0xb4,
  	MCU_EXT_CMD_WF_RF_PIN_CTRL = 0xbd,
@@ -105,7 +105,7 @@ Subject: [PATCH 1001/1052] wifi: mt76: mt7915: csi: implement csi support
  int mt7915_init_debugfs(struct mt7915_phy *phy)
  {
  	struct mt7915_dev *dev = phy->dev;
-@@ -1370,6 +1415,9 @@ int mt7915_init_debugfs(struct mt7915_ph
+@@ -1369,6 +1414,9 @@ int mt7915_init_debugfs(struct mt7915_ph
  		debugfs_create_devm_seqfile(dev->mt76.dev, "rdd_monitor", dir,
  					    mt7915_rdd_monitor);
  	}
@@ -200,7 +200,7 @@ Subject: [PATCH 1001/1052] wifi: mt76: mt7915: csi: implement csi support
  	if (ret)
 --- a/mt7915/main.c
 +++ b/mt7915/main.c
-@@ -918,6 +918,21 @@ void mt7915_mac_sta_remove(struct mt76_d
+@@ -921,6 +921,21 @@ void mt7915_mac_sta_remove(struct mt76_d
  {
  	struct mt7915_dev *dev = container_of(mdev, struct mt7915_dev, mt76);
  	struct mt7915_sta *msta = (struct mt7915_sta *)sta->drv_priv;
@@ -235,7 +235,7 @@ Subject: [PATCH 1001/1052] wifi: mt76: mt7915: csi: implement csi support
  static u8
  mt7915_mcu_get_sta_nss(u16 mcs_map)
  {
-@@ -513,6 +517,11 @@ mt7915_mcu_rx_ext_event(struct mt7915_de
+@@ -528,6 +532,11 @@ mt7915_mcu_rx_ext_event(struct mt7915_de
  	case MCU_EXT_EVENT_FW_LOG_2_HOST:
  		mt7915_mcu_rx_log_message(dev, skb);
  		break;
@@ -247,7 +247,7 @@ Subject: [PATCH 1001/1052] wifi: mt76: mt7915: csi: implement csi support
  	case MCU_EXT_EVENT_BCC_NOTIFY:
  		mt7915_mcu_rx_bcc_notify(dev, skb);
  		break;
-@@ -4271,6 +4280,200 @@ out:
+@@ -4297,6 +4306,200 @@ out:
  	return ret;
  }
  
@@ -450,7 +450,7 @@ Subject: [PATCH 1001/1052] wifi: mt76: mt7915: csi: implement csi support
  {
 --- a/mt7915/mcu.h
 +++ b/mt7915/mcu.h
-@@ -552,4 +552,77 @@ enum {
+@@ -561,4 +561,77 @@ enum {
  					 sizeof(struct bss_info_bmc_rate) +\
  					 sizeof(struct bss_info_ext_bss))
  

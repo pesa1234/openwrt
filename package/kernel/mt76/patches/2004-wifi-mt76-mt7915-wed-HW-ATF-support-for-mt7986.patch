@@ -17,7 +17,7 @@ Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
 
 --- a/mt76_connac_mcu.h
 +++ b/mt76_connac_mcu.h
-@@ -1244,6 +1244,7 @@ enum {
+@@ -1246,6 +1246,7 @@ enum {
  	MCU_EXT_CMD_THERMAL_CTRL = 0x2c,
  	MCU_EXT_CMD_WTBL_UPDATE = 0x32,
  	MCU_EXT_CMD_SET_DRR_CTRL = 0x36,
@@ -25,7 +25,7 @@ Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
  	MCU_EXT_CMD_SET_RDD_CTRL = 0x3a,
  	MCU_EXT_CMD_ATE_CTRL = 0x3d,
  	MCU_EXT_CMD_PROTECT_CTRL = 0x3e,
-@@ -1253,6 +1254,7 @@ enum {
+@@ -1255,6 +1256,7 @@ enum {
  	MCU_EXT_CMD_MUAR_UPDATE = 0x48,
  	MCU_EXT_CMD_BCN_OFFLOAD = 0x49,
  	MCU_EXT_CMD_RX_AIRTIME_CTRL = 0x4a,
@@ -408,7 +408,7 @@ Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
  static int
  mt7915_radar_trigger(void *data, u64 val)
  {
-@@ -1543,6 +1902,7 @@ int mt7915_init_debugfs(struct mt7915_ph
+@@ -1542,6 +1901,7 @@ int mt7915_init_debugfs(struct mt7915_ph
  	debugfs_create_devm_seqfile(dev->mt76.dev, "twt_stats", dir,
  				    mt7915_twt_stats);
  	debugfs_create_file("rf_regval", 0600, dir, dev, &fops_rf_regval);
@@ -521,7 +521,7 @@ Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
  	int idx;
  
  	if (mtk_wed_device_active(&dev->mt76.mmio.wed) &&
-@@ -872,6 +877,15 @@ int mt7915_mac_sta_add(struct mt76_dev *
+@@ -875,6 +880,15 @@ int mt7915_mac_sta_add(struct mt76_dev *
  	mt7915_mac_wtbl_update(dev, idx,
  			       MT_WTBL_UPDATE_ADM_COUNT_CLEAR);
  	mt7915_mcu_add_sta(dev, vif, sta, CONN_STATE_DISCONNECT, true);
@@ -539,7 +539,7 @@ Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
  }
 --- a/mt7915/mcu.c
 +++ b/mt7915/mcu.c
-@@ -1817,7 +1817,7 @@ mt7915_mcu_add_group(struct mt7915_dev *
+@@ -1836,7 +1836,7 @@ mt7915_mcu_add_group(struct mt7915_dev *
  {
  #define MT_STA_BSS_GROUP		1
  	struct mt7915_vif *mvif = (struct mt7915_vif *)vif->drv_priv;
@@ -548,7 +548,7 @@ Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
  	struct {
  		__le32 action;
  		u8 wlan_idx_lo;
-@@ -1828,10 +1828,9 @@ mt7915_mcu_add_group(struct mt7915_dev *
+@@ -1847,10 +1847,9 @@ mt7915_mcu_add_group(struct mt7915_dev *
  		u8 rsv1[8];
  	} __packed req = {
  		.action = cpu_to_le32(MT_STA_BSS_GROUP),
@@ -560,7 +560,7 @@ Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
  	req.wlan_idx_lo = to_wcid_lo(msta->wcid.idx);
  	req.wlan_idx_hi = to_wcid_hi(msta->wcid.idx);
  
-@@ -1896,6 +1895,7 @@ int __mt7915_mcu_add_sta(struct mt7915_d
+@@ -1915,6 +1914,7 @@ int __mt7915_mcu_add_sta(struct mt7915_d
  		mt7915_mcu_sta_bfee_tlv(dev, skb, vif, sta);
  	}
  
@@ -568,7 +568,7 @@ Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
  	ret = mt7915_mcu_add_group(dev, vif, sta);
  	if (ret) {
  		dev_kfree_skb(skb);
-@@ -3848,6 +3848,169 @@ int mt7915_mcu_set_ser(struct mt7915_dev
+@@ -3875,6 +3875,169 @@ int mt7915_mcu_set_ser(struct mt7915_dev
  				 &req, sizeof(req), false);
  }
  
