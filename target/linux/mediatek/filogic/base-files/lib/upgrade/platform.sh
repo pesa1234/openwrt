@@ -148,6 +148,8 @@ platform_do_upgrade() {
 	cmcc,rax3000m|\
 	comfast,cf-wr632ax-ubootmod|\
 	creatlentem,clt-r30b1-ubi|\
+	cudy,m3000-v1-ubootmod|\
+	cudy,m3000-v2-yt8821-ubootmod|\
 	cudy,tr3000-v1-ubootmod|\
 	cudy,wbr3000uax-v1-ubootmod|\
 	cudy,wr3000e-v1-ubootmod|\
@@ -155,6 +157,7 @@ platform_do_upgrade() {
 	cudy,wr3000h-v1-ubootmod|\
 	cudy,wr3000p-v1-ubootmod|\
 	gatonetworks,gdsp|\
+	globitel,bt-r320|\
 	h3c,magic-nx30-pro|\
 	imou,hx21|\
 	jcg,q30-pro|\
@@ -198,7 +201,6 @@ platform_do_upgrade() {
 	glinet,gl-mt6000|\
 	glinet,gl-x3000|\
 	glinet,gl-xe3000|\
-	globitel,bt-r320|\
 	huasifei,wh3000|\
 	huasifei,wh3000-pro-emmc|\
 	smartrg,sdg-8612|\
@@ -362,6 +364,8 @@ platform_check_image() {
 	cmcc,rax3000m|\
 	comfast,cf-wr632ax-ubootmod|\
 	creatlentem,clt-r30b1-ubi|\
+	cudy,m3000-v1-ubootmod|\
+	cudy,m3000-v2-yt8821-ubootmod|\
 	cudy,tr3000-v1-ubootmod|\
 	cudy,wbr3000uax-v1-ubootmod|\
 	cudy,wr3000e-v1-ubootmod|\
@@ -369,6 +373,7 @@ platform_check_image() {
 	cudy,wr3000h-v1-ubootmod|\
 	cudy,wr3000p-v1-ubootmod|\
 	gatonetworks,gdsp|\
+	globitel,bt-r320|\
 	h3c,magic-nx30-pro|\
 	jcg,q30-pro|\
 	jdcloud,re-cp-03|\
