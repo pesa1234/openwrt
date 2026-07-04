@@ -1,6 +1,6 @@
 --- a/mt7915/mcu.c
 +++ b/mt7915/mcu.c
-@@ -5535,7 +5535,7 @@ int mt7915_mcu_set_edcca(struct mt7915_p
+@@ -5493,7 +5493,7 @@ int mt7915_mcu_set_edcca(struct mt7915_
  	struct {
  		u8 band_idx;
  		u8 cmd_idx;
@@ -9,7 +9,7 @@
  		bool record_in_fw;
  		u8 region;
  		s8 thres_compensation;
-@@ -5552,9 +5552,10 @@ int mt7915_mcu_set_edcca(struct mt7915_p
+@@ -5510,9 +5510,10 @@ int mt7915_mcu_set_edcca(struct mt7915_
  	if (mode == EDCCA_CTRL_SET_EN) {
  		req.setting[0] = (!value)? EDCCA_MODE_AUTO: value[0];
  	} else if (mode == EDCCA_CTRL_SET_THERS) {
@@ -23,7 +23,7 @@
  	} else {
  		return -EINVAL;
  	}
-@@ -5568,7 +5569,7 @@ int mt7915_mcu_get_edcca(struct mt7915_p
+@@ -5526,7 +5527,7 @@ int mt7915_mcu_get_edcca(struct mt7915_
  	struct {
  		u8 band_idx;
  		u8 cmd_idx;
@@ -32,7 +32,7 @@
  		bool record_in_fw;
  		u8 region;
  		s8 thres_compensation;
-@@ -5579,6 +5580,7 @@ int mt7915_mcu_get_edcca(struct mt7915_p
+@@ -5537,6 +5538,7 @@ int mt7915_mcu_get_edcca(struct mt7915_
  	};
  	struct sk_buff *skb;
  	int ret;
@@ -40,7 +40,7 @@
  	struct mt7915_mcu_edcca_info *res;
  
  	ret = mt76_mcu_send_and_get_msg(&dev->mt76, MCU_EXT_CMD(EDCCA), &req, sizeof(req),
-@@ -5587,9 +5589,8 @@ int mt7915_mcu_get_edcca(struct mt7915_p
+@@ -5545,9 +5547,8 @@ int mt7915_mcu_get_edcca(struct mt7915_
  		return ret;
  
  	res = (struct mt7915_mcu_edcca_info *)skb->data;
@@ -68,7 +68,7 @@
  
 --- a/mt7915/vendor.c
 +++ b/mt7915/vendor.c
-@@ -87,6 +87,7 @@ edcca_ctrl_policy[NUM_MTK_VENDOR_ATTRS_E
+@@ -87,6 +87,7 @@ edcca_ctrl_policy[NUM_MTK_VENDOR_ATTRS_
         [MTK_VENDOR_ATTR_EDCCA_CTRL_SEC40_VAL] = { .type = NLA_U8 },
         [MTK_VENDOR_ATTR_EDCCA_CTRL_SEC80_VAL] = { .type = NLA_U8 },
         [MTK_VENDOR_ATTR_EDCCA_CTRL_COMPENSATE] = { .type = NLA_S8 },
@@ -76,7 +76,7 @@
  };
  
  static const struct nla_policy
-@@ -95,6 +96,7 @@ edcca_dump_policy[NUM_MTK_VENDOR_ATTRS_E
+@@ -95,6 +96,7 @@ edcca_dump_policy[NUM_MTK_VENDOR_ATTRS_
         [MTK_VENDOR_ATTR_EDCCA_DUMP_PRI20_VAL] = { .type = NLA_U8 },
         [MTK_VENDOR_ATTR_EDCCA_DUMP_SEC40_VAL] = { .type = NLA_U8 },
         [MTK_VENDOR_ATTR_EDCCA_DUMP_SEC80_VAL] = { .type = NLA_U8 },
@@ -84,7 +84,7 @@
  };
  
  static const struct nla_policy
-@@ -1332,7 +1334,8 @@ static int mt7915_vendor_edcca_ctrl(stru
+@@ -1332,7 +1334,8 @@ static int mt7915_vendor_edcca_ctrl(str
  	} else if (edcca_mode == EDCCA_CTRL_SET_THERS) {
  		if (!tb[MTK_VENDOR_ATTR_EDCCA_CTRL_PRI20_VAL] ||
  		    !tb[MTK_VENDOR_ATTR_EDCCA_CTRL_SEC40_VAL] ||
@@ -94,7 +94,7 @@
  			return -EINVAL;
  		}
  		edcca_value[0] =
-@@ -1341,6 +1344,8 @@ static int mt7915_vendor_edcca_ctrl(stru
+@@ -1341,6 +1344,8 @@ static int mt7915_vendor_edcca_ctrl(str
  			nla_get_u8(tb[MTK_VENDOR_ATTR_EDCCA_CTRL_SEC40_VAL]);
  		edcca_value[2] =
  			nla_get_u8(tb[MTK_VENDOR_ATTR_EDCCA_CTRL_SEC80_VAL]);
@@ -103,7 +103,7 @@
  		err = mt7915_mcu_set_edcca(phy, edcca_mode, edcca_value,
  					   edcca_compensation);
  		if (err) {
-@@ -1349,9 +1354,9 @@ static int mt7915_vendor_edcca_ctrl(stru
+@@ -1349,9 +1354,9 @@ static int mt7915_vendor_edcca_ctrl(str
  			return err;
  		}
  		dev_info(phy->dev->mt76.dev,
