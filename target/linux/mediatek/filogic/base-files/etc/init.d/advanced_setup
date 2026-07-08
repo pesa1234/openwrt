@@ -832,19 +832,9 @@ sync_mt7915e_airtime_module_options()
 		uci commit advanced 2>/dev/null
 	fi
 
-	case "$atf" in
-		1|on|true|yes|enabled)
-			atf=1
-			;;
-		*)
-			atf=0
-			;;
-	esac
-
 	if [ -e "$MODULE_FILE" ]; then
 		old_content=$(cat "$MODULE_FILE" 2>/dev/null)
 		new_line="mt7915e"
-		atf_token_added=0
 
 		set -- $old_content
 		for token in "$@"; do
@@ -852,10 +842,6 @@ sync_mt7915e_airtime_module_options()
 				mt7915e)
 					;;
 				expose_airtime_fairness=*)
-					if [ "$atf" = "0" ] && [ "$atf_token_added" = "0" ]; then
-						append_mt7915e_module_token "expose_airtime_fairness=0"
-						atf_token_added=1
-					fi
 					;;
 				*)
 					append_mt7915e_module_token "$token"
@@ -863,47 +849,13 @@ sync_mt7915e_airtime_module_options()
 			esac
 		done
 
-		if [ "$atf" = "0" ] && [ "$atf_token_added" = "0" ]; then
-			append_mt7915e_module_token "expose_airtime_fairness=0"
-		fi
-
 		if [ "$old_content" != "$new_line" ]; then
 			printf '%s\n' "$new_line" > "$MODULE_FILE"
-			logger -t advanced_setup "updated $MODULE_FILE to '$new_line'; reboot required for Airtime Fairness mode change"
-			echo "0"
-			return 0
+			logger -t advanced_setup "removed legacy expose_airtime_fairness option from $MODULE_FILE"
 		fi
-	fi
-
-	if mt7915e_airtime_reboot_required; then
-		runtime_atf=$(cat /sys/module/mt7915e/parameters/expose_airtime_fairness 2>/dev/null)
-		logger -t advanced_setup "mt7915e runtime Airtime Fairness state '$runtime_atf' differs from UCI '$atf'; reboot required"
 	fi
 
 	echo "0"
-}
-
-mt7915e_airtime_reboot_required()
-{
-	local atf
-	local runtime_atf
-
-	[ -e /sys/module/mt7915e/parameters/expose_airtime_fairness ] || return 1
-
-	atf=$(uci -q get advanced.@defaults[0].atf_enable 2>/dev/null || echo "1")
-	case "$atf" in
-		1|on|true|yes|enabled)
-			atf=1
-			;;
-		*)
-			atf=0
-			;;
-	esac
-
-	runtime_atf=$(cat /sys/module/mt7915e/parameters/expose_airtime_fairness 2>/dev/null)
-
-	{ [ "$atf" = "1" ] && [ "$runtime_atf" != "Y" ]; } || \
-	{ [ "$atf" = "0" ] && [ "$runtime_atf" != "N" ]; }
 }
 
 sync_mt7915e_module_options()
@@ -937,10 +889,6 @@ hw_atf_setup()
 			;;
 	esac
 
-	if mt7915e_airtime_reboot_required; then
-		logger -t advanced_setup "applying VOW ATF/WATF runtime setup; reboot still required for Airtime Fairness module visibility"
-	fi
-
 	for FILE in /sys/kernel/debug/ieee80211/*/mt76/vow_atf; do
 		[ -e "$FILE" ] || continue
 		found=1
@@ -955,21 +903,12 @@ runtime_atf()
 {
 	local FILE
 	local found=0
-	local module_value="-"
-	local module_state="unknown"
 	local phy
 	local vow_value
 	local vow_state
+	local sep=" "
 
-	if [ -e /sys/module/mt7915e/parameters/expose_airtime_fairness ]; then
-		module_value=$(cat /sys/module/mt7915e/parameters/expose_airtime_fairness 2>/dev/null)
-		case "$module_value" in
-			Y) module_state="On" ;;
-			N) module_state="Off" ;;
-		esac
-	fi
-
-	printf 'Runtime status: Linux ATF=%s (module=%s)' "$module_state" "$module_value"
+	printf 'Runtime status:'
 
 	for FILE in /sys/kernel/debug/ieee80211/*/mt76/vow_atf; do
 		[ -e "$FILE" ] || continue
@@ -982,10 +921,11 @@ runtime_atf()
 			0|N|n|off|false) vow_state="Off" ;;
 			*) vow_state="unknown" ;;
 		esac
-		printf '; %s VOW ATF/WATF=%s (runtime=%s)' "$phy" "$vow_state" "${vow_value:-?}"
+		printf '%s%s VOW ATF/WATF=%s (runtime=%s)' "$sep" "$phy" "$vow_state" "${vow_value:-?}"
+		sep="; "
 	done
 
-	[ "$found" -eq 1 ] || printf '; VOW runtime status unavailable'
+	[ "$found" -eq 1 ] || printf ' VOW runtime status unavailable'
 	printf '\n'
 }
 
