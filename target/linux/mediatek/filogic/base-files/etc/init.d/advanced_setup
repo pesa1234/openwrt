@@ -5,7 +5,7 @@ USE_PROCD=1
 
 . /lib/functions.sh
 
-extra_command "reprobe_mt7915e" "Reprobe mt7915e to apply updated WED/ATF module options"
+extra_command "runtime_atf" "Show runtime ATF/WATF state"
 
 
 smp_mt76() {
@@ -715,33 +715,6 @@ mtk_offloading()
 	fi
 }
 
-load_mt7915e_from_modules_file()
-{
-	local module_file="/etc/modules.d/mt7915e"
-	local modline
-
-	[ -e "$module_file" ] || return 1
-
-	modline=$(cat "$module_file" 2>/dev/null)
-	[ -n "$modline" ] || modline="mt7915e"
-
-	set -- $modline
-	/sbin/modprobe "$@"
-}
-
-wait_for_mt7915e_runtime()
-{
-	local tries=0
-
-	while [ "$tries" -lt 10 ]; do
-		[ -e /sys/module/mt7915e/parameters/wed_enable ] && return 0
-		sleep 1
-		tries=$((tries + 1))
-	done
-
-	return 1
-}
-
 mt7915e_module_has_token()
 {
 	local module_file="$1"
@@ -841,51 +814,6 @@ sync_mt7915e_wed_module_options()
 	fi
 
 	echo "0"
-}
-
-reprobe_mt7915e()
-{
-	local reprobe_ok=0
-
-	logger -t advanced_setup "reprobing mt7915e to apply module option changes"
-
-	/sbin/wifi down >/dev/null 2>&1
-	sleep 2
-
-	if grep -q '^mt7915e ' /proc/modules 2>/dev/null; then
-		if ! /sbin/modprobe -r mt7915e >/dev/null 2>&1 && \
-		   ! /sbin/rmmod mt7915e >/dev/null 2>&1; then
-			logger -t advanced_setup "failed to unload mt7915e; attempting to restore Wi-Fi"
-			/sbin/wifi up >/dev/null 2>&1
-			return 1
-		fi
-	fi
-
-	sleep 2
-
-	if ! load_mt7915e_from_modules_file >/dev/null 2>&1; then
-		logger -t advanced_setup "failed to reload mt7915e from /etc/modules.d/mt7915e"
-	else
-		reprobe_ok=1
-	fi
-
-	if [ "$reprobe_ok" -eq 1 ] && ! wait_for_mt7915e_runtime; then
-		logger -t advanced_setup "mt7915e runtime files not ready after reprobe"
-		reprobe_ok=0
-	fi
-
-	/sbin/wifi up >/dev/null 2>&1
-	sleep 3
-
-	if [ "$reprobe_ok" -ne 1 ]; then
-		logger -t advanced_setup "mt7915e reprobe incomplete; Wi-Fi bring-up attempted as fallback"
-		return 1
-	fi
-
-	advanced_runtime_setup
-
-	logger -t advanced_setup "mt7915e reprobe completed"
-	return 0
 }
 
 sync_mt7915e_airtime_module_options()
@@ -1010,18 +938,55 @@ hw_atf_setup()
 	esac
 
 	if mt7915e_airtime_reboot_required; then
-		logger -t advanced_setup "skipping HW-ATF runtime setup; reboot required for Airtime Fairness mode change"
-		return 0
+		logger -t advanced_setup "applying VOW ATF/WATF runtime setup; reboot still required for Airtime Fairness module visibility"
 	fi
 
 	for FILE in /sys/kernel/debug/ieee80211/*/mt76/vow_atf; do
 		[ -e "$FILE" ] || continue
 		found=1
-		logger -s "smp_affinity: HW-ATF runtime control available at $FILE"
+		logger -s "smp_affinity: VOW ATF/WATF runtime control available at $FILE"
 		printf '%s\n' "$atf" > "$FILE"
 	done
 
 	[ "$found" -eq 1 ] || return 0
+}
+
+runtime_atf()
+{
+	local FILE
+	local found=0
+	local module_value="-"
+	local module_state="unknown"
+	local phy
+	local vow_value
+	local vow_state
+
+	if [ -e /sys/module/mt7915e/parameters/expose_airtime_fairness ]; then
+		module_value=$(cat /sys/module/mt7915e/parameters/expose_airtime_fairness 2>/dev/null)
+		case "$module_value" in
+			Y) module_state="On" ;;
+			N) module_state="Off" ;;
+		esac
+	fi
+
+	printf 'Runtime status: Linux ATF=%s (module=%s)' "$module_state" "$module_value"
+
+	for FILE in /sys/kernel/debug/ieee80211/*/mt76/vow_atf; do
+		[ -e "$FILE" ] || continue
+		found=1
+		phy=${FILE#/sys/kernel/debug/ieee80211/}
+		phy=${phy%%/*}
+		vow_value=$(cat "$FILE" 2>/dev/null)
+		case "$vow_value" in
+			1|Y|y|on|true) vow_state="On" ;;
+			0|N|n|off|false) vow_state="Off" ;;
+			*) vow_state="unknown" ;;
+		esac
+		printf '; %s VOW ATF/WATF=%s (runtime=%s)' "$phy" "$vow_state" "${vow_value:-?}"
+	done
+
+	[ "$found" -eq 1 ] || printf '; VOW runtime status unavailable'
+	printf '\n'
 }
 
 advanced_runtime_setup()
@@ -1130,9 +1095,7 @@ reload_service() {
 	        atf)
 			logger -t advanced_setup "advanced_setup atf"
 			sync_mt7915e_airtime_module_options >/dev/null
-			if ! mt7915e_airtime_reboot_required; then
-				hw_atf_setup
-			fi
+			hw_atf_setup
 	            ;;
         usb)
 			logger -t advanced_setup "advanced_setup usb"
