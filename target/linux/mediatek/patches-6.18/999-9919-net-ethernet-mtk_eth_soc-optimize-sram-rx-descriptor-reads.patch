@@ -1,0 +1,88 @@
+Normal netsys v2 RX descriptors occupy 16 bytes in the Ethernet SRAM, but
+mtk_rx_get_desc() reads them using four separate 32-bit accesses.  This is
+particularly expensive on in-order Cortex-A53 CPUs.
+
+Use two 64-bit MMIO accesses for SRAM-backed descriptors on 64-bit systems.
+The first access obtains the stable buffer address and ownership
+word; only read the remaining metadata after RX_DMA_DONE has been observed.
+Keep the existing READ_ONCE() path for descriptors outside SRAM and for
+32-bit systems.
+
+Netsys v3 only consumes rxd1 through rxd5 in the receive path, so stop
+reading rxd6 and rxd7.  Its SRAM fast path consequently needs two 64-bit
+accesses followed by one 32-bit access.
+
+Signed-off-by: SmartWRT <smartwrt@localhost>
+---
+ drivers/net/ethernet/mediatek/mtk_eth_soc.c | 43 ++++++++++++++++++----
+ 1 file changed, 37 insertions(+), 6 deletions(-)
+
+--- a/drivers/net/ethernet/mediatek/mtk_eth_soc.c
++++ b/drivers/net/ethernet/mediatek/mtk_eth_soc.c
+@@ -1408,9 +1408,43 @@ static inline int mtk_max_buf_size(int f
+ 	return buf_size;
+ }
+ 
++#ifdef CONFIG_64BIT
++static bool mtk_rx_get_desc_sram(struct mtk_eth *eth,
++				 struct mtk_rx_dma_v2 *rxd,
++				 struct mtk_rx_dma_v2 *dma_rxd)
++{
++	void __iomem *desc = (__force void __iomem *)dma_rxd;
++	u64 data;
++
++	/* SRAM allocations are 32-byte aligned and RX descriptors are at
++	 * least 16-byte aligned.  Read the stable buffer address together
++	 * with the ownership word, then fetch metadata only after the DMA
++	 * engine has released the descriptor.
++	 */
++	data = readq_relaxed(desc);
++	rxd->rxd1 = lower_32_bits(data);
++	rxd->rxd2 = upper_32_bits(data);
++	if (!(rxd->rxd2 & RX_DMA_DONE))
++		return false;
++
++	data = readq_relaxed(desc + 8);
++	rxd->rxd3 = lower_32_bits(data);
++	rxd->rxd4 = upper_32_bits(data);
++	if (mtk_is_netsys_v3_or_greater(eth))
++		rxd->rxd5 = readl_relaxed(desc + 16);
++
++	return true;
++}
++#endif
++
+ static bool mtk_rx_get_desc(struct mtk_eth *eth, struct mtk_rx_dma_v2 *rxd,
+-			    struct mtk_rx_dma_v2 *dma_rxd)
++			    struct mtk_rx_dma_v2 *dma_rxd, bool in_sram)
+ {
++#ifdef CONFIG_64BIT
++	if (in_sram)
++		return mtk_rx_get_desc_sram(eth, rxd, dma_rxd);
++#endif
++
+ 	rxd->rxd2 = READ_ONCE(dma_rxd->rxd2);
+ 	if (!(rxd->rxd2 & RX_DMA_DONE))
+ 		return false;
+@@ -1418,11 +1452,8 @@ static bool mtk_rx_get_desc(struct mtk_e
+ 	rxd->rxd1 = READ_ONCE(dma_rxd->rxd1);
+ 	rxd->rxd3 = READ_ONCE(dma_rxd->rxd3);
+ 	rxd->rxd4 = READ_ONCE(dma_rxd->rxd4);
+-	if (mtk_is_netsys_v3_or_greater(eth)) {
++	if (mtk_is_netsys_v3_or_greater(eth))
+ 		rxd->rxd5 = READ_ONCE(dma_rxd->rxd5);
+-		rxd->rxd6 = READ_ONCE(dma_rxd->rxd6);
+-		rxd->rxd7 = READ_ONCE(dma_rxd->rxd7);
+-	}
+ 
+ 	return true;
+ }
+@@ -2515,7 +2546,7 @@ static int mtk_poll_rx(struct napi_struc
+ 		rxd = ring->dma + RX_DESC_OFS(eth, idx);
+ 		data = ring->data[idx];
+ 
+-		if (!mtk_rx_get_desc(eth, &trxd, rxd))
++		if (!mtk_rx_get_desc(eth, &trxd, rxd, ring->in_sram))
+ 			break;
+ 
+ 		/* find out which mac the packet come from. values start at 1 */
