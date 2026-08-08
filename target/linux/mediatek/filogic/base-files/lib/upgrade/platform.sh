@@ -146,6 +146,7 @@ platform_do_upgrade() {
 	bazis,ax3000wm|\
 	cmcc,a10-ubootmod|\
 	cmcc,rax3000m|\
+	comfast,cf-wr632ax-ubi|\
 	comfast,cf-wr632ax-ubootmod|\
 	creatlentem,clt-r30b1-ubi|\
 	cudy,m3000-v1-ubootmod|\
@@ -167,6 +168,7 @@ platform_do_upgrade() {
 	mediatek,mt7988a-rfb|\
 	mercusys,mr90x-v1-ubi|\
 	netis,eap930-v1|\
+	netis,n6-v2|\
 	netis,nx30v2|\
 	netis,nx31|\
 	netis,nx32u|\
@@ -179,6 +181,8 @@ platform_do_upgrade() {
 	routerich,ax3000-ubootmod|\
 	routerich,be7200|\
 	snr,snr-cpe-ax2|\
+	teralink,tl3020-256mb|\
+	tplink,be450-ubi|\
 	tplink,tl-xdr4288|\
 	tplink,tl-xdr6086|\
 	tplink,tl-xdr6088|\
@@ -214,6 +218,33 @@ platform_do_upgrade() {
 		CI_KERNPART="kernel"
 		CI_ROOTPART="rootfs"
 		emmc_do_upgrade "$1"
+		;;
+	airtel,aap4221zy)
+		# ZyXEL zloader requires a "zyfwinfo" UBI volume with valid
+		# metadata (magic + checksum) to select the boot partition.
+		# Without it, zloader refuses to boot the firmware. It has to be
+		# written before nand_do_upgrade(), which sizes rootfs_data to
+		# fill the remaining space.
+		local ubidev="$(nand_attach_ubi "${CI_UBIPART:-ubi}")"
+		[ "$ubidev" ] || nand_do_upgrade_failed
+		local vol="$(nand_find_volume "$ubidev" zyfwinfo)"
+		if [ ! "$vol" ]; then
+			# rootfs_data may occupy all LEBs, nand_do_upgrade() recreates it
+			[ "$(nand_find_volume "$ubidev" rootfs_data)" ] && \
+				ubirmvol /dev/$ubidev -N rootfs_data
+			if ! ubimkvol /dev/$ubidev -N zyfwinfo -s 256 -t dynamic; then
+				echo "cannot create zyfwinfo volume"
+				nand_do_upgrade_failed
+			fi
+			vol="$(nand_find_volume "$ubidev" zyfwinfo)"
+		fi
+		local tmpfile="/tmp/zyfwinfo.bin"
+		echo -n -e '\x45\x58\x59\x5A\x02\x00\xB3\x15\x00\x01\x00\x00' > "$tmpfile"
+		dd if=/dev/zero bs=1 count=242 >> "$tmpfile" 2>/dev/null
+		echo -n -e '\x1B\x02' >> "$tmpfile"
+		ubiupdatevol /dev/$vol -s 256 "$tmpfile"
+		rm -f "$tmpfile"
+		nand_do_upgrade "$1"
 		;;
 	asus,rt-ax52|\
 	asus,rt-ax57m|\
@@ -363,6 +394,7 @@ platform_check_image() {
 	bazis,ax3000wm|\
 	cmcc,a10-ubootmod|\
 	cmcc,rax3000m|\
+	comfast,cf-wr632ax-ubi|\
 	comfast,cf-wr632ax-ubootmod|\
 	creatlentem,clt-r30b1-ubi|\
 	cudy,m3000-v1-ubootmod|\
@@ -384,12 +416,15 @@ platform_check_image() {
 	mercusys,mr90x-v1-ubi|\
 	nokia,ea0326gmp|\
 	netis,eap930-v1|\
+	netis,n6-v2|\
 	netis,nx32u|\
 	openwrt,one|\
 	netcore,n60|\
 	qihoo,360t7|\
 	qihoo,360t7-ubi|\
 	routerich,ax3000-ubootmod|\
+	teralink,tl3020-256mb|\
+	tplink,be450-ubi|\
 	tplink,tl-xdr4288|\
 	tplink,tl-xdr6086|\
 	tplink,tl-xdr6088|\

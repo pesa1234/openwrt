@@ -123,14 +123,6 @@
 	status = "okay";
 };
 
-&cryptobam {
-	status = "okay";
-};
-
-&crypto {
-	status = "okay";
-};
-
 &qpic_bam {
 	status = "okay";
 };
@@ -262,6 +254,7 @@
 			label = "wan";
 			phy-handle = <&aqr113c>;
 			phy-mode = "usxgmii";
+			managed = "in-band-status";
 			pcs-handle = <&uniphy2 0>;
 		};
 	};

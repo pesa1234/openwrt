@@ -66,15 +66,27 @@ define Device/hasivo_s1100wp-8gt-se
   SOC := rtl9303
   DEVICE_VENDOR := Hasivo
   DEVICE_MODEL := S1100WP-8GT-SE
+  DEVICE_PACKAGES := kmod-pse-hasivo-hs104 kmod-mfd-hasivo-stc8
   IMAGE_SIZE := 12288k
   $(Device/kernel-lzma)
 endef
 TARGET_DEVICES += hasivo_s1100wp-8gt-se
 
+define Device/hasivo_s1100wp-8xgt-se
+  SOC := rtl9303
+  DEVICE_VENDOR := Hasivo
+  DEVICE_MODEL := S1100WP-8XGT-SE
+  IMAGE_SIZE := 12288k
+  DEVICE_PACKAGES := rtl826x-firmware kmod-pse-hasivo-hs104 kmod-mfd-hasivo-stc8
+  $(Device/kernel-lzma)
+endef
+TARGET_DEVICES += hasivo_s1100wp-8xgt-se
+
 define Device/hasivo_s600wp-5gt-2sx-se
   SOC := rtl9303
   DEVICE_VENDOR := Hasivo
   DEVICE_MODEL := S600WP-5GT-2SX-SE
+  DEVICE_PACKAGES := kmod-pse-hasivo-hs104 kmod-mfd-hasivo-stc8
   IMAGE_SIZE := 12288k
   $(Device/kernel-lzma)
 endef

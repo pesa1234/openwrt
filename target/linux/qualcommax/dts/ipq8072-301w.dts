@@ -246,14 +246,6 @@
 	status = "okay";
 };
 
-&cryptobam {
-	status = "okay";
-};
-
-&crypto {
-	status = "okay";
-};
-
 &qpic_bam {
 	status = "okay";
 };
@@ -506,6 +498,7 @@
 			label = "10g-1";
 			phy-handle = <&aqr113c_8>;
 			phy-mode = "usxgmii";
+			managed = "in-band-status";
 			pcs-handle = <&uniphy1 0>;
 		};
 
@@ -514,6 +507,7 @@
 			label = "10g-2";
 			phy-handle = <&aqr113c_0>;
 			phy-mode = "usxgmii";
+			managed = "in-band-status";
 			pcs-handle = <&uniphy2 0>;
 		};
 	};
