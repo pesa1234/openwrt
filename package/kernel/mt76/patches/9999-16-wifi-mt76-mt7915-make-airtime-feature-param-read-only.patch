@@ -1,0 +1,14 @@
+--- a/mt7915/mmio.c
++++ b/mt7915/mmio.c
+@@ -18,9 +18,9 @@ module_param(wed_enable, bool, 0644);
+ MODULE_PARM_DESC(wed_enable, "Enable Wireless Ethernet Dispatch support");
+ 
+ static bool expose_airtime_fairness = true;
+-module_param(expose_airtime_fairness, bool, 0644);
++module_param(expose_airtime_fairness, bool, 0444);
+ MODULE_PARM_DESC(expose_airtime_fairness,
+-		 "Expose NL80211_EXT_FEATURE_AIRTIME_FAIRNESS");
++		 "Advertise NL80211_EXT_FEATURE_AIRTIME_FAIRNESS at probe time");
+ 
+ static const u32 mt7915_reg[] = {
+ 	[INT_SOURCE_CSR] = MT_INT_SOURCE_CSR,
