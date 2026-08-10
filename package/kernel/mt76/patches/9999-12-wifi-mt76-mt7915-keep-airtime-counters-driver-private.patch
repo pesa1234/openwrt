@@ -1,0 +1,94 @@
+--- a/mt76.h
++++ b/mt76.h
+@@ -372,16 +372,12 @@ struct mt76_sta_stats {
+ 	u32 tx_packets;		/* unit: MSDU */
+ 	u32 tx_retries;
+ 	u32 tx_failed;
+-	u32 tx_total_mpdu_cnt;
+-	u32 tx_failed_mpdu_cnt;
+-	u32 tx_airtime[4];
+ 	/* WED RX */
+ 	u64 rx_bytes;
+ 	u32 rx_packets;
+ 	u32 rx_errors;
+ 	u32 rx_drops;
+ 	u64 last_rx_bytes;
+-	u32 rx_airtime[4];
+ };
+ 
+ enum mt76_wcid_flags {
+--- a/mt7915/mcu.c
++++ b/mt7915/mcu.c
+@@ -558,6 +558,7 @@ mt7915_mcu_rx_all_sta_info_event(struct
+ 		bool clear;
+ 		struct mt76_wcid *wcid;
+ 		struct ieee80211_sta *sta;
++		struct mt7915_sta *msta;
+ 		u32 prev_tx_airtime, prev_rx_airtime, diff_tx_airtime, diff_rx_airtime;
+ 
+ 		switch (res->tag) {
+@@ -576,28 +577,29 @@ mt7915_mcu_rx_all_sta_info_event(struct
+ 				rcu_read_unlock();
+ 				continue;
+ 			}
++			msta = (struct mt7915_sta *)sta->drv_priv;
+ 
+ 			for (ac = IEEE80211_AC_VO; ac < IEEE80211_NUM_ACS; ++ac) {
+ 				u8 lmac_ac = mt76_connac_lmac_mapping(ac);
++				u32 *tx_airtime = &msta->airtime_ac[ac];
++				u32 *rx_airtime = &msta->airtime_ac[ac + IEEE80211_NUM_ACS];
+ 
+-				prev_tx_airtime = wcid->stats.tx_airtime[ac];
+-				prev_rx_airtime = wcid->stats.rx_airtime[ac];
+-				wcid->stats.tx_airtime[ac] = le32_to_cpu(res->airtime[i].tx[lmac_ac]);
+-				wcid->stats.rx_airtime[ac] = le32_to_cpu(res->airtime[i].rx[lmac_ac]);
++				prev_tx_airtime = *tx_airtime;
++				prev_rx_airtime = *rx_airtime;
++				*tx_airtime = le32_to_cpu(res->airtime[i].tx[lmac_ac]);
++				*rx_airtime = le32_to_cpu(res->airtime[i].rx[lmac_ac]);
+ 
+-				if (wcid->stats.tx_airtime[ac] >= prev_tx_airtime) {
+-					diff_tx_airtime = wcid->stats.tx_airtime[ac] - prev_tx_airtime;
+-				} else {
+-					diff_tx_airtime = wcid->stats.tx_airtime[ac];
+-				}
++				if (*tx_airtime >= prev_tx_airtime)
++					diff_tx_airtime = *tx_airtime - prev_tx_airtime;
++				else
++					diff_tx_airtime = *tx_airtime;
+ 
+-				if (wcid->stats.rx_airtime[ac] >= prev_rx_airtime) {
+-					diff_rx_airtime = wcid->stats.rx_airtime[ac] - prev_rx_airtime;
+-				} else {
+-					diff_rx_airtime = wcid->stats.rx_airtime[ac];
+-				}
++				if (*rx_airtime >= prev_rx_airtime)
++					diff_rx_airtime = *rx_airtime - prev_rx_airtime;
++				else
++					diff_rx_airtime = *rx_airtime;
+ 
+-				if ((wcid->stats.tx_airtime[ac] | wcid->stats.rx_airtime[ac]) & BIT(30)) {
++				if ((*tx_airtime | *rx_airtime) & BIT(30)) {
+ 						clear = true;
+ 
+ 						dev_dbg(dev->mt76.dev,
+@@ -605,7 +607,7 @@ mt7915_mcu_rx_all_sta_info_event(struct
+ 							le32_to_cpu(res->airtime[i].tx[lmac_ac]),
+ 							le32_to_cpu(res->airtime[i].rx[lmac_ac]),
+-							wcid->stats.tx_airtime[ac],
+-							wcid->stats.rx_airtime[ac],
++							*tx_airtime,
++							*rx_airtime,
+ 							prev_tx_airtime, prev_rx_airtime,
+ 							diff_tx_airtime, diff_rx_airtime,
+ 							clear);
+@@ -619,7 +621,7 @@ mt7915_mcu_rx_all_sta_info_event(struct
+ 						le32_to_cpu(res->airtime[i].tx[lmac_ac]),
+ 						le32_to_cpu(res->airtime[i].rx[lmac_ac]),
+-						wcid->stats.tx_airtime[ac],
+-						wcid->stats.rx_airtime[ac],
++						*tx_airtime,
++						*rx_airtime,
+ 						prev_tx_airtime, prev_rx_airtime,
+ 						diff_tx_airtime, diff_rx_airtime);
+ 
