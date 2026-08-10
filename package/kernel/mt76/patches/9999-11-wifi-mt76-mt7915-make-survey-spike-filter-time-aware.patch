@@ -1,0 +1,107 @@
+--- a/mt7915/mcu.c
++++ b/mt7915/mcu.c
+@@ -3457,6 +3457,24 @@ out:
+ 	return 0;
+ }
+ 
++static void
++mt7915_mcu_update_survey_counter(struct mt7915_dev *dev, const char *name,
++				 u64 *counter, u64 cur, u64 prev,
++				 u64 max_delta)
++{
++	u64 delta = cur - prev;
++
++	if (delta <= max_delta) {
++		*counter += delta;
++		return;
++	}
++
++	dev_dbg_ratelimited(dev->mt76.dev,
++			    "ignore survey %s spike: delta=%llu max=%llu\n",
++			    name, (unsigned long long)delta,
++			    (unsigned long long)max_delta);
++}
++
+ int mt7915_mcu_get_chan_mib_info(struct mt7915_phy *phy, bool chan_switch)
+ {
+ 	struct mt76_channel_state *state = phy->mt76->chan_state;
+@@ -3465,8 +3483,10 @@ int mt7915_mcu_get_chan_mib_info(struct
+ 	struct mt7915_mcu_mib *res, req[5];
+ 	struct sk_buff *skb;
+ 	static const u32 *offs;
++	s64 elapsed;
+ 	int i, ret, len, offs_cc;
+-	u64 cc_tx;
++	u64 cc_tx, cc_bss_rx, cc_rx, cc_busy;
++	u64 max_delta;
+ 
+ 	/* strict order */
+ 	if (is_mt7915(&dev->mt76)) {
+@@ -3502,37 +3522,54 @@ int mt7915_mcu_get_chan_mib_info(struct
+ 	if (ret)
+ 		return ret;
+ 
++	if (skb->len < offs_cc + len * sizeof(*res)) {
++		ret = -EMSGSIZE;
++		goto free_skb;
++	}
++
+ 	res = (struct mt7915_mcu_mib *)(skb->data + offs_cc);
+ 
+ #define __res_u64(s) le64_to_cpu(res[s].data)
+ 	/* subtract Tx backoff time from Tx duration for MT7915 */
+ 	if (is_mt7915(&dev->mt76)) {
+ 		u64 backoff = (__res_u64(4) & 0xffff) * 79;  /* 16us + 9us * 7 */
+-		cc_tx = __res_u64(1) - backoff;
++
++		cc_tx = __res_u64(1);
++		cc_tx = cc_tx > backoff ? cc_tx - backoff : 0;
+ 	} else {
+ 		cc_tx = __res_u64(1);
+ 	}
+ 
++	cc_bss_rx = __res_u64(2);
++	cc_rx = cc_bss_rx + __res_u64(3);
++	cc_busy = __res_u64(0) + cc_tx + cc_rx;
++
+ 	if (chan_switch)
+ 		goto out;
+ 
+-	if (cc_tx - state_ts->cc_tx < 150000)
+-		state->cc_tx += cc_tx - state_ts->cc_tx;
+-	if (__res_u64(2) - state_ts->cc_bss_rx < 150000)
+-		state->cc_bss_rx += __res_u64(2) - state_ts->cc_bss_rx;
+-	if (__res_u64(2) + __res_u64(3) - state_ts->cc_rx < 150000)
+-		state->cc_rx += __res_u64(2) + __res_u64(3) - state_ts->cc_rx;
+-	if (__res_u64(0) + cc_tx + __res_u64(2) + __res_u64(3) - state_ts->cc_busy < 150000)
+-		state->cc_busy += __res_u64(0) + cc_tx + __res_u64(2) + __res_u64(3) - state_ts->cc_busy;
++	elapsed = ktime_us_delta(ktime_get_boottime(), phy->mt76->survey_time);
++	max_delta = elapsed > 0 ? elapsed : 0;
++	max_delta += 50000;
++
++	mt7915_mcu_update_survey_counter(dev, "tx", &state->cc_tx, cc_tx,
++					 state_ts->cc_tx, max_delta);
++	mt7915_mcu_update_survey_counter(dev, "bss-rx", &state->cc_bss_rx,
++					 cc_bss_rx, state_ts->cc_bss_rx,
++					 max_delta);
++	mt7915_mcu_update_survey_counter(dev, "rx", &state->cc_rx, cc_rx,
++					 state_ts->cc_rx, max_delta);
++	mt7915_mcu_update_survey_counter(dev, "busy", &state->cc_busy, cc_busy,
++					 state_ts->cc_busy, max_delta);
+ 
+ out:
+ 	state_ts->cc_tx = cc_tx;
+-	state_ts->cc_bss_rx = __res_u64(2);
+-	state_ts->cc_rx = __res_u64(2) + __res_u64(3);
+-	state_ts->cc_busy = __res_u64(0) + cc_tx + __res_u64(2) + __res_u64(3);
++	state_ts->cc_bss_rx = cc_bss_rx;
++	state_ts->cc_rx = cc_rx;
++	state_ts->cc_busy = cc_busy;
+ #undef __res_u64
+ 
++free_skb:
+ 	dev_kfree_skb(skb);
+ 
+-	return 0;
++	return ret;
+ }
