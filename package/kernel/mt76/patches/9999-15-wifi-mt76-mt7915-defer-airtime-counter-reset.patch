@@ -1,0 +1,90 @@
+--- a/mt7915/mt7915.h
++++ b/mt7915/mt7915.h
+@@ -410,7 +410,9 @@ struct mt7915_dev {
+ 	struct work_struct rc_work;
+ 	struct work_struct dump_work;
+ 	struct work_struct reset_work;
++	struct work_struct airtime_reset_work;
+ 	wait_queue_head_t reset_wait;
++	DECLARE_BITMAP(airtime_reset, MT76_N_WCIDS);
+ 
+ 	struct {
+ 		u32 state;
+@@ -788,5 +790,6 @@ void mt7915_mac_init(struct mt7915_dev *
+ u32 mt7915_mac_wtbl_lmac_addr(struct mt7915_dev *dev, u16 wcid, u8 dw);
+ bool mt7915_mac_wtbl_update(struct mt7915_dev *dev, int idx, u32 mask);
++void mt7915_mac_airtime_reset_work(struct work_struct *work);
+ void mt7915_mac_reset_counters(struct mt7915_phy *phy);
+ void mt7915_mac_cca_stats_reset(struct mt7915_phy *phy);
+ void mt7915_mac_enable_nf(struct mt7915_dev *dev, u8 band);
+--- a/mt7915/mac.c
++++ b/mt7915/mac.c
+@@ -80,5 +80,28 @@ bool mt7915_mac_wtbl_update(struct mt791
+ 			 0, 5000);
+ }
+ 
++void mt7915_mac_airtime_reset_work(struct work_struct *work)
++{
++	struct mt7915_dev *dev;
++	unsigned long idx;
++
++	dev = container_of(work, struct mt7915_dev, airtime_reset_work);
++
++	mutex_lock(&dev->mt76.mutex);
++	for_each_set_bit(idx, dev->airtime_reset, MT76_N_WCIDS) {
++		clear_bit(idx, dev->airtime_reset);
++
++		if (idx >= mt7915_wtbl_size(dev))
++			continue;
++
++		if (!mt7915_mac_wtbl_update(dev, idx,
++					      MT_WTBL_UPDATE_ADM_COUNT_CLEAR))
++			dev_dbg_ratelimited(dev->mt76.dev,
++					    "failed to reset airtime for WCID %lu\n",
++					    idx);
++	}
++	mutex_unlock(&dev->mt76.mutex);
++}
++
+ u32 mt7915_mac_wtbl_lmac_addr(struct mt7915_dev *dev, u16 wcid, u8 dw)
+ {
+--- a/mt7915/mcu.c
++++ b/mt7915/mcu.c
+@@ -649,8 +649,8 @@ mt7915_mcu_rx_all_sta_info_event(struct
+ 					"sta: %02X:%02X:%02X:%02X:%02X:%02X reset airtime counters\n",
+ 					sta->addr[0], sta->addr[1], sta->addr[2], sta->addr[3], sta->addr[4], sta->addr[5]);
+ 
+-				mt7915_mac_wtbl_update(dev, wcid->idx,
+-						       MT_WTBL_UPDATE_ADM_COUNT_CLEAR);
++				set_bit(wcid->idx, dev->airtime_reset);
++				queue_work(dev->mt76.wq, &dev->airtime_reset_work);
+ 			}
+ 			rcu_read_unlock();
+ 			break;
+--- a/mt7915/main.c
++++ b/mt7915/main.c
+@@ -882,6 +882,7 @@ int mt7915_mac_sta_add(struct mt76_dev *
+ 
+ 	ewma_avg_signal_init(&msta->avg_ack_signal);
+ 
++	clear_bit(idx, dev->airtime_reset);
+ 	mt7915_mac_wtbl_update(dev, idx,
+ 			       MT_WTBL_UPDATE_ADM_COUNT_CLEAR);
+ 	mt7915_mcu_add_sta(dev, vif, sta, CONN_STATE_DISCONNECT, true);
+--- a/mt7915/init.c
++++ b/mt7915/init.c
+@@ -1280,6 +1280,7 @@ int mt7915_register_device(struct mt7915
+ 	dev->phy.mt76 = &dev->mt76.phy;
+ 	dev->mt76.phy.priv = &dev->phy;
+ 	INIT_WORK(&dev->rc_work, mt7915_mac_sta_rc_work);
++	INIT_WORK(&dev->airtime_reset_work, mt7915_mac_airtime_reset_work);
+ 	INIT_DELAYED_WORK(&dev->mphy.mac_work, mt7915_mac_work);
+ 	INIT_DELAYED_WORK(&dev->scs_work, mt7915_mcu_scs_sta_poll);
+ 	INIT_LIST_HEAD(&dev->sta_rc_list);
+@@ -1368,5 +1369,6 @@ void mt7915_unregister_device(struct mt7
+ 	mt7915_unregister_thermal(&dev->phy);
+ 	mt76_unregister_device(&dev->mt76);
++	cancel_work_sync(&dev->airtime_reset_work);
+ 	mt7915_stop_hardware(dev);
+ 
+ 	mt76_free_device(&dev->mt76);
