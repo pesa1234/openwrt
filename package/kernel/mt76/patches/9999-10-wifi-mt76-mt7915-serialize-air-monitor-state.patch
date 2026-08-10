@@ -1,0 +1,287 @@
+--- a/mt7915/mt7915.h
++++ b/mt7915/mt7915.h
+@@ -273,7 +273,7 @@ struct csi_mac_filter {
+ #define MAX_CSI_MAC_NUM 10
+ 
+ #define MT7915_AIR_MONITOR_MAX_ENTRY	16
+-#define MT7915_AIR_MONITOR_MAX_GROUP	MT7915_AIR_MONITOR_MAX_ENTRY >> 1
++#define MT7915_AIR_MONITOR_MAX_GROUP	(MT7915_AIR_MONITOR_MAX_ENTRY >> 1)
+ 
+ struct mt7915_air_monitor_group {
+ 	bool enable;
+@@ -287,12 +287,14 @@ struct mt7915_air_monitor_entry {
+ 	u8 group_used_idx;
+ 	u8 muar_idx;
+ 	u8 addr[ETH_ALEN];
+-	unsigned int last_seen;
++	unsigned long last_seen;
+ 	s8 rssi[4];
+ 	struct ieee80211_sta *sta;
+ };
+ 
+ struct mt7915_air_monitor_ctrl {
++	spinlock_t lock;
++	struct mutex mutex;
+ 	u8 enable;
+ 
+ 	struct mt7915_air_monitor_group group[MT7915_AIR_MONITOR_MAX_GROUP];
+--- a/mt7915/vendor.c
++++ b/mt7915/vendor.c
+@@ -763,7 +763,7 @@ mt7915_vendor_smesh_ctrl(struct mt7915_p
+ }
+ 
+ static int
+-mt7915_vendor_amnt_muar(struct mt7915_phy *phy, u8 muar_idx, u8 *addr)
++mt7915_vendor_amnt_muar(struct mt7915_phy *phy, u8 muar_idx, const u8 *addr)
+ {
+ 	struct mt7915_dev *dev = phy->dev;
+ 	struct {
+@@ -813,58 +813,112 @@ mt7915_vendor_amnt_set_en(struct mt7915_
+ }
+ 
+ static int
+-mt7915_vendor_amnt_set_addr(struct mt7915_phy *phy, u8 index, u8 *addr)
++mt7915_vendor_amnt_set_addr(struct mt7915_phy *phy, u8 index,
++			    const u8 *addr)
+ {
+ 	struct mt7915_air_monitor_ctrl *amnt_ctrl = &phy->amnt_ctrl;
+-	struct mt7915_air_monitor_group *group;
+ 	struct mt7915_air_monitor_entry *entry;
++	struct mt7915_air_monitor_entry old_entry, new_entry;
++	struct mt7915_air_monitor_group groups[MT7915_AIR_MONITOR_MAX_GROUP];
+ 	const u8 zero_addr[ETH_ALEN] = {};
++	const u8 *rollback_addr;
++	u8 old_enable, new_enable = 0;
+ 	int enable = !ether_addr_equal(addr, zero_addr);
+-	int ret, i, j;
++	int ret, i, j = -1;
+ 
+ 	if (index >= MT7915_AIR_MONITOR_MAX_ENTRY)
+ 		return -EINVAL;
+ 
++	if (enable && !is_valid_ether_addr(addr))
++		return -EINVAL;
++
++	mutex_lock(&amnt_ctrl->mutex);
++
+ 	entry = &amnt_ctrl->entry[index];
+-	if (enable == 1 && entry->enable == 1) {
+-		ether_addr_copy(entry->addr, addr);
+-	} else if (enable == 1 && entry->enable == 0){
++	spin_lock_bh(&amnt_ctrl->lock);
++	memcpy(groups, amnt_ctrl->group, sizeof(groups));
++	old_entry = *entry;
++	old_enable = amnt_ctrl->enable;
++	spin_unlock_bh(&amnt_ctrl->lock);
++
++	new_entry = old_entry;
++	if (enable && old_entry.enable) {
++		ether_addr_copy(new_entry.addr, addr);
++	} else if (enable) {
+ 		for (i = 0; i < MT7915_AIR_MONITOR_MAX_GROUP; i++) {
+-			group = &(amnt_ctrl->group[i]);
+-			if (group->used[0] == 0)
++			if (!groups[i].used[0])
+ 				j = 0;
+-			else if (group->used[1] == 0)
++			else if (!groups[i].used[1])
+ 				j = 1;
+ 			else
+ 				continue;
+ 
+-			group->enable = 1;
+-			group->used[j] = 1;
+-			entry->enable = 1;
+-			entry->group_idx = i;
+-			entry->group_used_idx = j;
+-			entry->muar_idx = 32 + 2 * i + 2 * i + 2 * j;
+-			ether_addr_copy(entry->addr, addr);
+ 			break;
+ 		}
++
++		if (j < 0) {
++			ret = -ENOSPC;
++			goto out_unlock;
++		}
++
++		groups[i].used[j] = true;
++		new_entry.enable = true;
++		new_entry.group_idx = i;
++		new_entry.group_used_idx = j;
++		new_entry.muar_idx = 32 + 4 * i + 2 * j;
++		ether_addr_copy(new_entry.addr, addr);
+ 	} else {
+-		group = &(amnt_ctrl->group[entry->group_idx]);
++		if (!old_entry.enable) {
++			ret = -ENOENT;
++			goto out_unlock;
++		}
+ 
+-		group->used[entry->group_used_idx] = 0;
+-		if (group->used[0] == 0 && group->used[1] == 0)
+-			group->enable = 0;
++		if (old_entry.group_idx >= MT7915_AIR_MONITOR_MAX_GROUP ||
++		    old_entry.group_used_idx >= ARRAY_SIZE(groups[0].used)) {
++			ret = -EINVAL;
++			goto out_unlock;
++		}
+ 
+-		entry->enable = 0;
+-		ether_addr_copy(entry->addr, addr);
++		groups[old_entry.group_idx].used[old_entry.group_used_idx] = false;
++		new_entry.enable = false;
++		ether_addr_copy(new_entry.addr, zero_addr);
+ 	}
+ 
+-	amnt_ctrl->enable &= ~(1 << entry->group_idx);
+-	amnt_ctrl->enable |= entry->enable << entry->group_idx;
+-	ret = mt7915_vendor_amnt_muar(phy, entry->muar_idx, addr);
++	for (i = 0; i < MT7915_AIR_MONITOR_MAX_GROUP; i++) {
++		groups[i].enable = groups[i].used[0] || groups[i].used[1];
++		if (groups[i].enable)
++			new_enable |= BIT(i);
++	}
++
++	ret = mt7915_vendor_amnt_muar(phy, new_entry.muar_idx, addr);
+ 	if (ret)
+-		return ret;
++		goto out_unlock;
+ 
+-	return mt7915_vendor_amnt_set_en(phy, amnt_ctrl->enable);
++	ret = mt7915_vendor_amnt_set_en(phy, new_enable);
++	if (ret) {
++		rollback_addr = old_entry.enable ? old_entry.addr : zero_addr;
++		mt7915_vendor_amnt_muar(phy, new_entry.muar_idx, rollback_addr);
++		mt7915_vendor_amnt_set_en(phy, old_enable);
++		goto out_unlock;
++	}
++
++	spin_lock_bh(&amnt_ctrl->lock);
++	memcpy(amnt_ctrl->group, groups, sizeof(groups));
++	amnt_ctrl->enable = new_enable;
++	entry->enable = new_entry.enable;
++	entry->group_idx = new_entry.group_idx;
++	entry->group_used_idx = new_entry.group_used_idx;
++	entry->muar_idx = new_entry.muar_idx;
++	ether_addr_copy(entry->addr, new_entry.addr);
++	memset(entry->rssi, 0, sizeof(entry->rssi));
++	entry->last_seen = enable ? jiffies : 0;
++	spin_unlock_bh(&amnt_ctrl->lock);
++
++	ret = 0;
++out_unlock:
++	mutex_unlock(&amnt_ctrl->mutex);
++
++	return ret;
+ }
+ 
+ void mt7915_vendor_amnt_fill_rx(struct mt7915_phy *phy, struct sk_buff *skb)
+@@ -883,24 +937,21 @@ void mt7915_vendor_amnt_fill_rx(struct mt
+ 	else
+ 		ether_addr_copy(addr, hdr->addr3);
+ 
++	spin_lock_bh(&ctrl->lock);
+ 	for (i = 0; i < MT7915_AIR_MONITOR_MAX_ENTRY; i++) {
+ 		struct mt7915_air_monitor_entry *entry;
+ 
+-		if (ether_addr_equal(addr, ctrl->entry[i].addr)) {
+-			entry = &ctrl->entry[i];
+-			entry->rssi[0] = status->chain_signal[0];
+-			entry->rssi[1] = status->chain_signal[1];
+-			entry->rssi[2] = status->chain_signal[2];
+-			entry->rssi[3] = status->chain_signal[3];
+-			entry->last_seen = jiffies;
+-		}
++		entry = &ctrl->entry[i];
++		if (!entry->enable || !ether_addr_equal(addr, entry->addr))
++			continue;
++
++		entry->rssi[0] = status->chain_signal[0];
++		entry->rssi[1] = status->chain_signal[1];
++		entry->rssi[2] = status->chain_signal[2];
++		entry->rssi[3] = status->chain_signal[3];
++		entry->last_seen = jiffies;
+ 	}
+-
+-	if (ieee80211_has_tods(fc) &&
+-	    !ether_addr_equal(hdr->addr3, phy->mt76->macaddr))
+-		return;
+-	else if (!ether_addr_equal(hdr->addr1, phy->mt76->macaddr))
+-		return;
++	spin_unlock_bh(&ctrl->lock);
+ }
+ 
+ int mt7915_vendor_amnt_sta_remove(struct mt7915_phy *phy,
+@@ -909,15 +960,22 @@ int mt7915_vendor_amnt_sta_remove(struct
+ {
+ 	u8 zero[ETH_ALEN] = {};
+-	int i;
++	int i, index = -1;
+ 
+-	if (!phy->amnt_ctrl.enable)
++	if (!READ_ONCE(phy->amnt_ctrl.enable))
+ 		return 0;
+ 
+-	for (i = 0; i < MT7915_AIR_MONITOR_MAX_ENTRY; i++)
+-		if (ether_addr_equal(sta->addr, phy->amnt_ctrl.entry[i].addr))
+-			return mt7915_vendor_amnt_set_addr(phy, i, zero);
++	spin_lock_bh(&phy->amnt_ctrl.lock);
++	for (i = 0; i < MT7915_AIR_MONITOR_MAX_ENTRY; i++) {
++		if (phy->amnt_ctrl.entry[i].enable &&
++		    ether_addr_equal(sta->addr, phy->amnt_ctrl.entry[i].addr)) {
++			index = i;
++			break;
++		}
++	}
++	spin_unlock_bh(&phy->amnt_ctrl.lock);
+ 
+-	return 0;
++	return index < 0 ? 0 :
++		mt7915_vendor_amnt_set_addr(phy, index, zero);
+ }
+ 
+ static int
+@@ -970,8 +1028,8 @@ mt7915_amnt_dump(struct mt7915_phy *phy,
+ 			 u8 amnt_idx, int *attrtype)
+ {
+ 	struct mt7915_air_monitor_entry *entry;
++	struct mt7915_air_monitor_ctrl *ctrl = &phy->amnt_ctrl;
+ 	struct mt7915_amnt_data data = {};
+-	u32 last_seen = 0;
+ 
+ 	if (amnt_idx >= MT7915_AIR_MONITOR_MAX_ENTRY)
+ 		return -EINVAL;
+@@ -980,16 +1038,15 @@ mt7915_amnt_dump(struct mt7915_phy *phy,
+-	entry = &phy->amnt_ctrl.entry[amnt_idx];
+-	if (entry->enable == 0)
++	spin_lock_bh(&ctrl->lock);
++	entry = &ctrl->entry[amnt_idx];
++	if (!entry->enable) {
++		spin_unlock_bh(&ctrl->lock);
+ 		return 0;
+-
+-	last_seen = jiffies_to_msecs(jiffies - entry->last_seen);
++	}
+ 
+ 	data.idx = amnt_idx;
+ 	ether_addr_copy(data.addr, entry->addr);
+-	data.rssi[0] = entry->rssi[0];
+-	data.rssi[1] = entry->rssi[1];
+-	data.rssi[2] = entry->rssi[2];
+-	data.rssi[3] = entry->rssi[3];
+-	data.last_seen = last_seen;
++	memcpy(data.rssi, entry->rssi, sizeof(data.rssi));
++	data.last_seen = jiffies_to_msecs(jiffies - entry->last_seen);
++	spin_unlock_bh(&ctrl->lock);
+ 
+ 	if (nla_put(skb, (*attrtype)++, sizeof(data), &data))
+ 		return -EMSGSIZE;
+@@ -1773,6 +1830,8 @@ static const struct wiphy_vendor_command
+ 
+ void mt7915_vendor_register(struct mt7915_phy *phy)
+ {
++	mutex_init(&phy->amnt_ctrl.mutex);
++	spin_lock_init(&phy->amnt_ctrl.lock);
+ 	phy->mt76->hw->wiphy->vendor_commands = mt7915_vendor_commands;
+ 	phy->mt76->hw->wiphy->n_vendor_commands = ARRAY_SIZE(mt7915_vendor_commands);
+ }
