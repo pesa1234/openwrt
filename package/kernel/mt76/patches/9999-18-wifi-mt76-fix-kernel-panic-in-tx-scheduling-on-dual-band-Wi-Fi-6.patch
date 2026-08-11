@@ -1,0 +1,63 @@
+From d8154c81316382ab16bbfb1a6e492fbcda84b922 Mon Sep 17 00:00:00 2001
+From: Chen Minqiang <ptpt52@gmail.com>
+Date: Fri, 26 Jun 2026 10:48:51 +0800
+Subject: [PATCH] wifi: mt76: fix kernel panic in tx scheduling on dual-band
+ Wi-Fi 6
+
+Commit aeedee5c0a2c ("wifi: mt76: add multi-radio support to tx scheduling")
+introduced a loop where the `phy` pointer is updated based on `wcid->phy_idx`
+to support routing tx queues to the correct hardware link in Wi-Fi 7 (MLO)
+architectures where multiple PHYs share the same mac80211 hardware
+structure (`ieee80211_hw`).
+
+However, this breaks dual-band Wi-Fi 6 (non-MLO) architectures (e.g., MT7981)
+where each PHY has its own independent `ieee80211_hw` and corresponding
+`active_txqs`. In such architectures, when a STA disconnects and its WCID
+is reused by another STA on the other band, a stale `txq` can still remain
+in the original PHY's active queue.
+
+During processing, `mt76_txq_schedule_list()` pulls the stale `txq`
+from `phy0->hw`, discovers the new `wcid` mapping points to `phy1`,
+and updates `phy` to `phy1`. It then calls `mt76_txq_dequeue(phy1, ...)`,
+which calls `ieee80211_tx_dequeue(phy1->hw, txq)`.
+
+This causes mac80211 to mix pointers from two different `ieee80211_hw`
+(local) contexts: `local B` (phy1) and `local A` (phy0). In `codel_dequeue`,
+calculating `flow - local->fq.flows` using pointers from two differently
+allocated structures produces a pseudo-random out-of-bounds index, leading
+to a memory corruption / kernel panic.
+
+Fix this by ensuring we only update the `phy` pointer if both PHYs share
+the same `hw` (MLO). If `phy->hw != wcid_phy->hw`, it indicates a stale
+queue from a different MAC, and we safely skip it.
+
+Signed-off-by: Chen Minqiang <ptpt52@gmail.com>
+---
+ tx.c | 7 ++++++-
+ 1 file changed, 6 insertions(+), 1 deletion(-)
+
+diff --git a/tx.c b/tx.c
+index b863e449d..79eaaeff2 100644
+--- a/tx.c
++++ b/tx.c
+@@ -572,6 +572,7 @@ mt76_txq_schedule_list(struct mt76_phy *phy, enum mt76_txq_id qid)
+ 
+ 	while (1) {
+ 		int n_frames = 0;
++		struct mt76_phy *wcid_phy;
+ 
+ 		txq = ieee80211_next_txq(phy->hw, qid);
+ 		if (!txq)
+@@ -582,7 +583,11 @@ mt76_txq_schedule_list(struct mt76_phy *phy, enum mt76_txq_id qid)
+ 		if (!wcid)
+ 			continue;
+ 
+-		phy = mt76_dev_phy(dev, wcid->phy_idx);
++		wcid_phy = mt76_dev_phy(dev, wcid->phy_idx);
++		if (phy->hw != wcid_phy->hw)
++			continue;
++
++		phy = wcid_phy;
+ 		if (test_bit(MT76_RESET, &phy->state) || phy->offchannel)
+ 			continue;
+ 
