@@ -475,7 +475,7 @@ Subject: [PATCH] net: ethernet: mtk_eth_soc: add rss support
  
  	mtk_tx_irq_disable(eth, MTK_TX_DONE_INT);
 -	mtk_rx_irq_disable(eth, eth->soc->rx.irq_done_mask);
--	mtk_handle_irq_rx(eth->irq[MTK_FE_IRQ_RX], dev);
+-	mtk_handle_irq_rx(eth->irq[MTK_FE_IRQ_RX], eth);
 +	mtk_rx_irq_disable(eth, MTK_RX_DONE_INT(0));
 +	mtk_handle_irq_rx(eth->irq_fe[MTK_FE_IRQ_RX], &eth->rx_napi[0]);
  	mtk_tx_irq_enable(eth, MTK_TX_DONE_INT);
