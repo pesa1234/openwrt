@@ -59,7 +59,7 @@ $(eval $(call KernelPackage,acpi-video))
 define KernelPackage/backlight
 	SUBMENU:=$(VIDEO_MENU)
 	TITLE:=Backlight support
-	DEPENDS:=@DISPLAY_SUPPORT +kmod-fb
+	DEPENDS:=@DISPLAY_SUPPORT +LINUX_6_12:kmod-fb
 	HIDDEN:=1
 	KCONFIG:=CONFIG_BACKLIGHT_CLASS_DEVICE \
 		CONFIG_BACKLIGHT_LCD_SUPPORT=y \
@@ -78,6 +78,21 @@ define KernelPackage/backlight/description
 endef
 
 $(eval $(call KernelPackage,backlight))
+
+define KernelPackage/backlight-gpio
+	SUBMENU:=$(VIDEO_MENU)
+	TITLE:=GPIO Backlight support
+	DEPENDS:=@GPIO_SUPPORT +kmod-backlight
+	KCONFIG:=CONFIG_BACKLIGHT_GPIO
+	FILES:=$(LINUX_DIR)/drivers/video/backlight/gpio_backlight.ko
+	AUTOLOAD:=$(call AutoProbe,gpio_backlight)
+endef
+
+define KernelPackage/backlight-gpio/description
+	Kernel module for GPIO based Backlight support.
+endef
+
+$(eval $(call KernelPackage,backlight-gpio))
 
 define KernelPackage/backlight-pwm
 	SUBMENU:=$(VIDEO_MENU)
@@ -98,7 +113,7 @@ $(eval $(call KernelPackage,backlight-pwm))
 define KernelPackage/fb
   SUBMENU:=$(VIDEO_MENU)
   TITLE:=Framebuffer and framebuffer console support
-  DEPENDS:=@DISPLAY_SUPPORT
+  DEPENDS:=@DISPLAY_SUPPORT +PACKAGE_kmod-backlight:kmod-backlight
   KCONFIG:= \
 	CONFIG_FB \
 	CONFIG_FB_DEVICE=y \
