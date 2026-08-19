@@ -44,13 +44,16 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  
 --- a/src/ap/ap_config.h
 +++ b/src/ap/ap_config.h
-@@ -1300,6 +1300,19 @@ struct hostapd_config {
+@@ -1325,5 +1325,6 @@ struct hostapd_config {
  	u8 edcca_enable;
  	s8 edcca_compensation;
  	int *edcca_threshold;
 +	u8 three_wire_enable;
-+};
-+
+ 
+ #ifdef CONFIG_AFC
+@@ -1396,3 +1397,14 @@ enum mtk_vendor_attr_edcca_ctrl_mode {
+ };
+ 
 +enum three_wire_mode {
 +	THREE_WIRE_MODE_DISABLE,
 +	THREE_WIRE_MODE_EXT0_ENABLE,
@@ -59,11 +62,10 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
 +
 +	/* keep last */
 +	NUM_THREE_WIRE_MODE,
-+	THREE_WIRE_MODE_MAX =
-+		NUM_THREE_WIRE_MODE - 1
- };
- 
- 
++	THREE_WIRE_MODE_MAX = NUM_THREE_WIRE_MODE - 1
++};
++
+ #define EDCCA_DEFAULT_COMPENSATION -6
 --- a/src/ap/ap_drv_ops.c
 +++ b/src/ap/ap_drv_ops.c
 @@ -1468,3 +1468,14 @@ int hostapd_drv_mu_dump(struct hostapd_d

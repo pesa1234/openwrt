@@ -287,15 +287,13 @@ index 95299f4..ce1e75c 100644
  static int hostapd_ctrl_iface_receive_process(struct hostapd_data *hapd,
  					      char *buf, char *reply,
  					      int reply_size,
-@@ -4582,6 +4733,12 @@ static int hostapd_ctrl_iface_receive_process(struct hostapd_data *hapd,
- 			reply_len = -1;
- #endif /* CONFIG_PROCESS_COORDINATION */
- #endif /* CONFIG_TESTING_OPTIONS */
+@@ -4882,4 +5033,10 @@ static int hostapd_ctrl_iface_receive_process(struct hostapd_data *hapd,
+ #endif /* CONFIG_AFC */
 +	} else if (os_strncmp(buf, "SET_EDCCA ", 10) == 0) {
-+		reply_len = hostapd_ctrl_iface_set_edcca(hapd, buf+10, reply,
++		reply_len = hostapd_ctrl_iface_set_edcca(hapd, buf + 10, reply,
 +							  reply_size);
 +	} else if (os_strncmp(buf, "GET_EDCCA ", 10) == 0) {
-+		reply_len = hostapd_ctrl_iface_get_edcca(hapd, buf+10, reply,
++		reply_len = hostapd_ctrl_iface_get_edcca(hapd, buf + 10, reply,
 +							  reply_size);
  	} else {
  		os_memcpy(reply, "UNKNOWN COMMAND\n", 16);
@@ -326,7 +324,7 @@ diff --git a/src/ap/ap_config.h b/src/ap/ap_config.h
 index 96947c1..c939d98 100644
 --- a/src/ap/ap_config.h
 +++ b/src/ap/ap_config.h
-@@ -1307,9 +1307,42 @@ struct hostapd_config {
+@@ -1321,5 +1321,10 @@ struct hostapd_config {
  
  	/* Disable MCS15 Subfield in EHT operation element */
  	bool disable_mcs15_rx;
@@ -335,6 +333,11 @@ index 96947c1..c939d98 100644
 +	u8 edcca_enable;
 +	s8 edcca_compensation;
 +	int *edcca_threshold;
+ 
+ #ifdef CONFIG_AFC
+@@ -1363,8 +1368,36 @@ struct hostapd_config {
+ 	} afc;
+ #endif /* CONFIG_AFC */
  };
  
  

@@ -361,11 +361,11 @@ Subject: [PATCH 020/149] mtk: hostapd: Add amsdu set get ctrl
  
 --- a/src/ap/ap_config.h
 +++ b/src/ap/ap_config.h
-@@ -1302,6 +1302,7 @@ struct hostapd_config {
+@@ -1327,6 +1327,7 @@ struct hostapd_config {
+ 	s8 edcca_compensation;
  	int *edcca_threshold;
  	u8 three_wire_enable;
  	u8 ibf_enable;
 +	u8 amsdu;
- };
  
- enum three_wire_mode {
+ #ifdef CONFIG_AFC

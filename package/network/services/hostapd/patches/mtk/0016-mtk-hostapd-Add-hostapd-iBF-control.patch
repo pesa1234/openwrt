@@ -93,10 +93,8 @@ Signed-off-by: mtk27835 <shurong.wen@mediatek.com>
  struct hostapd_cli_cmd {
  	const char *cmd;
  	int (*handler)(struct wpa_ctrl *ctrl, int argc, char *argv[]);
-@@ -1929,6 +1936,8 @@ static const struct hostapd_cli_cmd host
- 	{ "driver", hostapd_cli_cmd_driver, NULL,
- 	  "<driver sub command> [<hex formatted data>] = send driver command data" },
- #endif /* ANDROID */
+@@ -2010,4 +2017,6 @@ static const struct hostapd_cli_cmd hostapd_cli_commands[] = {
+ #endif /* CONFIG_AFC */
 +	{ "get_ibf", hostapd_cli_cmd_get_ibf, NULL,
 +	  " = show iBF state (enabled/disabled)"},
  	{ NULL, NULL, NULL, NULL }
@@ -114,14 +112,13 @@ Signed-off-by: mtk27835 <shurong.wen@mediatek.com>
  
 --- a/src/ap/ap_config.h
 +++ b/src/ap/ap_config.h
-@@ -1301,6 +1301,7 @@ struct hostapd_config {
+@@ -1326,5 +1326,6 @@ struct hostapd_config {
  	s8 edcca_compensation;
  	int *edcca_threshold;
  	u8 three_wire_enable;
 +	u8 ibf_enable;
- };
  
- enum three_wire_mode {
+ #ifdef CONFIG_AFC
 @@ -1465,6 +1466,7 @@ hostapd_set_and_check_bw320_offset(struc
  #endif /* CONFIG_IEEE80211BE */
  }

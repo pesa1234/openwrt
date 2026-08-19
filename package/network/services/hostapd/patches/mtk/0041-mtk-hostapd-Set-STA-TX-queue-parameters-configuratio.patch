@@ -60,12 +60,12 @@ Signed-off-by: Michael Lee <michael-cy.lee@mediatek.com>
  
  static void wpa_supplicant_event_assoc(struct wpa_supplicant *wpa_s,
  				       union wpa_event_data *data)
-@@ -4988,6 +5002,8 @@ static void wpa_supplicant_event_assoc(s
+@@ -5063,6 +5077,8 @@ static int wpa_supplicant_event_assoc(struct wpa_supplicant *wpa_s,
  
  	if (wpa_s->current_ssid && wpa_s->current_ssid->enable_4addr_mode)
  		wpa_supplicant_set_4addr_mode(wpa_s);
 +
 +	wpa_supplicant_tx_queue_params(wpa_s);
+ 
+ 	return 0;
  }
- 
- 

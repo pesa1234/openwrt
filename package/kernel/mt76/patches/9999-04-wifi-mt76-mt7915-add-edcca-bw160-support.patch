@@ -84,6 +84,15 @@
  };
  
  static const struct nla_policy
+@@ -1314,7 +1316,7 @@ static int mt7915_vendor_edcca_ctrl(str
+ 	struct nlattr *tb[NUM_MTK_VENDOR_ATTRS_EDCCA_CTRL];
+ 	int err;
+ 	u8 edcca_mode;
+-	s8 edcca_compensation;
++	s8 edcca_compensation = 0;
+ 	u8 edcca_value[EDCCA_THRES_NUM] = {0};
+ 
+ 	err = nla_parse(tb, MTK_VENDOR_ATTR_EDCCA_CTRL_MAX, data, data_len,
 @@ -1332,7 +1334,8 @@ static int mt7915_vendor_edcca_ctrl(str
  	} else if (edcca_mode == EDCCA_CTRL_SET_THERS) {
  		if (!tb[MTK_VENDOR_ATTR_EDCCA_CTRL_PRI20_VAL] ||
@@ -115,6 +124,16 @@
  	} else {
  		return -EINVAL;
  	}
+@@ -1398,7 +1403,8 @@ mt7915_vendor_edcca_ctrl_dump(struct wiphy *wiphy, struct wireless_dev *wdev,
+ 
+ 	if (nla_put_u8(skb, MTK_VENDOR_ATTR_EDCCA_DUMP_PRI20_VAL, value[0]) ||
+ 	    nla_put_u8(skb, MTK_VENDOR_ATTR_EDCCA_DUMP_SEC40_VAL, value[1]) ||
+-	    nla_put_u8(skb, MTK_VENDOR_ATTR_EDCCA_DUMP_SEC80_VAL, value[2]))
++	    nla_put_u8(skb, MTK_VENDOR_ATTR_EDCCA_DUMP_SEC80_VAL, value[2]) ||
++	    nla_put_u8(skb, MTK_VENDOR_ATTR_EDCCA_DUMP_SEC160_VAL, value[3]))
+ 		return -ENOMEM;
+ 
+ 	return len;
 --- a/mt7915/vendor.h
 +++ b/mt7915/vendor.h
 @@ -3,7 +3,7 @@
