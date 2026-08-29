@@ -1,0 +1,28 @@
+From 6a4c41c41410cd5042ad10c39da6593ba036283c Mon Sep 17 00:00:00 2001
+From: developer <developer@mediatek.com>
+Date: Tue, 14 Feb 2023 17:36:36 +0800
+Subject: [PATCH] arm64: dts: mediatek: mt7986: correct timer frequency
+
+The MT7986 architected timer runs at 12,986,200 Hz rather than 13 MHz.
+Describe its actual frequency so the architected timer driver overrides
+the value reported by firmware through CNTFRQ_EL0.
+
+The upstream mt7986b.dtsi includes mt7986a.dtsi, so this change covers
+both SoC variants.
+
+Link: https://github.com/mediatek/mtk-openwrt-feeds/commit/6a4c41c41410cd5042ad10c39da6593ba036283c
+Signed-off-by: Andrea Pesaresi <andreapesaresi82@gmail.com>
+---
+ arch/arm64/boot/dts/mediatek/mt7986a.dtsi | 1 +
+ 1 file changed, 1 insertion(+)
+
+--- a/arch/arm64/boot/dts/mediatek/mt7986a.dtsi
++++ b/arch/arm64/boot/dts/mediatek/mt7986a.dtsi
+@@ -685,6 +685,7 @@
+ 	timer {
+ 		compatible = "arm,armv8-timer";
+ 		interrupt-parent = <&gic>;
++		clock-frequency = <12986200>;
+ 		interrupts = <GIC_PPI 13 IRQ_TYPE_LEVEL_LOW>,
+ 			     <GIC_PPI 14 IRQ_TYPE_LEVEL_LOW>,
+ 			     <GIC_PPI 11 IRQ_TYPE_LEVEL_LOW>,
