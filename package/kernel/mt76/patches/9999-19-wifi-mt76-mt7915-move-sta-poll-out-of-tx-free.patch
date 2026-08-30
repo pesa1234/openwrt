@@ -1,0 +1,49 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Joshua Klinesmith <joshuaklinesmith@gmail.com>
+Date: Mon, 6 Apr 2026 23:15:34 -0400
+Subject: [PATCH] wifi: mt76: mt7915: move sta_poll from tx_free to mac_work
+
+mt7915_mac_sta_poll() performs direct MMIO reads of WTBL entries for
+airtime accounting, GI reporting, and RSSI. It is called from
+mt7915_mac_tx_free_done(), which runs in NAPI context on every
+TX-Free-Done event. The high-frequency WTBL access races with firmware
+WTBL operations, causing kernel warnings and panics at
+mt7915_mac_wtbl_lmac_addr, followed by MCU message timeouts and firmware
+communication breakdown.
+
+Move mt7915_mac_sta_poll() into mt7915_mac_work() at the periodic fifth
+tick, under the device mutex. This reduces the access frequency from
+thousands of times per second to once every roughly five seconds,
+serializes it with other driver operations, and eliminates the
+NAPI-context WTBL access.
+
+Vendor driver analysis (mt_wifi.ko from MT7981 firmware) confirms the
+vendor TX-free handler performs no WTBL reads or station polling.
+
+Fixes: e57b7901469f ("mt76: add mac80211 driver for MT7915 PCIe-based chipsets")
+Link: https://lore.kernel.org/linux-wireless/20260407031534.57132-1-joshuaklinesmith@gmail.com/
+Tested-by: Shiji Yang <yangshiji66@outlook.com>
+Signed-off-by: Joshua Klinesmith <joshuaklinesmith@gmail.com>
+---
+ mt7915/mac.c | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
+
+--- a/mt7915/mac.c
++++ b/mt7915/mac.c
+@@ -850,8 +850,6 @@ mt7915_mac_tx_free_done(struct mt7915_de
+ {
+ 	struct sk_buff *skb, *tmp;
+ 
+-	mt7915_mac_sta_poll(dev);
+-
+ 	if (wake)
+ 		mt76_set_tx_blocked(&dev->mt76, false);
+ 
+@@ -2052,6 +2050,7 @@ void mt7915_mac_work(struct work_struct
+ 		int i, ret;
+ 
+ 		mphy->mac_work_count = 0;
++		mt7915_mac_sta_poll(phy->dev);
+ 
+ 		mt7915_mac_update_stats(phy);
+ 		mt7915_mac_severe_check(phy);
