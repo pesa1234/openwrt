@@ -1,21 +1,20 @@
 From 9cc3b09943ebc5b3c5a1c5256d4fd84cf9388519 Mon Sep 17 00:00:00 2001
 From: "Allen.Ye" <allen.ye@mediatek.com>
 Date: Thu, 9 Nov 2023 11:37:37 +0800
-Subject: [PATCH 32/87] mtk: mac80211: Add cert mode to disable ba timeout
+Subject: [PATCH 32/87] mtk: mac80211: Add cert mode to disable BA timeout
 
-Add a switch of certification mode in debugfs as cert_mode. In the case
-we use it to disable BA timeout from STA to prevent crashing STA.
+Add a certification mode switch in debugfs. The mode can only be
+changed while all interfaces are down, so every BA session observes one
+stable setting for its entire lifetime. Use READ_ONCE/WRITE_ONCE because
+the value is also consumed from TX paths outside the wiphy lock.
 
 Signed-off-by: Allen.Ye <allen.ye@mediatek.com>
-
-Move the variable 'cert_mode' from ieee80211_local to ieee80211_hw
-
 Signed-off-by: Michael-CY Lee <michael-cy.lee@mediatek.com>
 ---
  include/net/mac80211.h |  6 ++++++
  net/mac80211/agg-tx.c  |  5 ++++-
- net/mac80211/debugfs.c | 49 ++++++++++++++++++++++++++++++++++++++++++
- 3 files changed, 59 insertions(+), 1 deletion(-)
+ net/mac80211/debugfs.c | 60 ++++++++++++++++++++++++++++++++++++++++++
+ 3 files changed, 70 insertions(+), 1 deletion(-)
 
 --- a/include/net/mac80211.h
 +++ b/include/net/mac80211.h
@@ -28,7 +27,7 @@ Signed-off-by: Michael-CY Lee <michael-cy.lee@mediatek.com>
  
 +static inline bool ieee80211_is_cert_mode(struct ieee80211_hw *hw)
 +{
-+	return hw->cert_mode;
++	return READ_ONCE(hw->cert_mode);
 +}
 +
  static inline bool _ieee80211_hw_check(struct ieee80211_hw *hw,
@@ -41,8 +40,8 @@ Signed-off-by: Michael-CY Lee <michael-cy.lee@mediatek.com>
  			le16_to_cpu(mgmt->u.action.u.addba_resp.timeout);
  
 -		if (tid_tx->timeout) {
-+		/* In the case of certification env, testbed STA cannot accept frequent DelBA.
-+		 * Therefore, we remove the session timer check here to avoid crashing testbed STA.
++		/* Certification peers may not tolerate periodic DELBA frames,
++		 * therefore leave accepted sessions without a session timer.
 +		 */
 +		if (tid_tx->timeout && !ieee80211_is_cert_mode(&local->hw)) {
  			mod_timer(&tid_tx->session_timer,
@@ -50,7 +49,7 @@ Signed-off-by: Michael-CY Lee <michael-cy.lee@mediatek.com>
  			tid_tx->last_tx = jiffies;
 --- a/net/mac80211/debugfs.c
 +++ b/net/mac80211/debugfs.c
-@@ -444,6 +444,54 @@ static const struct file_operations rese
+@@ -444,6 +444,63 @@ static const struct file_operations rese
  };
  #endif
  
@@ -61,13 +60,12 @@ Signed-off-by: Michael-CY Lee <michael-cy.lee@mediatek.com>
 +{
 +	struct ieee80211_local *local = file->private_data;
 +	char buf[32];
-+	int len = 0;
++	int len;
 +
 +	len = scnprintf(buf, sizeof(buf), "cert_mode: %d\n",
-+			local->hw.cert_mode);
++			READ_ONCE(local->hw.cert_mode));
 +
-+	return simple_read_from_buffer(user_buf, count, ppos,
-+				       buf, len);
++	return simple_read_from_buffer(user_buf, count, ppos, buf, len);
 +}
 +
 +static ssize_t cert_mode_write(struct file *file,
@@ -76,7 +74,9 @@ Signed-off-by: Michael-CY Lee <michael-cy.lee@mediatek.com>
 +			       loff_t *ppos)
 +{
 +	struct ieee80211_local *local = file->private_data;
++	bool cert_mode;
 +	char buf[16];
++	int ret = 0;
 +
 +	if (count >= sizeof(buf))
 +		return -EINVAL;
@@ -89,10 +89,18 @@ Signed-off-by: Michael-CY Lee <michael-cy.lee@mediatek.com>
 +	else
 +		buf[count] = '\0';
 +
-+	if (kstrtobool(buf, &local->hw.cert_mode))
++	if (kstrtobool(buf, &cert_mode))
 +		return -EINVAL;
 +
-+	return count;
++	/* Avoid changing policy underneath already negotiated BA sessions. */
++	wiphy_lock(local->hw.wiphy);
++	if (local->open_count)
++		ret = -EBUSY;
++	else
++		WRITE_ONCE(local->hw.cert_mode, cert_mode);
++	wiphy_unlock(local->hw.wiphy);
++
++	return ret ?: count;
 +}
 +
 +static const struct file_operations cert_mode_ops = {
@@ -105,7 +113,7 @@ Signed-off-by: Michael-CY Lee <michael-cy.lee@mediatek.com>
  static const char *hw_flag_names[] = {
  #define FLAG(F)	[IEEE80211_HW_##F] = #F
  	FLAG(HAS_RATE_CONTROL),
-@@ -717,6 +765,7 @@ void debugfs_hw_add(struct ieee80211_loc
+@@ -717,6 +774,7 @@ void debugfs_hw_add(struct ieee80211_loc
  	debugfs_create_u32("aql_threshold", 0600,
  			   phyd, &local->aql_threshold);
  

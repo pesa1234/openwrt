@@ -34,12 +34,12 @@ Subject: [PATCH 15/87] mtk: mac80211: fix tx amsdu aggregation
 +	u16 capab = 0;
 +	bool amsdu = ieee80211_hw_check(&local->hw, SUPPORTS_AMSDU_IN_AMPDU);
  
- 	skb = dev_alloc_skb(sizeof(*mgmt) +
+ 	skb = dev_alloc_skb(IEEE80211_MIN_ACTION_SIZE(addba_req) +
  			    2 + sizeof(struct ieee80211_addba_ext_ie) +
 @@ -83,7 +84,8 @@ static void ieee80211_send_addba_request
- 	mgmt->u.action.u.addba_req.action_code = WLAN_ACTION_ADDBA_REQ;
+ 		WLAN_ACTION_NDP_ADDBA_REQ : WLAN_ACTION_ADDBA_REQ;
  
- 	mgmt->u.action.u.addba_req.dialog_token = dialog_token;
+ 	mgmt->u.action.addba_req.dialog_token = dialog_token;
 -	capab = IEEE80211_ADDBA_PARAM_AMSDU_MASK;
 +	if (amsdu)
 +		capab = IEEE80211_ADDBA_PARAM_AMSDU_MASK;

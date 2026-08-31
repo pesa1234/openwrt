@@ -1,0 +1,21 @@
+--- a/trace.h
++++ b/trace.h
+@@ -106,6 +106,6 @@
+ #undef TRACE_INCLUDE_PATH
+ #define TRACE_INCLUDE_PATH .
+ #undef TRACE_INCLUDE_FILE
+-#define TRACE_INCLUDE_FILE trace
++#define TRACE_INCLUDE_FILE mt76_trace
+ 
+ #include <trace/define_trace.h>
+--- /dev/null
++++ b/mt76_trace.h
+@@ -0,0 +1,8 @@
++/* SPDX-License-Identifier: BSD-3-Clause-Clear */
++/*
++ * Use a unique name for define_trace's second inclusion.  mac80211 also
++ * installs a trace.h in its exported include directory, so using the generic
++ * name may re-read mac80211's trace definitions instead of mt76's.
++ */
++
++#include "trace.h"

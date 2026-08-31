@@ -1,44 +1,114 @@
 From 7ca58a08f937bd0ba29e925c130d10a2f5dd0659 Mon Sep 17 00:00:00 2001
 From: Yi-Chia Hsieh <yi-chia.hsieh@mediatek.com>
 Date: Mon, 13 Mar 2023 05:23:37 +0800
-Subject: [PATCH 17/87] mtk: mac80211: track obss color bitmap
+Subject: [PATCH 17/87] mtk: mac80211: track recent OBSS color bitmap
 
-Track OBSS BSS color when receive their beacon.
+Track OBSS BSS colors received in beacons. Keep two ten-second
+generations so colors which disappear are aged out without exposing a
+nearly empty bitmap at each rotation. Serialize RX updates and provide a
+READ_ONCE accessor for drivers.
 
-Adding 2 tracepoint for debug, usage:
-echo 1 > /sys/kernel/debug/tracing/events/mac80211/bss_color_bitmap/enable
-echo 1 > /sys/kernel/debug/tracing/events/mac80211/bss_color_collision/enable
-
+Signed-off-by: Yi-Chia Hsieh <yi-chia.hsieh@mediatek.com>
 ---
- include/net/mac80211.h |  1 +
- net/mac80211/rx.c      |  6 +++++-
+ include/net/mac80211.h | 11 +++++++++++
+ net/mac80211/link.c    |  2 ++
+ net/mac80211/rx.c      | 32 +++++++++++++++++++++++++++++++-
  net/mac80211/trace.h   | 20 ++++++++++++++++++++
- 3 files changed, 26 insertions(+), 1 deletion(-)
+ 4 files changed, 64 insertions(+), 1 deletion(-)
 
 --- a/include/net/mac80211.h
 +++ b/include/net/mac80211.h
-@@ -822,6 +822,7 @@ struct ieee80211_bss_conf {
+@@ -822,6 +822,10 @@ struct ieee80211_bss_conf {
  	} he_oper;
  	struct ieee80211_he_obss_pd he_obss_pd;
  	struct cfg80211_he_bss_color he_bss_color;
++	spinlock_t used_color_lock;
 +	u64 used_color_bitmap;
++	u64 used_color_bitmap_new;
++	unsigned long used_color_bitmap_last;
  	struct ieee80211_fils_discovery fils_discovery;
  	u32 unsol_bcast_probe_resp_interval;
  	struct cfg80211_bitrate_mask beacon_tx_rate;
+@@ -895,6 +899,14 @@ struct ieee80211_bss_conf {
+ 	struct ieee80211_bss_npca_params npca;
+ };
+ 
++/**
++ * ieee80211_get_used_color_bitmap - get recently observed OBSS colors
++ */
++static inline u64 ieee80211_get_used_color_bitmap(struct ieee80211_bss_conf *conf)
++{
++	return READ_ONCE(conf->used_color_bitmap);
++}
++
+ #define IEEE80211_NAN_MAX_CHANNELS 3
+ 
+ /**
+--- a/net/mac80211/link.c
++++ b/net/mac80211/link.c
+@@ -125,6 +125,8 @@ void ieee80211_link_init(struct ieee8021
+ 	link_conf->vif = &sdata->vif;
+ 	link->ap_power_level = IEEE80211_UNSET_POWER_LEVEL;
+ 	link->user_power_level = sdata->local->user_power_level;
++	spin_lock_init(&link_conf->used_color_lock);
++	link_conf->used_color_bitmap_last = jiffies;
+ 	link_conf->txpower = INT_MIN;
+ 
+ 	wiphy_work_init(&link->csa.finalize_work,
 --- a/net/mac80211/rx.c
 +++ b/net/mac80211/rx.c
-@@ -3396,9 +3396,13 @@ ieee80211_rx_check_bss_color_collision(s
+@@ -3361,6 +3361,8 @@ static void ieee80211_process_sa_query_r
+ 	ieee80211_tx_skb(sdata, skb);
+ }
+ 
++#define IEEE80211_BSS_COLOR_BITMAP_AGE	(10 * HZ)
++
+ static void
+ ieee80211_rx_check_bss_color_collision(struct ieee80211_rx_data *rx)
+ {
+@@ -3391,18 +3393,45 @@ ieee80211_rx_check_bss_color_collision(s
+ 	if (ie && ie->datalen >= sizeof(struct ieee80211_he_operation) &&
+ 	    ie->datalen >= ieee80211_he_oper_size(ie->data + 1)) {
+ 		const struct ieee80211_he_operation *he_oper;
++		u64 color_bit, used_color_bitmap;
+ 		u8 color;
+ 
+ 		he_oper = (void *)(ie->data + 1);
+ 		if (le32_get_bits(he_oper->he_oper_params,
+ 				  IEEE80211_HE_OPERATION_BSS_COLOR_DISABLED))
+ 			return;
  
  		color = le32_get_bits(he_oper->he_oper_params,
  				      IEEE80211_HE_OPERATION_BSS_COLOR_MASK);
++		color_bit = BIT_ULL(color);
 +
-+		bss_conf->used_color_bitmap |= BIT_ULL(color);
++		spin_lock_bh(&bss_conf->used_color_lock);
++		if (time_after(jiffies, bss_conf->used_color_bitmap_last +
++				       IEEE80211_BSS_COLOR_BITMAP_AGE)) {
++			/* Keep two generations so a rotation never exposes a
++			 * nearly empty bitmap. Colors absent for two complete
++			 * periods are discarded.
++			 */
++			if (time_after(jiffies, bss_conf->used_color_bitmap_last +
++					       2 * IEEE80211_BSS_COLOR_BITMAP_AGE))
++				bss_conf->used_color_bitmap_new = 0;
 +
-+		// trace_bss_color_bitmap(color, bss_conf->used_color_bitmap);
++			WRITE_ONCE(bss_conf->used_color_bitmap,
++				   bss_conf->used_color_bitmap_new);
++			bss_conf->used_color_bitmap_new = 0;
++			bss_conf->used_color_bitmap_last = jiffies;
++		}
++
++		bss_conf->used_color_bitmap_new |= color_bit;
++		used_color_bitmap = READ_ONCE(bss_conf->used_color_bitmap) |
++				    color_bit;
++		WRITE_ONCE(bss_conf->used_color_bitmap, used_color_bitmap);
++		spin_unlock_bh(&bss_conf->used_color_lock);
++
++		trace_bss_color_bitmap(color, used_color_bitmap);
  		if (color == bss_conf->he_bss_color.color)
  			ieee80211_obss_color_collision_notify(&rx->sdata->vif,
--							      BIT_ULL(color),
-+							      bss_conf->used_color_bitmap,
+ 							      BIT_ULL(color),
  							      bss_conf->link_id);
  	}
  }

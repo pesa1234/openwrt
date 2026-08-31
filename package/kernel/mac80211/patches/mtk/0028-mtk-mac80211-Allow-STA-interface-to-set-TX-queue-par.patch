@@ -4,10 +4,14 @@ Date: Fri, 7 Jul 2023 17:17:30 +0800
 Subject: [PATCH 28/87] mtk: mac80211: Allow STA interface to set TX queue
  parameters
 
+Preserve the U-APSD value negotiated by a station and commit the cached
+queue configuration only after the driver accepts it.
+
 Signed-off-by: Michael Lee <michael-cy.lee@mediatek.com>
 ---
- net/wireless/nl80211.c | 1 +
- 1 file changed, 1 insertion(+)
+ net/mac80211/cfg.c     | 13 ++++++++-----
+ net/wireless/nl80211.c |  1 +
+ 2 files changed, 9 insertions(+), 5 deletions(-)
 
 --- a/net/wireless/nl80211.c
 +++ b/net/wireless/nl80211.c
@@ -18,4 +22,36 @@ Signed-off-by: Michael Lee <michael-cy.lee@mediatek.com>
 +			netdev->ieee80211_ptr->iftype != NL80211_IFTYPE_STATION &&
  		    netdev->ieee80211_ptr->iftype != NL80211_IFTYPE_P2P_GO)
  			return -EINVAL;
+ 
+--- a/net/mac80211/cfg.c
++++ b/net/mac80211/cfg.c
+@@ -3447,15 +3447,14 @@ static int ieee80211_set_txq_params(stru
+ 	p.cw_min = params->cwmin;
+ 	p.txop = params->txop;
+ 
+-	/*
+-	 * Setting tx queue params disables u-apsd because it's only
+-	 * called in master mode.
+-	 */
+-	p.uapsd = false;
++	/* A station's U-APSD setting was negotiated at association time and
++	 * must not be changed by an explicit EDCA parameter update.
++	 */
++	p.uapsd = sdata->vif.type == NL80211_IFTYPE_STATION ?
++		  link->tx_conf[params->ac].uapsd : false;
+ 
+ 	ieee80211_regulatory_limit_wmm_params(sdata, &p, params->ac);
+ 
+-	link->tx_conf[params->ac] = p;
+ 	if (drv_conf_tx(local, link, params->ac, &p)) {
+ 		wiphy_debug(local->hw.wiphy,
+ 			    "failed to set TX queue parameters for AC %d\n",
+@@ -3463,6 +3466,8 @@ static int ieee80211_set_txq_params(stru
+ 		return -EINVAL;
+ 	}
+ 
++	link->tx_conf[params->ac] = p;
++
+ 	ieee80211_link_info_change_notify(sdata, link,
+ 					  BSS_CHANGED_QOS);
  

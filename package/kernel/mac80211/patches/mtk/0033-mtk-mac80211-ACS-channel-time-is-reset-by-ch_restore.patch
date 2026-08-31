@@ -24,16 +24,17 @@ scan done and before restore to duty channel.
 
 Signed-off-by: fancy.liu <fancy.liu@mediatek.com>
 ---
- include/net/mac80211.h | 7 +++++++
+ include/net/mac80211.h | 8 ++++++++
  net/mac80211/util.c    | 8 ++++++++
- 2 files changed, 15 insertions(+)
+ 2 files changed, 16 insertions(+)
 
 --- a/include/net/mac80211.h
 +++ b/include/net/mac80211.h
-@@ -7963,4 +7963,11 @@ int ieee80211_emulate_switch_vif_chanctx
-  * Return: %true iff the vif is a NAN interface and NAN is started
+@@ -8249,4 +8249,12 @@ bool ieee80211_vif_nan_started(struct ie
+  * Return: 0 if success and non-zero on error
   */
- bool ieee80211_vif_nan_started(struct ieee80211_vif *vif);
+ int ieee80211_encrypt_tx_skb(struct sk_buff *skb);
++
 +/**
 + * ieee80211_get_scanning - get scanning bitmask
 + *
