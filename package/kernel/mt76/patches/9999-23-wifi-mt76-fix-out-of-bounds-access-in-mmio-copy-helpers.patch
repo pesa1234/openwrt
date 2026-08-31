@@ -1,0 +1,57 @@
+From 04017929f632abe82860a3c1fa508ad364a16606 Mon Sep 17 00:00:00 2001
+From: Felix Fietkau <nbd@nbd.name>
+Date: Thu, 2 Jul 2026 15:14:10 +0000
+Subject: [PATCH] wifi: mt76: fix out-of-bounds access in mmio copy helpers
+
+mt76_mmio_write_copy() and mt76_mmio_read_copy() iterate up to
+ALIGN(len, 4), so a length that is not a multiple of four reads past the
+source buffer (write_copy) or writes past the destination (read_copy).
+Copy the aligned body in the loop and handle the remaining tail through a
+4-byte bounce buffer, keeping the register access width unchanged.
+
+Fixes: 2df00805f7db ("wifi: mt76: mmio_*_copy fix byte order and alignment")
+Signed-off-by: Felix Fietkau <nbd@nbd.name>
+---
+ mmio.c | 18 ++++++++++++++++--
+ 1 file changed, 16 insertions(+), 2 deletions(-)
+
+diff --git a/mmio.c b/mmio.c
+index 05d74cd7..73d47608 100644
+--- a/mmio.c
++++ b/mmio.c
+@@ -35,9 +35,16 @@ static void mt76_mmio_write_copy(struct mt76_dev *dev, u32 offset,
+ {
+ 	int i;
+ 
+-	for (i = 0; i < ALIGN(len, 4); i += 4)
++	for (i = 0; i + 4 <= len; i += 4)
+ 		writel(get_unaligned_le32(data + i),
+ 		       dev->mmio.regs + offset + i);
++
++	if (i < len) {
++		u8 tmp[4] = {};
++
++		memcpy(tmp, data + i, len - i);
++		writel(get_unaligned_le32(tmp), dev->mmio.regs + offset + i);
++	}
+ }
+ 
+ static void mt76_mmio_read_copy(struct mt76_dev *dev, u32 offset,
+@@ -45,9 +52,16 @@ static void mt76_mmio_read_copy(struct mt76_dev *dev, u32 offset,
+ {
+ 	int i;
+ 
+-	for (i = 0; i < ALIGN(len, 4); i += 4)
++	for (i = 0; i + 4 <= len; i += 4)
+ 		put_unaligned_le32(readl(dev->mmio.regs + offset + i),
+ 				   data + i);
++
++	if (i < len) {
++		u8 tmp[4];
++
++		put_unaligned_le32(readl(dev->mmio.regs + offset + i), tmp);
++		memcpy(data + i, tmp, len - i);
++	}
+ }
+ 
+ static int mt76_mmio_wr_rp(struct mt76_dev *dev, u32 base,
