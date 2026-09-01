@@ -1,0 +1,292 @@
+--- a/mt7915/vendor.c
++++ b/mt7915/vendor.c
+@@ -268,7 +268,8 @@
+ 	},
+ };
+ 
+-static inline u8 csi_group_idx(u8 mode, u8 ch_bw, u8 data_bw, u8 pri_ch_idx)
++static inline unsigned int
++csi_group_idx(u8 mode, u8 ch_bw, u8 data_bw, u8 pri_ch_idx)
+ {
+ 	if (ch_bw < 2 || data_bw < 1)
+ 		return mode * 11 + ch_bw * ch_bw + pri_ch_idx;
+@@ -360,11 +361,15 @@
+ 	if (tb[MTK_VENDOR_ATTR_CSI_CTRL_CFG]) {
+ 		u8 mode = 0, type = 0, v1 = 0, v2 = 0;
+ 		u8 mac_addr[ETH_ALEN] = {};
++		bool mac_addr_set = false;
+ 		struct nlattr *cur;
+ 		int rem;
+ 		u32 sta_interval = 0;
+ 
+ 		nla_for_each_nested(cur, tb[MTK_VENDOR_ATTR_CSI_CTRL_CFG], rem) {
++			if (nla_len(cur) != sizeof(u8))
++				return -EINVAL;
++
+ 			switch (nla_type(cur)) {
+ 			case MTK_VENDOR_ATTR_CSI_CTRL_CFG_MODE:
+ 				mode = nla_get_u8(cur);
+@@ -387,8 +392,16 @@
+ 			int idx = 0;
+ 
+ 			nla_for_each_nested(cur, tb[MTK_VENDOR_ATTR_CSI_CTRL_MAC_ADDR], rem) {
++				if (nla_len(cur) != sizeof(u8) ||
++				    idx >= ARRAY_SIZE(mac_addr))
++					return -EINVAL;
++
+ 				mac_addr[idx++] = nla_get_u8(cur);
+ 			}
++			if (idx != ETH_ALEN)
++				return -EINVAL;
++
++			mac_addr_set = true;
+ 
+ 			/* when configure mac filter, add interval for report interval per sta */
+ 			if (tb[MTK_VENDOR_ATTR_CSI_CTRL_STA_INTERVAL])
+@@ -409,9 +422,13 @@
+ 			mt7915_csi_mac_filter_clear(phy);
+ 
+ 			mutex_unlock(&phy->csi.mac_filter_lock);
+-		} else if (mode == 2 && type == 8 && v1 == 1 && (v2 == ADD_CSI_MAC || v2 == DEL_CSI_MAC)) {
++		} else if (mode == 2 && type == 8 && v1 == 1 &&
++			   (v2 == ADD_CSI_MAC || v2 == DEL_CSI_MAC)) {
+ 			struct csi_mac_filter *ent;
+ 
++			if (!mac_addr_set || !is_valid_ether_addr(mac_addr))
++				return -EINVAL;
++
+ 			mutex_lock(&phy->csi.mac_filter_lock);
+ 
+ 			if (v2 == DEL_CSI_MAC) {
+@@ -512,25 +529,47 @@
+ static void
+ mt7915_vendor_csi_tone_mask(struct mt7915_phy *phy, struct csi_data *csi)
+ {
+-	static const u8 mode_map[] = {
+-		[MT_PHY_TYPE_OFDM] = 0,
+-		[MT_PHY_TYPE_HT] = 1,
+-		[MT_PHY_TYPE_VHT] = 1,
+-		[MT_PHY_TYPE_HE_SU] = 2,
+-	};
+ 	const struct csi_mask *cmask;
++	unsigned int group;
++	u8 mode, pri_ch_idx;
+ 	int i;
+ 
+ 	if (csi->rx_mode == MT_PHY_TYPE_CCK || !phy->csi.mask)
+ 		return;
+ 
++	switch (csi->rx_mode) {
++	case MT_PHY_TYPE_OFDM:
++		mode = 0;
++		break;
++	case MT_PHY_TYPE_HT:
++	case MT_PHY_TYPE_VHT:
++		mode = 1;
++		break;
++	case MT_PHY_TYPE_HE_SU:
++	case MT_PHY_TYPE_HE_EXT_SU:
++	case MT_PHY_TYPE_HE_TB:
++	case MT_PHY_TYPE_HE_MU:
++		mode = 2;
++		break;
++	default:
++		return;
++	}
++
++	if (csi->ch_bw > CSI_BW80 ||
++	    csi->data_bw > IEEE80211_STA_RX_BW_80)
++		return;
++
++	pri_ch_idx = csi->pri_ch_idx;
+ 	if (csi->data_bw == IEEE80211_STA_RX_BW_40)
+-		csi->pri_ch_idx /= 2;
++		pri_ch_idx /= 2;
+ 
+-	cmask = &csi_mask_groups[csi_group_idx(mode_map[csi->rx_mode],
+-					       csi->ch_bw,
+-					       csi->data_bw,
+-					       csi->pri_ch_idx)];
++	group = csi_group_idx(mode, csi->ch_bw, csi->data_bw,
++			      pri_ch_idx);
++	if (group < mode * 11 || group >= (mode + 1) * 11 ||
++	    group >= ARRAY_SIZE(csi_mask_groups))
++		return;
++
++	cmask = &csi_mask_groups[group];
+ 
+ 	for (i = 0; i < 10; i++) {
+ 		const struct csi_null_tone *ntone = &cmask->null[i];
+@@ -577,9 +616,9 @@
+ 
+ 		if (end) {
+ 			memmove(&csi->data_i[dest], &csi->data_i[start],
+-				end - start + 1);
++				(end - start + 1) * sizeof(csi->data_i[0]));
+ 			memmove(&csi->data_q[dest], &csi->data_q[start],
+-				end - start + 1);
++				(end - start + 1) * sizeof(csi->data_q[0]));
+ 		} else {
+ 			csi->data_i[dest] = csi->data_i[start];
+ 			csi->data_q[dest] = csi->data_q[start];
+@@ -1165,22 +1204,30 @@
+ 		ieee80211_queue_work(hw, &dev->rc_work);
+ 	}
+ 	else if (tb[MTK_VENDOR_ATTR_RFEATURE_CTRL_TRIG_TYPE_CFG]) {
+-		u8 enable, trig_type;
++		u8 enable = 0, trig_type = 0;
++		bool enable_set = false, trig_type_set = false;
+ 		int rem;
+ 		struct nlattr *cur;
+ 
+ 		nla_for_each_nested(cur, tb[MTK_VENDOR_ATTR_RFEATURE_CTRL_TRIG_TYPE_CFG], rem) {
++			if (nla_len(cur) != sizeof(u8))
++				return -EINVAL;
++
+ 			switch(nla_type(cur)) {
+ 			case MTK_VENDOR_ATTR_RFEATURE_CTRL_TRIG_TYPE_EN:
+ 				enable = nla_get_u8(cur);
++				enable_set = true;
+ 				break;
+ 			case MTK_VENDOR_ATTR_RFEATURE_CTRL_TRIG_TYPE:
+ 				trig_type = nla_get_u8(cur);
++				trig_type_set = true;
+ 				break;
+ 			default:
+ 				return -EINVAL;
+ 			};
+ 		}
++		if (!enable_set || !trig_type_set || enable > 1)
++			return -EINVAL;
+ 
+ 		err = mt7915_mcu_set_rfeature_trig_type(phy, enable, trig_type);
+ 		if (err)
+--- a/mt7915/mcu.c
++++ b/mt7915/mcu.c
+@@ -4771,6 +4771,9 @@
+ {
+ 	struct csi_data *csi_temp = NULL;
+ 
++	if (csi->data_num > ARRAY_SIZE(csi->data_i))
++		return CSI_CHAIN_ERR;
++
+ 	if (csi->segment_num == 0 &&
+ 	    csi->remain_last == 0)
+ 		return CSI_CHAIN_COMPLETE;
+@@ -4782,10 +4785,14 @@
+ 		return CSI_CHAIN_SEGMENT_FIRST;
+ 	} else if (csi->segment_num != 0) {
+ 		csi_temp = &phy->csi.buffered_csi;
+-		if (csi->chain_info !=
++		if (!csi_temp->remain_last ||
++			csi->chain_info !=
+ 			csi_temp->chain_info ||
+ 			csi->segment_num !=
+-			(csi_temp->segment_num + 1))
++			(csi_temp->segment_num + 1) ||
++			csi_temp->data_num > ARRAY_SIZE(csi_temp->data_i) ||
++			csi->data_num > ARRAY_SIZE(csi_temp->data_i) -
++					csi_temp->data_num)
+ 			return CSI_CHAIN_SEGMENT_ERR;
+ 
+ 		memcpy(&csi_temp->data_i[csi_temp->data_num],
+@@ -4810,18 +4817,18 @@
+ static int
+ mt7915_mcu_report_csi(struct mt7915_dev *dev, struct sk_buff *skb)
+ {
+-	struct mt76_connac2_mcu_rxd *rxd = (struct mt76_connac2_mcu_rxd *)skb->data;
+ 	struct mt7915_phy *phy = &dev->phy;
+-	int len, i;
++	u32 data_num;
++	int i;
+ 	struct mt7915_mcu_csi_report *cr;
+ 	int ret;
+ 	struct csi_data *current_csi = NULL;
+ 	struct csi_data *target_csi = NULL;
+ 
+-	skb_pull(skb, sizeof(struct mt76_connac2_mcu_rxd));
+-
+-	len = le16_to_cpu(rxd->len) - sizeof(struct mt76_connac2_mcu_rxd) + 24;
++	if (skb->len < sizeof(struct mt76_connac2_mcu_rxd) + sizeof(*cr))
++		return -EINVAL;
+ 
++	skb_pull(skb, sizeof(struct mt76_connac2_mcu_rxd));
+ 	cr = (struct mt7915_mcu_csi_report *)skb->data;
+ 
+ 	if (phy->csi.interval &&
+@@ -4833,13 +4840,10 @@
+ 	if (!current_csi)
+ 		return -ENOMEM;
+ 
+-	memset(current_csi, 0, sizeof(struct csi_data));
+-
+ #define SET_CSI_DATA(_field)	(current_csi->_field = le32_to_cpu((cr->_field)))
+ 	SET_CSI_DATA(ch_bw);
+ 	SET_CSI_DATA(rssi);
+ 	SET_CSI_DATA(snr);
+-	SET_CSI_DATA(data_num);
+ 	SET_CSI_DATA(data_bw);
+ 	SET_CSI_DATA(pri_ch_idx);
+ 	SET_CSI_DATA(ext_info);
+@@ -4855,23 +4859,36 @@
+ 	}
+ 
+ 	SET_CSI_DATA(band);
+-	if (current_csi->band && !phy->mt76->band_idx)
++	if (current_csi->band > 1)
++		goto free_csi;
++
++	if (current_csi->band && !phy->mt76->band_idx) {
+ 		phy = mt7915_ext_phy(dev);
++		if (!phy)
++			goto free_csi;
++	}
+ #undef SET_CSI_DATA
+ 
++	data_num = le32_to_cpu(cr->data_num);
+ 	switch (current_csi->ch_bw) {
+ 	case CSI_BW20:
+ 		if (is_mt798x(&dev->mt76) || is_mt7916(&dev->mt76))
+-			current_csi->data_num = CSI_BW20_DATA_COUNT;
++			data_num = CSI_BW20_DATA_COUNT;
+ 		break;
+ 	case CSI_BW40:
+ 		if (is_mt798x(&dev->mt76) || is_mt7916(&dev->mt76))
+-			current_csi->data_num = CSI_BW40_DATA_COUNT;
++			data_num = CSI_BW40_DATA_COUNT;
+ 		break;
+ 	default:
+ 		break;
+ 	}
+ 
++	if (data_num > ARRAY_SIZE(cr->data_i) ||
++	    data_num > ARRAY_SIZE(current_csi->data_i) ||
++	    current_csi->remain_last > 1)
++		goto free_csi;
++
++	current_csi->data_num = data_num;
+ 	for (i = 0; i < current_csi->data_num; i++) {
+ 		current_csi->data_i[i] = le16_to_cpu(cr->data_i[i]);
+ 		current_csi->data_q[i] = le16_to_cpu(cr->data_q[i]);
+@@ -4887,8 +4904,7 @@
+ 
+ 		/* event data error or event drop */
+ 		if (ret == CSI_CHAIN_ERR || ret == CSI_CHAIN_SEGMENT_ERR) {
+-			kfree(current_csi);
+-			return -EINVAL;
++			goto free_csi;
+ 		}
+ 
+ 		if (ret == CSI_CHAIN_SEGMENT_FIRST || ret == CSI_CHAIN_SEGMENT_MIDDLE) {
+@@ -4934,6 +4950,10 @@
+ 	spin_unlock_bh(&phy->csi.data_lock);
+ 
+ 	return 0;
++
++free_csi:
++	kfree(current_csi);
++	return -EINVAL;
+ }
+ void mt7915_set_wireless_vif(void *data, u8 *mac, struct ieee80211_vif *vif)
+ {
+

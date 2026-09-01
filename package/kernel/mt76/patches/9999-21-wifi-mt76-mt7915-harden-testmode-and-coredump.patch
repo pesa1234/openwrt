@@ -1,0 +1,437 @@
+--- a/testmode.c
++++ b/testmode.c
+@@ -509,7 +509,7 @@
+ mt76_testmode_set_eeprom(struct mt76_phy *phy, struct nlattr **tb)
+ {
+ 	struct mt76_dev *dev = phy->dev;
+-	u8 action, val[MT76_TM_EEPROM_BLOCK_SIZE];
++	u8 action, val[MT76_TM_EEPROM_BLOCK_SIZE] = {};
+ 	u32 offset = 0;
+ 	int err = -EINVAL;
+ 
+@@ -520,21 +520,27 @@
+ 			   0, MT76_TM_EEPROM_ACTION_MAX))
+ 		goto out;
+ 
+-	if (tb[MT76_TM_ATTR_EEPROM_OFFSET]) {
++	if (action == MT76_TM_EEPROM_ACTION_UPDATE_DATA) {
+ 		struct nlattr *cur;
+ 		int rem, idx = 0;
+ 
+-		offset = nla_get_u32(tb[MT76_TM_ATTR_EEPROM_OFFSET]);
+-		if (!!(offset % MT76_TM_EEPROM_BLOCK_SIZE) ||
++		if (!tb[MT76_TM_ATTR_EEPROM_OFFSET] ||
+ 		    !tb[MT76_TM_ATTR_EEPROM_VAL])
+ 			goto out;
+ 
++		offset = nla_get_u32(tb[MT76_TM_ATTR_EEPROM_OFFSET]);
++		if (offset % MT76_TM_EEPROM_BLOCK_SIZE)
++			goto out;
++
+ 		nla_for_each_nested(cur, tb[MT76_TM_ATTR_EEPROM_VAL], rem) {
+ 			if (nla_len(cur) != 1 || idx >= ARRAY_SIZE(val))
+ 				goto out;
+ 
+ 			val[idx++] = nla_get_u8(cur);
+ 		}
++
++		if (idx != ARRAY_SIZE(val))
++			goto out;
+ 	}
+ 
+ 	err = dev->test_ops->set_eeprom(phy, offset, val, action);
+--- a/mt7915/testmode.c
++++ b/mt7915/testmode.c
+@@ -535,6 +535,40 @@
+ 	memcpy(&td->ed, &tmp, sizeof(td->ed));
+ }
+ 
++static void
++mt7915_tm_txbf_remove_vif(struct mt7915_phy *phy)
++{
++	struct mt76_testmode_data *td = &phy->mt76->test;
++	struct ieee80211_vif *vif = td->second_vif;
++	struct mt7915_dev *dev = phy->dev;
++	struct mt7915_vif *mvif;
++	struct mt7915_sta *msta;
++
++	if (!vif)
++		return;
++
++	mvif = (struct mt7915_vif *)vif->drv_priv;
++	msta = &mvif->sta;
++
++	mt7915_mcu_add_bss_info(phy, vif, false);
++	mt7915_mcu_add_sta(dev, vif, NULL, CONN_STATE_DISCONNECT, false);
++	mt7915_mcu_add_dev_info(phy, vif, false);
++	rcu_assign_pointer(dev->mt76.wcid[msta->wcid.idx], NULL);
++
++	dev->mt76.vif_mask &= ~BIT_ULL(mvif->mt76.idx);
++	phy->omac_mask &= ~BIT_ULL(mvif->mt76.omac_idx);
++	mt76_wcid_mask_clear(dev->mt76.wcid_mask, msta->wcid.idx);
++
++	spin_lock_bh(&dev->mt76.sta_poll_lock);
++	if (!list_empty(&msta->wcid.poll_list))
++		list_del_init(&msta->wcid.poll_list);
++	spin_unlock_bh(&dev->mt76.sta_poll_lock);
++
++	mt76_wcid_cleanup(&dev->mt76, &msta->wcid);
++	kfree(vif);
++	td->second_vif = NULL;
++}
++
+ static int
+ mt7915_tm_txbf_init(struct mt7915_phy *phy, u16 *val)
+ {
+@@ -545,8 +579,10 @@
+ 	struct mt76_testmode_data *td = &phy->mt76->test;
+ 	struct mt7915_dev *dev = phy->dev;
+ 	struct mt76_phy *mphy = phy->mt76;
++	struct ieee80211_vif *second_vif;
+ 	bool enable = val[0];
+ 	void *phase_cal, *pfmu_data, *pfmu_tag;
++	int ret;
+ 	u8 sub_addr = td->is_txbf_dut ? TXBF_DUT_MAC_SUBADDR : TXBF_GOLDEN_MAC_SUBADDR;
+ 	u8 peer_addr = td->is_txbf_dut ? TXBF_GOLDEN_MAC_SUBADDR : TXBF_DUT_MAC_SUBADDR;
+ 	u8 bss_addr = TXBF_DUT_MAC_SUBADDR;
+@@ -555,10 +591,17 @@
+ 	u8 peer_addrs[ETH_ALEN] = {0x00, peer_addr, peer_addr, peer_addr, peer_addr, peer_addr};
+ 
+ 	if (!enable) {
++		mt7915_tm_txbf_remove_vif(phy);
+ 		td->bf_en = 0;
+ 		return 0;
+ 	}
+ 
++	if (!phy->monitor_vif)
++		return -ENODEV;
++
++	mt7915_tm_txbf_remove_vif(phy);
++	td->bf_en = 0;
++
+ 	if (!dev->test.txbf_phase_cal) {
+ 		phase_cal = devm_kzalloc(dev->mt76.dev,
+ 					 sizeof(struct mt7915_txbf_phase) *
+@@ -590,17 +633,29 @@
+ 		dev->test.txbf_pfmu_tag = pfmu_tag;
+ 	}
+ 
+-	td->bf_en = 1;
+ 	memcpy(td->addr[0], peer_addrs, ETH_ALEN);
+ 	memcpy(td->addr[1], addr, ETH_ALEN);
+ 	memcpy(td->addr[2], bssid, ETH_ALEN);
+ 	memcpy(phy->monitor_vif->addr, addr, ETH_ALEN);
+-	mt7915_mcu_add_dev_info(phy, phy->monitor_vif, true);
++	ret = mt7915_mcu_add_dev_info(phy, phy->monitor_vif, true);
++	if (ret)
++		return ret;
+ 
+ 	/* Add second interface in wtbl for using TXCMD to transmit sounding */
+-	td->second_vif = kzalloc(sizeof(*td->second_vif) + sizeof(struct mt7915_vif), GFP_KERNEL);
+-	memcpy(td->second_vif, phy->monitor_vif, sizeof(*td->second_vif));
+-	mt7915_init_vif(phy, td->second_vif, td->bf_en);
++	second_vif = kzalloc(sizeof(*second_vif) + sizeof(struct mt7915_vif),
++			     GFP_KERNEL);
++	if (!second_vif)
++		return -ENOMEM;
++
++	memcpy(second_vif, phy->monitor_vif, sizeof(*second_vif));
++	ret = mt7915_init_vif(phy, second_vif, true);
++	if (ret) {
++		kfree(second_vif);
++		return ret;
++	}
++
++	td->second_vif = second_vif;
++	td->bf_en = 1;
+ 
+ 	if (td->ebf && !td->is_txbf_dut) {
+ 		u8 is_160hz = val[1];
+@@ -1696,6 +1751,9 @@
+ 	if (!test_bit(MT76_STATE_RUNNING, &phy->mt76->state))
+ 		return;
+ 
++	if (!en)
++		mt7915_tm_txbf_remove_vif(phy);
++
+ 	phy->sku_limit_en = !en;
+ 	phy->sku_path_en = !en;
+ 	mt7915_mcu_set_sku_en(phy);
+@@ -2387,37 +2445,57 @@
+ {
+ #define DPD_PER_CHAN_SIZE_7915	2
+ #define DPD_PER_CHAN_SIZE_7986	3
+-	u32 base, dpd_offest_2g, dpd_offest_5g, cal_idx = 0, cal_type = 0, len = 0;
++	u32 base, region_size, total_size, group_size, dpd_size;
++	u32 dpd_offest_2g, dpd_offest_5g, cal_type, len;
+ 	u8 *pre_cal;
+ 
+ 	pre_cal = dev->cal;
++	if (!pre_cal)
++		return;
++
++	group_size = mt7915_get_cal_group_size(dev);
++	dpd_size = mt7915_get_cal_dpd_size(dev);
++	total_size = group_size + dpd_size;
+ 	dpd_offest_5g = dev->dpd_chan_num_6g * DPD_PER_CHAN_SIZE_7986 * MT_EE_CAL_UNIT;
+ 	dpd_offest_2g = dpd_offest_5g + dev->dpd_chan_num_5g * MT_EE_CAL_UNIT *
+ 			(is_mt7915(&dev->mt76) ? DPD_PER_CHAN_SIZE_7915 : DPD_PER_CHAN_SIZE_7986);
+-	cal_idx = le32_to_cpu(data->cal_idx);
+ 	cal_type = le32_to_cpu(data->cal_type);
+ 	len = le32_to_cpu(result->payload_len);
+-	len = len - sizeof(struct mt7915_tm_rf_test_data);
++	if (len < sizeof(*data))
++		return;
++	len -= sizeof(*data);
+ 
+ 	switch (cal_type) {
+ 	case RF_PRE_CAL:
+ 		base = 0;
++		region_size = group_size;
+ 		break;
+ 	case RF_DPD_FLAT_CAL:
+-		base = mt7915_get_cal_group_size(dev) + dpd_offest_2g;
++		base = group_size + dpd_offest_2g;
++		if (base > total_size)
++			return;
++		region_size = total_size - base;
+ 		break;
+ 	case RF_DPD_FLAT_5G_CAL:
+-		base = mt7915_get_cal_group_size(dev) + dpd_offest_5g;
++		if (dpd_offest_5g > dpd_offest_2g)
++			return;
++		base = group_size + dpd_offest_5g;
++		region_size = dpd_offest_2g - dpd_offest_5g;
+ 		break;
+ 	case RF_DPD_FLAT_6G_CAL:
+-		base = mt7915_get_cal_group_size(dev);
++		base = group_size;
++		region_size = dpd_offest_5g;
+ 		break;
+ 	default:
+ 		dev_info(dev->mt76.dev, "Unknown calibration type!\n");
+ 		return;
+ 	}
+-	pre_cal += (base + dev->cur_prek_offset);
++	if (base > total_size || region_size > total_size - base ||
++	    dev->cur_prek_offset > region_size ||
++	    len > region_size - dev->cur_prek_offset)
++		return;
+ 
++	pre_cal += base + dev->cur_prek_offset;
+ 	memcpy(pre_cal, data->data, len);
+ 	dev->cur_prek_offset += len;
+ }
+@@ -2426,9 +2504,17 @@
+ {
+ 	struct mt7915_tm_rf_test_result *result;
+ 	struct mt7915_tm_rf_test_data *data;
+-	static u32 event_type;
++	u32 event_type, payload_len;
++
++	if (skb->len < sizeof(*result))
++		return;
+ 
+ 	result = (struct mt7915_tm_rf_test_result *)skb->data;
++	payload_len = le32_to_cpu(result->payload_len);
++	if (payload_len < sizeof(*data) ||
++	    payload_len > skb->len - sizeof(*result))
++		return;
++
+ 	data = (struct mt7915_tm_rf_test_data *)result->event;
+ 
+ 	event_type = le32_to_cpu(result->func_idx);
+@@ -2442,36 +2528,66 @@
+ 	}
+ }
+ 
+-static void
++static int
+ mt7915_tm_update_params(struct mt7915_phy *phy, u32 changed)
+ {
+ 	struct mt76_testmode_data *td = &phy->mt76->test;
+ 	bool en = phy->mt76->test.state != MT76_TM_STATE_OFF;
++	int ret;
+ 
+-	if (changed & BIT(TM_CHANGED_FREQ_OFFSET))
+-		mt7915_tm_set_freq_offset(phy, en, en ? td->freq_offset : 0);
+-	if (changed & BIT(TM_CHANGED_TXPOWER))
+-		mt7915_tm_set_tx_power(phy);
++	if (changed & BIT(TM_CHANGED_FREQ_OFFSET)) {
++		ret = mt7915_tm_set_freq_offset(phy, en,
++					     en ? td->freq_offset : 0);
++		if (ret)
++			return ret;
++	}
++	if (changed & BIT(TM_CHANGED_TXPOWER)) {
++		ret = mt7915_tm_set_tx_power(phy);
++		if (ret)
++			return ret;
++	}
+ 	if (changed & BIT(TM_CHANGED_SKU_EN)) {
+ 		phy->sku_limit_en = td->sku_en;
+ 		phy->sku_path_en = td->sku_en;
+-		mt7915_mcu_set_sku_en(phy);
+-		mt7915_mcu_set_txpower_sku(phy);
++		ret = mt7915_mcu_set_sku_en(phy);
++		if (ret)
++			return ret;
++		ret = mt7915_mcu_set_txpower_sku(phy);
++		if (ret)
++			return ret;
++	}
++	if (changed & BIT(TM_CHANGED_AID)) {
++		ret = mt7915_tm_set_entry(phy);
++		if (ret)
++			return ret;
++	}
++	if (changed & BIT(TM_CHANGED_CFG)) {
++		ret = mt7915_tm_set_cfg(phy);
++		if (ret)
++			return ret;
++	}
++	if (changed & BIT(TM_CHANGED_TXBF_ACT)) {
++		ret = mt7915_tm_set_txbf(phy);
++		if (ret)
++			return ret;
+ 	}
+-	if (changed & BIT(TM_CHANGED_AID))
+-		mt7915_tm_set_entry(phy);
+-	if (changed & BIT(TM_CHANGED_CFG))
+-		mt7915_tm_set_cfg(phy);
+-	if (changed & BIT(TM_CHANGED_TXBF_ACT))
+-		mt7915_tm_set_txbf(phy);
+ 	if ((changed & BIT(TM_CHANGED_OFF_CHAN_CH)) &&
+-	    (changed & BIT(TM_CHANGED_OFF_CHAN_BW)))
+-		mt7915_tm_set_offchan(phy, !(changed & BIT(TM_CHANGED_OFF_CHAN_CENTER_CH)));
++	    (changed & BIT(TM_CHANGED_OFF_CHAN_BW))) {
++		ret = mt7915_tm_set_offchan(phy,
++					     !(changed & BIT(TM_CHANGED_OFF_CHAN_CENTER_CH)));
++		if (ret)
++			return ret;
++	}
+ 	if ((changed & BIT(TM_CHANGED_IPI_THRESHOLD)) &&
+-	    (changed & BIT(TM_CHANGED_IPI_PERIOD)))
+-		mt7915_tm_set_ipi(phy);
++	    (changed & BIT(TM_CHANGED_IPI_PERIOD))) {
++		ret = mt7915_tm_set_ipi(phy);
++		if (ret)
++			return ret;
++	}
+ 	if (changed & BIT(TM_CHANGED_IPI_RESET))
+ 		mt7915_tm_reset_ipi(phy);
++
++	return 0;
+ }
+ 
+ static int
+@@ -2523,7 +2639,9 @@
+ 		if (ret)
+ 			return ret;
+ 
+-		mt7915_tm_update_params(phy, changed);
++		ret = mt7915_tm_update_params(phy, changed);
++		if (ret)
++			return ret;
+ 	}
+ 
+ 	return 0;
+@@ -2553,9 +2671,7 @@
+ 			changed |= BIT(i);
+ 	}
+ 
+-	mt7915_tm_update_params(phy, changed);
+-
+-	return 0;
++	return mt7915_tm_update_params(phy, changed);
+ }
+ 
+ static int
+@@ -2567,11 +2683,30 @@
+ 	int band_idx = mphy->band_idx;
+ 
+ 	if (!td->last_rx.path) {
+-		td->last_rx.path = hweight32(mphy->chainmask >> (dev->chainshift * band_idx));
+-		td->last_rx.rcpi = devm_kzalloc(dev->mt76.dev, td->last_rx.path, GFP_KERNEL);
+-		td->last_rx.rssi = devm_kzalloc(dev->mt76.dev, td->last_rx.path, GFP_KERNEL);
+-		td->last_rx.ib_rssi = devm_kzalloc(dev->mt76.dev, td->last_rx.path, GFP_KERNEL);
+-		td->last_rx.wb_rssi = devm_kzalloc(dev->mt76.dev, td->last_rx.path, GFP_KERNEL);
++		u8 path = hweight32(mphy->chainmask >>
++				    (dev->chainshift * band_idx));
++
++		if (!path)
++			return -EINVAL;
++
++		td->last_rx.rcpi = devm_kzalloc(dev->mt76.dev, path, GFP_KERNEL);
++		td->last_rx.rssi = devm_kzalloc(dev->mt76.dev, path, GFP_KERNEL);
++		td->last_rx.ib_rssi = devm_kzalloc(dev->mt76.dev, path, GFP_KERNEL);
++		td->last_rx.wb_rssi = devm_kzalloc(dev->mt76.dev, path, GFP_KERNEL);
++		if (!td->last_rx.rcpi || !td->last_rx.rssi ||
++		    !td->last_rx.ib_rssi || !td->last_rx.wb_rssi) {
++			devm_kfree(dev->mt76.dev, td->last_rx.rcpi);
++			devm_kfree(dev->mt76.dev, td->last_rx.rssi);
++			devm_kfree(dev->mt76.dev, td->last_rx.ib_rssi);
++			devm_kfree(dev->mt76.dev, td->last_rx.wb_rssi);
++			td->last_rx.rcpi = NULL;
++			td->last_rx.rssi = NULL;
++			td->last_rx.ib_rssi = NULL;
++			td->last_rx.wb_rssi = NULL;
++			return -ENOMEM;
++		}
++
++		td->last_rx.path = path;
+ 	}
+ 
+ 	if (mphy->test.tx_rate_mode == MT76_TM_TX_MODE_HE_MU)
+@@ -2620,7 +2755,8 @@
+ 	u8 *eeprom = dev->mt76.eeprom.data;
+ 	int ret = 0;
+ 
+-	if (offset >= mt7915_eeprom_size(dev))
++	if (mt7915_eeprom_size(dev) < MT76_TM_EEPROM_BLOCK_SIZE ||
++	    offset > mt7915_eeprom_size(dev) - MT76_TM_EEPROM_BLOCK_SIZE)
+ 		return -EINVAL;
+ 
+ 	switch (action) {
+--- a/mt7915/coredump.c
++++ b/mt7915/coredump.c
+@@ -435,7 +435,7 @@
+ 	for (i = 0; i < __MT76_RAM_TYPE_MAX; i++) {
+ 		crash_data = vzalloc(sizeof(*dev->coredump.crash_data[i]));
+ 		if (!crash_data)
+-			return -ENOMEM;
++			goto error;
+ 
+ 		dev->coredump.crash_data[i] = crash_data;
+ 
+@@ -443,17 +443,19 @@
+ 			crash_data->memdump_buf_len = mt7915_coredump_get_mem_size(dev, i);
+ 			if (!crash_data->memdump_buf_len)
+ 				/* no memory content */
+-				return 0;
++				continue;
+ 
+ 			crash_data->memdump_buf = vzalloc(crash_data->memdump_buf_len);
+-			if (!crash_data->memdump_buf) {
+-				vfree(crash_data);
+-				return -ENOMEM;
+-			}
++			if (!crash_data->memdump_buf)
++				goto error;
+ 		}
+ 	}
+ 
+ 	return 0;
++
++error:
++	mt7915_coredump_unregister(dev);
++	return -ENOMEM;
+ }
+ 
+ void mt7915_coredump_unregister(struct mt7915_dev *dev)
+@@ -474,4 +476,3 @@
+ 		dev->coredump.crash_data[i] = NULL;
+ 	}
+ }
+-
+
