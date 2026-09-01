@@ -143,28 +143,37 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  
  	dev->mt76.vif_mask |= BIT_ULL(mvif->mt76.idx);
  	phy->omac_mask |= BIT_ULL(mvif->mt76.omac_idx);
-@@ -249,7 +239,6 @@ static int mt7915_add_interface(struct i
- 	idx = mt76_wcid_alloc(dev->mt76.wcid_mask, mt7915_wtbl_size(dev));
- 	if (idx < 0) {
- 		ret = -ENOSPC;
--		goto out;
- 	}
- 
- 	INIT_LIST_HEAD(&mvif->sta.rc_list);
-@@ -294,7 +283,26 @@ static int mt7915_add_interface(struct i
+@@ -294,26 +283,44 @@ static int mt7915_add_interface(struct i
+ 	mt7915_mcu_add_bss_info(phy, vif, true);
  	mt7915_mcu_add_sta(dev, vif, NULL, CONN_STATE_PORT_SECURE, true);
  	rcu_assign_pointer(dev->mt76.wcid[idx], &mvif->sta.wcid);
  
+-	mutex_unlock(&dev->mt76.mutex);
+-
+ 	return 0;
+ 
+ err:
+ 	dev->mt76.vif_mask &= ~BIT_ULL(mvif->mt76.idx);
+ 	phy->omac_mask &= ~BIT_ULL(mvif->mt76.omac_idx);
+ 	mt7915_mcu_add_dev_info(phy, vif, false);
 -out:
-+	return ret;
-+}
-+
+-	if (phy->monitor_vif == vif)
+-		phy->monitor_vif = NULL;
+-	mutex_unlock(&dev->mt76.mutex);
+-
+-	if (!is_mt7915(&dev->mt76))
+-		mt7915_mcu_set_vow_band(dev, mvif);
+-
+ 	return ret;
+ }
+ 
 +static int mt7915_add_interface(struct ieee80211_hw *hw,
 +				struct ieee80211_vif *vif)
 +{
++	struct mt7915_vif *mvif = (struct mt7915_vif *)vif->drv_priv;
 +	struct mt7915_dev *dev = mt7915_hw_dev(hw);
 +	struct mt7915_phy *phy = mt7915_hw_phy(hw);
-+	int ret = 0;
++	int ret;
 +
 +	mutex_lock(&dev->mt76.mutex);
 +
@@ -175,10 +184,20 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
 +		phy->monitor_vif = vif;
 +
 +	ret = mt7915_init_vif(phy, vif, false);
++	if (ret && phy->monitor_vif == vif)
++		phy->monitor_vif = NULL;
 +
- 	mutex_unlock(&dev->mt76.mutex);
- 
- 	return ret;
++	mutex_unlock(&dev->mt76.mutex);
++
++	if (!is_mt7915(&dev->mt76))
++		mt7915_mcu_set_vow_band(dev, mvif);
++
++	return ret;
++}
++
+ static void mt7915_remove_interface(struct ieee80211_hw *hw,
+ 				    struct ieee80211_vif *vif)
+ {
 --- a/mt7915/mcu.c
 +++ b/mt7915/mcu.c
 @@ -543,10 +543,12 @@ mt7915_mcu_rx_ext_event(struct mt7915_de

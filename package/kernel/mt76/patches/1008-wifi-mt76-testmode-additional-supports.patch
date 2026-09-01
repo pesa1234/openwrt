@@ -1900,24 +1900,21 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  		mt7915_tm_update_params(phy, changed);
  	}
  
-@@ -780,10 +1782,8 @@ mt7915_tm_set_params(struct mt76_phy *mp
+@@ -780,8 +1782,8 @@ mt7915_tm_set_params(struct mt76_phy *mp
  {
  	struct mt76_testmode_data *td = &mphy->test;
  	struct mt7915_phy *phy = mphy->priv;
--	struct mt7915_dev *dev = phy->dev;
--	u32 chainmask = mphy->chainmask, changed = 0;
--	bool ext_phy = phy != &dev->phy;
+-	u32 chainmask = mt7915_band_chainmask(phy), changed = 0;
 -	int i;
 +	u32 changed = 0;
 +	int i, ret;
  
  	BUILD_BUG_ON(NUM_TM_CHANGED >= 32);
  
-@@ -791,9 +1791,9 @@ mt7915_tm_set_params(struct mt76_phy *mp
+@@ -789,8 +1791,9 @@ mt7915_tm_set_params(struct mt76_phy *mp
  	    td->state == MT76_TM_STATE_OFF)
  		return 0;
  
--	chainmask = ext_phy ? chainmask >> dev->chainshift : chainmask;
 -	if (td->tx_antenna_mask > chainmask)
 -		return -EINVAL;
 +	ret = mt7915_tm_check_antenna(phy);

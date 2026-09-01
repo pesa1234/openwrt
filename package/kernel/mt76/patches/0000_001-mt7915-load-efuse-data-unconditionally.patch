@@ -110,12 +110,19 @@ Signed-off-by: Felix Fietkau <nbd@nbd.name>
  	int ret;
  
  	ret = mt76_mcu_send_and_get_msg(&dev->mt76,
-@@ -2942,13 +2941,14 @@ int mt7915_mcu_get_eeprom(struct mt7915_
+@@ -2942,20 +2941,14 @@ int mt7915_mcu_get_eeprom(struct mt7915_
  		return ret;
  
  	res = (struct mt7915_mcu_eeprom_info *)skb->data;
--	if (!buf)
--		buf = dev->mt76.eeprom.data + le32_to_cpu(res->addr);
+-	if (!buf) {
+-		u32 addr = le32_to_cpu(res->addr);
+-
+-		if (addr > dev->mt76.eeprom.size - MT7915_EEPROM_BLOCK_SIZE) {
+-			dev_kfree_skb(skb);
+-			return -EINVAL;
+-		}
+-		buf = dev->mt76.eeprom.data + addr;
+-	}
 -	memcpy(buf, res->data, MT7915_EEPROM_BLOCK_SIZE);
 +	if (res->valid)
 +		memcpy(buf, res->data, MT7915_EEPROM_BLOCK_SIZE);

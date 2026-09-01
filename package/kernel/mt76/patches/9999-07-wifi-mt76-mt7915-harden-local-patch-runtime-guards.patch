@@ -1,17 +1,3 @@
---- a/mt7915/main.c
-+++ b/mt7915/main.c
-@@ -263,7 +263,10 @@ int mt7915_init_vif(struct mt7915_phy *p
- 
- 	idx = mt76_wcid_alloc(dev->mt76.wcid_mask, mt7915_wtbl_size(dev));
- 	if (idx < 0) {
--		ret = -ENOSPC;
-+		mt7915_mcu_add_dev_info(phy, vif, false);
-+		dev->mt76.vif_mask &= ~BIT_ULL(mvif->mt76.idx);
-+		phy->omac_mask &= ~BIT_ULL(mvif->mt76.omac_idx);
-+		return -ENOSPC;
- 	}
- 
- 	INIT_LIST_HEAD(&mvif->sta.rc_list);
 --- a/mt7915/mcu.c
 +++ b/mt7915/mcu.c
 @@ -503,12 +503,19 @@ static void

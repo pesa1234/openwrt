@@ -1,16 +1,24 @@
 --- a/mt7915/main.c
 +++ b/mt7915/main.c
-@@ -311,6 +311,9 @@ int mt7915_init_vif(struct mt7915_phy *p
+@@ -306,6 +306,9 @@
  	mt7915_mcu_add_sta(dev, vif, NULL, CONN_STATE_PORT_SECURE, true);
  	rcu_assign_pointer(dev->mt76.wcid[idx], &mvif->sta.wcid);
  
 +	if (!is_mt7915(&dev->mt76))
 +		mt7915_mcu_set_vow_band(dev, mvif);
 +
- 	return ret;
- }
+ 	return 0;
  
-@@ -330,8 +333,5 @@ static int mt7915_add_interface(struct i
+ err:
+@@ -318,7 +321,6 @@
+ static int mt7915_add_interface(struct ieee80211_hw *hw,
+ 				struct ieee80211_vif *vif)
+ {
+-	struct mt7915_vif *mvif = (struct mt7915_vif *)vif->drv_priv;
+ 	struct mt7915_dev *dev = mt7915_hw_dev(hw);
+ 	struct mt7915_phy *phy = mt7915_hw_phy(hw);
+ 	int ret;
+@@ -337,9 +339,6 @@
  
  	mutex_unlock(&dev->mt76.mutex);
  
@@ -19,3 +27,4 @@
 -
  	return ret;
  }
+ 
