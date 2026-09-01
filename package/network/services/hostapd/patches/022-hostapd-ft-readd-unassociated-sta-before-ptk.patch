@@ -1,0 +1,52 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: AndreaCovelli <andcov23@gmail.com>
+Date: Wed, 1 Jul 2026 17:45:00 +0200
+Subject: [PATCH] hostapd: re-add FT STA before pre-association PTK install
+
+FT-over-DS can derive and install the PTK before the reassociation frame is
+processed. If the previous association was just disassociated, hostapd may
+retain a userspace STA entry after the kernel STA entry has already been
+removed.
+
+In that state the FT PTK install fails with:
+
+  nl80211: kernel reports: key addition failed
+
+and the following VLAN/WDS binding can fail with:
+
+  NL80211_ATTR_STA_VLAN (...) failed: -2 (No such file or directory)
+
+because both operations need a kernel STA entry. hostapd already has
+ap_sta_re_add() for the closely related PMF FT path. Use the same helper
+for FT STAs that are no longer marked associated before the first PTK
+install.
+This creates an unassociated kernel STA so mac80211 can accept the FT key
+and defer hardware upload until association.
+
+Link: https://github.com/openwrt/openwrt/pull/23181#issuecomment-4857459727
+Signed-off-by: AndreaCovelli <andcov23@gmail.com>
+---
+ src/ap/wpa_auth_glue.c | 12 ++++++++++++
+ 1 file changed, 12 insertions(+)
+
+--- a/src/ap/wpa_auth_glue.c
++++ b/src/ap/wpa_auth_glue.c
+@@ -1322,6 +1322,18 @@ static int hostapd_wpa_auth_add_sta_ft(v
+ 		return ap_sta_re_add(hapd, sta);
+ 	}
+ 
++	/* FT-over-DS can reach PTK setup after the old driver STA entry was
++	 * removed, but before reassociation has added a new one. Re-add an
++	 * unassociated kernel STA so the following key/VLAN setup has a target.
++	 */
++	if (FULL_AP_CLIENT_STATE_SUPP(hapd->iface->drv_flags) &&
++	    !(hapd->conf->mesh & MESH_ENABLED) && !(sta->added_unassoc) &&
++	    !(sta->flags & WLAN_STA_ASSOC)) {
++		wpa_printf(MSG_DEBUG,
++			   "FT: Re-add unassociated driver STA entry before PTK configuration");
++		return ap_sta_re_add(hapd, sta);
++	}
++
+ 	return 0;
+ }
+ 
