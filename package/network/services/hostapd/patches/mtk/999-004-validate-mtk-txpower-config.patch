@@ -1,0 +1,71 @@
+From: Andrea Pesaresi <andreapesaresi82@gmail.com>
+Date: Wed, 2 Sep 2026 16:00:00 +0200
+Subject: [PATCH] hostapd: validate MTK txpower configuration values
+
+Reject trailing data and values that cannot be represented by the MTK
+txpower vendor ABI. Also handle netlink attribute allocation failures when
+building the request.
+
+--- a/hostapd/config_file.c
++++ b/hostapd/config_file.c
+@@ -5391,15 +5391,38 @@ static int hostapd_config_fill(struct ho
+ 		}
+ 		conf->amsdu = (u8) val;
+ 	} else if (os_strcmp(buf, "lpi_enable") == 0) {
+-		u8 en = strtol(pos, NULL, 10);
++		char *end;
++		long val = strtol(pos, &end, 10);
+ 
+-		conf->lpi_enable = !!en;
++		if (end == pos || *end || val < 0 || val > 1) {
++			wpa_printf(MSG_ERROR,
++				   "Line %d: invalid lpi_enable '%s'; allowed values are 0 and 1",
++				   line, pos);
++			return 1;
++		}
++		conf->lpi_enable = (u8) val;
+ 	} else if (os_strcmp(buf, "sku_idx") == 0) {
+-		conf->sku_idx = strtol(pos, NULL, 10);
++		char *end;
++		long val = strtol(pos, &end, 10);
++
++		if (end == pos || *end || val < 0 || val > 255) {
++			wpa_printf(MSG_ERROR,
++				   "Line %d: invalid sku_idx '%s'; allowed range is 0 to 255",
++				   line, pos);
++			return 1;
++		}
++		conf->sku_idx = (u8) val;
+ 	} else if (os_strcmp(buf, "beacon_dup") == 0) {
+-		u8 en = strtol(pos, NULL, 10);
++		char *end;
++		long val = strtol(pos, &end, 10);
+ 
+-		conf->beacon_dup = !!en;
++		if (end == pos || *end || val < 0 || val > 1) {
++			wpa_printf(MSG_ERROR,
++				   "Line %d: invalid beacon_dup '%s'; allowed values are 0 and 1",
++				   line, pos);
++			return 1;
++		}
++		conf->beacon_dup = (u8) val;
+ 	} else {
+ 		wpa_printf(MSG_ERROR,
+ 			   "Line %d: unknown configuration item '%s'",
+--- a/src/drivers/driver_nl80211.c
++++ b/src/drivers/driver_nl80211.c
+@@ -17542,9 +17542,11 @@ static int nl80211_txpower_ctrl(void *pr
+ 	if (!data)
+ 		goto fail;
+ 
+-	nla_put_u8(msg, MTK_VENDOR_ATTR_TXPOWER_CTRL_LPI_ENABLE, lpi_enable);
+-	nla_put_u8(msg, MTK_VENDOR_ATTR_TXPOWER_CTRL_SKU_IDX, sku_idx);
+-	nla_put_u8(msg, MTK_VENDOR_ATTR_TXPOWER_CTRL_BCN_DUP, beacon_dup);
++	if (nla_put_u8(msg, MTK_VENDOR_ATTR_TXPOWER_CTRL_LPI_ENABLE,
++		       lpi_enable) ||
++	    nla_put_u8(msg, MTK_VENDOR_ATTR_TXPOWER_CTRL_SKU_IDX, sku_idx) ||
++	    nla_put_u8(msg, MTK_VENDOR_ATTR_TXPOWER_CTRL_BCN_DUP, beacon_dup))
++		goto fail;
+ 
+ 	nla_nest_end(msg, data);
+ 	ret = send_and_recv_cmd(drv, msg);

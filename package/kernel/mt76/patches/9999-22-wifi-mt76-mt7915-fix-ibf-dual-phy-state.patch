@@ -1,0 +1,101 @@
+From: Andrea Pesaresi <andreapesaresi82@gmail.com>
+Date: Wed, 2 Sep 2026 12:00:00 +0200
+Subject: [PATCH] wifi: mt76: mt7915: fix iBF state on dual-PHY devices
+
+The firmware iBF command is device-wide and has no band index, while the
+vendor command is exposed on each PHY.  Keeping only one boolean allows the
+last hostapd instance to overwrite the other PHY's request.
+
+Track the enabled PHYs and keep iBF active while at least one running PHY
+requests it.  Serialize updates, clear fully stopped PHYs while preserving
+state across suspend, and restore both the aggregate and per-PHY state if a
+vendor-triggered firmware command fails.
+
+--- a/mt7915/main.c
++++ b/mt7915/main.c
+@@ -140,6 +140,24 @@ static void mt7915_stop(struct ieee80211
+ 	mt76_testmode_reset(phy->mt76, true);
+ 
+ 	clear_bit(MT76_STATE_RUNNING, &phy->mt76->state);
++	if (!suspend &&
++	    dev->ibf_phy_mask & BIT(phy->mt76->band_idx)) {
++		bool old_ibf = dev->ibf;
++		int ret;
++
++		dev->ibf_phy_mask &= ~BIT(phy->mt76->band_idx);
++		dev->ibf = !!dev->ibf_phy_mask;
++
++		if (dev->ibf != old_ibf && mt7915_dev_running(dev)) {
++			ret = mt7915_mcu_set_txbf(dev, MT_BF_TYPE_UPDATE);
++			if (ret) {
++				dev->ibf = old_ibf;
++				dev_warn(dev->mt76.dev,
++					 "failed to update iBF after PHY stop: %d\n",
++					 ret);
++			}
++		}
++	}
+ 
+ 	if (phy != &dev->phy) {
+ 		mt76_connac_mcu_set_pm(&dev->mt76, phy->mt76->band_idx, 1);
+--- a/mt7915/mt7915.h
++++ b/mt7915/mt7915.h
+@@ -452,6 +452,7 @@ struct mt7915_dev {
+ 	u8 eeprom_mode;
+ 	bool muru_debug;
+ 	bool ibf;
++	u8 ibf_phy_mask;
+ 
+ 	u8 monitor_mask;
+ 
+--- a/mt7915/vendor.c
++++ b/mt7915/vendor.c
+@@ -1592,8 +1592,9 @@ static int mt7915_vendor_ibf_ctrl(struct
+ 	struct mt7915_phy *phy = mt7915_hw_phy(hw);
+ 	struct mt7915_dev *dev = phy->dev;
+ 	struct nlattr *tb[NUM_MTK_VENDOR_ATTRS_IBF_CTRL];
++	bool old_ibf;
+ 	int err;
+-	u8 val;
++	u8 old_ibf_phy_mask, phy_mask, val;
+ 
+ 	err = nla_parse(tb, MTK_VENDOR_ATTR_IBF_CTRL_MAX, data, data_len,
+ 			ibf_ctrl_policy, NULL);
+@@ -1603,11 +1604,28 @@ static int mt7915_vendor_ibf_ctrl(struct
+-	if (tb[MTK_VENDOR_ATTR_IBF_CTRL_ENABLE]) {
+-		val = nla_get_u8(tb[MTK_VENDOR_ATTR_IBF_CTRL_ENABLE]);
+-
+-		dev->ibf = !!val;
+-
+-		err = mt7915_mcu_set_txbf(dev, MT_BF_TYPE_UPDATE);
+-		if (err)
+-			return err;
++	if (!tb[MTK_VENDOR_ATTR_IBF_CTRL_ENABLE])
++		return 0;
++
++	val = nla_get_u8(tb[MTK_VENDOR_ATTR_IBF_CTRL_ENABLE]);
++	phy_mask = BIT(phy->mt76->band_idx);
++
++	mutex_lock(&dev->mt76.mutex);
++	old_ibf_phy_mask = dev->ibf_phy_mask;
++	old_ibf = dev->ibf;
++
++	if (val)
++		dev->ibf_phy_mask |= phy_mask;
++	else
++		dev->ibf_phy_mask &= ~phy_mask;
++
++	dev->ibf = !!dev->ibf_phy_mask;
++	if (dev->ibf == old_ibf)
++		goto out;
++
++	err = mt7915_mcu_set_txbf(dev, MT_BF_TYPE_UPDATE);
++	if (err) {
++		dev->ibf_phy_mask = old_ibf_phy_mask;
++		dev->ibf = old_ibf;
+ 	}
+-	return 0;
++out:
++	mutex_unlock(&dev->mt76.mutex);
++	return err;
+ }

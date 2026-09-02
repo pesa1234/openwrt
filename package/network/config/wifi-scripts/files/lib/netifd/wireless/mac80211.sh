@@ -59,8 +59,6 @@ drv_mac80211_init_device_config() {
 		he_bss_color_enabled \
 		he_twt_required \
 		he_twt_responder \
-		etxbfen \
-		itxbfen \
 		lpi_enable \
 		beacon_dup
 	config_add_int \
@@ -74,14 +72,19 @@ drv_mac80211_init_device_config() {
 		tx_stbc \
 		he_bss_color \
 		he_spr_non_srg_obss_pd_max_offset \
-		sku_idx
+		sku_idx \
+		mu_onoff \
+		three_wire_enable
 	config_add_boolean \
 		ldpc \
 		greenfield \
 		short_gi_20 \
 		short_gi_40 \
 		max_amsdu \
-		dsss_cck_40
+		dsss_cck_40 \
+		etxbfen \
+		itxbfen \
+		amsdu
 }
 
 drv_mac80211_init_iface_config() {
@@ -139,6 +142,44 @@ mac80211_add_he_capabilities() {
 	IFS="$oifs"
 }
 
+mac80211_validate_integer() {
+	local value="$1"
+	local min="$2"
+	local max="$3"
+	local unsigned="${value#-}"
+
+	[ -n "$unsigned" ] || return 1
+	case "$unsigned" in
+		*[!0-9]*) return 1 ;;
+	esac
+
+	[ "$value" -ge "$min" ] && [ "$value" -le "$max" ]
+}
+
+mac80211_append_edcca_config() {
+	local edcca_enable edcca_compensation
+	local thres_0 thres_1 thres_2 thres_3
+
+	edcca_enable="$(uci -q get advanced.@edcca[0].edcca_enable)"
+	mac80211_validate_integer "$edcca_enable" 0 1 || edcca_enable=1
+
+	edcca_compensation="$(uci -q get advanced.@edcca[0].compensation)"
+	mac80211_validate_integer "$edcca_compensation" -126 126 || edcca_compensation=-6
+
+	thres_0="$(uci -q get advanced.@edcca[0].thres_0)"
+	mac80211_validate_integer "$thres_0" -126 0 || thres_0=-60
+	thres_1="$(uci -q get advanced.@edcca[0].thres_1)"
+	mac80211_validate_integer "$thres_1" -126 0 || thres_1=-62
+	thres_2="$(uci -q get advanced.@edcca[0].thres_2)"
+	mac80211_validate_integer "$thres_2" -126 0 || thres_2=-59
+	thres_3="$(uci -q get advanced.@edcca[0].thres_3)"
+	mac80211_validate_integer "$thres_3" -126 0 || thres_3=-54
+
+	append base_cfg "edcca_enable=$edcca_enable" "$N"
+	append base_cfg "edcca_compensation=$edcca_compensation" "$N"
+	append base_cfg "edcca_threshold=$thres_0 $thres_1 $thres_2 $thres_3" "$N"
+}
+
 mac80211_hostapd_setup_base() {
 	local phy="$1"
 
@@ -151,9 +192,13 @@ mac80211_hostapd_setup_base() {
 		append base_cfg "acs_exclude_dfs=1" "$N"
 
 	json_get_vars noscan ht_coex vendor_vht min_tx_power:0 tx_burst
-	json_get_vars etxbfen:1 itxbfen lpi_enable:0 sku_idx:0 beacon_dup:1
+	json_get_vars etxbfen:1 itxbfen amsdu mu_onoff three_wire_enable
+	json_get_vars lpi_enable:0 sku_idx:0 beacon_dup:1
 	json_get_values ht_capab_list ht_capab
 	json_get_values channel_list channels
+
+	mac80211_validate_integer "$mu_onoff" 0 15 || mu_onoff=
+	mac80211_validate_integer "$three_wire_enable" 0 3 || three_wire_enable=
 
 	[ "$auto_channel" = 0 ] && [ -z "$channel_list" ] && \
 		channel_list="$channel"
@@ -366,7 +411,6 @@ mac80211_hostapd_setup_base() {
 
 		[ "$etxbfen" -eq 0 ] && {
 			su_beamformer=0
-			su_beamformee=0
 			mu_beamformer=0
 		}
 
@@ -503,30 +547,8 @@ mac80211_hostapd_setup_base() {
 			append base_cfg "he_twt_responder=$he_twt_responder" "$N"
 		fi
 		
-		edcca_enable=$(uci get advanced.@edcca[0].edcca_enable 2>/dev/null || echo "1")
-		if [ -n "$edcca_enable" ]; then
-			append base_cfg "edcca_enable=$edcca_enable" "$N"
-		fi
-		
-		edcca_compensation=$(uci get advanced.@edcca[0].compensation 2>/dev/null || echo "-6")
-		if [ -n "$edcca_compensation" ]; then
-			append base_cfg "edcca_compensation=$edcca_compensation" "$N"
-		fi
-		
-		thres_0=$(uci get advanced.@edcca[0].thres_0 2>/dev/null || echo "-60")
-		thres_1=$(uci get advanced.@edcca[0].thres_1 2>/dev/null || echo "-62")
-		thres_2=$(uci get advanced.@edcca[0].thres_2 2>/dev/null || echo "-59")
-		thres_3=$(uci get advanced.@edcca[0].thres_3 2>/dev/null || echo "-54")
-		edcca_threshold="${thres_0} ${thres_1} ${thres_2} ${thres_3}"
-		if [ -n "$edcca_threshold" ]; then
-			append base_cfg "edcca_threshold=$edcca_threshold" "$N"
-		fi
-
 		if [ "$he_bss_color_enabled" -gt 0 ]; then
-			if !([ "$he_bss_color" -gt 0 ] && [ "$he_bss_color" -le 64 ]); then
-				rand=$(head -n 1 /dev/urandom | tr -dc 0-9 | head -c 2 | sed 's/^0*//')
-				he_bss_color=$((rand % 63 + 1))
-			fi
+			mac80211_validate_integer "$he_bss_color" 1 63 || he_bss_color=128
 			append base_cfg "he_bss_color=$he_bss_color" "$N"
 			[ "$he_spr_non_srg_obss_pd_max_offset" -gt 0 ] && { \
 				append base_cfg "he_spr_non_srg_obss_pd_max_offset=$he_spr_non_srg_obss_pd_max_offset" "$N"
@@ -568,6 +590,8 @@ mac80211_hostapd_setup_base() {
 		append base_cfg "he_mu_edca_ac_vo_timer=255" "$N"
 	fi
 
+	mac80211_append_edcca_config
+
 	if [ "$enable_be" != "0" ]; then
 		append base_cfg "ieee80211be=1" "$N"
 		[ "$hwmode" = "a" ] && {
@@ -583,6 +607,9 @@ ${channel_list:+chanlist=$channel_list}
 ${hostapd_noscan:+noscan=1}
 ${tx_burst:+tx_queue_data2_burst=$tx_burst}
 ${itxbfen:+ibf_enable=$itxbfen}
+${mu_onoff:+mu_onoff=$mu_onoff}
+${amsdu:+amsdu=$amsdu}
+${three_wire_enable:+three_wire_enable=$three_wire_enable}
 ${lpi_enable:+lpi_enable=$lpi_enable}
 ${sku_idx:+sku_idx=$sku_idx}
 ${beacon_dup:+beacon_dup=$beacon_dup}

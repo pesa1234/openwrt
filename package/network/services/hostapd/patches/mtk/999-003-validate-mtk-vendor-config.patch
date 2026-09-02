@@ -1,0 +1,110 @@
+From: Andrea Pesaresi <andreapesaresi82@gmail.com>
+Date: Wed, 2 Sep 2026 12:00:00 +0200
+Subject: [PATCH] hostapd: validate MTK vendor configuration values
+
+Reject trailing data and out-of-range values for the MTK MU, three-wire,
+iBF and AMSDU configuration parameters.  Also handle netlink attribute
+allocation failures when building iBF and AMSDU requests.
+
+---
+ hostapd/config_file.c        | 51 +++++++++++++++++++++++++-----------
+ src/drivers/driver_nl80211.c |  6 +++--
+ 2 files changed, 40 insertions(+), 17 deletions(-)
+
+--- a/hostapd/config_file.c
++++ b/hostapd/config_file.c
+@@ -4041,14 +4041,16 @@ static int hostapd_config_fill(struct ho
+ 	} else if (os_strcmp(buf, "mbssid_max") == 0) {
+ 		conf->mbssid_max = atoi(pos);
+ 	} else if (os_strcmp(buf, "mu_onoff") == 0) {
+-		int val = atoi(pos);
+-		if (val < 0 || val > 15) {
++		char *end;
++		long val = strtol(pos, &end, 10);
++
++		if (end == pos || *end || val < 0 || val > 15) {
+ 			wpa_printf(MSG_ERROR,
+-				   "Line %d: invalid mu_onoff value",
+-				   line);
++				   "Line %d: invalid mu_onoff '%s'; allowed range is 0 to 15",
++				   line, pos);
+ 			return 1;
+ 		}
+-		conf->mu_onoff = val;
++		conf->mu_onoff = (u8) val;
+ #endif /* CONFIG_IEEE80211AX */
+ 	} else if (os_strcmp(buf, "max_listen_interval") == 0) {
+ 		bss->max_listen_interval = atoi(pos);
+@@ -5354,21 +5356,40 @@ static int hostapd_config_fill(struct ho
+ 		}
+ 		conf->edcca_compensation = (s8) val;
+ 	} else if (os_strcmp(buf, "three_wire_enable") == 0) {
+-		u8 en = atoi(pos);
++		char *end;
++		long val = strtol(pos, &end, 10);
+ 
+-		conf->three_wire_enable = en;
+-	} else if (os_strcmp(buf, "ibf_enable") == 0) { /*ibf setting is per device*/
+-		int val = atoi(pos);
+-		conf->ibf_enable = !!val;
++		if (end == pos || *end || val < THREE_WIRE_MODE_DISABLE ||
++		    val > THREE_WIRE_MODE_MAX) {
++			wpa_printf(MSG_ERROR,
++				   "Line %d: invalid three_wire_enable '%s'; allowed range is %d to %d",
++				   line, pos, THREE_WIRE_MODE_DISABLE,
++				   THREE_WIRE_MODE_MAX);
++			return 1;
++		}
++		conf->three_wire_enable = (u8) val;
++	} else if (os_strcmp(buf, "ibf_enable") == 0) {
++		char *end;
++		long val = strtol(pos, &end, 10);
++
++		if (end == pos || *end || val < 0 || val > 1) {
++			wpa_printf(MSG_ERROR,
++				   "Line %d: invalid ibf_enable '%s'; allowed values are 0 and 1",
++				   line, pos);
++			return 1;
++		}
++		conf->ibf_enable = (u8) val;
+ 	} else if (os_strcmp(buf, "amsdu") == 0) {
+-		int val = atoi(pos);
+-		if (val < 0 || val > 1) {
++		char *end;
++		long val = strtol(pos, &end, 10);
++
++		if (end == pos || *end || val < 0 || val > 1) {
+ 			wpa_printf(MSG_ERROR,
+-					 "Line %d: invalid amsdu value",
+-					 line);
++				   "Line %d: invalid amsdu '%s'; allowed values are 0 and 1",
++				   line, pos);
+ 			return 1;
+ 		}
+-		conf->amsdu = val;
++		conf->amsdu = (u8) val;
+ 	} else if (os_strcmp(buf, "lpi_enable") == 0) {
+ 		u8 en = strtol(pos, NULL, 10);
+ 
+--- a/src/drivers/driver_nl80211.c
++++ b/src/drivers/driver_nl80211.c
+@@ -17299,7 +17299,8 @@ static int nl80211_ibf_enable(void *priv
+ 	if (!data)
+ 		goto fail;
+ 
+-	nla_put_u8(msg, MTK_VENDOR_ATTR_IBF_CTRL_ENABLE, ibf_enable);
++	if (nla_put_u8(msg, MTK_VENDOR_ATTR_IBF_CTRL_ENABLE, ibf_enable))
++		goto fail;
+ 
+ 	nla_nest_end(msg, data);
+ 	ret = send_and_recv_cmd(drv, msg);
+@@ -17419,7 +17420,8 @@ static int nl80211_enable_amsdu(void *pr
+ 	if (!data)
+ 		goto fail;
+ 
+-	nla_put_u8(msg, MTK_VENDOR_ATTR_WIRELESS_CTRL_AMSDU, amsdu);
++	if (nla_put_u8(msg, MTK_VENDOR_ATTR_WIRELESS_CTRL_AMSDU, amsdu))
++		goto fail;
+ 
+ 	nla_nest_end(msg, data);
+ 	ret = send_and_recv_cmd(drv, msg);
