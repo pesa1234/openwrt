@@ -366,7 +366,7 @@
 		"he_twt_responder": {
 			"description": "Whether TWT (HE) responder is enabled.",
 			"type": "boolean",
-			"default": true
+			"default": false
 		},
 		"hostapd_options": {
 			"type": "array",
@@ -588,6 +588,12 @@
 			"type": "boolean",
 			"default": false
 		},
+		"obss_interval": {
+			"description": "Overlapping BSS scan interval in seconds when HT coexistence is enabled",
+			"type": "number",
+			"minimum": 0,
+			"maximum": 65535
+		},
 		"okc": {
 			"description": "Enable Opportunistic Key Caching",
 			"type": "boolean"
@@ -771,6 +777,10 @@
 		"type": {
 			"description": "Device type (only mac80211 supported)",
 			"type": "string"
+		},
+		"vendor_vht": {
+			"description": "Enable vendor VHT extensions and 256-QAM on 2.4 GHz",
+			"type": "boolean"
 		},
 		"vht160": {
 			"description": "Supported channel widths. 0 == 160MHz and 80+80 MHz not supported, 1 == 160 MHz supported, 2 == 160MHz and 80+80 MHz supported",

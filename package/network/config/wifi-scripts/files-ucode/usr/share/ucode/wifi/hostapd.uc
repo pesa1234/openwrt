@@ -233,6 +233,10 @@ function device_htmode_append(config) {
 			config.ht_capab += rx_stbc[min(config.rx_stbc, (ht_capab >> 8) & 3)];
 
 			append_vars(config, [ 'ieee80211n', 'ht_coex', 'ht_capab' ]);
+			if (config.ht_coex) {
+				set_default(config, 'obss_interval', 300);
+				append('obss_interval', config.obss_interval);
+			}
 		}
 	}
 
@@ -332,7 +336,11 @@ function device_htmode_append(config) {
 		append_vars(config, [ 'op_class' ]);
 	}
 
-	if (config.ieee80211ac && config.hw_mode == 'a') {
+	let vendor_vht = config.hw_mode == 'g' && config.vendor_vht;
+	if (vendor_vht)
+		config.ieee80211ac = 1;
+
+	if (config.ieee80211ac && (config.hw_mode == 'a' || vendor_vht)) {
 		/* VHT capab */
 		if (config.vht_oper_chwidth < 2) {
 			config.vht160 = 0;
@@ -411,6 +419,8 @@ function device_htmode_append(config) {
 			'ieee80211ac', 'vht_oper_chwidth', 'vht_oper_centr_freq_seg0_idx',
 			'vht_capab'
 		]);
+		if (vendor_vht)
+			append('vendor_vht', true);
 	}
 
 	/* 802.11ax */
