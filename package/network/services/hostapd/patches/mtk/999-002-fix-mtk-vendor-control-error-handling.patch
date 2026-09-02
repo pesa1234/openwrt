@@ -1,0 +1,505 @@
+Subject: [PATCH] mtk: hostapd: fix vendor control error handling
+
+Reject incomplete vendor dump responses instead of treating them as
+successful and consuming uninitialized or stale values.  Also align the
+wireless control attribute IDs with mt76, validate SET_MU input, restore
+the previous MU setting on failure, and use a portable format for u64.
+
+--- a/hostapd/ctrl_iface.c
++++ b/hostapd/ctrl_iface.c
+@@ -4217,35 +4217,36 @@ static int
+ hostapd_ctrl_iface_set_mu(struct hostapd_data *hapd, char *cmd,
+ 					 char *buf, size_t buflen)
+ {
+-	char *pos, *config, *value;
++	char *pos, *config, *value, *end;
++	long mu;
++	u8 old_mu;
++
+ 	config = cmd;
+ 	pos = os_strchr(config, ' ');
+ 	if (pos == NULL)
+ 		return -1;
+ 	*pos++ = '\0';
+-
+-	if(pos == NULL)
+-		return -1;
+ 	value = pos;
+ 
+-	if (os_strcmp(config, "onoff") == 0) {
+-		int mu = atoi(value);
+-		if (mu < 0 || mu > 15) {
+-			wpa_printf(MSG_ERROR, "Invalid value for mu");
+-			return -1;
+-		}
+-		hapd->iconf->mu_onoff = (u8) mu;
+-	} else {
++	if (os_strcmp(config, "onoff") != 0) {
+ 		wpa_printf(MSG_ERROR,
+ 			"Unsupported parameter %s for SET_MU", config);
+ 		return -1;
+ 	}
+ 
+-	if(hostapd_drv_mu_ctrl(hapd) == 0) {
+-		return os_snprintf(buf, buflen, "OK\n");
+-	} else {
++	mu = strtol(value, &end, 10);
++	if (value == end || *end != '\0' || mu < 0 || mu > 15) {
++		wpa_printf(MSG_ERROR, "Invalid value for mu");
+ 		return -1;
+ 	}
++
++	old_mu = hapd->iconf->mu_onoff;
++	hapd->iconf->mu_onoff = (u8) mu;
++	if (hostapd_drv_mu_ctrl(hapd) == 0)
++		return os_snprintf(buf, buflen, "OK\n");
++
++	hapd->iconf->mu_onoff = old_mu;
++	return -1;
+ }
+ 
+ 
+@@ -4253,7 +4254,7 @@ static int
+ hostapd_ctrl_iface_get_mu(struct hostapd_data *hapd, char *buf,
+ 					 size_t buflen)
+ {
+-	u8 mu_onoff;
++	u8 mu_onoff = 0;
+ 	char *pos, *end;
+ 
+ 	pos = buf;
+@@ -4305,8 +4306,8 @@ static int
+ hostapd_ctrl_iface_get_amsdu(struct hostapd_data *hapd, char *buf,
+ 					 size_t buflen)
+ {
+-	u8 amsdu;
+-	int ret;
++	u8 amsdu = 0;
++	int ret = -1;
+ 	char *pos, *end;
+ 
+ 	pos = buf;
+@@ -4318,8 +4319,8 @@ hostapd_ctrl_iface_get_amsdu(struct host
+ 					hapd->iconf->amsdu);
+ 	}
+ 
+-	if (os_snprintf_error(end - pos, ret))
+-		return 0;
++	if (ret < 0 || os_snprintf_error(end - pos, ret))
++		return -1;
+ 
+ 	return ret;
+ }
+@@ -4329,11 +4330,6 @@ hostapd_ctrl_iface_get_bss_color(struct
+ 		size_t buflen)
+ {
+ 	int ret;
+-	char *pos, *end;
+-	int i;
+-
+-	pos = buf;
+-	end = buf + buflen;
+ 
+ 	if (hapd->iface->conf->he_op.he_bss_color_disabled)
+ 		ret = os_snprintf(buf, buflen, "BSS Color disabled\n");
+@@ -4341,9 +4337,10 @@ hostapd_ctrl_iface_get_bss_color(struct
+ 		ret = os_snprintf(buf, buflen, "BSS Color=%u\n",
+ 				  hapd->iface->conf->he_op.he_bss_color);
+ 
+-	pos += ret;
++	if (os_snprintf_error(buflen, ret))
++		return -1;
+ 
+-	return pos - buf;
++	return ret;
+ }
+ 
+ 
+@@ -4356,15 +4353,17 @@ hostapd_ctrl_iface_get_aval_color_bmp(st
+ 	int i;
+ 	u64 aval_color_bmp = 0;
+ 
+-	hostapd_drv_get_aval_bss_color_bmp(hapd, &aval_color_bmp);
++	if (hostapd_drv_get_aval_bss_color_bmp(hapd,
++						&aval_color_bmp) < 0)
++		return -1;
+ 	hapd->color_collision_bitmap = ~aval_color_bmp;
+ 
+ 	pos = buf;
+ 	end = buf + buflen;
+ 
+ 	ret = os_snprintf(buf, buflen,
+-			"available color bitmap=0x%lx\n",
+-			aval_color_bmp);
++			"available color bitmap=0x%llx\n",
++			(unsigned long long) aval_color_bmp);
+ 	if (os_snprintf_error(end - pos, ret))
+ 		return pos - buf;
+ 	pos += ret;
+--- a/src/ap/ap_drv_ops.c
++++ b/src/ap/ap_drv_ops.c
+@@ -1465,7 +1465,7 @@ int hostapd_drv_mu_ctrl(struct hostapd_d
+ int hostapd_drv_mu_dump(struct hostapd_data *hapd, u8 *mu_onoff)
+ {
+ 	if (!hapd->driver || !hapd->driver->mu_dump)
+-		return 0;
++		return -EOPNOTSUPP;
+ 	return hapd->driver->mu_dump(hapd->drv_priv, mu_onoff);
+ }
+ 
+@@ -1490,7 +1490,7 @@ int hostapd_drv_ibf_ctrl(struct hostapd_
+ int hostapd_drv_ibf_dump(struct hostapd_data *hapd, u8 *ibf_enable)
+ {
+ 	if (!hapd->driver || !hapd->driver->ibf_dump)
+-		return 0;
++		return -EOPNOTSUPP;
+ 	return hapd->driver->ibf_dump(hapd->drv_priv, ibf_enable);
+ }
+ 
+@@ -1504,7 +1504,7 @@ int hostapd_drv_amsdu_ctrl(struct hostap
+ int hostapd_drv_amsdu_dump(struct hostapd_data *hapd, u8 *amsdu)
+ {
+ 	if (!hapd->driver || !hapd->driver->amsdu_dump)
+-		return 0;
++		return -EOPNOTSUPP;
+ 	return hapd->driver->amsdu_dump(hapd->drv_priv, amsdu);
+ }
+ 
+@@ -1512,7 +1512,7 @@ int hostapd_drv_get_aval_bss_color_bmp(s
+ {
+ 	if (!hapd->driver || !hapd->driver->get_aval_color_bmp ||
+ 	    hapd->iface->conf->he_op.he_bss_color_disabled)
+-		return 0;
++		return -EOPNOTSUPP;
+ 	return hapd->driver->get_aval_color_bmp(hapd->drv_priv, aval_color_bmp);
+ }
+ 
+--- a/src/common/mtk_vendor.h
++++ b/src/common/mtk_vendor.h
+@@ -183,7 +183,7 @@ enum mtk_vendor_attr_wireless_ctrl {
+ 	MTK_VENDOR_ATTR_WIRELESS_CTRL_BA_BUFFER_SIZE,
+ 	MTK_VENDOR_ATTR_WIRELESS_CTRL_MIMO,
+ 	MTK_VENDOR_ATTR_WIRELESS_CTRL_AMSDU,
+-	MTK_VENDOR_ATTR_WIRELESS_CTRL_CERT,
++	MTK_VENDOR_ATTR_WIRELESS_CTRL_CERT = 9,
+ 	MTK_VENDOR_ATTR_WIRELESS_CTRL_RTS_SIGTA,
+ 
+ 	/* keep last */
+--- a/src/drivers/driver_nl80211.c
++++ b/src/drivers/driver_nl80211.c
+@@ -15489,6 +15489,17 @@ fail:
+ }
+ 
+ 
++struct mtk_u8_dump_data {
++	u8 *value;
++	bool valid;
++};
++
++struct mtk_u64_dump_data {
++	u64 *value;
++	bool valid;
++};
++
++
+ #ifdef CONFIG_IEEE80211AX
+ static int nl80211_mu_onoff(void *priv, u8 mu_onoff)
+ {
+@@ -15523,7 +15534,7 @@ static int nl80211_mu_onoff(void *priv,
+ 
+ static int mu_dump_handler(struct nl_msg *msg, void *arg)
+ {
+-	u8 *mu_onoff = (u8 *) arg;
++	struct mtk_u8_dump_data *data = arg;
+ 	struct nlattr *tb[NL80211_ATTR_MAX + 1];
+ 	struct nlattr *tb_vendor[MTK_VENDOR_ATTR_MU_CTRL_MAX + 1];
+ 	struct genlmsghdr *gnlh = nlmsg_data(nlmsg_hdr(msg));
+@@ -15542,8 +15553,10 @@ static int mu_dump_handler(struct nl_msg
+ 	if (!nl_vend)
+ 		return NL_SKIP;
+ 
+-	nla_parse(tb_vendor, MTK_VENDOR_ATTR_MU_CTRL_MAX,
+-		  nla_data(nl_vend), nla_len(nl_vend), NULL);
++	if (nla_parse(tb_vendor, MTK_VENDOR_ATTR_MU_CTRL_MAX,
++		      nla_data(nl_vend), nla_len(nl_vend),
++		      mu_ctrl_policy) < 0)
++		return NL_SKIP;
+ 
+ 	attr = tb_vendor[MTK_VENDOR_ATTR_MU_CTRL_DUMP];
+ 	if (!attr) {
+@@ -15551,10 +15564,11 @@ static int mu_dump_handler(struct nl_msg
+ 		return NL_SKIP;
+ 	}
+ 
+-	*mu_onoff = nla_get_u8(attr);
+-	wpa_printf(MSG_DEBUG, "nla_get mu_onoff: %d\n", *mu_onoff);
++	*data->value = nla_get_u8(attr);
++	data->valid = true;
++	wpa_printf(MSG_DEBUG, "nla_get mu_onoff: %d\n", *data->value);
+ 
+-	return 0;
++	return NL_SKIP;
+ }
+ 
+ static int nl80211_mu_dump(void *priv, u8 *mu_onoff)
+@@ -15563,12 +15577,15 @@ static int nl80211_mu_dump(void *priv, u
+ 	struct wpa_driver_nl80211_data *drv = bss->drv;
+ 	struct nl_msg *msg;
+ 	struct nlattr *attr;
++	struct mtk_u8_dump_data data = {
++		.value = mu_onoff,
++	};
+ 	int ret;
+ 
+ 	if (!drv->mtk_mu_vendor_cmd_avail) {
+ 		wpa_printf(MSG_INFO,
+-			   "nl80211: Driver does not support setting mu control");
+-		return 0;
++			   "nl80211: Driver does not support getting mu control");
++		return -EOPNOTSUPP;
+ 	}
+ 
+ 	if (!(msg = nl80211_drv_msg(drv, NLM_F_DUMP, NL80211_CMD_VENDOR)) ||
+@@ -15586,9 +15603,11 @@ static int nl80211_mu_dump(void *priv, u
+ 
+ 	nla_nest_end(msg, attr);
+ 
+-	ret = send_and_recv_resp(drv, msg, mu_dump_handler, mu_onoff);
++	ret = send_and_recv_resp(drv, msg, mu_dump_handler, &data);
++	if (!ret && !data.valid)
++		ret = -EINVAL;
+ 
+-	if(ret){
++	if (ret) {
+ 		wpa_printf(MSG_ERROR, "Failed to get mu_onoff. ret=%d (%s)", ret, strerror(-ret));
+ 	}
+ 
+@@ -15620,7 +15639,7 @@ static int nl80211_dpp_listen(void *priv
+ 
+ static int nl80211_get_aval_color_bmp_handler(struct nl_msg *msg, void *arg)
+ {
+-	u64 *aval_color_bmp = arg;
++	struct mtk_u64_dump_data *data = arg;
+ 	struct nlattr *tb[NL80211_ATTR_MAX + 1];
+ 	struct nlattr *tb_vendor[MTK_VENDOR_ATTR_BSS_COLOR_CTRL_MAX + 1];
+ 	struct genlmsghdr *gnlh = nlmsg_data(nlmsg_hdr(msg));
+@@ -15638,12 +15657,22 @@ static int nl80211_get_aval_color_bmp_ha
+ 	if (!nl_vend)
+ 		return NL_SKIP;
+ 
+-	nla_parse(tb_vendor, MTK_VENDOR_ATTR_BSS_COLOR_CTRL_MAX,
+-			nla_data(nl_vend), nla_len(nl_vend), NULL);
++	if (nla_parse(tb_vendor, MTK_VENDOR_ATTR_BSS_COLOR_CTRL_MAX,
++		      nla_data(nl_vend), nla_len(nl_vend),
++		      bss_color_ctrl_policy) < 0)
++		return NL_SKIP;
++
++	attr = tb_vendor[MTK_VENDOR_ATTR_AVAL_BSS_COLOR_BMP];
++	if (!attr) {
++		wpa_printf(MSG_ERROR,
++			   "nl80211: cannot find available BSS color bitmap");
++		return NL_SKIP;
++	}
+ 
+-	*aval_color_bmp = nla_get_u64(tb_vendor[MTK_VENDOR_ATTR_AVAL_BSS_COLOR_BMP]);
++	*data->value = nla_get_u64(attr);
++	data->valid = true;
+ 
+-	return 0;
++	return NL_SKIP;
+ }
+ 
+ static int nl80211_get_aval_color_bmp(void *priv, u64 *aval_color_bmp)
+@@ -15652,36 +15681,46 @@ static int nl80211_get_aval_color_bmp(vo
+ 	struct wpa_driver_nl80211_data *drv = bss->drv;
+ 	struct nl_msg *msg;
+ 	struct nlattr *attr;
++	struct mtk_u64_dump_data data = {
++		.value = aval_color_bmp,
++	};
+ 	int ret;
+ 
+ 	if (!drv->mtk_bss_color_vendor_cmd_avail) {
+ 		wpa_printf(MSG_INFO,
+ 			   "nl80211: Driver does not support BSS COLOR vendor cmd");
+-		return 0;
++		return -EOPNOTSUPP;
+ 	}
+ 
+-	if (!(msg = nl80211_drv_msg(drv, NLM_F_DUMP, NL80211_CMD_VENDOR)) ||
+-	    nla_put_u32(msg, NL80211_ATTR_VENDOR_ID, OUI_MTK) ||
++	msg = nl80211_drv_msg(drv, NLM_F_DUMP, NL80211_CMD_VENDOR);
++	if (!msg)
++		return -ENOBUFS;
++
++	if (nla_put_u32(msg, NL80211_ATTR_VENDOR_ID, OUI_MTK) ||
+ 	    nla_put_u32(msg, NL80211_ATTR_VENDOR_SUBCMD,
+ 			MTK_NL80211_VENDOR_SUBCMD_BSS_COLOR_CTRL))
+-		return -ENOBUFS;
++		goto fail;
+ 
+ 	attr = nla_nest_start(msg, NL80211_ATTR_VENDOR_DATA);
+-	if (!attr) {
+-		nlmsg_free(msg);
+-		return -1;
+-	}
++	if (!attr)
++		goto fail;
+ 
+ 	nla_nest_end(msg, attr);
+ 
+ 	ret = send_and_recv_resp(drv, msg,
+-		nl80211_get_aval_color_bmp_handler, aval_color_bmp);
++		nl80211_get_aval_color_bmp_handler, &data);
++	if (!ret && !data.valid)
++		ret = -EINVAL;
+ 
+ 	if (ret) {
+ 		wpa_printf(MSG_ERROR, "Failed to send BSS COLOR vendor cmd. ret=%d (%s) ",
+ 			   ret, strerror(-ret));
+ 	}
+ 	return ret;
++
++fail:
++	nlmsg_free(msg);
++	return -ENOBUFS;
+ }
+ 
+ static int nl80211_link_add(void *priv, u8 link_id, const u8 *addr,
+@@ -17277,7 +17316,7 @@ fail:
+ 
+ static int ibf_dump_handler(struct nl_msg *msg, void *arg)
+ {
+-	u8 *ibf_enable = (u8 *) arg;
++	struct mtk_u8_dump_data *data = arg;
+ 	struct nlattr *tb[NL80211_ATTR_MAX + 1];
+ 	struct nlattr *tb_vendor[MTK_VENDOR_ATTR_IBF_DUMP_MAX + 1];
+ 	struct genlmsghdr *gnlh = nlmsg_data(nlmsg_hdr(msg));
+@@ -17290,8 +17329,10 @@ static int ibf_dump_handler(struct nl_ms
+ 	if (!nl_vend)
+ 		return NL_SKIP;
+ 
+-	nla_parse(tb_vendor, MTK_VENDOR_ATTR_IBF_DUMP_MAX,
+-			nla_data(nl_vend), nla_len(nl_vend), NULL);
++	if (nla_parse(tb_vendor, MTK_VENDOR_ATTR_IBF_DUMP_MAX,
++		      nla_data(nl_vend), nla_len(nl_vend),
++		      ibf_dump_policy) < 0)
++		return NL_SKIP;
+ 
+ 	attr = tb_vendor[MTK_VENDOR_ATTR_IBF_DUMP_ENABLE];
+ 	if (!attr) {
+@@ -17299,7 +17340,8 @@ static int ibf_dump_handler(struct nl_ms
+ 		return NL_SKIP;
+ 	}
+ 
+-	*ibf_enable = nla_get_u8(attr);
++	*data->value = nla_get_u8(attr);
++	data->valid = true;
+ 
+ 	return NL_SKIP;
+ }
+@@ -17311,8 +17353,17 @@ nl80211_ibf_dump(void *priv, u8 *ibf_ena
+ 	struct wpa_driver_nl80211_data *drv = bss->drv;
+ 	struct nl_msg *msg;
+ 	struct nlattr *data;
++	struct mtk_u8_dump_data dump = {
++		.value = ibf_enable,
++	};
+ 	int ret;
+ 
++	if (!drv->mtk_ibf_vendor_cmd_avail) {
++		wpa_printf(MSG_INFO,
++			   "nl80211: Driver does not support getting ibf control");
++		return -EOPNOTSUPP;
++	}
++
+ 	msg = nl80211_drv_msg(drv, NLM_F_DUMP, NL80211_CMD_VENDOR);
+ 	if (!msg)
+ 		goto fail;
+@@ -17327,7 +17378,9 @@ nl80211_ibf_dump(void *priv, u8 *ibf_ena
+ 
+ 	nla_nest_end(msg, data);
+ 
+-	ret = send_and_recv_resp(drv, msg, ibf_dump_handler, ibf_enable);
++	ret = send_and_recv_resp(drv, msg, ibf_dump_handler, &dump);
++	if (!ret && !dump.valid)
++		ret = -EINVAL;
+ 
+ 	if (ret) {
+ 		wpa_printf(MSG_ERROR, "Failed to dump ibf_enable. ret=%d (%s)", ret, strerror(-ret));
+@@ -17383,7 +17436,7 @@ fail:
+ 
+ static int dump_amsdu_handler(struct nl_msg *msg, void *arg)
+ {
+-	u8 *amsdu = (u8 *) arg;
++	struct mtk_u8_dump_data *data = arg;
+ 	struct nlattr *tb[NL80211_ATTR_MAX + 1];
+ 	struct nlattr *tb_vendor[MTK_VENDOR_ATTR_WIRELESS_DUMP_MAX + 1];
+ 	struct genlmsghdr *gnlh = nlmsg_data(nlmsg_hdr(msg));
+@@ -17396,16 +17449,19 @@ static int dump_amsdu_handler(struct nl_
+ 	if (!nl_vend)
+ 		return NL_SKIP;
+ 
+-	nla_parse(tb_vendor, MTK_VENDOR_ATTR_WIRELESS_DUMP_MAX,
+-			nla_data(nl_vend), nla_len(nl_vend), NULL);
++	if (nla_parse(tb_vendor, MTK_VENDOR_ATTR_WIRELESS_DUMP_MAX,
++		      nla_data(nl_vend), nla_len(nl_vend),
++		      wireless_dump_policy) < 0)
++		return NL_SKIP;
+ 
+ 	attr_amsdu = tb_vendor[MTK_VENDOR_ATTR_WIRELESS_DUMP_AMSDU];
+-	if (!attr_amsdu ){
++	if (!attr_amsdu) {
+ 		wpa_printf(MSG_ERROR, "nl80211: cannot find vendor attributes");
+ 		return NL_SKIP;
+ 	}
+ 
+-	*amsdu = nla_get_u8(attr_amsdu);
++	*data->value = nla_get_u8(attr_amsdu);
++	data->valid = true;
+ 
+ 	return NL_SKIP;
+ }
+@@ -17417,12 +17473,15 @@ nl80211_dump_amsdu(void *priv, u8 *amsdu
+ 	struct wpa_driver_nl80211_data *drv = bss->drv;
+ 	struct nl_msg *msg;
+ 	struct nlattr *data;
++	struct mtk_u8_dump_data dump = {
++		.value = amsdu,
++	};
+ 	int ret;
+ 
+ 	if (!drv->mtk_wireless_vendor_cmd_avail) {
+ 		wpa_printf(MSG_INFO,
+-				 "nl80211: Driver does not support ap_wireless control");
+-		return 0;
++			   "nl80211: Driver does not support getting ap wireless control");
++		return -EOPNOTSUPP;
+ 	}
+ 
+ 	msg = nl80211_drv_msg(drv, NLM_F_DUMP, NL80211_CMD_VENDOR);
+@@ -17439,7 +17498,9 @@ nl80211_dump_amsdu(void *priv, u8 *amsdu
+ 
+ 	nla_nest_end(msg, data);
+ 
+-	ret = send_and_recv_resp(drv, msg, dump_amsdu_handler, amsdu);
++	ret = send_and_recv_resp(drv, msg, dump_amsdu_handler, &dump);
++	if (!ret && !dump.valid)
++		ret = -EINVAL;
+ 
+ 	if (ret) {
+ 		wpa_printf(MSG_ERROR, "Failed to dump amsdu. ret=%d (%s)", ret, strerror(-ret));
+--- a/hostapd/hostapd_cli.c
++++ b/hostapd/hostapd_cli.c
+@@ -1923,9 +1923,9 @@ static const struct hostapd_cli_cmd host
+ 	{ "driver_flags2", hostapd_cli_cmd_driver_flags2, NULL,
+ 	  " = show supported driver flags2"},
+ 	{ "set_mu", hostapd_cli_cmd_set_mu, NULL,
+-		"<value> [0-15] bitmap- UL MU-MIMO(bit3), DL MU-MIMO(bit2), UL OFDMA(bit1), DL OFDMA(bit0)"},
++	  "onoff <value> [0-15] bitmap - UL MU-MIMO(bit3), DL MU-MIMO(bit2), UL OFDMA(bit1), DL OFDMA(bit0)"},
+ 	{ "get_mu", hostapd_cli_cmd_get_mu, NULL,
+-		" = show mu onoff value in 0-15 bitmap"},
++	  " = show mu onoff value in 0-15 bitmap"},
+ #ifdef CONFIG_DPP
+ 	{ "dpp_qr_code", hostapd_cli_cmd_dpp_qr_code, NULL,
+ 	  "report a scanned DPP URI from a QR Code" },
