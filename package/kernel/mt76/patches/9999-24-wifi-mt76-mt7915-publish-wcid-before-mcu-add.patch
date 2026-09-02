@@ -1,0 +1,37 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Ryan Leung <untilscour@protonmail.com>
+Date: Fri, 21 Aug 2026 09:00:01 +0000
+Subject: [PATCH] wifi: mt76: mt7915: publish wcid before MCU add commands
+
+mt7915 interface setup enables the BSS and STA in firmware before
+publishing dev->mt76.wcid[idx]. Firmware can generate TX status or TX
+free events as soon as it processes those commands, leaving the event
+handlers without a published WCID and potentially causing memory
+corruption.
+
+Publish the WCID before telling firmware that the interface is live.
+Apply the ordering in mt7915_init_vif(), where the MediaTek testmode
+patches moved the common interface setup, so normal and beamforming
+test interfaces both use the safe lifetime order.
+
+Closes: https://github.com/openwrt/openwrt/issues/24594
+Link: https://patch.msgid.link/20260821-mt7915-wcid-publish-order-v2-1-acf0b7f32cbd@protonmail.com
+Link: https://github.com/openwrt/openwrt/pull/24810
+Signed-off-by: Ryan Leung <untilscour@protonmail.com>
+---
+ mt7915/main.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/mt7915/main.c
++++ b/mt7915/main.c
+@@ -322,9 +322,9 @@ int mt7915_init_vif(struct mt7915_phy *p
+ 	mt7915_init_bitrate_mask(vif);
+ 	memset(&mvif->cap, -1, sizeof(mvif->cap));
+ 
++	rcu_assign_pointer(dev->mt76.wcid[idx], &mvif->sta.wcid);
+ 	mt7915_mcu_add_bss_info(phy, vif, true);
+ 	mt7915_mcu_add_sta(dev, vif, NULL, CONN_STATE_PORT_SECURE, true);
+-	rcu_assign_pointer(dev->mt76.wcid[idx], &mvif->sta.wcid);
+ 
+ 	if (!is_mt7915(&dev->mt76))
+ 		mt7915_mcu_set_vow_band(dev, mvif);

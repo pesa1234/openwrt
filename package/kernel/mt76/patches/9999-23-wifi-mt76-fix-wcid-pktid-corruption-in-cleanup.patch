@@ -1,0 +1,39 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Ryan Leung <untilscour@protonmail.com>
+Date: Thu, 20 Aug 2026 12:45:01 +0000
+Subject: [PATCH] wifi: mt76: fix wcid->pktid corruption in
+ mt76_wcid_cleanup()
+
+mt76_wcid_cleanup() releases dev->status_lock before calling
+idr_destroy(&wcid->pktid) to tear down the pktid idr. Meanwhile,
+mt76_tx_status_skb_add() can concurrently insert into that same idr
+during TX completion handling.
+
+Run idr_destroy() while status_lock is still held so teardown and
+concurrent insertion are mutually exclusive.
+
+Closes: https://github.com/openwrt/openwrt/issues/24594
+Link: https://patch.msgid.link/20260820-mt76-pktid-idr-race-v1-1-451f176a6495@protonmail.com
+Link: https://github.com/openwrt/openwrt/pull/24810
+Signed-off-by: Ryan Leung <untilscour@protonmail.com>
+---
+ mac80211.c | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
+
+--- a/mac80211.c
++++ b/mac80211.c
+@@ -1760,9 +1760,12 @@ void mt76_wcid_cleanup(struct mt76_dev *
+ 
+ 	mt76_tx_status_lock(dev, &list);
+ 	mt76_tx_status_skb_get(dev, wcid, -1, &list);
+-	mt76_tx_status_unlock(dev, &list);
+-
++	/*
++	 * Serialize pktid teardown against mt76_tx_status_skb_add(), which
++	 * allocates entries in the same idr under status_lock.
++	 */
+ 	idr_destroy(&wcid->pktid);
++	mt76_tx_status_unlock(dev, &list);
+ 
+ 	/* Remove from sta_poll_list to prevent list corruption after reset.
+ 	 * Without this, mt76_reset_device() reinitializes sta_poll_list but
