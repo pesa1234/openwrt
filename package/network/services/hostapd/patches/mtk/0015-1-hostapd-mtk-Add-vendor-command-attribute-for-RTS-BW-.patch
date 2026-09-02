@@ -11,7 +11,7 @@ Signed-off-by: himanshu.goyal <himanshu.goyal@mediatek.com>
 
 --- a/src/common/mtk_vendor.h
 +++ b/src/common/mtk_vendor.h
-@@ -155,6 +155,7 @@ enum mtk_vendor_attr_wireless_ctrl {
+@@ -166,6 +166,7 @@ enum mtk_vendor_attr_wireless_ctrl {
  	MTK_VENDOR_ATTR_WIRELESS_CTRL_AMPDU,
  	MTK_VENDOR_ATTR_WIRELESS_CTRL_AMSDU,
  	MTK_VENDOR_ATTR_WIRELESS_CTRL_CERT,

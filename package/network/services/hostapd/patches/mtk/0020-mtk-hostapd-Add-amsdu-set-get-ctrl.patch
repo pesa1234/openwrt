@@ -21,7 +21,7 @@ Subject: [PATCH 020/149] mtk: hostapd: Add amsdu set get ctrl
 
 --- a/hostapd/config_file.c
 +++ b/hostapd/config_file.c
-@@ -5062,6 +5062,15 @@ static int hostapd_config_fill(struct ho
+@@ -5358,6 +5358,15 @@ static int hostapd_config_fill(struct ho
  	} else if (os_strcmp(buf, "ibf_enable") == 0) { /*ibf setting is per device*/
  		int val = atoi(pos);
  		conf->ibf_enable = !!val;
@@ -39,7 +39,7 @@ Subject: [PATCH 020/149] mtk: hostapd: Add amsdu set get ctrl
  			   "Line %d: unknown configuration item '%s'",
 --- a/hostapd/ctrl_iface.c
 +++ b/hostapd/ctrl_iface.c
-@@ -4158,6 +4158,30 @@ hostapd_ctrl_iface_get_ibf(struct hostap
+@@ -4301,6 +4301,30 @@ hostapd_ctrl_iface_get_ibf(struct hostap
  }
  
  
@@ -70,7 +70,7 @@ Subject: [PATCH 020/149] mtk: hostapd: Add amsdu set get ctrl
  static int hostapd_ctrl_iface_receive_process(struct hostapd_data *hapd,
  					      char *buf, char *reply,
  					      int reply_size,
-@@ -4793,6 +4817,8 @@ static int hostapd_ctrl_iface_receive_pr
+@@ -4950,6 +4974,8 @@ static int hostapd_ctrl_iface_receive_pr
  		reply_len = hostapd_ctrl_iface_get_mu(hapd, reply, reply_size);
  	} else if (os_strncmp(buf, "GET_IBF", 7) == 0) {
  		reply_len = hostapd_ctrl_iface_get_ibf(hapd, reply, reply_size);
@@ -81,7 +81,7 @@ Subject: [PATCH 020/149] mtk: hostapd: Add amsdu set get ctrl
  		reply_len = 16;
 --- a/hostapd/hostapd_cli.c
 +++ b/hostapd/hostapd_cli.c
-@@ -1700,6 +1700,13 @@ static int hostapd_cli_cmd_get_ibf(struc
+@@ -1736,6 +1736,13 @@ static int hostapd_cli_cmd_get_ibf(struc
  }
  
  
@@ -95,8 +95,8 @@ Subject: [PATCH 020/149] mtk: hostapd: Add amsdu set get ctrl
  struct hostapd_cli_cmd {
  	const char *cmd;
  	int (*handler)(struct wpa_ctrl *ctrl, int argc, char *argv[]);
-@@ -1938,6 +1945,8 @@ static const struct hostapd_cli_cmd host
- #endif /* ANDROID */
+@@ -1985,6 +1992,8 @@ static const struct hostapd_cli_cmd host
+ #endif /* CONFIG_AFC */
  	{ "get_ibf", hostapd_cli_cmd_get_ibf, NULL,
  	  " = show iBF state (enabled/disabled)"},
 +	{ "get_amsdu", hostapd_cli_cmd_get_amsdu, NULL,
@@ -106,7 +106,7 @@ Subject: [PATCH 020/149] mtk: hostapd: Add amsdu set get ctrl
  
 --- a/src/ap/ap_config.c
 +++ b/src/ap/ap_config.c
-@@ -319,6 +319,7 @@ struct hostapd_config * hostapd_config_d
+@@ -320,6 +320,7 @@ struct hostapd_config * hostapd_config_d
  	conf->edcca_compensation = EDCCA_DEFAULT_COMPENSATION;
  	conf->three_wire_enable = THREE_WIRE_MODE_DISABLE;
  	conf->ibf_enable = IBF_DEFAULT_ENABLE;
@@ -149,7 +149,7 @@ Subject: [PATCH 020/149] mtk: hostapd: Add amsdu set get ctrl
  
 --- a/src/ap/hostapd.c
 +++ b/src/ap/hostapd.c
-@@ -2832,6 +2832,8 @@ dfs_offload:
+@@ -2893,6 +2893,8 @@ dfs_offload:
  		goto fail;
  	if (hostapd_drv_ibf_ctrl(hapd) < 0)
  		goto fail;
@@ -160,7 +160,7 @@ Subject: [PATCH 020/149] mtk: hostapd: Add amsdu set get ctrl
  		   iface->bss[0]->conf->iface);
 --- a/src/common/mtk_vendor.h
 +++ b/src/common/mtk_vendor.h
-@@ -169,7 +169,6 @@ enum mtk_vendor_attr_wireless_ctrl {
+@@ -180,7 +180,6 @@ enum mtk_vendor_attr_wireless_ctrl {
  	MTK_VENDOR_ATTR_WIRELESS_CTRL_NUSERS_OFDMA,
  	MTK_VENDOR_ATTR_WIRELESS_CTRL_BA_BUFFER_SIZE,
  	MTK_VENDOR_ATTR_WIRELESS_CTRL_MIMO,
@@ -168,7 +168,7 @@ Subject: [PATCH 020/149] mtk: hostapd: Add amsdu set get ctrl
  	MTK_VENDOR_ATTR_WIRELESS_CTRL_AMSDU,
  	MTK_VENDOR_ATTR_WIRELESS_CTRL_CERT,
  	MTK_VENDOR_ATTR_WIRELESS_CTRL_RTS_SIGTA,
-@@ -180,6 +179,22 @@ enum mtk_vendor_attr_wireless_ctrl {
+@@ -191,6 +190,22 @@ enum mtk_vendor_attr_wireless_ctrl {
  		NUM_MTK_VENDOR_ATTRS_WIRELESS_CTRL - 1
  };
  
@@ -193,7 +193,7 @@ Subject: [PATCH 020/149] mtk: hostapd: Add amsdu set get ctrl
  
 --- a/src/drivers/driver.h
 +++ b/src/drivers/driver.h
-@@ -5679,6 +5679,15 @@ struct wpa_driver_ops {
+@@ -6039,6 +6039,15 @@ struct wpa_driver_ops {
  	 *
  	 */
  	int (*ibf_dump)(void *priv, u8 *ibf_enable);
@@ -211,7 +211,7 @@ Subject: [PATCH 020/149] mtk: hostapd: Add amsdu set get ctrl
  /**
 --- a/src/drivers/driver_nl80211.c
 +++ b/src/drivers/driver_nl80211.c
-@@ -16026,6 +16026,118 @@ fail:
+@@ -17268,6 +17268,118 @@ fail:
  	return -ENOBUFS;
  }
  
@@ -330,7 +330,7 @@ Subject: [PATCH 020/149] mtk: hostapd: Add amsdu set get ctrl
  const struct wpa_driver_ops wpa_driver_nl80211_ops = {
  	.name = "nl80211",
  	.desc = "Linux nl80211/cfg80211",
-@@ -16213,4 +16325,6 @@ const struct wpa_driver_ops wpa_driver_n
+@@ -17462,4 +17574,6 @@ const struct wpa_driver_ops wpa_driver_n
  	.three_wire_ctrl = nl80211_enable_three_wire,
  	.ibf_ctrl = nl80211_ibf_enable,
  	.ibf_dump = nl80211_ibf_dump,
@@ -339,7 +339,7 @@ Subject: [PATCH 020/149] mtk: hostapd: Add amsdu set get ctrl
  };
 --- a/src/drivers/driver_nl80211.h
 +++ b/src/drivers/driver_nl80211.h
-@@ -220,6 +220,7 @@ struct wpa_driver_nl80211_data {
+@@ -226,6 +226,7 @@ struct wpa_driver_nl80211_data {
  	unsigned int mtk_mu_vendor_cmd_avail:1;
  	unsigned int mtk_3wire_vendor_cmd_avail:1;
  	unsigned int mtk_ibf_vendor_cmd_avail:1;
@@ -349,7 +349,7 @@ Subject: [PATCH 020/149] mtk: hostapd: Add amsdu set get ctrl
  
 --- a/src/drivers/driver_nl80211_capa.c
 +++ b/src/drivers/driver_nl80211_capa.c
-@@ -1184,6 +1184,9 @@ static int wiphy_info_handler(struct nl_
+@@ -1555,6 +1555,9 @@ static int wiphy_info_handler(struct nl_
  				case MTK_NL80211_VENDOR_SUBCMD_IBF_CTRL:
  					drv->mtk_ibf_vendor_cmd_avail = 1;
  					break;
@@ -361,11 +361,11 @@ Subject: [PATCH 020/149] mtk: hostapd: Add amsdu set get ctrl
  
 --- a/src/ap/ap_config.h
 +++ b/src/ap/ap_config.h
-@@ -1327,6 +1327,7 @@ struct hostapd_config {
- 	s8 edcca_compensation;
+@@ -1326,6 +1326,7 @@ struct hostapd_config {
  	int *edcca_threshold;
  	u8 three_wire_enable;
  	u8 ibf_enable;
 +	u8 amsdu;
  
  #ifdef CONFIG_AFC
+ 	struct {

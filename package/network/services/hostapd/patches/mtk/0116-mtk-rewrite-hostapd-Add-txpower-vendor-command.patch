@@ -22,7 +22,7 @@ control.
 
 --- a/hostapd/config_file.c
 +++ b/hostapd/config_file.c
-@@ -5073,6 +5073,16 @@ static int hostapd_config_fill(struct ho
+@@ -5369,6 +5369,16 @@ static int hostapd_config_fill(struct ho
  			return 1;
  		}
  		conf->amsdu = val;
@@ -41,7 +41,7 @@ control.
  			   "Line %d: unknown configuration item '%s'",
 --- a/src/ap/hostapd.c
 +++ b/src/ap/hostapd.c
-@@ -2834,6 +2834,8 @@ dfs_offload:
+@@ -2895,6 +2895,8 @@ dfs_offload:
  		goto fail;
  	if (hostapd_drv_amsdu_ctrl(hapd) < 0)
  		goto fail;
@@ -71,7 +71,7 @@ control.
  };
  
  enum mtk_vendor_attr_edcca_ctrl {
-@@ -267,6 +268,19 @@ enum mtk_vendor_attr_bss_color_ctrl {
+@@ -278,6 +279,19 @@ enum mtk_vendor_attr_bss_color_ctrl {
  		NUM_MTK_VENDOR_ATTRS_BSS_COLOR_CTRL - 1
  };
  
@@ -93,7 +93,7 @@ control.
  
 --- a/src/drivers/driver.h
 +++ b/src/drivers/driver.h
-@@ -5606,6 +5606,15 @@ struct wpa_driver_ops {
+@@ -5878,6 +5878,15 @@ struct wpa_driver_ops {
  #endif /* CONFIG_TESTING_OPTIONS */
  
  	/**
@@ -111,7 +111,7 @@ control.
  	 * @priv: Private driver interface data
 --- a/src/drivers/driver_nl80211.c
 +++ b/src/drivers/driver_nl80211.c
-@@ -90,6 +90,13 @@ static void handle_nl_debug_hook(struct
+@@ -91,6 +91,13 @@ static void handle_nl_debug_hook(struct
  	wpa_netlink_hook(tx, nlh, nlh->nlmsg_len);
  }
  
@@ -125,7 +125,7 @@ control.
  static struct nl_sock * nl_create_handle(struct nl_cb *cb, const char *dbg)
  {
  	struct nl_sock *handle;
-@@ -16203,6 +16210,49 @@ fail:
+@@ -17445,6 +17452,49 @@ fail:
  	return -ENOBUFS;
  }
  
@@ -175,7 +175,7 @@ control.
  const struct wpa_driver_ops wpa_driver_nl80211_ops = {
  	.name = "nl80211",
  	.desc = "Linux nl80211/cfg80211",
-@@ -16390,6 +16440,7 @@ const struct wpa_driver_ops wpa_driver_n
+@@ -17639,6 +17689,7 @@ const struct wpa_driver_ops wpa_driver_n
  	.three_wire_ctrl = nl80211_enable_three_wire,
  	.ibf_ctrl = nl80211_ibf_enable,
  	.ibf_dump = nl80211_ibf_dump,
@@ -185,7 +185,7 @@ control.
  	.get_aval_color_bmp = nl80211_get_aval_color_bmp,
 --- a/src/drivers/driver_nl80211_capa.c
 +++ b/src/drivers/driver_nl80211_capa.c
-@@ -1190,6 +1190,9 @@ static int wiphy_info_handler(struct nl_
+@@ -1561,6 +1561,9 @@ static int wiphy_info_handler(struct nl_
  				case MTK_NL80211_VENDOR_SUBCMD_BSS_COLOR_CTRL :
  					drv->mtk_bss_color_vendor_cmd_avail = 1;
  					break;
@@ -197,7 +197,7 @@ control.
  
 --- a/src/ap/ap_config.c
 +++ b/src/ap/ap_config.c
-@@ -320,6 +320,9 @@ struct hostapd_config * hostapd_config_d
+@@ -321,6 +321,9 @@ struct hostapd_config * hostapd_config_d
  	conf->edcca_compensation = EDCCA_DEFAULT_COMPENSATION;
  	conf->three_wire_enable = THREE_WIRE_MODE_DISABLE;
  	conf->ibf_enable = IBF_DEFAULT_ENABLE;
@@ -209,7 +209,7 @@ control.
  	hostapd_set_and_check_bw320_offset(conf, 0);
 --- a/src/ap/ap_config.h
 +++ b/src/ap/ap_config.h
-@@ -1329,5 +1329,8 @@ struct hostapd_config {
+@@ -1328,6 +1328,9 @@ struct hostapd_config {
  	u8 three_wire_enable;
  	u8 ibf_enable;
  	u8 amsdu;
@@ -218,6 +218,7 @@ control.
 +	u8 beacon_dup;
  
  #ifdef CONFIG_AFC
+ 	struct {
 --- a/src/ap/ap_drv_ops.h
 +++ b/src/ap/ap_drv_ops.h
 @@ -163,6 +163,7 @@ int hostapd_drv_mu_dump(struct hostapd_d
@@ -230,7 +231,7 @@ control.
  int hostapd_drv_get_aval_bss_color_bmp(struct hostapd_data *hapd,
 --- a/src/drivers/driver_nl80211.h
 +++ b/src/drivers/driver_nl80211.h
-@@ -220,6 +220,7 @@ struct wpa_driver_nl80211_data {
+@@ -226,6 +226,7 @@ struct wpa_driver_nl80211_data {
  	unsigned int mtk_mu_vendor_cmd_avail:1;
  	unsigned int mtk_3wire_vendor_cmd_avail:1;
  	unsigned int mtk_ibf_vendor_cmd_avail:1;

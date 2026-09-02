@@ -14,7 +14,7 @@ Signed-off-by: Shayne Chen <shayne.chen@mediatek.com>
 
 --- a/src/drivers/driver_nl80211.c
 +++ b/src/drivers/driver_nl80211.c
-@@ -12141,7 +12141,7 @@ static int nl80211_switch_channel(void *
+@@ -12511,7 +12511,7 @@ static int nl80211_switch_channel(void *
  	if (!beacon_csa)
  		goto fail;
  
@@ -23,7 +23,7 @@ Signed-off-by: Shayne Chen <shayne.chen@mediatek.com>
  	if (ret)
  		goto error;
  
-@@ -12229,7 +12229,7 @@ static int nl80211_switch_color(void *pr
+@@ -12599,7 +12599,7 @@ static int nl80211_switch_color(void *pr
  		goto error;
  	}
  

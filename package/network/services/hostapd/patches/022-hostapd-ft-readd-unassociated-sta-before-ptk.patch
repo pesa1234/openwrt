@@ -31,7 +31,7 @@ Signed-off-by: AndreaCovelli <andcov23@gmail.com>
 
 --- a/src/ap/wpa_auth_glue.c
 +++ b/src/ap/wpa_auth_glue.c
-@@ -1322,6 +1322,18 @@ static int hostapd_wpa_auth_add_sta_ft(v
+@@ -1326,6 +1326,18 @@ static int hostapd_wpa_auth_add_sta_ft(v
  		return ap_sta_re_add(hapd, sta);
  	}
  
