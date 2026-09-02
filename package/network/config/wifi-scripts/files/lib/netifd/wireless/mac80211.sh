@@ -31,7 +31,7 @@ drv_mac80211_init_device_config() {
 	config_add_string distance
 	config_add_string ifname_prefix
 	config_add_string macaddr_base
-	config_add_int radio beacon_int chanbw frag rts
+	config_add_int radio beacon_int chanbw frag rts obss_interval
 	config_add_int rxantenna txantenna txpower min_tx_power
 	config_add_int num_global_macaddr multiple_bssid
 	config_add_boolean noscan ht_coex acs_exclude_dfs background_radar
@@ -191,7 +191,7 @@ mac80211_hostapd_setup_base() {
 	[ -n "$acs_exclude_dfs" ] && [ "$acs_exclude_dfs" -gt 0 ] &&
 		append base_cfg "acs_exclude_dfs=1" "$N"
 
-	json_get_vars noscan ht_coex vendor_vht min_tx_power:0 tx_burst
+	json_get_vars noscan ht_coex vendor_vht min_tx_power:0 tx_burst obss_interval
 	json_get_vars etxbfen:1 itxbfen amsdu mu_onoff three_wire_enable
 	json_get_vars lpi_enable:0 sku_idx:0 beacon_dup:1
 	json_get_values ht_capab_list ht_capab
@@ -199,6 +199,7 @@ mac80211_hostapd_setup_base() {
 
 	mac80211_validate_integer "$mu_onoff" 0 15 || mu_onoff=
 	mac80211_validate_integer "$three_wire_enable" 0 3 || three_wire_enable=
+	mac80211_validate_integer "$sku_idx" 0 255 || sku_idx=0
 
 	[ "$auto_channel" = 0 ] && [ -z "$channel_list" ] && \
 		channel_list="$channel"
@@ -251,8 +252,8 @@ mac80211_hostapd_setup_base() {
 			set_default ht_coex 0
 			append base_cfg "ht_coex=$ht_coex" "$N"
 			[ "$ht_coex" -eq 1 ] && {
-			set_default obss_interval 300
-			append base_cfg "obss_interval=$obss_interval" "$N"
+				mac80211_validate_integer "$obss_interval" 0 65535 || obss_interval=300
+				append base_cfg "obss_interval=$obss_interval" "$N"
 			}
 
 			json_get_vars \
@@ -373,7 +374,7 @@ mac80211_hostapd_setup_base() {
 	[ "$hwmode" = "a" ] || enable_ac=0
 	[ "$band" = "6g" ] && enable_ac=0
 
-	if [ "$enable_ac" != "0" -o "$vendor_vht" = "1" ]; then
+	if [ "$enable_ac" != "0" ] || [ "$vendor_vht" = "1" ]; then
 		json_get_vars \
 			rxldpc:1 \
 			short_gi_80:1 \
@@ -528,7 +529,7 @@ mac80211_hostapd_setup_base() {
 			append base_cfg "he_oper_chwidth=$vht_oper_chwidth" "$N"
 			append base_cfg "he_oper_centr_freq_seg0_idx=$vht_center_seg0" "$N"
 		}
-		
+
 		[ "$etxbfen" -eq 0 ] && {
 			he_su_beamformer=0
 			he_mu_beamformer=0
@@ -539,14 +540,9 @@ mac80211_hostapd_setup_base() {
 			he_su_beamformee:${he_phy_cap:8:2}:0x1:$he_su_beamformee \
 			he_mu_beamformer:${he_phy_cap:8:2}:0x2:$he_mu_beamformer \
 			he_twt_required:${he_mac_cap:0:2}:0x6:$he_twt_required
-			
-		if [ -n "$he_twt_responder" ]; then
-			append base_cfg "he_twt_responder=$he_twt_responder" "$N"
-		else
-			he_twt_responder=0
-			append base_cfg "he_twt_responder=$he_twt_responder" "$N"
-		fi
-		
+
+		append base_cfg "he_twt_responder=$he_twt_responder" "$N"
+
 		if [ "$he_bss_color_enabled" -gt 0 ]; then
 			mac80211_validate_integer "$he_bss_color" 1 63 || he_bss_color=128
 			append base_cfg "he_bss_color=$he_bss_color" "$N"

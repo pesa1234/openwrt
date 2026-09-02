@@ -50,7 +50,10 @@ function abort(msg) {
 function validate_value(schema, key, value) {
 	switch(schema.type) {
 	case 'number':
+		let input = value;
 		value = +value;
+		if (value != value)
+			abort(`${key}: ${input} is not a number`);
 		if (schema.minimum != null && value < schema.minimum)
 			abort(`${key}: ${value} is lower than the minimum value`);
 		if (schema.maximum != null && value > schema.maximum)
