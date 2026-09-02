@@ -20,6 +20,10 @@
 			"minimum": 0,
 			"maximum": 3
 		},
+		"amsdu": {
+			"description": "Enable A-MSDU in A-MPDU support in the MTK driver",
+			"type": "boolean"
+		},
 		"antenna_gain": {
 			"description": "Reduction in antenna gain from regulatory maximum in dBi",
 			"type": "number",
@@ -61,6 +65,11 @@
 			"items": {
 				"type": "number"
 			}
+		},
+		"beacon_dup": {
+			"description": "Enable MTK duplicate beacon transmission on 6 GHz",
+			"type": "boolean",
+			"default": true
 		},
 		"beacon_int": {
 			"description": "Set the beacon interval. This is the time interval between beacon frames, measured in units of 1.024 ms. hostapd permits this to be set between 15 and 65535. This option only has an effect on ap and adhoc wifi-ifaces",
@@ -171,6 +180,11 @@
 		"enable_background_radar": {
 			"description": "This feature allows CAC to be run on dedicated radio RF chains",
 			"type": "boolean"
+		},
+		"etxbfen": {
+			"description": "Enable explicit transmit beamforming capabilities",
+			"type": "boolean",
+			"default": true
 		},
 		"frag": {
 			"description": "Fragmentation threshold",
@@ -420,6 +434,10 @@
 			"description": "Default ifname prefix for this radio",
 			"type": "string"
 		},
+		"itxbfen": {
+			"description": "Enable MTK implicit transmit beamforming",
+			"type": "boolean"
+		},
 		"iface_max_num_sta": {
 			"description": "Limits the maximum allowed number of associated clients",
 			"type": "number"
@@ -481,6 +499,11 @@
 			"description": "Enable WPA logging",
 			"type": "boolean",
 			"default": true
+		},
+		"lpi_enable": {
+			"description": "Enable MTK 6 GHz low-power indoor mode",
+			"type": "boolean",
+			"default": false
 		},
 		"logger_stdout": {
 			"description": "Log to stdout",
@@ -544,6 +567,12 @@
 			"description": " Supports operation as an MU beamformer",
 			"type": "boolean",
 			"default": true
+		},
+		"mu_onoff": {
+			"description": "MTK MU feature control bitmap",
+			"type": "number",
+			"minimum": 0,
+			"maximum": 15
 		},
 		"multiple_bssid": {
 			"type": "alias",
@@ -668,6 +697,13 @@
 			"type": "boolean",
 			"default": true
 		},
+		"sku_idx": {
+			"description": "MTK transmit-power SKU table index",
+			"type": "number",
+			"default": 0,
+			"minimum": 0,
+			"maximum": 255
+		},
 		"spectrum_mgmt_required": {
 			"description": "Set Spectrum Management subfield in the Capability Information field",
 			"type": "boolean",
@@ -694,6 +730,12 @@
 			"items": {
 				"type": "number"
 			}
+		},
+		"three_wire_enable": {
+			"description": "MTK three-wire PTA mode",
+			"type": "number",
+			"minimum": 0,
+			"maximum": 3
 		},
 		"tx_antenna_pattern": {
 			"description": "Tx antenna pattern does not change during the lifetime of an association",

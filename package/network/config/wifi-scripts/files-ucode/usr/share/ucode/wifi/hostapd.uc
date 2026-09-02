@@ -10,6 +10,7 @@ import * as iface from 'wifi.iface';
 import * as nl80211 from 'nl80211';
 import * as ap from 'wifi.ap';
 import * as fs from 'fs';
+import * as libuci from 'uci';
 
 const NL80211_EXT_FEATURE_ENABLE_FTM_RESPONDER = 33;
 const NL80211_EXT_FEATURE_RADAR_BACKGROUND = 61;
@@ -139,6 +140,31 @@ function device_cell_density_append(config) {
 			break;
 		}
 	}
+}
+
+function integer_or_default(value, minimum, maximum, fallback) {
+	if (value == null || !match(`${value}`, /^-?[0-9]+$/))
+		return fallback;
+
+	value = +value;
+	if (value < minimum || value > maximum)
+		return fallback;
+
+	return value;
+}
+
+function device_edcca_append() {
+	let edcca = libuci.cursor().get_all('advanced', '@edcca[0]') ?? {};
+	let threshold = [
+		integer_or_default(edcca.thres_0, -126, 0, -60),
+		integer_or_default(edcca.thres_1, -126, 0, -62),
+		integer_or_default(edcca.thres_2, -126, 0, -59),
+		integer_or_default(edcca.thres_3, -126, 0, -54),
+	];
+
+	append('edcca_enable', integer_or_default(edcca.edcca_enable, 0, 1, 1));
+	append('edcca_compensation', integer_or_default(edcca.compensation, -126, 126, -6));
+	append('edcca_threshold', threshold);
 }
 
 function device_htmode_append(config) {
@@ -318,6 +344,10 @@ function device_htmode_append(config) {
 		let vht_capab = phy_capabilities.vht_capa;
 
 		config.vht_capab = '';
+		if (!config.etxbfen) {
+			config.su_beamformer = false;
+			config.mu_beamformer = false;
+		}
 		if (vht_capab & 0x10 && config.rxldpc)
 			config.vht_capab += '[RXLDPC]';
 		if (vht_capab & 0x20 && config.short_gi_80)
@@ -389,6 +419,10 @@ function device_htmode_append(config) {
 		let he_mac_cap = phy_capabilities.he_mac_cap;
 
 		config.ieee80211ax = true;
+		if (!config.etxbfen) {
+			config.he_su_beamformer = false;
+			config.he_mu_beamformer = false;
+		}
 
 		if (config.hw_mode == 'a') {
 			/*
@@ -448,6 +482,10 @@ function device_htmode_append(config) {
 		let eht_phy_cap = phy_capabilities.eht_phy_cap;
 
 		config.ieee80211be = true;
+		if (!config.etxbfen) {
+			config.eht_su_beamformer = false;
+			config.eht_mu_beamformer = false;
+		}
 
 		if (!(eht_phy_cap[0] & 0x20))
 			config.eht_su_beamformer = false;
@@ -545,6 +583,13 @@ function generate(config) {
 		append(require_mode[config.require_mode], 1);
 	}
 	device_htmode_append(config);
+	device_edcca_append();
+
+	append('ibf_enable', config.itxbfen);
+	append_vars(config, [
+		'mu_onoff', 'amsdu', 'three_wire_enable',
+		'lpi_enable', 'sku_idx', 'beacon_dup',
+	]);
 
 	if (config.ieee80211ax || config.ieee80211be)
 		append_vars(config, [ 'mbssid' ]);
