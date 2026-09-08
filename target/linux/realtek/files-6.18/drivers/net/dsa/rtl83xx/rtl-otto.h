@@ -6,6 +6,8 @@
 #include <asm/mach-rtl-otto/mach-rtl-otto.h>
 #include <net/dsa.h>
 
+#include "table.h"
+
 /* Register definition */
 #define RTL838X_MAC_PORT_CTRL(port)		(0xd560 + (((port) << 7)))
 #define RTL839X_MAC_PORT_CTRL(port)		(0x8004 + (((port) << 7)))
@@ -1262,7 +1264,7 @@ struct pie_rule {
 	u16 otag_m;
 	u8 smac_m[ETH_ALEN];
 	u8 dmac_m[ETH_ALEN];
-	u8 ethertype_m;
+	u16 ethertype_m;
 	u16 itag_m;
 	u16 field_range_check_m;
 	u32 sip_m;
@@ -1418,6 +1420,11 @@ struct rtldsa_config {
 	int  (*mac_port_ctrl)(int port);
 
 	/**
+	 * @mac_capabilities: supported MAC capabilities
+	 */
+	unsigned long mac_capabilities;
+
+	/**
 	 * @mac_max_len_reg: Return the switch register holding the MAC maximum
 	 * accepted L2 frame length of user port @p. Families whose limit is one
 	 * register for the whole switch leave this unset and set
@@ -1496,7 +1503,7 @@ struct rtldsa_config {
 	void (*lag_fill_data)(u32 data[], struct rtldsa_93xx_lag_entry *e);
 	void (*lag_set_local_port2group)(int group, int port, bool valid);
 	void (*lag_set_port2group)(int group, int port, bool valid);
-	struct table_reg* (*lag_table)(void);
+	int (*lag_table)(void);
 	void (*lag_sync_tables)(void);
 };
 
@@ -1629,55 +1636,6 @@ struct rtldsa_mib_desc {
 	const struct rtldsa_mib_list_item *list;
 };
 
-/* API for switch table access */
-struct table_reg {
-	u16 addr;
-	u16 data;
-	u8  max_data;
-	u8 c_bit;
-	u8 t_bit;
-	u8 rmode;
-	u8 tbl;
-	struct mutex lock;
-};
-
-#define TBL_DESC(_addr, _data, _max_data, _c_bit, _t_bit, _rmode) \
-		{  .addr = _addr, .data = _data, .max_data = _max_data, .c_bit = _c_bit, \
-		    .t_bit = _t_bit, .rmode = _rmode \
-		}
-
-typedef enum {
-	RTL8380_TBL_L2 = 0,
-	RTL8380_TBL_0,
-	RTL8380_TBL_1,
-	RTL8390_TBL_L2,
-	RTL8390_TBL_0,
-	RTL8390_TBL_1,
-	RTL8390_TBL_2,
-	RTL9300_TBL_L2,
-	RTL9300_TBL_0,
-	RTL9300_TBL_1,
-	RTL9300_TBL_2,
-	RTL9300_TBL_HSB,
-	RTL9300_TBL_HSA,
-	RTL9310_TBL_0,
-	RTL9310_TBL_1,
-	RTL9310_TBL_2,
-	RTL9310_TBL_3,
-	RTL9310_TBL_4,
-	RTL9310_TBL_5,
-	RTL_TBL_END
-} rtl838x_tbl_reg_t;
-
-void rtl_table_init(void);
-struct table_reg *rtl_table_get(rtl838x_tbl_reg_t r, int t);
-void rtl_table_release(struct table_reg *r);
-int rtl_table_read(struct table_reg *r, int idx);
-int rtl_table_write(struct table_reg *r, int idx);
-inline u16 rtl_table_data(struct table_reg *r, int i);
-inline u32 rtl_table_data_r(struct table_reg *r, int i);
-inline void rtl_table_data_w(struct table_reg *r, u32 v, int i);
-
 int rtldsa_83xx_lag_setup_algomask(struct rtl838x_switch_priv *priv, int group,
 				   struct netdev_lag_upper_info *info);
 
@@ -1685,7 +1643,8 @@ void rtldsa_838x_qos_init(struct rtl838x_switch_priv *priv);
 void rtldsa_839x_qos_init(struct rtl838x_switch_priv *priv);
 
 void rtldsa_port_fast_age(struct dsa_switch *ds, int port);
-int rtl83xx_packet_cntr_alloc(struct rtl838x_switch_priv *priv);
+int rtldsa_packet_cntr_alloc(struct rtl838x_switch_priv *priv);
+void rtldsa_packet_cntr_free(struct rtl838x_switch_priv *priv, int idx);
 int rtldsa_port_get_stp_state(struct rtl838x_switch_priv *priv, int port);
 int rtl83xx_port_is_under(const struct net_device *dev, struct rtl838x_switch_priv *priv);
 void rtldsa_port_stp_state_set(struct dsa_switch *ds, int port, u8 state);

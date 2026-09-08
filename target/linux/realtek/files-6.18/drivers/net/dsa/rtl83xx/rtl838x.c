@@ -208,54 +208,47 @@ static inline int rtl838x_port_iso_ctrl(int p)
 
 static void rtl838x_vlan_tables_read(u32 vlan, struct rtldsa_vlan_info *info)
 {
+	u32 buf[2];
+	u32 untag;
 	u32 v;
-	/* Read VLAN table (0) via register 0 */
-	struct table_reg *r = rtl_table_get(RTL8380_TBL_0, 0);
 
-	rtl_table_read(r, vlan);
-	info->member_ports = sw_r32(rtl_table_data(r, 0));
-	v = sw_r32(rtl_table_data(r, 1));
+	otto_table_read(RTL8380_TBL_VLAN, vlan, &buf);
+	info->member_ports = buf[0];
+	v = buf[1];
 	pr_debug("VLAN_READ %d: %016llx %08x\n", vlan, info->member_ports, v);
-	rtl_table_release(r);
 
 	info->profile_id = v & 0x7;
 	info->hash_mc_fid = !!(v & 0x8);
 	info->hash_uc_fid = !!(v & 0x10);
 	info->fid = (v >> 5) & 0x3f;
 
-	/* Read UNTAG table (0) via table register 1 */
-	r = rtl_table_get(RTL8380_TBL_1, 0);
-	rtl_table_read(r, vlan);
-	info->untagged_ports = sw_r32(rtl_table_data(r, 0));
-	rtl_table_release(r);
+	otto_table_read(RTL8380_TBL_UNTAG, vlan, &untag);
+	info->untagged_ports = untag;
 }
 
 static void rtl838x_vlan_set_tagged(u32 vlan, struct rtldsa_vlan_info *info)
 {
+	u32 buf[2];
 	u32 v;
-	/* Access VLAN table (0) via register 0 */
-	struct table_reg *r = rtl_table_get(RTL8380_TBL_0, 0);
 
-	sw_w32(info->member_ports, rtl_table_data(r, 0));
+	buf[0] = info->member_ports;
 
 	v = info->profile_id;
 	v |= info->hash_mc_fid ? 0x8 : 0;
 	v |= info->hash_uc_fid ? 0x10 : 0;
 	v |= ((u32)info->fid) << 5;
-	sw_w32(v, rtl_table_data(r, 1));
+	buf[1] = v;
 
-	rtl_table_write(r, vlan);
-	rtl_table_release(r);
+	otto_table_write(RTL8380_TBL_VLAN, vlan, &buf);
 }
 
 static void rtl838x_vlan_set_untagged(u32 vlan, u64 portmask)
 {
-	/* Access UNTAG table (0) via register 1 */
-	struct table_reg *r = rtl_table_get(RTL8380_TBL_1, 0);
+	u32 buf[1];
 
-	sw_w32(portmask & RTL838X_MC_PMASK_ALL_PORTS, rtl_table_data(r, 0));
-	rtl_table_write(r, vlan);
-	rtl_table_release(r);
+	buf[0] = portmask & RTL838X_MC_PMASK_ALL_PORTS;
+
+	otto_table_write(RTL8380_TBL_UNTAG, vlan, &buf);
 }
 
 /* Sets the L2 forwarding to be based on either the inner VLAN tag or the outer
@@ -461,14 +454,10 @@ static void rtl838x_fill_l2_row(u32 r[], struct rtl838x_l2_entry *e)
 static u64 rtl838x_read_l2_entry_using_hash(u32 hash, u32 pos, struct rtl838x_l2_entry *e)
 {
 	u32 r[3];
-	struct table_reg *q = rtl_table_get(RTL8380_TBL_L2, 0); /* Access L2 Table 0 */
 	u32 idx = (0 << 14) | (hash << 2) | pos; /* Search SRAM, with hash and at pos in bucket */
 
-	rtl_table_read(q, idx);
-	for (int i = 0; i < 3; i++)
-		r[i] = sw_r32(rtl_table_data(q, i));
-
-	rtl_table_release(q);
+	/* Access L2 Table 0 */
+	otto_table_read(RTL8380_TBL_L2_UC, idx, &r);
 
 	rtl838x_fill_l2_entry(r, e);
 	if (!e->valid)
@@ -480,29 +469,20 @@ static u64 rtl838x_read_l2_entry_using_hash(u32 hash, u32 pos, struct rtl838x_l2
 static void rtl838x_write_l2_entry_using_hash(u32 hash, u32 pos, struct rtl838x_l2_entry *e)
 {
 	u32 r[3];
-	struct table_reg *q = rtl_table_get(RTL8380_TBL_L2, 0);
-
 	u32 idx = (0 << 14) | (hash << 2) | pos; /* Access SRAM, with hash and at pos in bucket */
 
 	rtl838x_fill_l2_row(r, e);
 
-	for (int i = 0; i < 3; i++)
-		sw_w32(r[i], rtl_table_data(q, i));
-
-	rtl_table_write(q, idx);
-	rtl_table_release(q);
+	/* Access L2 Table 0 */
+	otto_table_write(RTL8380_TBL_L2_UC, idx, &r);
 }
 
 static u64 rtl838x_read_cam(int idx, struct rtl838x_l2_entry *e)
 {
 	u32 r[3];
-	struct table_reg *q = rtl_table_get(RTL8380_TBL_L2, 1); /* Access L2 Table 1 */
 
-	rtl_table_read(q, idx);
-	for (int i = 0; i < 3; i++)
-		r[i] = sw_r32(rtl_table_data(q, i));
-
-	rtl_table_release(q);
+	/* Access L2 Table 1 */
+	otto_table_read(RTL8380_TBL_L2_CAM_UC, idx, &r);
 
 	rtl838x_fill_l2_entry(r, e);
 	if (!e->valid)
@@ -517,38 +497,27 @@ static u64 rtl838x_read_cam(int idx, struct rtl838x_l2_entry *e)
 static void rtl838x_write_cam(int idx, struct rtl838x_l2_entry *e)
 {
 	u32 r[3];
-	struct table_reg *q = rtl_table_get(RTL8380_TBL_L2, 1); /* Access L2 Table 1 */
 
 	rtl838x_fill_l2_row(r, e);
 
-	for (int i = 0; i < 3; i++)
-		sw_w32(r[i], rtl_table_data(q, i));
-
-	rtl_table_write(q, idx);
-	rtl_table_release(q);
+	/* Access L2 Table 1 */
+	otto_table_write(RTL8380_TBL_L2_CAM_UC, idx, &r);
 }
 
 static u64 rtl838x_read_mcast_pmask(int idx)
 {
 	u32 portmask;
-	/* Read MC_PMSK (2) via register RTL8380_TBL_L2 */
-	struct table_reg *q = rtl_table_get(RTL8380_TBL_L2, 2);
 
-	rtl_table_read(q, idx);
-	portmask = sw_r32(rtl_table_data(q, 0));
-	rtl_table_release(q);
+	otto_table_read(RTL8380_TBL_MC_PMSK, idx, &portmask);
 
 	return portmask;
 }
 
 static void rtl838x_write_mcast_pmask(int idx, u64 portmask)
 {
-	/* Access MC_PMSK (2) via register RTL8380_TBL_L2 */
-	struct table_reg *q = rtl_table_get(RTL8380_TBL_L2, 2);
+	u32 buf[1] = { ((u32)portmask) & RTL838X_MC_PMASK_ALL_PORTS };
 
-	sw_w32(((u32)portmask) & RTL838X_MC_PMASK_ALL_PORTS, rtl_table_data(q, 0));
-	rtl_table_write(q, idx);
-	rtl_table_release(q);
+	otto_table_write(RTL8380_TBL_MC_PMSK, idx, &buf);
 }
 
 static int
@@ -644,28 +613,30 @@ static void rtl838x_set_static_move_action(int port, bool forward)
 
 static int rtldsa_838x_stp_get(struct rtl838x_switch_priv *priv, u16 msti, int port)
 {
-	struct table_reg *r = rtl_table_get(RTL8380_TBL_0, 2);
 	int idx = 1 - (port / 16);
 	int bit = 2 * (port % 16);
+	/* port < priv->r->cpu_port (RTL838X_CPU_PORT == 28), so idx is 0 or 1 */
+	u32 buf[2];
 	int state;
 
-	rtl_table_read(r, msti);
-	state = (sw_r32(rtl_table_data(r, idx)) >> bit) & 0x3;
-	rtl_table_release(r);
+	otto_table_read(RTL8380_TBL_MSTI, msti, &buf);
+	state = (buf[idx] >> bit) & 0x3;
 
 	return state;
 }
 
 static void rtl838x_stp_set(struct rtl838x_switch_priv *priv, u16 msti, int port, int state)
 {
-	struct table_reg *r = rtl_table_get(RTL8380_TBL_0, 2);
+	int tbl = otto_table_acquire(RTL8380_TBL_MSTI);
 	int idx = 1 - (port / 16);
 	int bit = 2 * (port % 16);
+	/* port < priv->r->cpu_port (RTL838X_CPU_PORT == 28), so idx is 0 or 1 */
+	u32 buf[2];
 
-	rtl_table_read(r, msti);
-	sw_w32_mask(0x3 << bit, state << bit, rtl_table_data(r, idx));
-	rtl_table_write(r, msti);
-	rtl_table_release(r);
+	__otto_table_read(tbl, msti, &buf);
+	buf[idx] = (buf[idx] & ~(0x3 << bit)) | (state << bit);
+	__otto_table_write(tbl, msti, &buf);
+	otto_table_release(tbl);
 }
 
 static void rtl838x_traffic_set(int source, u64 dest_matrix)
@@ -1372,18 +1343,15 @@ static void rtl838x_pie_rule_dump_raw(u32 r[])
 
 static int rtl838x_pie_rule_read(struct rtl838x_switch_priv *priv, int idx, struct  pie_rule *pr)
 {
-	/* Read IACL table (1) via register 0 */
-	struct table_reg *q = rtl_table_get(RTL8380_TBL_0, 1);
+	int tbl = otto_table_acquire(RTL8380_TBL_IACL);
 	u32 r[18];
 	int block = idx / PIE_BLOCK_SIZE;
 	u32 t_select = sw_r32(RTL838X_ACL_BLK_TMPLTE_CTRL(block));
 
 	memset(pr, 0, sizeof(*pr));
-	rtl_table_read(q, idx);
-	for (int i = 0; i < 18; i++)
-		r[i] = sw_r32(rtl_table_data(q, i));
+	__otto_table_read(tbl, idx, &r);
 
-	rtl_table_release(q);
+	otto_table_release(tbl);
 
 	rtl838x_read_pie_fixed_fields(r, pr);
 	if (!pr->valid)
@@ -1401,8 +1369,7 @@ static int rtl838x_pie_rule_read(struct rtl838x_switch_priv *priv, int idx, stru
 
 static int rtl838x_pie_rule_write(struct rtl838x_switch_priv *priv, int idx, struct pie_rule *pr)
 {
-	/* Access IACL table (1) via register 0 */
-	struct table_reg *q = rtl_table_get(RTL8380_TBL_0, 1);
+	int tbl = otto_table_acquire(RTL8380_TBL_IACL);
 	u32 r[18];
 	int err;
 	int block = idx / PIE_BLOCK_SIZE;
@@ -1432,12 +1399,19 @@ static int rtl838x_pie_rule_write(struct rtl838x_switch_priv *priv, int idx, str
 
 /*	rtl838x_pie_rule_dump_raw(r); */
 
-	for (int i = 0; i < 18; i++)
-		sw_w32(r[i], rtl_table_data(q, i));
+	__otto_table_write(tbl, idx, &r);
+	otto_table_release(tbl);
+
+	return err;
 
 errout:
-	rtl_table_write(q, idx);
-	rtl_table_release(q);
+	/* Leave no half-built rule behind: commit an empty entry. The write
+	 * used to go out with the data registers untouched, which committed
+	 * whatever the previous table access had left in them.
+	 */
+	memset(r, 0, sizeof(r));
+	__otto_table_write(tbl, idx, &r);
+	otto_table_release(tbl);
 
 	return err;
 }
@@ -1481,10 +1455,19 @@ static int rtl838x_pie_verify_template(struct rtl838x_switch_priv *priv,
 			return -1;
 	}
 
-	if (ether_addr_to_u64(pr->smac) && !rtl838x_pie_templ_has(t, TEMPLATE_FIELD_SMAC0))
+	if (ether_addr_to_u64(pr->smac_m) && !rtl838x_pie_templ_has(t, TEMPLATE_FIELD_SMAC0))
 		return -1;
 
-	if (ether_addr_to_u64(pr->dmac) && !rtl838x_pie_templ_has(t, TEMPLATE_FIELD_DMAC0))
+	if (ether_addr_to_u64(pr->dmac_m) && !rtl838x_pie_templ_has(t, TEMPLATE_FIELD_DMAC0))
+		return -1;
+
+	if (pr->itag_m && !rtl838x_pie_templ_has(t, TEMPLATE_FIELD_ITAG))
+		return -1;
+
+	if (pr->sport_m && !rtl838x_pie_templ_has(t, TEMPLATE_FIELD_L4_SPORT))
+		return -1;
+
+	if (pr->dport_m && !rtl838x_pie_templ_has(t, TEMPLATE_FIELD_L4_DPORT))
 		return -1;
 
 	/* TODO: Check more */
@@ -1590,42 +1573,42 @@ static void rtl838x_pie_init(struct rtl838x_switch_priv *priv)
 
 static u32 rtl838x_packet_cntr_read(int counter)
 {
+	u32 buf[2];
 	u32 v;
 
-	/* Read LOG table (3) via register RTL8380_TBL_0 */
-	struct table_reg *r = rtl_table_get(RTL8380_TBL_0, 3);
-
 	pr_debug("In %s, id %d\n", __func__, counter);
-	rtl_table_read(r, counter / 2);
+	otto_table_read(RTL8380_TBL_LOG, counter / 2, &buf);
 
-	pr_debug("Registers: %08x %08x\n",
-		 sw_r32(rtl_table_data(r, 0)), sw_r32(rtl_table_data(r, 1)));
-	/* The table has a size of 2 registers */
+	pr_debug("Registers: %08x %08x\n", buf[0], buf[1]);
 	if (counter % 2)
-		v = sw_r32(rtl_table_data(r, 0));
+		v = buf[0];
 	else
-		v = sw_r32(rtl_table_data(r, 1));
-
-	rtl_table_release(r);
+		v = buf[1];
 
 	return v;
 }
 
 static void rtl838x_packet_cntr_clear(int counter)
 {
-	/* Access LOG table (3) via register RTL8380_TBL_0 */
-	struct table_reg *r = rtl_table_get(RTL8380_TBL_0, 3);
+	int tbl = otto_table_acquire(RTL8380_TBL_LOG);
+	u32 buf[2];
 
 	pr_debug("In %s, id %d\n", __func__, counter);
-	/* The table has a size of 2 registers */
+
+	/*
+	 * Two counters share one LOG table entry. Read the current entry
+	 * first so clearing one half preserves the adjacent counter.
+	 */
+	__otto_table_read(tbl, counter / 2, &buf);
+
 	if (counter % 2)
-		sw_w32(0, rtl_table_data(r, 0));
+		buf[0] = 0;
 	else
-		sw_w32(0, rtl_table_data(r, 1));
+		buf[1] = 0;
 
-	rtl_table_write(r, counter / 2);
+	__otto_table_write(tbl, counter / 2, &buf);
 
-	rtl_table_release(r);
+	otto_table_release(tbl);
 }
 
 static void rtl838x_vlan_port_keep_tag_set(int port, bool keep_outer, bool keep_inner)
@@ -1821,6 +1804,7 @@ const struct rtldsa_config rtldsa_838x_cfg = {
 	.stp_get = rtldsa_838x_stp_get,
 	.stp_set = rtl838x_stp_set,
 	.mac_port_ctrl = rtl838x_mac_port_ctrl,
+	.mac_capabilities = MAC_ASYM_PAUSE | MAC_SYM_PAUSE | MAC_10 | MAC_100 | MAC_1000FD,
 	.mac_max_len_ctrl = RTL838X_MAC_MAX_LEN_CTRL,
 	.mac_max_len_ctrl_dup = RTL838X_MAC_MAX_LEN_CTRL_DUP,
 	.max_frame = RTL838X_MAX_FRAME,
