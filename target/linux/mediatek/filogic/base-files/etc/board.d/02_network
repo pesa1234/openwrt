@@ -10,7 +10,6 @@ mediatek_setup_interfaces()
 	case $board in
 	abt,asr3000|\
 	buffalo,wsr-6000ax8|\
-	cmcc,rax3000m|\
 	h3c,magic-nx30-pro|\
 	imou,hx21|\
 	konka,komi-a31|\
@@ -56,6 +55,7 @@ mediatek_setup_interfaces()
 	cetron,ct3003|\
 	cmcc,a10-stock|\
 	cmcc,a10-ubootmod|\
+	cmcc,rax3000m|\
 	confiabits,mt7981|\
 	creatlentem,clt-r30b1|\
 	creatlentem,clt-r30b1-112m|\
@@ -306,6 +306,30 @@ mediatek_setup_macs()
 		;;
 	jiorouter,ax6000-jidu6101)
 		label_mac=$(mtd_get_mac_ascii u-boot-env mac)
+		wan_mac=$label_mac
+		lan_mac=$(macaddr_add "$label_mac" 1)
+		;;
+	jiorouter,ax6000-jidu6j01)
+		local mfg_dev
+		local model
+		mfg_dev=$(find_mtd_chardev "MFG")
+		[ -z "$mfg_dev" ] && return
+		model=$(dd if="$mfg_dev" bs=1024 count=1 2>/dev/null | strings | grep -o -m1 'JIDU[0-9A-Z][0-9A-Z]*')
+		case "$model" in
+		JIDU6401)
+			label_mac=$(get_mac_binary "$mfg_dev" 0x20)
+			;;
+		JIDU6601)
+			label_mac=$(mtd_get_mac_text "MFG" 0x1d0)
+			;;
+		JIDU6701)
+			label_mac=$(mtd_get_mac_ascii "MFG" mac)
+			;;
+		*)
+			label_mac=$(get_mac_binary "$mfg_dev" 0)
+			;;
+		esac
+		[ -n "$label_mac" ] || return
 		wan_mac=$label_mac
 		lan_mac=$(macaddr_add "$label_mac" 1)
 		;;
