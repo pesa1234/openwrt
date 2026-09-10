@@ -5,6 +5,8 @@
 
 #include <linux/bitfield.h>
 #include <linux/bitmap.h>
+#include <linux/cleanup.h>
+#include <linux/mutex.h>
 #include <linux/regmap.h>
 #include <linux/spinlock.h>
 #include <linux/workqueue.h>
@@ -175,15 +177,6 @@
 #define   PPE_TDM_DIR			BIT(4)
 #define   PPE_TDM_VALID			BIT(5)
 
-#define PPE_PRX_MRU_MTU_W1(p)		(PPE_PRX_BASE + 0x3000 + (p) * 0x10 + 0x4)
-#define   PPE_QOS_PCP_GRP		BIT(4)
-#define   PPE_QOS_DSCP_GRP		BIT(5)
-#define   PPE_QOS_PREHEADER_PREC	GENMASK(10, 8)
-#define   PPE_QOS_PCP_PREC		GENMASK(13, 11)
-#define   PPE_QOS_DSCP_PREC		GENMASK(16, 14)
-#define   PPE_QOS_FLOW_PREC		GENMASK(19, 17)
-#define   PPE_QOS_ACL_PREC		GENMASK(22, 20)
-
 /* --- Ingress VLAN (base 0x00f000) --- */
 #define PPE_IVLAN_BASE			0x00f000
 
@@ -197,6 +190,8 @@
 #define PPE_XLT_RULE_TBL(idx)		(PPE_IVLAN_BASE + 0x2000 + (idx) * 0x10)
 #define   PPE_XLT_VALID			BIT(0)
 #define   PPE_XLT_PORT_BMP		GENMASK(8, 1)
+#define   PPE_XLT_SKEY_FMT		GENMASK(11, 9)
+#define   PPE_XLT_SKEY_UNTAGGED		1
 #define   PPE_XLT_CKEY_FMT_0		BIT(31)
 
 #define PPE_XLT_RULE_W1(idx)		(PPE_IVLAN_BASE + 0x2000 + (idx) * 0x10 + 0x4)
@@ -205,7 +200,6 @@
 #define   PPE_XLT_CKEY_VID		GENMASK(14, 3)
 
 #define PPE_XLT_ACTION_TBL(idx)		(PPE_IVLAN_BASE + 0x4000 + (idx) * 0x10)
-#define   PPE_XLT_CVID_CMD		GENMASK(16, 15)
 
 #define PPE_XLT_ACTION_W1(idx)		(PPE_IVLAN_BASE + 0x4000 + (idx) * 0x10 + 0x4)
 #define   PPE_XLT_VSI_CMD		BIT(11)
@@ -271,6 +265,7 @@
 
 #define PPE_MC_MTU_CTRL(port)		(PPE_L2_BASE + 0xa00 + (port) * 0x4)
 #define   PPE_MC_MTU_CTRL_MTU		GENMASK(13, 0)
+#define   PPE_MC_MTU_CTRL_MTU_CMD	GENMASK(15, 14)
 #define   PPE_MC_MTU_CTRL_TX_CNT_EN	BIT(16)
 
 #define PPE_RFDB_TBL(idx)		(PPE_L2_BASE + 0x1000 + (idx) * 0x8)
@@ -283,6 +278,13 @@
 #define   PPE_APP_CTRL_CMD		GENMASK(16, 15)
 #define   PPE_APP_CTRL_REDIRECT_CPU	3
 
+#define PPE_PORT_QOS_CTRL(p)		(PPE_L2_BASE + 0x900 + (p) * 0x10)
+#define   PPE_QOS_DSCP_PREC		GENMASK(5, 3)
+#define   PPE_QOS_PCP_PREC		GENMASK(8, 6)
+#define   PPE_QOS_PREHEADER_PREC	GENMASK(11, 9)
+#define   PPE_QOS_FLOW_PREC		GENMASK(14, 12)
+#define   PPE_QOS_ACL_PREC		GENMASK(17, 15)
+
 #define PPE_VSI_TBL(vsi)		(PPE_L2_BASE + 0x1800 + (vsi) * 0x10)
 #define   PPE_VSI_TBL_MEMBER		GENMASK(7, 0)
 #define   PPE_VSI_TBL_UUC		GENMASK(15, 8)
@@ -293,9 +295,19 @@
 
 #define PPE_MRU_MTU_CTRL(port, stride)	(PPE_L2_BASE + 0x3000 + (port) * (stride))
 #define   PPE_MRU_MTU_CTRL_MRU		GENMASK(13, 0)
+#define   PPE_MRU_MTU_CTRL_MRU_CMD	GENMASK(15, 14)
 #define   PPE_MRU_MTU_CTRL_MTU		GENMASK(29, 16)
+#define   PPE_MRU_MTU_CTRL_MTU_CMD	GENMASK(31, 30)
+#define     PPE_SIZE_CMD_DROP		1
+#define     PPE_SIZE_CMD_RDT_TO_CPU	3
 #define   PPE_MRU_MTU_CTRL_RX_CNT_EN	BIT(0)
 #define   PPE_MRU_MTU_CTRL_TX_CNT_EN	BIT(1)
+/* IPQ6018 field positions, in the second word of the port's MRU/MTU entry. */
+#define   PPE_MRU_QOS_PREHEADER_PREC	GENMASK(10, 8)
+#define   PPE_MRU_QOS_PCP_PREC		GENMASK(13, 11)
+#define   PPE_MRU_QOS_DSCP_PREC		GENMASK(16, 14)
+#define   PPE_MRU_QOS_FLOW_PREC		GENMASK(19, 17)
+#define   PPE_MRU_QOS_ACL_PREC		GENMASK(22, 20)
 
 /* --- L3 (base 0x200000) --- */
 #define PPE_L3_BASE			0x200000
@@ -398,7 +410,7 @@
 #define   PPE_AC_MUL_CEILING		GENMASK(26, 16)
 #define   PPE_AC_MUL_GRN_MAX_LO		GENMASK(31, 27)
 #define   PPE_AC_MUL_GRN_MAX_HI		GENMASK(5, 0)
-#define   PPE_AC_MUL_GRN_RESUME_HI	GENMASK(17, 11)
+#define   PPE_AC_MUL_GRN_RESUME_HI	GENMASK(17, 7)
 
 #define PPE_QM_AC_GRP_W0(g)		(PPE_QM_BASE + 0x4c000 + (g) * 0x10)
 #define PPE_QM_AC_GRP_W1(g)		(PPE_QM_BASE + 0x4c000 + (g) * 0x10 + 0x4)
@@ -449,8 +461,7 @@
 #define PPE_FDB_OP_FLUSH		4
 
 #define PPE_XLT_TBL_NUM			64
-#define PPE_XLT_MISS_FWD_DROP		3
-#define PPE_XLT_CVID_DEL		2
+#define PPE_XLT_MISS_RDT_TO_CPU		3
 #define PPE_XLT_CKEY_TAGGED		4
 
 #define PPE_EG_UNTAGGED			0
@@ -520,15 +531,22 @@ struct qca_ppe_priv {
 	struct dsa_switch ds;
 	struct regmap *regmap;
 	const struct ppe_data *data;
-	struct clk_bulk_data *clks;
-	int num_clks;
 	spinlock_t fdb_lock;
+	u32 fdb_cmd_id;
+	u32 fdb_rd_cmd_id;
+	/* Guards the VSI, translation-index and bridge-VLAN state, and the
+	 * read-modify-write an MDB update makes of an FDB entry. The switchdev
+	 * ops reach it under rtnl, the FDB and MDB work from a workqueue that
+	 * holds none.
+	 */
+	struct mutex vlan_lock;
 	DECLARE_BITMAP(vsi_bitmap, PPE_VSI_MAX);
 	DECLARE_BITMAP(xlt_bitmap, PPE_XLT_TBL_NUM);
 	u32 port_vsi[QCA_PPE_MAX_PORTS];
 	struct qca_ppe_bridge_vsi bridges[QCA_PPE_MAX_BRIDGES];
 	struct qca_ppe_vlan_entry vlans[PPE_VSI_MAX];
 	struct net_device *port_br_dev[QCA_PPE_MAX_PORTS];
+	u32 vlan_filtering;
 	u16 port_pvid[QCA_PPE_MAX_PORTS];
 	struct clk *port_rx_clk[QCA_PPE_MAX_PORTS];
 	struct clk *port_tx_clk[QCA_PPE_MAX_PORTS];
@@ -565,6 +583,8 @@ int qca_ppe_vlan_setup(struct dsa_switch *ds);
 int qca_ppe_port_vlan_filtering(struct dsa_switch *ds, int port,
 				bool vlan_filtering,
 				struct netlink_ext_ack *extack);
+struct qca_ppe_vlan_entry *
+ppe_vlan_find(struct qca_ppe_priv *priv, struct net_device *br_dev, u16 vid);
 int qca_ppe_port_vlan_add(struct dsa_switch *ds, int port,
 			  const struct switchdev_obj_port_vlan *vlan,
 			  struct netlink_ext_ack *extack);
