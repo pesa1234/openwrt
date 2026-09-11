@@ -148,8 +148,6 @@ enum otto_table_id {
 
 #define OTTO_TBL_COUNT		OTTO_TBL_HANDLE(OTTO_TBL_END)
 
-void otto_table_init(void);
-
 /* Size of the object p points at. A bare array is refused: the whole-entry
  * forms take the transfer size from the caller's buffer, which only holds
  * when p addresses the whole object rather than its first element.
@@ -158,40 +156,39 @@ void otto_table_init(void);
 	(sizeof(*(p)) + BUILD_BUG_ON_ZERO(__is_array(p), "pass &array, not the array"))
 
 /* Read or write one whole entry. p addresses the caller's object: a u32 for a
- * one-word table, &array for a wider one. The size comes from the object and
- * has to match the entry, so a transfer can neither run past the object nor
- * move part of a row.
+ * one-word table, &array for a wider one. The size comes from the object, so a
+ * transfer cannot run past it.
  */
 #define otto_table_read(id, idx, p) \
-	otto_table_read_bytes((id), (idx), (p), otto_table_size(p))
+	otto_table_read_bytes((id), (idx), (p), 0, otto_table_size(p))
 #define otto_table_write(id, idx, p) \
 	otto_table_write_bytes((id), (idx), (p), otto_table_size(p))
 
 /* Hold a table across more than one access. The __ variants expect the caller
  * to hold it.
  */
+int otto_table_loaded(void);
 int otto_table_acquire(enum otto_table_id id);
 void otto_table_release(int handle);
 
 #define __otto_table_read(handle, idx, p) \
-	__otto_table_read_bytes((handle), (idx), (p), otto_table_size(p))
+	__otto_table_read_bytes((handle), (idx), (p), 0, otto_table_size(p))
 #define __otto_table_write(handle, idx, p) \
 	__otto_table_write_bytes((handle), (idx), (p), otto_table_size(p))
 
-/* What the macros above expand to. size is the caller's object size and must
- * equal the entry width; a mismatch is refused and warned about rather than
- * silently truncated, because no caller checks the return value.
+/* What the macros above expand to. A read takes size bytes starting at word of
+ * the entry and has to end inside it; the whole-entry forms start at word zero.
+ * A write always moves the whole entry, because the command commits the whole
+ * data window, so its size has to equal the entry width. Either mismatch is
+ * refused and warned about rather than silently truncated, because no caller
+ * checks the return value.
  */
-int otto_table_read_bytes(enum otto_table_id id, int idx, void *buf, size_t size);
+int otto_table_read_bytes(enum otto_table_id id, int idx, void *buf,
+			  int word_offset, size_t size);
 int otto_table_write_bytes(enum otto_table_id id, int idx, const void *buf, size_t size);
 
-int __otto_table_read_bytes(int handle, int idx, void *buf, size_t size);
+int __otto_table_read_bytes(int handle, int idx, void *buf, int word_offset,
+			    size_t size);
 int __otto_table_write_bytes(int handle, int idx, const void *buf, size_t size);
-
-/* Load an entry into the data registers without copying it out, for the caller
- * that then picks single words at offsets it computes at run time.
- */
-int __otto_table_fetch(int handle, int idx);
-u32 __otto_table_word_read(int handle, int word);
 
 #endif /* _OTTO_TABLE_H */
