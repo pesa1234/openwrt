@@ -2,8 +2,11 @@
 
 START=99
 USE_PROCD=1
+STARTUP_MARKER=/tmp/smp_affinity_started
+DEFAULT_STARTUP_DELAY=30
 
 extra_command "runtime_atf" "Show runtime ATF/WATF state"
+extra_command "run_deferred" "Run the deferred boot-time setup"
 
 
 smp_mt76() {
@@ -23,6 +26,10 @@ WIFI_MODULE_LIST='mt7915e mt7996e'
 
 get_if_info()
 {
+	local phy_path
+	local radio_device
+	local radio_devices
+
 	# try to get all wifi and eth net interface.
 	logger -s "smp_affinity: try to get all wifi and eth net interface."
 	NET_IF_LIST=`ls /sys/class/net`
@@ -36,29 +43,34 @@ get_if_info()
 	done;
 	logger -s "smp_affinity: RPS_IF_LIST = $RPS_IF_LIST"
 
-	# try to get wifi physical card num.
+	# Count physical Wi-Fi devices instead of PHYs. A single integrated radio
+	# device can expose multiple PHYs, and recent kernels no longer include
+	# "wmac" in its sysfs path (for example .../18000000.wifi/...).
 	logger -s "smp_affinity: try to get wifi physical card num."
-	VIRTUAL_RADIO_LIST=`ls -l /sys/class/ieee80211/ | awk -F 'devices' '{print $2}' | awk -F 'phy' '{print $1}' | uniq`
-	for v in $VIRTUAL_RADIO_LIST;
-	do
+	radio_devices=""
+	for phy_path in /sys/class/ieee80211/*; do
+		[ -e "$phy_path" ] || continue
+
+		radio_device=$(readlink -f "$phy_path/device" 2>/dev/null)
+		if [ -z "$radio_device" ]; then
+			radio_device=$(readlink -f "$phy_path" 2>/dev/null)
+			radio_device=${radio_device%/ieee80211/*}
+		fi
+		[ -n "$radio_device" ] || continue
+
+		case " $radio_devices " in
+			*" $radio_device "*) continue ;;
+		esac
+		radio_devices="$radio_devices $radio_device"
+
 		NUM_WIFI_CARD=`expr $NUM_WIFI_CARD + 1`
-		logger -s "smp_affinity: physical raido $v"
-		if [[ $v == *"wmac"* ]]; then
-			WIFI_RADIO1=1
-		fi
-
-		if [[ $v == *"wbsys"* ]]; then
-			WIFI_RADIO1=1
-		fi
-
-		if [[ $v == *"pci0000"* ]]; then
-			WIFI_RADIO2=1
-		fi
-
-		if [[ $v == *"pci0001"* ]]; then
-			WIFI_RADIO3=1
-		fi
-	done;
+		logger -s "smp_affinity: physical radio $radio_device"
+		case "$radio_device" in
+			*/pci0000:*) WIFI_RADIO2=1 ;;
+			*/pci0001:*) WIFI_RADIO3=1 ;;
+			*/platform/*) WIFI_RADIO1=1 ;;
+		esac
+	done
 
 
 	for v in $WIFI_MODULE_LIST;
@@ -284,12 +296,16 @@ gl_mt6000()
 	eth_irq_rx2=223
 	eth_irq_rx3=224
 	eth_irq_tx=229
+	wifi1_irq=
+	wifi2_irq=
+	wifi3_irq=
 	
-	
-	if [[ "$WED_ENABLE" -eq "1" ]]; then
-		wifi1_irq=237
-	else
-		wifi1_irq=245
+	if [[ "$WIFI_RADIO1" -eq "1" ]]; then
+		if [[ "$WED_ENABLE" -eq "1" ]]; then
+			wifi1_irq=237
+		else
+			wifi1_irq=245
+		fi
 	fi
 
 	for vif in $NET_IF_LIST;
@@ -362,7 +378,7 @@ gl_mt6000()
 	# CPU#_AFFINITY="add binding irq number here"
 	# CPU#_RPS="add binding interface name here"
 	
-	#we bound all wifi card to cpu1 and bound eth to cpu0
+	# Keep the integrated Wi-Fi IRQ on CPU3 and spread Ethernet RSS IRQs.
 	CPU0_AFFINITY="$eth_irq_rx0"
 	CPU1_AFFINITY="$eth_irq_rx1 $eth_irq_tx"
 	CPU2_AFFINITY="$eth_irq_rx2 $wifi2_irq $wifi3_irq"
@@ -389,7 +405,7 @@ MT7981()
 	num_of_wifi=$1
 	DEFAULT_RPS=0
 
-	#Physical IRQ# setting
+	# MT7981 has RSS disabled: PDMA0 handles RX and FE1 handles TX.
 	eth_irq_rx=221
 	eth_irq_tx=229
 	wifi1_irq=
@@ -454,9 +470,9 @@ gl_mt3000()
 	num_of_wifi=$1
 	DEFAULT_RPS=0
 
-	#Physical IRQ# setting
-	eth_irq_rx=229
-	eth_irq_tx=230
+	# MT7981 has RSS disabled: PDMA0 handles RX and FE1 handles TX.
+	eth_irq_rx=221
+	eth_irq_tx=229
 	wifi1_irq=
 	wifi2_irq=
 	wifi3_irq=
@@ -572,17 +588,16 @@ setup_model()
 
 get_virtual_irq()
 {
-	PHY_POS=`expr $NUM_OF_CPU + 3` #physical irq # position in /proc/interrups may vary with the number of CPU up
-	target_phy_irq=$1
-	cat /proc/interrupts | sed 's/:/ /g'| awk '$1 ~ /^[0-9]+$/' | while read line
-	do
-		set -- $line
-		phy_irq=$(eval "echo \$$PHY_POS")
-		if [ $phy_irq == $target_phy_irq ]; then
-			echo $1
-			return
-		fi
-	done
+	local phy_pos=$((NUM_OF_CPU + 3))
+	local target_phy_irq="$1"
+
+	awk -v phy_pos="$phy_pos" -v target="$target_phy_irq" '
+		$1 ~ /^[0-9]+:$/ && $phy_pos == target {
+			sub(/:$/, "", $1)
+			print $1
+			exit
+		}
+	' /proc/interrupts
 }
 
 set_rps_cpu_bitmap()
@@ -646,11 +661,14 @@ set_smp_affinity()
 		for i in $smp_list; do
 			cpu_bit=$((2 ** $num))
 			virq=$(get_virtual_irq $i)
-			#virq=$i
+			if [ -z "$virq" ]; then
+				logger -t advanced_setup "smp_affinity: active IRQ for hwirq $i not found, skipping"
+				continue
+			fi
+
 			logger -s "smp_affinity: irq p2v $i --> $virq"
-			if [ ! -z $virq ]; then
-				#logger -s "smp_affinity: echo $cpu_bit > /proc/irq/$virq/smp_affinity"
-				echo $cpu_bit > /proc/irq/$virq/smp_affinity
+			if ! echo "$cpu_bit" > "/proc/irq/$virq/smp_affinity"; then
+				logger -t advanced_setup "smp_affinity: failed to set IRQ $virq affinity to CPU$num"
 			fi
 		done
 		num=`expr $num + 1`
@@ -1013,16 +1031,44 @@ service_triggers() {
     procd_add_reload_trigger advanced network
 }
 
-start_service() {
-    if [ ! -f /tmp/smp_affinity_started ]; then
-		delay=$(uci get advanced.@advanced_packet_steering[0].advanced_packet_steering_delay 2>/dev/null || echo "30")
-		logger -s "smp_affinity: Starting with delay of $delay sec."
-		sleep $delay
-		echo 1 > /tmp/smp_affinity_started
-	fi
+get_startup_delay() {
+	local delay
+
+	delay=$(uci -q get advanced.@advanced_packet_steering[0].advanced_packet_steering_delay 2>/dev/null)
+	case "$delay" in
+		''|*[!0-9]*) delay=$DEFAULT_STARTUP_DELAY ;;
+	esac
+	printf '%s\n' "$delay"
+}
+
+run_advanced_setup() {
 	sync_mt7915e_module_options >/dev/null
 	advanced_runtime_setup
-    logger -t advanced_setup "advanced_setup finished"
+	echo 1 > "$STARTUP_MARKER"
+	logger -t advanced_setup "advanced_setup finished"
+}
+
+run_deferred() {
+	local delay="${1:-$DEFAULT_STARTUP_DELAY}"
+
+	case "$delay" in
+		''|*[!0-9]*) delay=$DEFAULT_STARTUP_DELAY ;;
+	esac
+
+	[ "$delay" -eq 0 ] || sleep "$delay"
+	logger -t advanced_setup "smp_affinity: deferred setup starting"
+	run_advanced_setup
+}
+
+start_service() {
+	local delay=0
+
+	[ -f "$STARTUP_MARKER" ] || delay=$(get_startup_delay)
+	logger -t advanced_setup "smp_affinity: setup scheduled after $delay sec (non-blocking)"
+
+	procd_open_instance deferred_setup
+	procd_set_param command "$initscript" run_deferred "$delay"
+	procd_close_instance
 }
 
 reload_service() {
@@ -1047,15 +1093,11 @@ reload_service() {
 			;;
         *)
 			logger -t advanced_setup "advanced_setup generic"
-			if [ ! -f /tmp/smp_affinity_started ]; then
-				delay=$(uci get advanced.@advanced_packet_steering[0].advanced_packet_steering_delay 2>/dev/null || echo "30")
-				logger -s "smp_affinity: Starting with delay of $delay sec."
-				sleep $delay
-				echo 1 > /tmp/smp_affinity_started
+			if [ ! -f "$STARTUP_MARKER" ]; then
+				logger -t advanced_setup "initial deferred setup still pending; reload will use the latest configuration"
+				return 0
 			fi
-			sync_mt7915e_module_options >/dev/null
-			advanced_runtime_setup
-			logger -t advanced_setup "advanced_setup finished"
+			run_advanced_setup
 			;;
     esac
 }
