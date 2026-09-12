@@ -1,0 +1,27 @@
+From: Andrea Pesaresi <andreapesaresi82@gmail.com>
+Date: Sat, 12 Sep 2026 12:00:00 +0200
+Subject: [PATCH] net: core: demote non-default NAPI weight diagnostic
+
+The MediaTek Ethernet driver deliberately uses a NAPI weight of 256.
+MediaTek documents that the default weight of 64 can reduce peak software
+path throughput by up to approximately 1.2 Gbit/s.
+
+The networking core accepts the larger value, but reports it as an error.
+Keep the diagnostic visible while classifying this intentional downstream
+tuning as a warning. This does not change the configured weight or any NAPI
+data-path behaviour.
+---
+ net/core/dev.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/net/core/dev.c
++++ b/net/core/dev.c
+@@ -7490,7 +7490,7 @@ void netif_napi_add_weight_locked(struct
+ 	napi->skb = NULL;
+ 	napi->poll = poll;
+ 	if (weight > NAPI_POLL_WEIGHT)
+-		netdev_err_once(dev, "%s() called with weight %d\n", __func__,
++		netdev_warn_once(dev, "%s() called with weight %d\n", __func__,
+ 				weight);
+ 	napi->weight = weight;
+ 	napi->dev = dev;
