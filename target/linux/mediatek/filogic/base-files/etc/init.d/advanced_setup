@@ -385,8 +385,9 @@ gl_mt6000()
 	CPU3_AFFINITY="$eth_irq_rx3 $wifi1_irq"
 	
 	rps_type=$(uci get advanced.@advanced_packet_steering[0].advanced_packet_steering_enable 2>/dev/null)
+	rps_type="${rps_type:-0}"
 
-	if [ -z "$rps_type" ] || [ "$rps_type" = "1" ]; then
+	if [ "$rps_type" = "1" ]; then
 		CPU0_RPS="$WIFI_IF_LIST"
 		CPU1_RPS="$WIFI_IF_LIST"
 		CPU2_RPS="$WIFI_IF_LIST"
@@ -684,9 +685,11 @@ setup_model
 
 rps_setting=$(uci get network.globals.packet_steering 2>/dev/null)
 rps_type=$(uci get advanced.@advanced_packet_steering[0].advanced_packet_steering_enable 2>/dev/null)
+rps_setting="${rps_setting:-1}"
+rps_type="${rps_type:-0}"
 
-if [ -z "$rps_setting" ] || [ "$rps_setting" = "0" ]; then
-	if [ -z "$rps_type" ] || [ "$rps_type" != "0" ]; then
+if [ "$rps_setting" = "0" ]; then
+	if [ "$rps_type" != "0" ]; then
 		set_rps_cpu_bitmap
 		set_rps_cpus $DEFAULT_RPS
 	else
