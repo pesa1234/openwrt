@@ -691,6 +691,7 @@ if [ -z "$rps_setting" ] || [ "$rps_setting" = "0" ]; then
 		set_rps_cpus $DEFAULT_RPS
 	else
 		logger -s "smp_affinity: # RPS disabled"
+		set_rps_cpus 0
 	fi
 else
 	logger -s "smp_affinity: # RPS done by packet steering script"
