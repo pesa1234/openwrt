@@ -7,7 +7,6 @@
 
 #define MAX_HOST_ROUTES		1536
 #define MAX_ROUTES		512
-#define MAX_INTERFACES		100
 
 #define HASH_PICK(val, lsb, len) ((val & (((1 << len) - 1) << lsb)) >> lsb)
 
@@ -78,6 +77,8 @@ struct otto_l3_route {
 	bool is_host_route;
 	int id;				/* ID number of this route */
 	struct rhlist_head linkage;
+	struct list_head list;		/* all routes, for lookups by destination */
+	u32 tb_id;			/* routing table the route came from */
 	u16 switch_mac_id;		/* Index into switch's own MACs, RTL839X only */
 	struct otto_l3_nexthop nh;
 	struct pie_rule pr;
@@ -98,6 +99,7 @@ struct otto_l3_config {
 	void (*route_read)(struct otto_l3_ctrl *ctrl, int idx, struct otto_l3_route *rt);
 	void (*route_write)(struct otto_l3_ctrl *ctrl, int idx, struct otto_l3_route *rt);
 	int (*setup)(struct otto_l3_ctrl *ctrl);
+	void (*dbgfs_init)(struct otto_l3_ctrl *ctrl);
 };
 
 struct otto_l3_ctrl {
@@ -107,9 +109,10 @@ struct otto_l3_ctrl {
 	struct notifier_block fib_nb;
 	struct notifier_block ne_nb;
 	struct rhltable routes;
+	struct list_head routes_list;
 	unsigned long route_use_bm[MAX_ROUTES / 32];
 	unsigned long host_route_use_bm[MAX_HOST_ROUTES / 32];
-	struct otto_l3_intf *interfaces[MAX_INTERFACES];
+	struct otto_l3_intf interfaces[MAX_SMACS];
 	struct mutex *lock; /* protect register access */
 };
 
