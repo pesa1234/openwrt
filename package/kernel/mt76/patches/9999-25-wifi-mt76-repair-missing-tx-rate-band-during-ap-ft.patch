@@ -1,160 +1,46 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Andrea Pesaresi <andreapesaresi82@gmail.com>
-Date: Sun, 13 Sep 2026 23:51:00 +0200
-Subject: [PATCH] wifi: mt76: repair missing TX rate band during AP FT
+Date: Wed, 16 Sep 2026 16:12:56 +0200
+Subject: [PATCH] wifi: mt76: initialize tx_info band for 802.3 offload
 
-The mac80211 HW 802.11 encapsulation path intentionally leaves info->band
-unset.  This is normally harmless on mt7915 because an associated WCID has
-MT_WCID_TX_INFO_SET and the firmware-selected fixed rate is used.
+ieee80211_8023_xmit() clears tx_info before queueing a frame for
+hardware encapsulation and does not initialize info->band. This is
+normally harmless because mt7915 uses the firmware rate stored in
+wcid->tx_info.
 
-During rapid AP-side FT roaming, however, the WCID rate information can be
-cleared while an encapsulated skb is still queued.  mt76 then falls back to
-ieee80211_get_tx_rates().  On the 5 GHz PHY the zero-initialized 2 GHz band
-is unavailable, causing a NULL dereference in rate_control_cap_mask().
+During AP-side FT roaming, the WCID rate information can be unset
+while an 802.3 skb remains queued. mt76 then falls back to
+ieee80211_get_tx_rates() with band 0. On the 5 GHz PHY,
+wiphy->bands[NL80211_BAND_2GHZ] is NULL, leading to a NULL pointer
+dereference in rate control and a kernel panic.
 
-Do not reject every skb whose band is unset: that breaks normal HW-offload
-traffic on the 5 GHz PHY.  Validate the band only when mt76 actually needs
-software rate lookup.  For a non-MLO AP unicast, repair it from the current
-PHY only when the PHY channel, VIF channel, VIF pointer and destination STA
-all agree.  Drop ambiguous stale frames instead of entering rate control.
+Set info->band from the resolved PHY while dequeuing hardware-
+encapsulated frames. The dequeue caller has already selected the PHY
+using wcid->phy_idx.
 
+Temporary diagnostic instrumentation and a same-MAC dual-radio FT
+stress test with continuous traffic reproduced the invalid state twice
+in 300 cycles on MT7981. Both cases had info->band=0, PHY band 1,
+tx_info=0 and HW 802.11 encapsulation enabled.
+
+With this fix applied, the same 300-cycle test completed on MT7981
+and MT7986 without a router disconnect, kernel warning or crash.
+
+Fixes: 55f7c9b02790 ("mt76: mt7915: add 802.11 encap offload support")
+Cc: stable@vger.kernel.org
 Signed-off-by: Andrea Pesaresi <andreapesaresi82@gmail.com>
 ---
- tx.c | 105 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++------
- 1 file changed, 96 insertions(+), 9 deletions(-)
+ tx.c | 2 ++
+ 1 file changed, 2 insertions(+)
 
 --- a/tx.c
 +++ b/tx.c
-@@ -500,6 +500,98 @@ mt76_txq_stopped(struct mt76_queue *q)
- 	       q->queued + MT_TXQ_FREE_THR >= q->ndesc;
+@@ -406,6 +406,8 @@ mt76_txq_dequeue(struct mt76_phy *phy, s
+ 
+ 	info = IEEE80211_SKB_CB(skb);
+ 	info->hw_queue |= FIELD_PREP(MT_TX_HW_QUEUE_PHY, phy->band_idx);
++	if (info->flags & IEEE80211_TX_CTL_HW_80211_ENCAP)
++		info->band = phy->chandef.chan->band;
+ 
+ 	return skb;
  }
- 
-+static bool
-+mt76_txq_prepare_tx_rates(struct mt76_phy *phy, struct mt76_txq *mtxq,
-+			  struct mt76_wcid *wcid, struct sk_buff *skb)
-+{
-+	struct ieee80211_txq *txq = mtxq_to_txq(mtxq);
-+	struct ieee80211_tx_info *info = IEEE80211_SKB_CB(skb);
-+	struct ieee80211_hdr *hdr = (void *)skb->data;
-+	struct ethhdr *eth = (void *)skb->data;
-+	struct ieee80211_channel *vif_chan;
-+	const u8 *sta_addr = txq->vif->addr;
-+	u32 tx_info = READ_ONCE(wcid->tx_info);
-+	u8 phy_band = NUM_NL80211_BANDS;
-+	u8 vif_band = NUM_NL80211_BANDS;
-+	u8 addr1[ETH_ALEN] = {};
-+	u8 addr2[ETH_ALEN] = {};
-+	bool vif_match = info->control.vif == txq->vif;
-+	bool frame_match = false;
-+
-+	/* The firmware-selected fixed rate does not use info->band. */
-+	if (tx_info & MT_WCID_TX_INFO_SET)
-+		return true;
-+
-+	if (info->band < NUM_NL80211_BANDS &&
-+	    phy->hw->wiphy->bands[info->band])
-+		goto lookup;
-+
-+	if (phy->chandef.chan)
-+		phy_band = phy->chandef.chan->band;
-+
-+	vif_chan = READ_ONCE(txq->vif->bss_conf.chanreq.oper.chan);
-+	if (vif_chan)
-+		vif_band = vif_chan->band;
-+
-+	if (txq->sta)
-+		sta_addr = txq->sta->addr;
-+
-+	if (info->flags & IEEE80211_TX_CTL_HW_80211_ENCAP) {
-+		if (skb->len >= ETH_HLEN) {
-+			ether_addr_copy(addr1, eth->h_dest);
-+			ether_addr_copy(addr2, eth->h_source);
-+			frame_match = txq->sta &&
-+				      ether_addr_equal(addr1, txq->sta->addr);
-+		}
-+	} else if (skb->len >= offsetof(struct ieee80211_hdr, addr3)) {
-+		ether_addr_copy(addr1, hdr->addr1);
-+		ether_addr_copy(addr2, hdr->addr2);
-+		frame_match = txq->sta &&
-+			      ieee80211_is_data(hdr->frame_control) &&
-+			      ether_addr_equal(addr1, txq->sta->addr) &&
-+			      ether_addr_equal(addr2, txq->vif->addr);
-+	}
-+
-+	/*
-+	 * HW 802.11 encapsulation leaves info->band unset because the fixed
-+	 * firmware rate normally makes it unnecessary. During an AP-side FT
-+	 * transition the station rate may briefly be cleared, making mt76
-+	 * fall back to mac80211 rate lookup. Fill in the missing band only
-+	 * when the channel, VIF and destination all identify this exact
-+	 * non-MLO AP/STA link. Ambiguous stale packets are safer to discard.
-+	 */
-+	if (phy_band < NUM_NL80211_BANDS &&
-+	    phy->hw->wiphy->bands[phy_band] &&
-+	    vif_band == phy_band && vif_match && frame_match &&
-+	    txq->vif->type == NL80211_IFTYPE_AP &&
-+	    !ieee80211_vif_is_mld(txq->vif)) {
-+		dev_warn_ratelimited(phy->dev->dev,
-+			"repair TX rate band: skb=%u phy=%u vif=%u phy_idx=%u wcid=%u tx_info=%#x tid=%u ac=%u encap=%u sta=%pM vif=%pM addr1=%pM addr2=%pM\n",
-+			info->band, phy_band, vif_band, phy->band_idx,
-+			mtxq->wcid, tx_info, txq->tid, txq->ac,
-+			!!(info->flags & IEEE80211_TX_CTL_HW_80211_ENCAP),
-+			sta_addr, txq->vif->addr, addr1, addr2);
-+		info->band = phy_band;
-+		goto lookup;
-+	}
-+
-+	dev_warn_ratelimited(phy->dev->dev,
-+		"drop unsafe TX rate lookup: skb=%u phy=%u vif=%u phy_idx=%u wcid=%u tx_info=%#x tid=%u ac=%u encap=%u vif_match=%u frame_match=%u sta=%pM vif=%pM addr1=%pM addr2=%pM\n",
-+		info->band, phy_band, vif_band, phy->band_idx, mtxq->wcid,
-+		tx_info, txq->tid, txq->ac,
-+		!!(info->flags & IEEE80211_TX_CTL_HW_80211_ENCAP), vif_match,
-+		frame_match, sta_addr, txq->vif->addr, addr1, addr2);
-+	ieee80211_free_txskb(phy->hw, skb);
-+
-+	return false;
-+
-+lookup:
-+	ieee80211_get_tx_rates(txq->vif, txq->sta, skb,
-+			       info->control.rates, 1);
-+
-+	return true;
-+}
-+
- static int
- mt76_txq_send_burst(struct mt76_phy *phy, struct mt76_queue *q,
- 		    struct mt76_txq *mtxq, struct mt76_wcid *wcid)
-@@ -507,7 +599,6 @@ mt76_txq_send_burst(struct mt76_phy *phy
- 	struct mt76_dev *dev = phy->dev;
- 	struct ieee80211_txq *txq = mtxq_to_txq(mtxq);
- 	enum mt76_txq_id qid = mt76_txq_get_qid(txq);
--	struct ieee80211_tx_info *info;
- 	struct sk_buff *skb;
- 	int n_frames = 1;
- 	bool stop = false;
-@@ -528,10 +619,8 @@ mt76_txq_send_burst(struct mt76_phy *phy
- 	if (!skb)
- 		return 0;
- 
--	info = IEEE80211_SKB_CB(skb);
--	if (!(wcid->tx_info & MT_WCID_TX_INFO_SET))
--		ieee80211_get_tx_rates(txq->vif, txq->sta, skb,
--				       info->control.rates, 1);
-+	if (!mt76_txq_prepare_tx_rates(phy, mtxq, wcid, skb))
-+		return 0;
- 
- 	spin_lock(&q->lock);
- 	idx = __mt76_tx_queue_skb(phy, qid, skb, wcid, txq->sta, &stop);
-@@ -553,10 +642,8 @@ mt76_txq_send_burst(struct mt76_phy *phy
- 		if (!skb)
- 			break;
- 
--		info = IEEE80211_SKB_CB(skb);
--		if (!(wcid->tx_info & MT_WCID_TX_INFO_SET))
--			ieee80211_get_tx_rates(txq->vif, txq->sta, skb,
--					       info->control.rates, 1);
-+		if (!mt76_txq_prepare_tx_rates(phy, mtxq, wcid, skb))
-+			break;
- 
- 		spin_lock(&q->lock);
- 		idx = __mt76_tx_queue_skb(phy, qid, skb, wcid, txq->sta, &stop);
