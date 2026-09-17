@@ -633,25 +633,37 @@ Subject: [PATCH] net: ethernet: mtk_eth_soc: add rss support
  
  	if (mtk_is_netsys_v3_or_greater(eth)) {
  		/* PSE dummy page mechanism */
-@@ -5061,6 +5232,8 @@ static void mtk_get_ethtool_stats(struct
+@@ -5061,6 +5232,17 @@ static void mtk_get_ethtool_stats(struct
++static u32 mtk_get_rx_ring_count(struct net_device *dev)
++{
++	struct mtk_mac *mac = netdev_priv(dev);
++	struct mtk_eth *eth = mac->hw;
++
++	if (MTK_HAS_CAPS(eth->soc->caps, MTK_RSS) && eth->soc->rss_num)
++		return MTK_RX_RSS_NUM;
++
++	return dev->hw_features & NETIF_F_LRO ? MTK_MAX_RX_RING_NUM : 0;
++}
++
  static int mtk_get_rxnfc(struct net_device *dev, struct ethtool_rxnfc *cmd,
  			 u32 *rule_locs)
  {
-+	struct mtk_mac *mac = netdev_priv(dev);
-+	struct mtk_eth *eth = mac->hw;
  	int ret = -EOPNOTSUPP;
  
  	switch (cmd->cmd) {
-@@ -5068,6 +5241,9 @@ static int mtk_get_rxnfc(struct net_devi
- 		if (dev->hw_features & NETIF_F_LRO) {
- 			cmd->data = MTK_MAX_RX_RING_NUM;
- 			ret = 0;
-+		} else if (MTK_HAS_CAPS(eth->soc->caps, MTK_RSS)) {
-+			cmd->data = MTK_RX_RSS_NUM;
-+			ret = 0;
- 		}
- 		break;
+@@ -5067,12 +5249,6 @@ static int mtk_get_rxnfc(struct net_devi
+-	case ETHTOOL_GRXRINGS:
+-		if (dev->hw_features & NETIF_F_LRO) {
+-			cmd->data = MTK_MAX_RX_RING_NUM;
+-			ret = 0;
+-		}
+-		break;
  	case ETHTOOL_GRXCLSRLCNT:
+ 		if (dev->hw_features & NETIF_F_LRO) {
+ 			struct mtk_mac *mac = netdev_priv(dev);
+ 
+ 			cmd->rule_cnt = mac->hwlro_ip_cnt;
+ 			ret = 0;
 @@ -5142,6 +5318,99 @@ static int mtk_set_eee(struct net_device
  	return phylink_ethtool_set_eee(mac->phylink, eee);
  }
@@ -752,8 +764,9 @@ Subject: [PATCH] net: ethernet: mtk_eth_soc: add rss support
  static u16 mtk_select_queue(struct net_device *dev, struct sk_buff *skb,
  			    struct net_device *sb_dev)
  {
-@@ -5179,6 +5448,10 @@ static const struct ethtool_ops mtk_etht
+@@ -5179,6 +5448,11 @@ static const struct ethtool_ops mtk_etht
  	.set_pauseparam		= mtk_set_pauseparam,
++	.get_rx_ring_count	= mtk_get_rx_ring_count,
  	.get_rxnfc		= mtk_get_rxnfc,
  	.set_rxnfc		= mtk_set_rxnfc,
 +	.get_rxfh_key_size	= mtk_get_rxfh_key_size,
