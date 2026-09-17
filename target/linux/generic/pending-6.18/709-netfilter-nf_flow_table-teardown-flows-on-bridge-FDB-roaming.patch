@@ -25,15 +25,15 @@ Link: https://github.com/pesa1234/mtk-openwrt-feeds/commit/2099fc641def024f04713
 
 --- a/net/netfilter/nf_flow_table_core.c
 +++ b/net/netfilter/nf_flow_table_core.c
-@@ -4,6 +4,7 @@
+@@ -5,6 +5,7 @@
  #include <linux/netfilter.h>
  #include <linux/rhashtable.h>
  #include <linux/netdevice.h>
 +#include <linux/etherdevice.h>
  #include <net/ip.h>
  #include <net/ip6_route.h>
- #include <net/netfilter/nf_flow_table.h>
-@@ -11,10 +12,24 @@
+ #include <net/netfilter/nf_tables.h>
+@@ -13,10 +14,24 @@
  #include <net/netfilter/nf_conntrack_core.h>
  #include <net/netfilter/nf_conntrack_l4proto.h>
  #include <net/netfilter/nf_conntrack_tuple.h>
@@ -58,7 +58,7 @@ Link: https://github.com/pesa1234/mtk-openwrt-feeds/commit/2099fc641def024f04713
  static void
  flow_offload_fill_dir(struct flow_offload *flow,
  		      enum flow_offload_tuple_dir dir)
-@@ -385,6 +400,130 @@ void flow_offload_teardown(struct flow_o
+@@ -390,6 +405,130 @@ void flow_offload_teardown(struct flow_o
  }
  EXPORT_SYMBOL_GPL(flow_offload_teardown);
  
@@ -189,7 +189,7 @@ Link: https://github.com/pesa1234/mtk-openwrt-feeds/commit/2099fc641def024f04713
  struct flow_offload_tuple_rhash *
  flow_offload_lookup(struct nf_flowtable *flow_table,
  		    struct flow_offload_tuple *tuple)
-@@ -839,8 +978,26 @@ static int __init nf_flow_table_module_i
+@@ -849,8 +988,26 @@ static int __init nf_flow_table_module_i
  	if (ret)
  		goto out_bpf;
  
@@ -216,7 +216,7 @@ Link: https://github.com/pesa1234/mtk-openwrt-feeds/commit/2099fc641def024f04713
  out_bpf:
  	nf_flow_table_offload_exit();
  out_offload:
-@@ -850,6 +1007,11 @@ out_offload:
+@@ -860,6 +1017,11 @@ out_offload:
  
  static void __exit nf_flow_table_module_exit(void)
  {

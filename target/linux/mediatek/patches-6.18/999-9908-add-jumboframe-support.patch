@@ -234,7 +234,7 @@
  	return 0;
  }
  
-@@ -5723,7 +5845,7 @@ no_pcs:
+@@ -5771,7 +5893,7 @@ no_pcs:
  
  	mac->phylink = phylink;
  
@@ -243,7 +243,7 @@
  
  	if (MTK_HAS_CAPS(eth->soc->caps, MTK_QDMA)) {
  		mac->device_notifier.notifier_call = mtk_device_event;
-@@ -5877,6 +5999,7 @@ static int mtk_probe(struct platform_dev
+@@ -5925,6 +6047,7 @@ static int mtk_probe(struct platform_dev
  	spin_lock_init(&eth->tx_irq_lock);
  	spin_lock_init(&eth->rx_irq_lock);
  	spin_lock_init(&eth->dim_lock);

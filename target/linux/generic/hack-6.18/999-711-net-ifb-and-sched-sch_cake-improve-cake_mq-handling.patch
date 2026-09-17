@@ -9,7 +9,7 @@
  
  static void ifb_update_q_stats(struct ifb_q_stats *stats, int len)
  {
-@@ -278,6 +280,7 @@ static const struct net_device_ops ifb_n
+@@ -277,6 +279,7 @@ static const struct net_device_ops ifb_n
  	.ndo_stop	= ifb_close,
  	.ndo_get_stats64 = ifb_stats64,
  	.ndo_start_xmit	= ifb_xmit,
@@ -17,7 +17,7 @@
  	.ndo_validate_addr = eth_validate_addr,
  	.ndo_init	= ifb_dev_init,
  };
-@@ -336,6 +339,21 @@ static void ifb_setup(struct net_device
+@@ -335,6 +338,21 @@ static void ifb_setup(struct net_device
  	netif_set_tso_max_size(dev, GSO_MAX_SIZE);
  }
  
@@ -64,7 +64,7 @@
  	u8		is_shared;
  };
  
-@@ -2013,7 +2022,8 @@ static struct sk_buff *cake_dequeue(stru
+@@ -2009,7 +2018,8 @@ static struct sk_buff *cake_dequeue(stru
  	struct cake_sched_data *q = qdisc_priv(sch);
  	struct cake_tin_data *b = &q->tins[q->cur_tin];
  	enum skb_drop_reason reason;
@@ -74,7 +74,7 @@
  	struct cake_flow *flow;
  	struct list_head *head;
  	bool first_flow = true;
-@@ -2021,42 +2031,62 @@ static struct sk_buff *cake_dequeue(stru
+@@ -2017,42 +2027,62 @@ static struct sk_buff *cake_dequeue(stru
  	u64 delay;
  	u32 len;
  
@@ -164,7 +164,7 @@
  	/* global hard shaper */
  	if (ktime_after(q->time_next_packet, now) &&
  	    ktime_after(q->failsafe_next_packet, now)) {
-@@ -2818,6 +2848,9 @@ static void cake_config_init(struct cake
+@@ -2819,6 +2849,9 @@ static void cake_config_init(struct cake
  			       * for 5 to 10% of interval
  			       */
  	q->rate_flags |= CAKE_FLAG_SPLIT_GSO;
@@ -174,7 +174,7 @@
  	q->is_shared = is_shared;
  	q->sync_time = 200 * NSEC_PER_USEC;
  }
-@@ -2895,6 +2928,8 @@ static void cake_config_replace(struct Q
+@@ -2896,6 +2929,8 @@ static void cake_config_replace(struct Q
  	struct cake_sched_data *qd = qdisc_priv(sch);
  
  	qd->config = cfg;

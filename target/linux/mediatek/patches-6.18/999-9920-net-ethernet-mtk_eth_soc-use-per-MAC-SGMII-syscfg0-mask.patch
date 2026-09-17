@@ -68,7 +68,7 @@ Signed-off-by: evan.zhang <evan.zhang@mediatek.com>
  
  		/* Save the syscfg0 value for mac_finish */
  		mac->syscfg0 = val;
-@@ -816,9 +836,12 @@ static int mtk_mac_finish(struct phylink
+@@ -817,9 +837,12 @@ static int mtk_mac_finish(struct phylink
  
  	/* Enable SGMII */
  	if (interface == PHY_INTERFACE_MODE_SGMII ||

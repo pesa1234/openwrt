@@ -16,7 +16,7 @@ data-path behaviour.
 
 --- a/net/core/dev.c
 +++ b/net/core/dev.c
-@@ -7490,7 +7490,7 @@ void netif_napi_add_weight_locked(struct
+@@ -7494,7 +7494,7 @@ void netif_napi_add_weight_locked(struct
  	napi->skb = NULL;
  	napi->poll = poll;
  	if (weight > NAPI_POLL_WEIGHT)

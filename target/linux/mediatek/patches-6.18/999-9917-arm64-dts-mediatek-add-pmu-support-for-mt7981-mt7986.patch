@@ -14,7 +14,7 @@ Signed-off-by: developer <developer@mediatek.com>
 
 --- a/arch/arm64/boot/dts/mediatek/mt7981b.dtsi
 +++ b/arch/arm64/boot/dts/mediatek/mt7981b.dtsi
-@@ -45,6 +45,12 @@
+@@ -48,6 +48,12 @@
  		method = "smc";
  	};
  
@@ -29,7 +29,7 @@ Signed-off-by: developer <developer@mediatek.com>
  		/* cooling level (0, 1, 2, 3) : (0% duty, 50% duty, 75% duty, 100% duty) */
 --- a/arch/arm64/boot/dts/mediatek/mt7986a.dtsi
 +++ b/arch/arm64/boot/dts/mediatek/mt7986a.dtsi
-@@ -61,6 +61,12 @@
+@@ -64,6 +64,12 @@
  		method = "smc";
  	};
  
