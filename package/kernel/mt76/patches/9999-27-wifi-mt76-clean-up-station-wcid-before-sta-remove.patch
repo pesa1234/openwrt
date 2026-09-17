@@ -1,0 +1,46 @@
+From 1a9e2e09507541ebba12c62f0e08139d005ed0aa Mon Sep 17 00:00:00 2001
+From: Alexandr Astrouski <astrouski@google.com>
+Date: Sun, 23 Aug 2026 21:24:07 +0000
+Subject: [PATCH] wifi: mt76: clean up station WCID and TX queues before
+ sta_remove
+
+When a station is removed, __mt76_sta_remove() previously called
+dev->drv->sta_remove() before calling mt76_wcid_cleanup().
+
+Because dev->drv->sta_remove() informs the hardware/firmware that the
+station's WCID is released, having un-transmitted packets in
+wcid->tx_pending/tx_offchannel or having the station still present on
+phy->tx_list during or after sta_remove can cause concurrent TX workers
+to attempt transmission on an unassigned/freed hardware WCID.
+
+Move mt76_wcid_cleanup() before dev->drv->sta_remove() so that TX
+polling and scheduling are halted under phy->tx_lock and all pending
+TX frames are cleanly flushed via ieee80211_free_txskb() before the
+hardware/firmware is notified.
+
+Signed-off-by: Alexander Astrovsky <astrouski@google.com>
+Link: https://github.com/openwrt/mt76/pull/1125
+
+Upstream-Status: Submitted [https://github.com/openwrt/mt76/pull/1125]
+OpenWrt-Drop-When: package/kernel/mt76/Makefile PKG_SOURCE_VERSION contains
+  1a9e2e09507541ebba12c62f0e08139d005ed0aa (or an mt76 equivalent of it).
+---
+ mac80211.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+--- a/mac80211.c
++++ b/mac80211.c
+@@ -1658,11 +1658,11 @@ void __mt76_sta_remove(struct mt76_phy *
+ 	for (i = 0; i < ARRAY_SIZE(wcid->aggr); i++)
+ 		mt76_rx_aggr_stop(dev, wcid, i);
+ 
++	mt76_wcid_cleanup(dev, wcid);
++
+ 	if (dev->drv->sta_remove)
+ 		dev->drv->sta_remove(dev, vif, sta);
+ 
+-	mt76_wcid_cleanup(dev, wcid);
+-
+ 	mt76_wcid_mask_clear(dev->wcid_mask, idx);
+ 	phy->num_sta--;
+ }
