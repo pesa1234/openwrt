@@ -1,0 +1,33 @@
+From d455d467d105e8f5ead4080cc417d6ce329b7ab6 Mon Sep 17 00:00:00 2001
+From: Evelyn Tsai <evelyn.tsai@mediatek.com>
+Date: Mon, 14 Sep 2026 15:56:25 +0800
+Subject: [PATCH] wifi: mt76: mt7915: add WLAN ID bounds check in
+ mt7915_mmio_wed_update_rx_stats
+
+Add an out-of-bounds guard before accessing the WCID in
+mt7915_mmio_wed_update_rx_stats. If the WLAN index from WO RX stats
+is zero or exceeds the WTBL size, bail out early to avoid accessing
+an invalid WCID.
+
+Signed-off-by: Evelyn Tsai <evelyn.tsai@mediatek.com>
+
+Origin: Backport [https://github.com/pesa1234/mtk-openwrt-feeds/commit/2839ca59e62fe0bc2709efe36abdd49a42423e58]
+Upstream-Status: Pending
+OpenWrt-Drop-When: package/kernel/mt76/Makefile PKG_SOURCE_VERSION contains
+  d455d467d105e8f5ead4080cc417d6ce329b7ab6 (or an mt76 equivalent of it).
+---
+ mt7915/mmio.c | 3 +++
+ 1 file changed, 3 insertions(+)
+
+--- a/mt7915/mmio.c
++++ b/mt7915/mmio.c
+@@ -598,6 +598,9 @@ static void mt7915_mmio_wed_update_rx_st
+ 
+ 	dev = container_of(wed, struct mt7915_dev, mt76.mmio.wed);
+ 
++	if (idx <= 0 || idx >= mt7915_wtbl_size(dev))
++		return;
++
+ 	rcu_read_lock();
+ 
+ 	wcid = mt76_wcid_ptr(dev, idx);
