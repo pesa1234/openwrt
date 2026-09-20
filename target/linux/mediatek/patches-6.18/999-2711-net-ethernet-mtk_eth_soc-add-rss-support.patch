@@ -797,13 +797,25 @@ Subject: [PATCH] net: ethernet: mtk_eth_soc: add rss support
  	if (!eth->netdev[id]) {
  		dev_err(eth->dev, "alloc_etherdev failed\n");
  		return -ENOMEM;
-@@ -5465,7 +5743,7 @@ no_pcs:
+@@ -5465,19 +5743,19 @@ no_pcs:
  	eth->netdev[id]->features |= eth->soc->hw_features;
  	eth->netdev[id]->ethtool_ops = &mtk_ethtool_ops;
  
 -	eth->netdev[id]->irq = eth->irq[MTK_FE_IRQ_SHARED];
 +	eth->netdev[id]->irq = eth->irq_fe[MTK_FE_IRQ_SHARED];
  	eth->netdev[id]->dev.of_node = np;
+ 
+ 	/* LPI wake-up timing is only verified on MTK_GMAC_EEE SoCs */
+ 	if (MTK_HAS_CAPS(eth->soc->caps, MTK_GMAC_EEE)) {
+ 		phy_interface_copy(mac->phylink_config.lpi_interfaces,
+ 				   mac->phylink_config.supported_interfaces);
+ 		__clear_bit(PHY_INTERFACE_MODE_2500BASEX,
+ 			    mac->phylink_config.lpi_interfaces);
+ 		for (i = 0; i < PHY_INTERFACE_MODE_MAX; i++)
+ 			if (mtk_interface_mode_is_xgmii(eth, i))
+ 				__clear_bit(i,
+ 					    mac->phylink_config.lpi_interfaces);
+ 	}
  
  	phylink = phylink_create(&mac->phylink_config,
 @@ -5803,20 +6081,44 @@ static int mtk_probe(struct platform_dev
@@ -1248,12 +1260,13 @@ Subject: [PATCH] net: ethernet: mtk_eth_soc: add rss support
  #define MTK_TRGMII_MT7621_CLK	BIT_ULL(MTK_TRGMII_MT7621_CLK_BIT)
  #define MTK_QDMA		BIT_ULL(MTK_QDMA_BIT)
  #define MTK_SOC_MT7628		BIT_ULL(MTK_SOC_MT7628_BIT)
-@@ -1191,24 +1250,26 @@ enum mkt_eth_capabilities {
+@@ -1191,24 +1250,27 @@ enum mkt_eth_capabilities {
  #define MT7981_CAPS  (MTK_GMAC1_SGMII | MTK_GMAC2_SGMII | MTK_GMAC2_GEPHY | \
  		      MTK_MUX_GMAC12_TO_GEPHY_SGMII | MTK_QDMA | \
  		      MTK_MUX_U3_GMAC23_TO_QPHY | MTK_U3_COPHY_V2 | \
--		      MTK_RSTCTRL_PPE1 | MTK_SRAM)
-+		      MTK_RSTCTRL_PPE1 | MTK_SRAM | MTK_PDMA_INT | MTK_RSS)
+-		      MTK_RSTCTRL_PPE1 | MTK_SRAM | MTK_GMAC_EEE)
++		      MTK_RSTCTRL_PPE1 | MTK_SRAM | MTK_GMAC_EEE | \
++		      MTK_PDMA_INT | MTK_RSS)
  
  #define MT7986_CAPS  (MTK_GMAC1_SGMII | MTK_GMAC2_SGMII | \
  		      MTK_MUX_GMAC12_TO_GEPHY_SGMII | MTK_QDMA | \
