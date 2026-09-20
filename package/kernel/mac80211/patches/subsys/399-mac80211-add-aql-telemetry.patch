@@ -1,0 +1,331 @@
+From: Andrea Pesaresi <andreapesaresi82@gmail.com>
+Date: Sun, 20 Sep 2026 13:00:00 +0200
+Subject: [PATCH] wifi: mac80211: add low-overhead AQL telemetry
+
+The existing AQL debugfs files expose the instantaneous pending airtime
+and configured limits, but they do not show whether a limit was reached
+or how high the queues grew during a test. This makes it difficult to
+tune AQL without continuously polling debugfs.
+
+Track per-AC and broadcast peak pending airtime, the highest pending
+airtime seen on an individual TXQ, and counters for the different AQL
+throttle paths. Expose the data in a per-PHY aql_stats debugfs file.
+Telemetry is disabled by default. Writing "1" resets and enables it,
+while writing "0" disables collection and preserves the last sample.
+
+When enabled, peak tracking adds one atomic read on enqueue and only
+performs a compare/exchange when a new peak is observed. Throttle
+counters are updated only when AQL rejects a dequeue or scheduler
+attempt.
+
+Signed-off-by: Andrea Pesaresi <andreapesaresi82@gmail.com>
+---
+ net/mac80211/debugfs.c     | 104 ++++++++++++++++++++++++++++++++++++++
+ net/mac80211/ieee80211_i.h |  14 ++++++
+ net/mac80211/sta_info.c    |  47 ++++++++++++++----
+ net/mac80211/tx.c          |  41 +++++++++++----
+ 4 files changed, 190 insertions(+), 16 deletions(-)
+
+--- a/net/mac80211/ieee80211_i.h
++++ b/net/mac80211/ieee80211_i.h
+@@ -1447,6 +1447,19 @@ enum mac80211_scan_state {
+ 
+ DECLARE_STATIC_KEY_FALSE(aql_disable);
+ 
++struct ieee80211_aql_stats {
++	bool enabled;
++	atomic_t total_peak;
++	atomic_t bc_peak;
++	atomic_t ac_peak[IEEE80211_NUM_ACS];
++	atomic_t txq_peak[IEEE80211_NUM_ACS];
++	atomic64_t txq_limit_hits[IEEE80211_NUM_ACS];
++	atomic64_t threshold_hits[IEEE80211_NUM_ACS];
++	atomic64_t high_limit_hits[IEEE80211_NUM_ACS];
++	atomic64_t ac_limit_hits[IEEE80211_NUM_ACS];
++	atomic64_t bc_limit_hits;
++};
++
+ struct ieee80211_local {
+ 	/* embed the driver visible part.
+ 	 * don't cast (use the static inlines below), but we keep
+@@ -1473,6 +1486,7 @@ struct ieee80211_local {
+ 	atomic_t aql_total_pending_airtime;
+ 	atomic_t aql_bc_pending_airtime;
+ 	atomic_t aql_ac_pending_airtime[IEEE80211_NUM_ACS];
++	struct ieee80211_aql_stats aql_stats;
+ 
+ 	const struct ieee80211_ops *ops;
+ 
+--- a/net/mac80211/sta_info.c
++++ b/net/mac80211/sta_info.c
+@@ -2495,6 +2495,30 @@ void ieee80211_sta_recalc_aggregates(str
+ }
+ EXPORT_SYMBOL(ieee80211_sta_recalc_aggregates);
+ 
++static inline void ieee80211_aql_add_pending(struct ieee80211_local *local,
++					     atomic_t *pending,
++					     atomic_t *peak,
++					     u16 tx_airtime)
++{
++	int value, old;
++
++	if (!READ_ONCE(local->aql_stats.enabled)) {
++		atomic_add(tx_airtime, pending);
++		return;
++	}
++
++	value = atomic_add_return(tx_airtime, pending);
++	old = atomic_read(peak);
++
++	while (value > old) {
++		int prev = atomic_cmpxchg(peak, old, value);
++
++		if (prev == old)
++			break;
++		old = prev;
++	}
++}
++
+ void ieee80211_sta_update_pending_airtime(struct ieee80211_local *local,
+ 					  struct sta_info *sta, u8 ac,
+ 					  u16 tx_airtime, bool tx_completed,
+@@ -2507,7 +2531,10 @@ void ieee80211_sta_update_pending_airtim
+ 
+ 	if (mcast) {
+ 		if (!tx_completed) {
+-			atomic_add(tx_airtime, &local->aql_bc_pending_airtime);
++			ieee80211_aql_add_pending(local,
++						  &local->aql_bc_pending_airtime,
++						  &local->aql_stats.bc_peak,
++						  tx_airtime);
+ 			return;
+ 		}
+ 
+@@ -2520,12 +2547,20 @@ void ieee80211_sta_update_pending_airtim
+ 	}
+ 
+ 	if (!tx_completed) {
+-		if (sta)
+-			atomic_add(tx_airtime,
+-				   &sta->airtime[ac].aql_tx_pending);
++		if (sta)
++			ieee80211_aql_add_pending(local,
++						  &sta->airtime[ac].aql_tx_pending,
++						  &local->aql_stats.txq_peak[ac],
++						  tx_airtime);
+ 
+-		atomic_add(tx_airtime, &local->aql_total_pending_airtime);
+-		atomic_add(tx_airtime, &local->aql_ac_pending_airtime[ac]);
++		ieee80211_aql_add_pending(local,
++					  &local->aql_total_pending_airtime,
++					  &local->aql_stats.total_peak,
++					  tx_airtime);
++		ieee80211_aql_add_pending(local,
++					  &local->aql_ac_pending_airtime[ac],
++					  &local->aql_stats.ac_peak[ac],
++					  tx_airtime);
+ 		return;
+ 	}
+ 
+--- a/net/mac80211/tx.c
++++ b/net/mac80211/tx.c
+@@ -4222,6 +4222,7 @@ bool ieee80211_txq_airtime_check(struct
+ {
+ 	struct sta_info *sta;
+ 	struct ieee80211_local *local = hw_to_local(hw);
++	int tx_pending, total_pending;
+ 
+ 	if (!wiphy_ext_feature_isset(local->hw.wiphy, NL80211_EXT_FEATURE_AQL))
+ 		return true;
+@@ -4229,9 +4230,15 @@ bool ieee80211_txq_airtime_check(struct
+ 	if (static_branch_unlikely(&aql_disable))
+ 		return true;
+ 
+-	if (!txq->sta)
+-		return atomic_read(&local->aql_bc_pending_airtime) <
+-		       local->aql_txq_limit_bc;
++	if (!txq->sta) {
++		tx_pending = atomic_read(&local->aql_bc_pending_airtime);
++		if (tx_pending < local->aql_txq_limit_bc)
++			return true;
++
++		if (READ_ONCE(local->aql_stats.enabled))
++			atomic64_inc(&local->aql_stats.bc_limit_hits);
++		return false;
++	}
+ 
+ 	if (unlikely(txq->tid == IEEE80211_NUM_TIDS))
+ 		return true;
+@@ -4237,16 +4244,23 @@ bool ieee80211_txq_airtime_check(struct
+ 		return true;
+ 
+ 	sta = container_of(txq->sta, struct sta_info, sta);
+-	if (atomic_read(&sta->airtime[txq->ac].aql_tx_pending) <
+-	    sta->airtime[txq->ac].aql_limit_low)
++	tx_pending = atomic_read(&sta->airtime[txq->ac].aql_tx_pending);
++	if (tx_pending < sta->airtime[txq->ac].aql_limit_low)
+ 		return true;
+ 
+-	if (atomic_read(&local->aql_total_pending_airtime) <
+-	    local->aql_threshold &&
+-	    atomic_read(&sta->airtime[txq->ac].aql_tx_pending) <
+-	    sta->airtime[txq->ac].aql_limit_high)
++	total_pending = atomic_read(&local->aql_total_pending_airtime);
++	if (total_pending < local->aql_threshold &&
++	    tx_pending < sta->airtime[txq->ac].aql_limit_high)
+ 		return true;
+ 
++	if (READ_ONCE(local->aql_stats.enabled)) {
++		atomic64_inc(&local->aql_stats.txq_limit_hits[txq->ac]);
++		if (total_pending >= local->aql_threshold)
++			atomic64_inc(&local->aql_stats.threshold_hits[txq->ac]);
++		if (tx_pending >= sta->airtime[txq->ac].aql_limit_high)
++			atomic64_inc(&local->aql_stats.high_limit_hits[txq->ac]);
++	}
++
+ 	return false;
+ }
+ EXPORT_SYMBOL(ieee80211_txq_airtime_check);
+@@ -4275,6 +4289,7 @@ ieee80211_txq_schedule_airtime_check(str
+ 	unsigned int num_txq = 0;
+ 	struct txq_info *txq;
+ 	u32 aql_limit;
++	int pending;
+ 
+ 	if (!wiphy_ext_feature_isset(local->hw.wiphy, NL80211_EXT_FEATURE_AQL))
+ 		return true;
+@@ -4285,7 +4300,13 @@ ieee80211_txq_schedule_airtime_check(str
+ 	aql_limit = (num_txq - 1) * local->aql_txq_limit_low[ac] / 2 +
+ 		    local->aql_txq_limit_high[ac];
+ 
+-	return atomic_read(&local->aql_ac_pending_airtime[ac]) < aql_limit;
++	pending = atomic_read(&local->aql_ac_pending_airtime[ac]);
++	if (pending < aql_limit)
++		return true;
++
++	if (READ_ONCE(local->aql_stats.enabled))
++		atomic64_inc(&local->aql_stats.ac_limit_hits[ac]);
++	return false;
+ }
+ 
+ bool ieee80211_txq_may_transmit(struct ieee80211_hw *hw,
+--- a/net/mac80211/debugfs.c
++++ b/net/mac80211/debugfs.c
+@@ -231,6 +231,109 @@ static const struct file_operations aql_
+ 	.llseek = default_llseek,
+ };
+ 
++static void ieee80211_aql_stats_reset(struct ieee80211_local *local)
++{
++	int ac;
++
++	atomic_set(&local->aql_stats.total_peak,
++		   atomic_read(&local->aql_total_pending_airtime));
++	atomic_set(&local->aql_stats.bc_peak,
++		   atomic_read(&local->aql_bc_pending_airtime));
++	atomic64_set(&local->aql_stats.bc_limit_hits, 0);
++
++	for (ac = 0; ac < IEEE80211_NUM_ACS; ac++) {
++		atomic_set(&local->aql_stats.ac_peak[ac],
++			   atomic_read(&local->aql_ac_pending_airtime[ac]));
++		atomic_set(&local->aql_stats.txq_peak[ac], 0);
++		atomic64_set(&local->aql_stats.txq_limit_hits[ac], 0);
++		atomic64_set(&local->aql_stats.threshold_hits[ac], 0);
++		atomic64_set(&local->aql_stats.high_limit_hits[ac], 0);
++		atomic64_set(&local->aql_stats.ac_limit_hits[ac], 0);
++	}
++}
++
++static ssize_t aql_stats_read(struct file *file, char __user *user_buf,
++			      size_t count, loff_t *ppos)
++{
++	static const char * const ac_name[] = { "VO", "VI", "BE", "BK" };
++	struct ieee80211_local *local = file->private_data;
++	char buf[1600];
++	int ac, len = 0;
++
++	len += scnprintf(buf + len, sizeof(buf) - len,
++			 "enabled %u\n"
++			 "AQL telemetry (write 1=start/reset, 0=stop, 'reset'=clear)\n"
++			 "AC current_ac peak_ac peak_txq txq_blocks threshold_blocks high_blocks ac_blocks\n",
++			 READ_ONCE(local->aql_stats.enabled));
++
++	for (ac = 0; ac < IEEE80211_NUM_ACS; ac++)
++		len += scnprintf(buf + len, sizeof(buf) - len,
++				 "%s %u %u %u %llu %llu %llu %llu\n",
++				 ac_name[ac],
++				 atomic_read(&local->aql_ac_pending_airtime[ac]),
++				 atomic_read(&local->aql_stats.ac_peak[ac]),
++				 atomic_read(&local->aql_stats.txq_peak[ac]),
++				 (unsigned long long)
++				 atomic64_read(&local->aql_stats.txq_limit_hits[ac]),
++				 (unsigned long long)
++				 atomic64_read(&local->aql_stats.threshold_hits[ac]),
++				 (unsigned long long)
++				 atomic64_read(&local->aql_stats.high_limit_hits[ac]),
++				 (unsigned long long)
++				 atomic64_read(&local->aql_stats.ac_limit_hits[ac]));
++
++	len += scnprintf(buf + len, sizeof(buf) - len,
++			 "BC/MC current %u peak %u blocks %llu\n"
++			 "total current %u peak %u threshold %u\n",
++			 atomic_read(&local->aql_bc_pending_airtime),
++			 atomic_read(&local->aql_stats.bc_peak),
++			 (unsigned long long)atomic64_read(&local->aql_stats.bc_limit_hits),
++			 atomic_read(&local->aql_total_pending_airtime),
++			 atomic_read(&local->aql_stats.total_peak),
++			 local->aql_threshold);
++
++	return simple_read_from_buffer(user_buf, count, ppos, buf, len);
++}
++
++static ssize_t aql_stats_write(struct file *file, const char __user *user_buf,
++			       size_t count, loff_t *ppos)
++{
++	struct ieee80211_local *local = file->private_data;
++	char buf[16];
++	bool enable;
++
++	if (!count || count >= sizeof(buf))
++		return -EINVAL;
++	if (copy_from_user(buf, user_buf, count))
++		return -EFAULT;
++
++	buf[count] = '\0';
++	if (sysfs_streq(buf, "reset")) {
++		enable = READ_ONCE(local->aql_stats.enabled);
++		WRITE_ONCE(local->aql_stats.enabled, false);
++		ieee80211_aql_stats_reset(local);
++		WRITE_ONCE(local->aql_stats.enabled, enable);
++		return count;
++	}
++
++	if (kstrtobool(buf, &enable))
++		return -EINVAL;
++
++	WRITE_ONCE(local->aql_stats.enabled, false);
++	if (enable) {
++		ieee80211_aql_stats_reset(local);
++		WRITE_ONCE(local->aql_stats.enabled, true);
++	}
++	return count;
++}
++
++static const struct file_operations aql_stats_ops = {
++	.write = aql_stats_write,
++	.read = aql_stats_read,
++	.open = simple_open,
++	.llseek = default_llseek,
++};
++
+ static ssize_t aql_txq_limit_read(struct file *file,
+ 				  char __user *user_buf,
+ 				  size_t count,
+@@ -689,6 +792,7 @@ void debugfs_hw_add(struct ieee80211_loc
+ 	DEBUGFS_ADD_MODE(force_tx_status, 0600);
+ 	DEBUGFS_ADD_MODE(aql_enable, 0600);
+ 	DEBUGFS_ADD(aql_pending);
++	DEBUGFS_ADD_MODE(aql_stats, 0600);
+ 	DEBUGFS_ADD_MODE(aqm, 0600);
+ 
+ 	DEBUGFS_ADD_MODE(airtime_flags, 0600);
