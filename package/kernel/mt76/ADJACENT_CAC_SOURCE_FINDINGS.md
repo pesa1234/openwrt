@@ -33,11 +33,10 @@ without importing it into the SmartWRT build.
 
 Our previous prototype sent APBW=80 and `RDD_CAC_START`. The latter is the
 normal, TX-silencing CAC command and plausibly explains the client outage.
-Patch `9999-31-wifi-mt76-mt7915-match-mt7986-adjacent-rdd-mode.patch`
-changes the prototype to send `RDD_NORMAL_START` before the channel/RX-path
-change, use BW=APBW=160, then start radar detection without `RDD_CAC_START`.
-This patch compiled locally; it has **not** been flashed or tested on the
-router.
+The consolidated `9999-29-wifi-mt76-mt7915-experimental-adjacent-cac.patch`
+sends `RDD_NORMAL_START` before the channel/RX-path change, uses BW=APBW=160,
+then starts radar detection without `RDD_CAC_START`. The source-backed change
+compiled locally; it has **not** been flashed or tested on the router.
 
 ## Remaining proof required
 

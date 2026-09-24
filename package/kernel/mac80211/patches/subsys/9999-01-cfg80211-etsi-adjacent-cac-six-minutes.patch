@@ -7,6 +7,8 @@ in-channel CAC default). Keep the restriction narrow to this adjacent
 prototype's block so unrelated devices and weather channels are not
 changed here.
 
+---
+diff --git a/net/wireless/mlme.c b/net/wireless/mlme.c
 --- a/net/wireless/mlme.c
 +++ b/net/wireless/mlme.c
 @@ -1338,6 +1338,11 @@ cfg80211_start_background_radar_detection(struct cfg80211_registered_device *rdev,

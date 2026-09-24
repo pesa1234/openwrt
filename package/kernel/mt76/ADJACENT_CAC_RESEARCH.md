@@ -41,14 +41,15 @@ show `DFS_BW160_TX80RX160`, `IS_ADJ_BW_ZERO_WAIT_TX80RX160=1`, an explicit
 center channel 50. The log predicate may be driver-internal; it is not known
 to be a firmware command field.
 
-Our `9999-29`/`9999-30` patches send `CHANNEL_SWITCH` and `SET_RX_PATH` with
-`bw=160`, `ap_bw=80`, center channel 50, and AP center channel 42. They start
-the **main** RDD and call `MURU_SET_SUTX`. They neither reproduce the observed
-`ucAPBW=3` request nor implement/verify the proprietary state transition or
-the explicit MAC-TX enable step. The difference is evidence of an incomplete
-port, **not** a proven explanation for the connectivity loss.
+The initial prototype sent `CHANNEL_SWITCH` and `SET_RX_PATH` with
+`bw=160`, `ap_bw=80`, center channel 50, and AP center channel 42. It started
+the **main** RDD and called `MURU_SET_SUTX`. It neither reproduced the observed
+`ucAPBW=3` request nor implemented or verified the proprietary state
+transition or the explicit MAC-TX enable step. These were findings about the
+initial prototype, before the source-backed changes described in
+`ADJACENT_CAC_SOURCE_FINDINGS.md` were folded into patch `9999-29`.
 
-The `9999-cfg80211-notify-background-cac-abort-after-radar.patch` change in
+The `9999-02-cfg80211-notify-background-cac-abort-after-radar.patch` change in
 mac80211 fixes missing userspace notification of CAC abort after radar. It is
 independent of the RF continuity problem.
 

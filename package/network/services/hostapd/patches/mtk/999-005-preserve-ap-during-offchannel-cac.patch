@@ -11,6 +11,7 @@ Likewise, a radar event on a non-overlapping channel must update the DFS
 channel state without marking radar on the operating AP.
 
 ---
+diff --git a/src/ap/dfs.c b/src/ap/dfs.c
 --- a/src/ap/dfs.c
 +++ b/src/ap/dfs.c
 @@ -1610,11 +1610,11 @@ int hostapd_dfs_radar_detected(struct hostapd_iface *iface, int freq,
