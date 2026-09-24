@@ -1,14 +1,13 @@
-Subject: [PATCH] hostapd: stage MT798x zero-wait DFS CAC
+Subject: [PATCH] hostapd: stage MT7986 zero-wait DFS CAC
 
 Stage an 80 MHz AP on the lower non-DFS block, start background CAC
 on the adjacent upper block, then use CSA to reach the configured
 80 or 160 MHz channel when it is available. Preserve ETSI CAC and
 radar safeguards, including NOP checks before 160 MHz expansion.
 
-This path is enabled only by enable_staged_zwdfs. "Staged" describes
-the hostapd channel sequence: MT7986 uses adjacent TX80/RX160 while
-MT7981 uses a dedicated RX path. RF behavior needs hardware validation
-on both devices.
+This path requires enable_staged_zwdfs and a driver that advertises
+background radar. MT7986 uses adjacent TX80/RX160. AP continuity and
+radar detection still need hardware validation.
 ---
 diff --git a/hostapd/config_file.c b/hostapd/config_file.c
 index 87872e5..805c1c4 100644
