@@ -1,0 +1,24 @@
+Subject: [PATCH] cfg80211: observe ETSI off-channel CAC minimum on 52-64
+
+Background CAC on the 52-64 80 MHz DFS block can run while an AP
+transmits on 36-48. This is off-channel CAC, for which ETSI EN 301 893
+requires at least six minutes (rather than the 60-second in-channel
+CAC default). Apply the minimum only to ETSI background CAC centered
+on 5290 MHz; other blocks and widths keep their existing timers.
+
+---
+diff --git a/net/wireless/mlme.c b/net/wireless/mlme.c
+--- a/net/wireless/mlme.c
++++ b/net/wireless/mlme.c
+@@ -1338,6 +1338,11 @@ cfg80211_start_background_radar_detection(struct cfg80211_registered_device *rdev,
+ 	cac_time_ms = cfg80211_chandef_dfs_cac_time(&rdev->wiphy, chandef);
+ 	if (!cac_time_ms)
+ 		cac_time_ms = IEEE80211_DFS_MIN_CAC_TIME_MS;
++	/* ETSI background CAC on 52-64 needs the off-channel minimum. */
++	if (reg_get_dfs_region(&rdev->wiphy) == NL80211_DFS_ETSI &&
++	    chandef->width == NL80211_CHAN_WIDTH_80 &&
++	    chandef->center_freq1 == 5290)
++		cac_time_ms = max(cac_time_ms, 360000U);
+ 
+ 	rdev->background_radar_chandef = *chandef;
+ 	rdev->background_radar_wdev = wdev; /* Get offchain ownership */
