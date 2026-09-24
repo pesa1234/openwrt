@@ -1,4 +1,4 @@
-Subject: [PATCH] hostapd: stage experimental MT798x zero-wait DFS CAC
+Subject: [PATCH] hostapd: stage MT798x zero-wait DFS CAC
 
 Stage an 80 MHz AP on the lower non-DFS block, start background CAC
 on the adjacent upper block, then use CSA to reach the configured
@@ -61,15 +61,20 @@ index 500e05e..6e9a3af 100644
  static int dfs_get_used_n_chans(struct hostapd_iface *iface, int *seg1)
  {
  	int n_chans = 1;
-@@ -317,6 +326,81 @@ static int dfs_find_channel(struct hostapd_iface *iface,
+@@ -317,6 +326,99 @@ static int dfs_find_channel(struct hostapd_iface *iface,
  }
  
  
++static int
++hostapd_dfs_start_channel_switch_background(struct hostapd_iface *iface);
++
++
 +void hostapd_dfs_start_staged_cac(struct hostapd_iface *iface)
 +{
 +	struct hostapd_hw_modes *mode;
 +	struct hostapd_channel_data *chan;
 +	struct hostapd_channel_data *target_chan = NULL;
++	bool already_available;
 +	int target = iface->conf->staged_zwdfs_channel;
 +	int final_channel = target;
 +	int secondary_channel;
@@ -107,8 +112,12 @@ index 500e05e..6e9a3af 100644
 +
 +	for (i = 0; i < mode->num_channels; i++) {
 +		chan = &mode->channels[i];
-+		if (chan->chan != 52 ||
-+		    !dfs_chan_range_available(mode, i, 4, DFS_NO_CAC_YET))
++		if (chan->chan != 52)
++			continue;
++		already_available =
++			dfs_chan_range_available(mode, i, 4, DFS_AVAILABLE);
++		if (!already_available &&
++		    !dfs_chan_range_available(mode, i, 4, DFS_ANY_CHANNEL))
 +			continue;
 +
 +		iface->radar_background.channel = target;
@@ -116,6 +125,15 @@ index 500e05e..6e9a3af 100644
 +		iface->radar_background.secondary_channel = secondary_channel;
 +		iface->radar_background.centr_freq_seg0_idx = 58;
 +		iface->radar_background.centr_freq_seg1_idx = 0;
++		if (already_available) {
++			wpa_printf(MSG_INFO,
++				   "Staged ZWDFS: channels 52-64 already available; requesting CSA");
++			if (hostapd_dfs_start_channel_switch_background(iface))
++				wpa_printf(MSG_WARNING,
++					   "Staged ZWDFS: CSA to available channels failed");
++			return;
++		}
++
 +		iface->radar_background.cac_started = 1;
 +		iface->radar_background.temp_ch = 1;
 +		if (hostapd_start_dfs_cac(iface, iface->conf->hw_mode,
@@ -143,7 +161,7 @@ index 500e05e..6e9a3af 100644
  static void dfs_adjust_center_freq(struct hostapd_iface *iface,
  				   struct hostapd_channel_data *chan,
  				   int secondary_channel,
-@@ -1042,22 +1126,26 @@ static int hostapd_dfs_request_channel_switch(struct hostapd_iface *iface,
+@@ -1042,22 +1144,26 @@ static int hostapd_dfs_request_channel_switch(struct hostapd_iface *iface,
  					      int channel, int freq,
  					      int secondary_channel,
  					      u8 current_vht_oper_chwidth,
@@ -172,7 +190,7 @@ index 500e05e..6e9a3af 100644
 -	new_vht_oper_chwidth = hostapd_get_oper_chwidth(iface->conf);
  	hostapd_set_oper_chwidth(iface->conf, current_vht_oper_chwidth);
  	if (ieee80211_freq_to_channel_ext(freq, secondary_channel,
-@@ -1072,6 +1160,15 @@ static int hostapd_dfs_request_channel_switch(struct hostapd_iface *iface,
+@@ -1072,6 +1178,15 @@ static int hostapd_dfs_request_channel_switch(struct hostapd_iface *iface,
  	os_memset(&csa_settings, 0, sizeof(csa_settings));
  	csa_settings.cs_count = 5;
  	csa_settings.block_tx = 1;
@@ -188,7 +206,7 @@ index 500e05e..6e9a3af 100644
  	csa_settings.link_id = -1;
  #ifdef CONFIG_IEEE80211BE
  	if (iface->bss[0]->conf->mld_ap)
-@@ -1102,6 +1199,10 @@ static int hostapd_dfs_request_channel_switch(struct hostapd_iface *iface,
+@@ -1102,6 +1217,10 @@ static int hostapd_dfs_request_channel_switch(struct hostapd_iface *iface,
  	if (err) {
  		wpa_printf(MSG_ERROR,
  			   "DFS failed to calculate CSA freq params");
@@ -199,7 +217,7 @@ index 500e05e..6e9a3af 100644
  		hostapd_disable_iface(iface);
  		return err;
  	}
-@@ -1113,6 +1214,13 @@ static int hostapd_dfs_request_channel_switch(struct hostapd_iface *iface,
+@@ -1113,6 +1232,13 @@ static int hostapd_dfs_request_channel_switch(struct hostapd_iface *iface,
  	}
  
  	if (num_err == iface->num_bss) {
@@ -213,7 +231,7 @@ index 500e05e..6e9a3af 100644
  		wpa_printf(MSG_WARNING,
  			   "DFS failed to schedule CSA (%d) - trying fallback",
  			   err);
-@@ -1221,8 +1329,9 @@ hostapd_is_freq_in_current_hw_info(struct hostapd_iface *iface, int freq)
+@@ -1221,8 +1347,9 @@ hostapd_is_freq_in_current_hw_info(struct hostapd_iface *iface, int freq)
  static bool
  hostapd_dfs_is_background_event(struct hostapd_iface *iface, int freq)
  {
@@ -225,7 +243,7 @@ index 500e05e..6e9a3af 100644
  		iface->radar_background.freq == freq;
  }
  
-@@ -1231,12 +1340,60 @@ static int
+@@ -1231,12 +1358,60 @@ static int
  hostapd_dfs_start_channel_switch_background(struct hostapd_iface *iface)
  {
  	u8 current_vht_oper_chwidth = hostapd_get_oper_chwidth(iface->conf);
@@ -286,7 +304,7 @@ index 500e05e..6e9a3af 100644
  						 iface->radar_background.centr_freq_seg0_idx,
  						 iface->radar_background.centr_freq_seg1_idx);
  
-@@ -1335,7 +1492,12 @@ int hostapd_dfs_complete_cac(struct hostapd_iface *iface, int success, int freq,
+@@ -1335,7 +1510,12 @@ int hostapd_dfs_complete_cac(struct hostapd_iface *iface, int success, int freq,
  		}
  	} else if (hostapd_dfs_is_background_event(iface, freq)) {
  		iface->radar_background.cac_started = 0;
@@ -300,7 +318,7 @@ index 500e05e..6e9a3af 100644
  	}
  
  	iface->radar_detected = false;
-@@ -1469,6 +1631,15 @@ static int
+@@ -1469,6 +1649,15 @@ static int
  hostapd_dfs_background_start_channel_switch(struct hostapd_iface *iface,
  					    int freq)
  {
@@ -316,7 +334,7 @@ index 500e05e..6e9a3af 100644
  	if (!dfs_use_radar_background(iface))
  		return -1; /* Background radar chain not supported. */
  
-@@ -1533,11 +1704,26 @@ static int hostapd_dfs_start_channel_switch(struct hostapd_iface *iface)
+@@ -1533,11 +1722,26 @@ static int hostapd_dfs_start_channel_switch(struct hostapd_iface *iface)
  	if (iface->cac_started)
  		return hostapd_dfs_start_channel_switch_cac(iface);
  
@@ -344,7 +362,7 @@ index 500e05e..6e9a3af 100644
  		channel_type = DFS_ANY_CHANNEL;
  
  	/* Perform channel switch/CSA */
-@@ -1586,6 +1772,7 @@ static int hostapd_dfs_start_channel_switch(struct hostapd_iface *iface)
+@@ -1586,6 +1790,7 @@ static int hostapd_dfs_start_channel_switch(struct hostapd_iface *iface)
  						  channel->freq,
  						  secondary_channel,
  						  current_vht_oper_chwidth,
@@ -352,7 +370,7 @@ index 500e05e..6e9a3af 100644
  						  oper_centr_freq_seg0_idx,
  						  oper_centr_freq_seg1_idx);
  }
-@@ -1665,6 +1852,9 @@ int hostapd_dfs_nop_finished(struct hostapd_iface *iface, int freq,
+@@ -1665,6 +1870,9 @@ int hostapd_dfs_nop_finished(struct hostapd_iface *iface, int freq,
  	set_dfs_state(iface, freq, ht_enabled, chan_offset, chan_width,
  		      cf1, cf2, HOSTAPD_CHAN_DFS_USABLE);
  
@@ -362,7 +380,7 @@ index 500e05e..6e9a3af 100644
  	if (iface->state == HAPD_IFACE_DFS && !iface->cac_started) {
  		/* Handle cases where all channels were initially unavailable */
  		hostapd_handle_dfs(iface);
-@@ -1747,6 +1937,10 @@ int hostapd_dfs_start_cac(struct hostapd_data *hapd, int freq,
+@@ -1747,6 +1955,10 @@ int hostapd_dfs_start_cac(struct hostapd_data *hapd, int freq,
  	}
  	/* TODO: How to check CAC time for ETSI weather channels? */
  	iface->dfs_cac_ms = 60000;
