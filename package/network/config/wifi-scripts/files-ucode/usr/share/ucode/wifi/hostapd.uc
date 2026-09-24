@@ -342,7 +342,7 @@ function device_htmode_append(config) {
 
 	if (config.ieee80211ac && (config.hw_mode == 'a' || vendor_vht)) {
 		/* VHT capab */
-		if (config.vht_oper_chwidth < 2 && !config.adjacent_zwdfs_160) {
+		if (config.vht_oper_chwidth < 2 && !config.staged_zwdfs_160) {
 			config.vht160 = 0;
 			config.short_gi_160 = 0;
 		}
@@ -585,22 +585,24 @@ function generate(config) {
 	    config.band == '5g') {
 		let channel = int(config.channel);
 
+		/* The staged mode owns background CAC; disable hostapd's generic
+		 * background-radar channel rotation. */
 		config.enable_background_radar = false;
 		if (!config.chanlist &&
 		    config.htmode in [ 'VHT80', 'HE80', 'EHT80' ] &&
 		    channel in [ 36, 52, 56, 60, 64 ]) {
-			append('enable_adjacent_zwdfs', 1);
+			append('enable_staged_zwdfs', 1);
 			if (channel != 36) {
-				append('adjacent_zwdfs_channel', channel);
+				append('staged_zwdfs_channel', channel);
 				config.channel = 36;
 			}
 		} else if (!config.chanlist &&
 		           config.htmode in [ 'VHT160', 'HE160' ] &&
 		           channel in [ 36, 40, 44, 48, 52, 56, 60, 64 ]) {
-			append('enable_adjacent_zwdfs', 1);
-			append('adjacent_zwdfs_channel', channel);
-			append('adjacent_zwdfs_width', 160);
-			config.adjacent_zwdfs_160 = true;
+			append('enable_staged_zwdfs', 1);
+			append('staged_zwdfs_channel', channel);
+			append('staged_zwdfs_width', 160);
+			config.staged_zwdfs_160 = true;
 			config.channel = 36;
 			config.htmode = config.htmode == 'HE160' ? 'HE80' : 'VHT80';
 		}

@@ -7,8 +7,8 @@ radar for MT7981. Expose it when EEPROM reports at least three 5 GHz
 RX paths; UCI zero_wait_dfs controls use of this path in hostapd.
 
 Match the MediaTek path configuration: use RX path mask 0x7 for
-SET_RX_PATH and restore it after a background scan. Keep the normal
-two-stream data configuration. AP continuity and real radar detection
+channel and RX-path setup and for off-channel scan STOP. Keep the
+normal data stream count at two. AP continuity and real radar detection
 need hardware validation.
 
 ---
@@ -71,7 +71,7 @@ index b325c99..0b397a4 100644
  	}
  #endif
  
-+	/* MT7981 dedicated CAC keeps two data streams and enables RX3. */
++	/* Keep two data streams while making RX3 available for radar. */
 +	if (mt7915_mt7981_dedicated_cac_supported(phy) &&
 +	    !mt76_testmode_enabled(phy->mt76))
 +		req.rx_path = GENMASK(2, 0);

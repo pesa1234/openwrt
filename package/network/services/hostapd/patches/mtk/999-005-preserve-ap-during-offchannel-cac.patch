@@ -50,7 +50,7 @@ diff --git a/src/ap/dfs.c b/src/ap/dfs.c
  		return 0;
  	}
  
-+	/* MT7981/MT7986 adjacent CAC must not restart the lower 80 MHz AP. */
++	/* Off-channel CAC must not restart the enabled lower 80 MHz AP. */
 +	offchannel_cac = iface->state == HAPD_IFACE_ENABLED &&
 +		iface->conf->channel >= 36 && iface->conf->channel <= 48 &&
 +		hostapd_get_oper_chwidth(iface->conf) ==

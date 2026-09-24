@@ -1,11 +1,10 @@
 Subject: [PATCH] cfg80211: observe ETSI off-channel CAC minimum on 52-64
 
-The MT7986 adjacent receiver checks the 52-64 80 MHz DFS block while
-the AP transmits on 36-48. This is off-channel CAC, for which ETSI
-EN 301 893 requires at least six minutes (rather than the 60-second
-in-channel CAC default). Keep the restriction narrow to this adjacent
-prototype's block so unrelated devices and weather channels are not
-changed here.
+Background CAC on the 52-64 80 MHz DFS block can run while an AP
+transmits on 36-48. This is off-channel CAC, for which ETSI EN 301 893
+requires at least six minutes (rather than the 60-second in-channel
+CAC default). Apply the minimum only to ETSI background CAC centered
+on 5290 MHz; other blocks and widths keep their existing timers.
 
 ---
 diff --git a/net/wireless/mlme.c b/net/wireless/mlme.c
@@ -15,7 +14,7 @@ diff --git a/net/wireless/mlme.c b/net/wireless/mlme.c
  	cac_time_ms = cfg80211_chandef_dfs_cac_time(&rdev->wiphy, chandef);
  	if (!cac_time_ms)
  		cac_time_ms = IEEE80211_DFS_MIN_CAC_TIME_MS;
-+	/* Adjacent 52-64 CAC is off-channel in the ETSI region. */
++	/* ETSI background CAC on 52-64 needs the off-channel minimum. */
 +	if (reg_get_dfs_region(&rdev->wiphy) == NL80211_DFS_ETSI &&
 +	    chandef->width == NL80211_CHAN_WIDTH_80 &&
 +	    chandef->center_freq1 == 5290)
