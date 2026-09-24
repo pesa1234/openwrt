@@ -342,7 +342,7 @@ function device_htmode_append(config) {
 
 	if (config.ieee80211ac && (config.hw_mode == 'a' || vendor_vht)) {
 		/* VHT capab */
-		if (config.vht_oper_chwidth < 2) {
+		if (config.vht_oper_chwidth < 2 && !config.staged_zwdfs_160) {
 			config.vht160 = 0;
 			config.short_gi_160 = 0;
 		}
@@ -573,11 +573,40 @@ function generate(config) {
 	/* assoc/thresholds */
 	append_vars(config, [ 'rssi_reject_assoc_rssi', 'rssi_reject_assoc_timeout', 'rssi_ignore_probe_request', 'iface_max_num_sta' ]);
 
-	/* ACS / Radar*/
-	if (!phy_features.radar_background || config.band != '5g')
+	/* ACS / Radar */
+	if (!phy_features.radar_background || config.band != '5g') {
 		delete config.enable_background_radar;
-	else
-		set_default(config, 'enable_background_radar', false);
+	} else {
+		/* Ignore legacy background radar settings; staged CAC uses the
+		 * capability independently of hostapd's generic radar mode. */
+		config.enable_background_radar = false;
+	}
+
+	/* Keep the requested primary while the AP serves on the lower
+	 * non-DFS 80 MHz block during background CAC. */
+	if (config.zero_wait_dfs && phy_features.radar_background &&
+	    config.band == '5g') {
+		let channel = int(config.channel);
+
+		if (!config.chanlist &&
+		    config.htmode in [ 'VHT80', 'HE80', 'EHT80' ] &&
+		    channel in [ 36, 52, 56, 60, 64 ]) {
+			append('enable_staged_zwdfs', 1);
+			if (channel != 36) {
+				append('staged_zwdfs_channel', channel);
+				config.channel = 36;
+			}
+		} else if (!config.chanlist &&
+		           config.htmode in [ 'VHT160', 'HE160' ] &&
+		           channel in [ 36, 40, 44, 48, 52, 56, 60, 64 ]) {
+			append('enable_staged_zwdfs', 1);
+			append('staged_zwdfs_channel', channel);
+			append('staged_zwdfs_width', 160);
+			config.staged_zwdfs_160 = true;
+			config.channel = 36;
+			config.htmode = config.htmode == 'HE160' ? 'HE80' : 'VHT80';
+		}
+	}
 
 	append_vars(config, [ 'acs_chan_bias', 'acs_exclude_dfs', 'enable_background_radar' ]);
 
