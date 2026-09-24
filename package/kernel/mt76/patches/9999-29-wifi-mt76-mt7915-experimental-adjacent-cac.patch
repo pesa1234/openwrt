@@ -5,20 +5,19 @@ adjacent upper 80 MHz block through the MT7986 main RDD. Configure
 the channel and RX path for TX80/RX160, use RDD_NORMAL_START to keep
 MAC TX active, then restore the operating path when CAC stops.
 
-The module parameter is opt-in and the background radar capability
-is exposed only on MT7986. Beacon continuity and RF radar detection
-remain unvalidated; this is for debug routers only.
+The background radar capability is exposed on 5 GHz MT7986 radios.
+The UCI zero_wait_dfs option controls use of this path in hostapd.
+Beacon continuity and RF radar detection still need hardware validation.
 ---
 diff --git a/mt7915/init.c b/mt7915/init.c
 index ac2877a..df92315 100644
 --- a/mt7915/init.c
 +++ b/mt7915/init.c
-@@ -447,6 +447,11 @@ mt7915_init_wiphy(struct mt7915_phy *phy)
+@@ -447,6 +447,10 @@ mt7915_init_wiphy(struct mt7915_phy *phy)
  		wiphy_ext_feature_set(wiphy,
  				      NL80211_EXT_FEATURE_RADAR_BACKGROUND);
  
-+	if (mt7915_adjacent_cac_enable && phy->mt76->cap.has_5ghz &&
-+	    is_mt7986(&phy->dev->mt76))
++	if (phy->mt76->cap.has_5ghz && is_mt7986(&phy->dev->mt76))
 +		wiphy_ext_feature_set(wiphy,
 +				      NL80211_EXT_FEATURE_RADAR_BACKGROUND);
 +
@@ -72,19 +71,7 @@ diff --git a/mt7915/main.c b/mt7915/main.c
 index d73ddc7..41c905d 100644
 --- a/mt7915/main.c
 +++ b/mt7915/main.c
-@@ -12,6 +12,11 @@ static bool sw_aci_enable = false;
- module_param(sw_aci_enable, bool, 0644);
- MODULE_PARM_DESC(sw_aci_enable, "Enable the feature of Adjacent Channel Interference Detection");
- 
-+bool mt7915_adjacent_cac_enable;
-+module_param_named(adjacent_cac, mt7915_adjacent_cac_enable, bool, 0444);
-+MODULE_PARM_DESC(adjacent_cac,
-+		 "Experimental MT7981/MT7986 adjacent 80 MHz CAC");
-+
- static bool mt7915_dev_running(struct mt7915_dev *dev)
- {
- 	struct mt7915_phy *phy;
-@@ -397,12 +402,76 @@ static void mt7915_remove_interface(struct ieee80211_hw *hw,
+@@ -397,12 +397,76 @@ static void mt7915_remove_interface(struct ieee80211_hw *hw,
  	mt76_wcid_cleanup(&dev->mt76, &msta->wcid);
  }
  
@@ -161,7 +148,7 @@ index d73ddc7..41c905d 100644
  	if (dev->cal) {
  		ret = mt7915_mcu_apply_tx_dpd(phy);
  		if (ret)
-@@ -789,6 +858,8 @@ mt7915_start_ap(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
+@@ -789,6 +853,8 @@ mt7915_start_ap(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
  	if (err)
  		goto out;
  	err = mt7915_mcu_add_sta(dev, vif, NULL, CONN_STATE_PORT_SECURE, false);
@@ -170,7 +157,7 @@ index d73ddc7..41c905d 100644
  out:
  	mutex_unlock(&dev->mt76.mutex);
  
-@@ -799,9 +870,16 @@ static void
+@@ -799,9 +865,16 @@ static void
  mt7915_stop_ap(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
  	       struct ieee80211_bss_conf *link_conf)
  {
@@ -187,11 +174,11 @@ index d73ddc7..41c905d 100644
  	mt7915_mcu_add_sta(dev, vif, NULL, CONN_STATE_DISCONNECT, false);
  	mutex_unlock(&dev->mt76.mutex);
  }
-@@ -1977,6 +2055,49 @@ mt7915_set_radar_background(struct ieee80211_hw *hw,
+@@ -1977,6 +2050,49 @@ mt7915_set_radar_background(struct ieee80211_hw *hw,
  	int ret = -EINVAL;
  	bool running;
  
-+	if (is_mt7986(&dev->mt76) && mt7915_adjacent_cac_enable) {
++	if (is_mt7986(&dev->mt76)) {
 +		mutex_lock(&dev->mt76.mutex);
 +
 +		if (!chandef) {
@@ -340,7 +327,7 @@ index 8c90917..f699e08 100644
  	struct cfg80211_chan_def rdd2_chandef;
  	struct mt7915_phy *rdd2_phy;
  
-+	/* MT7981/MT7986 adjacent 80 MHz CAC using the main RDD */
++	/* MT7986 adjacent 80 MHz CAC using the main RDD */
 +	struct cfg80211_chan_def adjacent_cac_chandef;
 +	struct mt7915_phy *adjacent_cac_phy;
 +	bool adjacent_radar_reported;
@@ -356,14 +343,13 @@ index 8c90917..f699e08 100644
  int mt7915_mcu_set_tx(struct mt7915_dev *dev, struct ieee80211_vif *vif);
  int mt7915_mcu_update_edca(struct mt7915_dev *dev, void *req);
  int mt7915_mcu_set_fixed_rate_ctrl(struct mt7915_dev *dev,
-@@ -848,6 +855,10 @@ bool mt7915_rx_check(struct mt76_dev *mdev, void *data, int len);
+@@ -848,6 +855,9 @@ bool mt7915_rx_check(struct mt76_dev *mdev, void *data, int len);
  void mt7915_stats_work(struct work_struct *work);
  int mt76_dfs_start_rdd(struct mt7915_dev *dev, bool force);
  int mt7915_dfs_init_radar_detector(struct mt7915_phy *phy);
 +int mt7915_dfs_start_adjacent_cac(struct mt7915_phy *phy);
 +int mt7915_dfs_stop_adjacent_cac(struct mt7915_phy *phy);
 +
-+extern bool mt7915_adjacent_cac_enable;
  void mt7915_set_stream_he_caps(struct mt7915_phy *phy);
  void mt7915_set_stream_vht_txbf_caps(struct mt7915_phy *phy);
  void mt7915_update_channel(struct mt76_phy *mphy);

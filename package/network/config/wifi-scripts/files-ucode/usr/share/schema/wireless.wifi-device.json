@@ -181,6 +181,11 @@
 			"description": "This feature allows CAC to be run on dedicated radio RF chains",
 			"type": "boolean"
 		},
+		"zero_wait_dfs": {
+			"description": "Stage an AP while background CAC checks an adjacent DFS channel block",
+			"type": "boolean",
+			"default": false
+		},
 		"etxbfen": {
 			"description": "Enable explicit transmit beamforming capabilities",
 			"type": "boolean",

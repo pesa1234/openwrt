@@ -1,30 +1,22 @@
-Subject: [PATCH] wifi: mt76: mt7915: try dedicated CAC on GL-MT3000
+Subject: [PATCH] wifi: mt76: mt7915: add MT7981 dedicated CAC
 
 MT7981 uses the firmware off-channel scan command and RDD2 for its
 dedicated receive path, unlike the MT7986 adjacent TX80/RX160 mode.
 mt76 already sends these commands, but does not advertise background
-radar for MT7981. Enable it only with dedicated_cac=Y on GL-MT3000
-when EEPROM reports at least three 5 GHz RX paths.
+radar for MT7981. Expose it when EEPROM reports at least three 5 GHz
+RX paths; UCI zero_wait_dfs controls use of this path in hostapd.
 
 Match the MediaTek path configuration: use RX path mask 0x7 for
 SET_RX_PATH and restore it after a background scan. Keep the normal
-two-stream data configuration. This remains an opt-in experiment;
-AP continuity and real radar detection need hardware validation.
+two-stream data configuration. AP continuity and real radar detection
+need hardware validation.
 
 ---
 diff --git a/mt7915/eeprom.c b/mt7915/eeprom.c
 index 20a9a65..7b056c1 100644
 --- a/mt7915/eeprom.c
 +++ b/mt7915/eeprom.c
-@@ -3,6 +3,7 @@
- 
- #include <linux/firmware.h>
- #include <linux/moduleparam.h>
-+#include <linux/of.h>
- #include "mt7915.h"
- #include "eeprom.h"
- 
-@@ -690,6 +691,22 @@ mt7915_eeprom_has_background_radar(struct mt7915_dev *dev)
+@@ -690,6 +690,21 @@ mt7915_eeprom_has_background_radar(struct mt7915_dev *dev)
  	return false;
  }
  
@@ -34,9 +26,8 @@ index 20a9a65..7b056c1 100644
 +	u8 *eeprom = dev->mt76.eeprom.data;
 +	u8 conf;
 +
-+	if (!mt7915_dedicated_cac_enable || !is_mt7981(&dev->mt76) ||
-+	    !phy->mt76->cap.has_5ghz || !eeprom ||
-+	    !of_machine_is_compatible("glinet,gl-mt3000"))
++	if (!is_mt7981(&dev->mt76) || !phy->mt76->cap.has_5ghz ||
++	    !eeprom)
 +		return false;
 +
 +	conf = eeprom[MT_EE_WIFI_CONF + phy->mt76->band_idx];
@@ -62,24 +53,6 @@ index df92315..e0f84f9 100644
  	ieee80211_hw_set(hw, HAS_RATE_CONTROL);
  	ieee80211_hw_set(hw, SUPPORTS_TX_ENCAP_OFFLOAD);
  	ieee80211_hw_set(hw, SUPPORTS_RX_DECAP_OFFLOAD);
-diff --git a/mt7915/main.c b/mt7915/main.c
-index 41c905d..4395ca3 100644
---- a/mt7915/main.c
-+++ b/mt7915/main.c
-@@ -15,7 +15,12 @@ MODULE_PARM_DESC(sw_aci_enable, "Enable the feature of Adjacent Channel Interfer
- bool mt7915_adjacent_cac_enable;
- module_param_named(adjacent_cac, mt7915_adjacent_cac_enable, bool, 0444);
- MODULE_PARM_DESC(adjacent_cac,
--		 "Experimental MT7981/MT7986 adjacent 80 MHz CAC");
-+		 "Experimental MT7986 adjacent 80 MHz CAC");
-+
-+bool mt7915_dedicated_cac_enable;
-+module_param_named(dedicated_cac, mt7915_dedicated_cac_enable, bool, 0444);
-+MODULE_PARM_DESC(dedicated_cac,
-+		 "Experimental GL-MT3000 dedicated RX background CAC");
- 
- static bool mt7915_dev_running(struct mt7915_dev *dev)
- {
 diff --git a/mt7915/mcu.c b/mt7915/mcu.c
 index b325c99..0b397a4 100644
 --- a/mt7915/mcu.c
@@ -110,11 +83,9 @@ diff --git a/mt7915/mt7915.h b/mt7915/mt7915.h
 index f699e08..dfea170 100644
 --- a/mt7915/mt7915.h
 +++ b/mt7915/mt7915.h
-@@ -859,6 +859,8 @@ int mt7915_dfs_start_adjacent_cac(struct mt7915_phy *phy);
+@@ -859,5 +859,6 @@ int mt7915_dfs_start_adjacent_cac(struct mt7915_phy *phy);
  int mt7915_dfs_stop_adjacent_cac(struct mt7915_phy *phy);
  
- extern bool mt7915_adjacent_cac_enable;
-+extern bool mt7915_dedicated_cac_enable;
 +bool mt7915_mt7981_dedicated_cac_supported(struct mt7915_phy *phy);
  void mt7915_set_stream_he_caps(struct mt7915_phy *phy);
  void mt7915_set_stream_vht_txbf_caps(struct mt7915_phy *phy);

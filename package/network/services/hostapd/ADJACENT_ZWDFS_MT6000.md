@@ -1,19 +1,18 @@
 # Experimental MT6000 adjacent zero-wait DFS
 
-This implementation is opt-in and restricted to GL-MT6000 with
-`mt7915e adjacent_cac=Y`. It reuses the LuCI **background radar** checkbox
-(`wireless.radio1.background_radar=1`). On this board, the generated hostapd
+Enable **Zero-wait DFS** on the 5 GHz radio in LuCI, or set
+`wireless.radio1.zero_wait_dfs=1` in UCI. MT7986 5 GHz radios advertise the
+background radar capability automatically; no `mt7915e` module parameter is
+needed. For a supported fixed channel and width, the generated hostapd
 configuration uses `enable_adjacent_zwdfs=1` and
-`enable_background_radar=0`; other devices retain the generic background-radar
-setting. Leave the UI wording unchanged while this is experimental.
+`enable_background_radar=0`. The default UCI value is disabled.
 
 With the 5 GHz AP configured for HE80 and legal DFS-ETSI operation, choose
 channel 52, 56, 60, or 64 in UCI. The generator remembers that primary as
 `adjacent_zwdfs_channel` while hostapd starts temporarily on 36/80. It runs
 background CAC on the chosen 80 MHz DFS block, then moves to the selected
-primary by CSA after CAC succeeds. Channel 36 retains the original prototype
-default of checking 52. Radar during background CAC aborts the check without
-moving the AP. Radar on the operating DFS channel makes hostapd select only
+primary by CSA after CAC succeeds. Channel 36 checks 52 by default.
+Radar during background CAC aborts the check without moving the AP. Radar on the operating DFS channel makes hostapd select only
 available channels for its first CSA attempt. If none exist, the ordinary
 hostapd fallback can still incur CAC or disable/restart the AP; this is not a
 guarantee of uninterrupted service. NOP is never bypassed.
@@ -29,13 +28,13 @@ adjacent to a non-DFS 80 MHz block and uses ordinary DFS, not this path.
 On a debug router after flashing, verify before injecting radar:
 
 ```
-cat /sys/module/mt7915e/parameters/adjacent_cac
+uci get wireless.radio1.zero_wait_dfs
 grep -E '^(channel|enable_background_radar|enable_adjacent_zwdfs|adjacent_zwdfs_channel|adjacent_zwdfs_width|vht_oper_chwidth)=' /var/run/hostapd-phy1.conf
 iw dev phy1-ap0 info
 logread | grep -E 'Adjacent ZWDFS|DFS-CAC|AP-CSA|DFS-RADAR' | tail -40
 ```
 
-Expected: module parameter `Y`, `enable_adjacent_zwdfs=1`,
+Expected: UCI value `1`, `enable_adjacent_zwdfs=1`,
 `enable_background_radar=0`, `channel=36`, and
 `adjacent_zwdfs_channel=<requested primary>`. For HE80, background CAC uses
 the requested DFS primary; for HE160 with a lower-block primary it checks

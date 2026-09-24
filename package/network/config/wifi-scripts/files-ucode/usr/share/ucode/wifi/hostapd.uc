@@ -579,40 +579,30 @@ function generate(config) {
 	else
 		set_default(config, 'enable_background_radar', false);
 
-	/* MT7986 uses adjacent RX; MT7981 uses a dedicated third RX path.
-	 * Both stage the AP on the lower 80 MHz block for this experiment. */
-	if (config.enable_background_radar) {
-		let board = fs.readfile('/tmp/sysinfo/board_name') || '';
-		let enabled =
-			(match(board, /^glinet,gl-mt6000/) &&
-			 match(fs.readfile('/sys/module/mt7915e/parameters/adjacent_cac') || '', /^Y/)) ||
-			(match(board, /^glinet,gl-mt3000/) &&
-			 match(fs.readfile('/sys/module/mt7915e/parameters/dedicated_cac') || '', /^Y/));
+	/* Keep the requested primary while the AP serves on the lower
+	 * non-DFS 80 MHz block during background CAC. */
+	if (config.zero_wait_dfs && phy_features.radar_background &&
+	    config.band == '5g') {
+		let channel = int(config.channel);
 
-		if (enabled) {
-			let channel = int(config.channel);
-
-			config.enable_background_radar = false;
-			/* Keep the requested primary; use channel 36 while the DFS
-			 * block completes background CAC. */
-			if (!config.chanlist &&
-			    config.htmode in [ 'VHT80', 'HE80', 'EHT80' ] &&
-			    channel in [ 36, 52, 56, 60, 64 ]) {
-				append('enable_adjacent_zwdfs', 1);
-				if (channel != 36) {
-					append('adjacent_zwdfs_channel', channel);
-					config.channel = 36;
-				}
-			} else if (!config.chanlist &&
-			           config.htmode in [ 'VHT160', 'HE160' ] &&
-			           channel in [ 36, 40, 44, 48, 52, 56, 60, 64 ]) {
-				append('enable_adjacent_zwdfs', 1);
+		config.enable_background_radar = false;
+		if (!config.chanlist &&
+		    config.htmode in [ 'VHT80', 'HE80', 'EHT80' ] &&
+		    channel in [ 36, 52, 56, 60, 64 ]) {
+			append('enable_adjacent_zwdfs', 1);
+			if (channel != 36) {
 				append('adjacent_zwdfs_channel', channel);
-				append('adjacent_zwdfs_width', 160);
-				config.adjacent_zwdfs_160 = true;
 				config.channel = 36;
-				config.htmode = config.htmode == 'HE160' ? 'HE80' : 'VHT80';
 			}
+		} else if (!config.chanlist &&
+		           config.htmode in [ 'VHT160', 'HE160' ] &&
+		           channel in [ 36, 40, 44, 48, 52, 56, 60, 64 ]) {
+			append('enable_adjacent_zwdfs', 1);
+			append('adjacent_zwdfs_channel', channel);
+			append('adjacent_zwdfs_width', 160);
+			config.adjacent_zwdfs_160 = true;
+			config.channel = 36;
+			config.htmode = config.htmode == 'HE160' ? 'HE80' : 'VHT80';
 		}
 	}
 
