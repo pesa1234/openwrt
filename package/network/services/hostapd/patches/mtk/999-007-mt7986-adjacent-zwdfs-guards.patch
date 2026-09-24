@@ -1,0 +1,40 @@
+From: SmartWRT
+Subject: [PATCH] hostapd: guard adjacent CSA and keep ETSI policy elsewhere
+
+Only the validated 52/80 operating channel uses immediate-availability
+selection after radar. Do not let a late CAC completion move an AP that
+has already left the non-DFS anchor.
+---
+--- a/src/ap/dfs.c
++++ b/src/ap/dfs.c
+@@ -1302,6 +1302,14 @@
+ 	if (dfs_use_adjacent_zwdfs(iface)) {
++		if (iface->state != HAPD_IFACE_ENABLED ||
++		    iface->conf->channel != 36 ||
++		    hostapd_get_oper_chwidth(iface->conf) !=
++			CONF_OPER_CHWIDTH_80MHZ ||
++		    hostapd_get_oper_centr_freq_seg0_idx(iface->conf) != 42) {
++			iface->radar_background.channel = -1;
++			return 0;
++		}
+ 		ret = hostapd_dfs_request_channel_switch(iface, 52, 5260, 1,
+ 						 current_vht_oper_chwidth, 58, 0);
+ 		iface->radar_background.channel = -1;
+ 		return ret;
+ 	}
+@@ -1624,9 +1632,13 @@
+ 	/*
+ 	 * Allow selection of DFS channel in ETSI to comply with
+ 	 * uniform spreading.
+ 	 */
+-	if (iface->dfs_domain == HOSTAPD_DFS_REGION_ETSI &&
+-	    !dfs_use_adjacent_zwdfs(iface))
++	if (iface->dfs_domain == HOSTAPD_DFS_REGION_ETSI &&
++	    !(dfs_use_adjacent_zwdfs(iface) &&
++	      iface->conf->channel == 52 &&
++	      hostapd_get_oper_chwidth(iface->conf) ==
++		CONF_OPER_CHWIDTH_80MHZ &&
++	      hostapd_get_oper_centr_freq_seg0_idx(iface->conf) == 58))
+ 		channel_type = DFS_ANY_CHANNEL;
+ 
+ 	/* Perform channel switch/CSA */

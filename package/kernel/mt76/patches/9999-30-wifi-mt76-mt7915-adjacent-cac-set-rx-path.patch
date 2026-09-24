@@ -1,0 +1,37 @@
+Subject: [PATCH] wifi: mt76: mt7915: configure RX path for adjacent CAC
+
+The adjacent TX80/RX160 experiment previously sent only CHANNEL_SWITCH.
+Program SET_RX_PATH as well before starting the main radar detector, and
+restore the normal RX path when adjacent CAC stops or the AP channel changes.
+
+---
+diff --git a/mt7915/main.c b/mt7915/main.c
+--- a/mt7915/main.c
++++ b/mt7915/main.c
+@@ -423,3 +423,7 @@
++	ret = mt7915_mcu_set_chan_info(phy, MCU_EXT_CMD(SET_RX_PATH));
++	if (!err)
++		err = ret;
++
+ 	ret = mt7915_mcu_set_adjacent_su(phy, false);
+ 	if (!err)
+ 		err = ret;
+@@ -2082,3 +2086,5 @@
+ 		ret = mt7915_mcu_set_chan_info(phy, MCU_EXT_CMD(CHANNEL_SWITCH));
+ 		if (!ret)
++			ret = mt7915_mcu_set_chan_info(phy, MCU_EXT_CMD(SET_RX_PATH));
++		if (!ret)
+ 			ret = mt7915_dfs_start_adjacent_cac(phy);
+diff --git a/mt7915/mcu.c b/mt7915/mcu.c
+--- a/mt7915/mcu.c
++++ b/mt7915/mcu.c
+@@ -3192,7 +3192,8 @@
+-	if (cmd == MCU_EXT_CMD(CHANNEL_SWITCH) &&
++	if ((cmd == MCU_EXT_CMD(CHANNEL_SWITCH) ||
++	     cmd == MCU_EXT_CMD(SET_RX_PATH)) &&
+ 	    READ_ONCE(dev->adjacent_cac_phy) == phy) {
+ 		req.center_ch = 50;
+ 		req.bw = CMD_CBW_160MHZ;
+ 		req.ap_bw = CMD_CBW_80MHZ;
+ 		req.ap_center_ch = 42;
+ 	}

@@ -1,0 +1,32 @@
+From: SmartWRT
+Subject: [PATCH] hostapd: recheck cleared upper half before 160 MHz CSA
+
+The background CAC completion and a radar notification can race. Do not
+expand the lower 80 MHz AP unless every channel in the upper DFS half is
+still available immediately before scheduling the 160 MHz CSA.
+
+--- a/src/ap/dfs.c
++++ b/src/ap/dfs.c
+@@ -1342,6 +1342,7 @@ hostapd_dfs_start_channel_switch_background(struct hostapd_iface *iface)
+ 	u8 current_vht_oper_chwidth = hostapd_get_oper_chwidth(iface->conf);
+ 	int final_channel = iface->conf->adjacent_zwdfs_channel;
+ 	int secondary_channel;
++	int i;
+ 	int ret;
+ 
+ 	if (dfs_use_adjacent_zwdfs(iface)) {
+@@ -1366,5 +1367,14 @@ hostapd_dfs_start_channel_switch_background(struct hostapd_iface *iface)
+ 				return -1;
+ 			}
+ 			secondary_channel = ((final_channel - 36) / 4) % 2 ? -1 : 1;
++			for (i = 0; i < iface->current_mode->num_channels; i++)
++				if (iface->current_mode->channels[i].chan == 52)
++					break;
++			if (i == iface->current_mode->num_channels ||
++			    !dfs_chan_range_available(iface->current_mode, i, 4,
++						      DFS_AVAILABLE)) {
++				iface->radar_background.channel = -1;
++				return -1;
++			}
+ 			ret = hostapd_dfs_request_channel_switch(
+ 				iface, final_channel, 5000 + 5 * final_channel,

@@ -342,7 +342,7 @@ function device_htmode_append(config) {
 
 	if (config.ieee80211ac && (config.hw_mode == 'a' || vendor_vht)) {
 		/* VHT capab */
-		if (config.vht_oper_chwidth < 2) {
+		if (config.vht_oper_chwidth < 2 && !config.adjacent_zwdfs_160) {
 			config.vht160 = 0;
 			config.short_gi_160 = 0;
 		}
@@ -578,6 +578,29 @@ function generate(config) {
 		delete config.enable_background_radar;
 	else
 		set_default(config, 'enable_background_radar', false);
+
+	/* MT7986 adjacent RX is not an independent background radar chain. */
+	if (config.enable_background_radar &&
+	    match(fs.readfile('/tmp/sysinfo/board_name') || '', /glinet,gl-mt6000/) &&
+	    match(fs.readfile('/sys/module/mt7915e/parameters/adjacent_cac') || '', /^Y/)) {
+		config.enable_background_radar = false;
+		append('enable_adjacent_zwdfs', 1);
+		/* Keep the requested primary channel; run the AP on the lower
+		 * non-DFS 80 MHz block while the upper block completes CAC. */
+		if (config.htmode in [ 'VHT80', 'HE80', 'EHT80' ] &&
+		    int(config.channel) in [ 52, 56, 60, 64 ] && !config.chanlist) {
+			append('adjacent_zwdfs_channel', config.channel);
+			config.channel = 36;
+		} else if (config.htmode in [ 'VHT160', 'HE160' ] &&
+		           int(config.channel) in [ 36, 40, 44, 48, 52, 56, 60, 64 ] &&
+		           !config.chanlist) {
+			append('adjacent_zwdfs_channel', config.channel);
+			append('adjacent_zwdfs_width', 160);
+			config.adjacent_zwdfs_160 = true;
+			config.channel = 36;
+			config.htmode = config.htmode == 'HE160' ? 'HE80' : 'VHT80';
+		}
+	}
 
 	append_vars(config, [ 'acs_chan_bias', 'acs_exclude_dfs', 'enable_background_radar' ]);
 

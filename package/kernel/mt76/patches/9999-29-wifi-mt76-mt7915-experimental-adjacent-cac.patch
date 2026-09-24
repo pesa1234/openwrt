@@ -1,0 +1,348 @@
+Subject: [PATCH] wifi: mt76: prototype adjacent CAC on MT7981 and MT7986
+
+Allow an explicit opt-in to monitor the upper DFS 80 MHz block while an AP
+operates on the lower non-DFS 80 MHz block. Reject all other background CAC
+requests. Keep the module option disabled by default pending on-device RF and
+hostapd integration tests.
+
+---
+diff --git a/mt7915/mt7915.h b/mt7915/mt7915.h
+--- a/mt7915/mt7915.h
++++ b/mt7915/mt7915.h
+@@ -335,6 +335,7 @@
+ 	u8 slottime;
+ 
+ 	u16 rdd_hw_value;
++	u8 ap_count;
+ 
+ 	u32 trb_ts;
+ 
+@@ -408,6 +409,11 @@
+ 	struct cfg80211_chan_def rdd2_chandef;
+ 	struct mt7915_phy *rdd2_phy;
+ 
++	/* MT7981/MT7986 adjacent 80 MHz CAC using the main RDD */
++	struct cfg80211_chan_def adjacent_cac_chandef;
++	struct mt7915_phy *adjacent_cac_phy;
++	bool adjacent_radar_reported;
++
+ 	u16 chainmask;
+ 	u16 chainshift;
+ 	u32 hif_idx;
+@@ -710,6 +716,7 @@
+ 			struct ieee80211_sta *sta);
+ int mt7915_set_channel(struct mt76_phy *mphy);
+ int mt7915_mcu_set_chan_info(struct mt7915_phy *phy, int cmd);
++int mt7915_mcu_set_adjacent_su(struct mt7915_phy *phy, bool enable);
+ int mt7915_mcu_set_tx(struct mt7915_dev *dev, struct ieee80211_vif *vif);
+ int mt7915_mcu_update_edca(struct mt7915_dev *dev, void *req);
+ int mt7915_mcu_set_fixed_rate_ctrl(struct mt7915_dev *dev,
+@@ -848,6 +855,10 @@
+ void mt7915_stats_work(struct work_struct *work);
+ int mt76_dfs_start_rdd(struct mt7915_dev *dev, bool force);
+ int mt7915_dfs_init_radar_detector(struct mt7915_phy *phy);
++int mt7915_dfs_start_adjacent_cac(struct mt7915_phy *phy);
++int mt7915_dfs_stop_adjacent_cac(struct mt7915_phy *phy);
++
++extern bool mt7915_adjacent_cac_enable;
+ void mt7915_set_stream_he_caps(struct mt7915_phy *phy);
+ void mt7915_set_stream_vht_txbf_caps(struct mt7915_phy *phy);
+ void mt7915_update_channel(struct mt76_phy *mphy);
+diff --git a/mt7915/main.c b/mt7915/main.c
+--- a/mt7915/main.c
++++ b/mt7915/main.c
+@@ -12,6 +12,11 @@
+ module_param(sw_aci_enable, bool, 0644);
+ MODULE_PARM_DESC(sw_aci_enable, "Enable the feature of Adjacent Channel Interference Detection");
+ 
++bool mt7915_adjacent_cac_enable;
++module_param_named(adjacent_cac, mt7915_adjacent_cac_enable, bool, 0444);
++MODULE_PARM_DESC(adjacent_cac,
++		 "Experimental MT7981/MT7986 adjacent 80 MHz CAC");
++
+ static bool mt7915_dev_running(struct mt7915_dev *dev)
+ {
+ 	struct mt7915_phy *phy;
+@@ -397,12 +402,72 @@
+ 	mt76_wcid_cleanup(&dev->mt76, &msta->wcid);
+ }
+ 
++static int mt7915_stop_adjacent_cac(struct mt7915_phy *phy, bool restore)
++{
++	struct mt7915_dev *dev = phy->dev;
++	int err, ret;
++
++	if (READ_ONCE(dev->adjacent_cac_phy) != phy)
++		return 0;
++
++	WRITE_ONCE(dev->adjacent_cac_phy, NULL);
++	WRITE_ONCE(dev->adjacent_radar_reported, false);
++	err = mt7915_dfs_stop_adjacent_cac(phy);
++
++	if (restore) {
++		ret = mt7915_mcu_set_chan_info(phy, MCU_EXT_CMD(CHANNEL_SWITCH));
++		if (!err)
++			err = ret;
++	}
++
++	ret = mt7915_mcu_set_adjacent_su(phy, false);
++	if (!err)
++		err = ret;
++
++	return err;
++}
++
++static bool
++mt7915_adjacent_cac_valid(struct mt7915_phy *phy,
++			  struct cfg80211_chan_def *target)
++{
++	struct cfg80211_chan_def *ap = &phy->mt76->chandef;
++	int dfs;
++
++	if (!target || !cfg80211_chandef_valid(target) ||
++	    !cfg80211_chandef_valid(ap) ||
++	    !test_bit(MT76_STATE_RUNNING, &phy->mt76->state) ||
++	    !phy->ap_count ||
++	    phy->mt76->offchannel ||
++	    phy->mt76->dfs_state != MT_DFS_STATE_DISABLED ||
++	    ap->width != NL80211_CHAN_WIDTH_80 ||
++	    target->width != NL80211_CHAN_WIDTH_80 ||
++	    ap->center_freq1 != 5210 ||
++	    target->center_freq1 != 5290 ||
++	    ap->chan->band != NL80211_BAND_5GHZ ||
++	    target->chan->band != NL80211_BAND_5GHZ)
++		return false;
++
++	dfs = cfg80211_chandef_dfs_required(phy->mt76->hw->wiphy, target,
++					 NL80211_IFTYPE_AP);
++	return dfs > 0;
++}
++
+ int mt7915_set_channel(struct mt76_phy *mphy)
+ {
+ 	struct mt7915_phy *phy = mphy->priv;
+ 	struct mt7915_dev *dev = phy->dev;
+ 	int ret;
+ 
++	if (READ_ONCE(dev->adjacent_cac_phy) == phy) {
++		ret = mt7915_stop_adjacent_cac(phy, false);
++		cfg80211_background_cac_abort(mphy->hw->wiphy);
++		if (ret)
++			dev_warn(dev->mt76.dev,
++				 "failed to stop adjacent CAC before channel change: %d\n",
++				 ret);
++	}
++
+ 	if (dev->cal) {
+ 		ret = mt7915_mcu_apply_tx_dpd(phy);
+ 		if (ret)
+@@ -789,6 +854,8 @@
+ 	if (err)
+ 		goto out;
+ 	err = mt7915_mcu_add_sta(dev, vif, NULL, CONN_STATE_PORT_SECURE, false);
++	if (!err)
++		phy->ap_count++;
+ out:
+ 	mutex_unlock(&dev->mt76.mutex);
+ 
+@@ -799,9 +866,16 @@
+ mt7915_stop_ap(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
+ 	       struct ieee80211_bss_conf *link_conf)
+ {
++	struct mt7915_phy *phy = mt7915_hw_phy(hw);
+ 	struct mt7915_dev *dev = mt7915_hw_dev(hw);
+ 
+ 	mutex_lock(&dev->mt76.mutex);
++	if (phy->ap_count)
++		phy->ap_count--;
++	if (!phy->ap_count && READ_ONCE(dev->adjacent_cac_phy) == phy) {
++		mt7915_stop_adjacent_cac(phy, true);
++		cfg80211_background_cac_abort(hw->wiphy);
++	}
+ 	mt7915_mcu_add_sta(dev, vif, NULL, CONN_STATE_DISCONNECT, false);
+ 	mutex_unlock(&dev->mt76.mutex);
+ }
+@@ -1977,6 +2051,45 @@
+ 	int ret = -EINVAL;
+ 	bool running;
+ 
++	if ((is_mt7981(&dev->mt76) || is_mt7986(&dev->mt76)) &&
++	    mt7915_adjacent_cac_enable) {
++		mutex_lock(&dev->mt76.mutex);
++
++		if (!chandef) {
++			ret = dev->adjacent_cac_phy ?
++				mt7915_stop_adjacent_cac(dev->adjacent_cac_phy, true) : 0;
++			goto adjacent_out;
++		}
++
++		if (dev->adjacent_cac_phy) {
++			ret = -EBUSY;
++			goto adjacent_out;
++		}
++
++		if (dev->mt76.region == NL80211_DFS_UNSET ||
++		    !mt7915_adjacent_cac_valid(phy, chandef)) {
++			ret = -EOPNOTSUPP;
++			goto adjacent_out;
++		}
++
++		ret = mt7915_mcu_set_adjacent_su(phy, true);
++		if (ret)
++			goto adjacent_out;
++
++		dev->adjacent_cac_chandef = *chandef;
++		WRITE_ONCE(dev->adjacent_radar_reported, false);
++		WRITE_ONCE(dev->adjacent_cac_phy, phy);
++		ret = mt7915_mcu_set_chan_info(phy, MCU_EXT_CMD(CHANNEL_SWITCH));
++		if (!ret)
++			ret = mt7915_dfs_start_adjacent_cac(phy);
++		if (ret)
++			mt7915_stop_adjacent_cac(phy, true);
++
++adjacent_out:
++		mutex_unlock(&dev->mt76.mutex);
++		return ret;
++	}
++
+ 	mutex_lock(&dev->mt76.mutex);
+ 
+ 	if (dev->mt76.region == NL80211_DFS_UNSET)
+diff --git a/mt7915/init.c b/mt7915/init.c
+--- a/mt7915/init.c
++++ b/mt7915/init.c
+@@ -447,6 +447,11 @@
+ 		wiphy_ext_feature_set(wiphy,
+ 				      NL80211_EXT_FEATURE_RADAR_BACKGROUND);
+ 
++	if (mt7915_adjacent_cac_enable && phy->mt76->cap.has_5ghz &&
++	    (is_mt7981(&phy->dev->mt76) || is_mt7986(&phy->dev->mt76)))
++		wiphy_ext_feature_set(wiphy,
++				      NL80211_EXT_FEATURE_RADAR_BACKGROUND);
++
+ 	ieee80211_hw_set(hw, HAS_RATE_CONTROL);
+ 	ieee80211_hw_set(hw, SUPPORTS_TX_ENCAP_OFFLOAD);
+ 	ieee80211_hw_set(hw, SUPPORTS_RX_DECAP_OFFLOAD);
+diff --git a/mt7915/mcu.c b/mt7915/mcu.c
+--- a/mt7915/mcu.c
++++ b/mt7915/mcu.c
+@@ -317,12 +317,27 @@
+ {
+ 	struct mt76_phy *mphy = &dev->mt76.phy;
+ 	struct mt7915_phy *phy;
++	struct mt7915_phy *adjacent;
+ 	struct cfg80211_chan_def *chandef;
+ 	struct mt7915_mcu_rdd_report *r;
+ 	u32 sku;
+ 
+ 	r = (struct mt7915_mcu_rdd_report *)skb->data;
+ 
++	adjacent = READ_ONCE(dev->adjacent_cac_phy);
++	if (adjacent &&
++	    r->rdd_idx == mt7915_get_rdd_idx(adjacent, false)) {
++		if (READ_ONCE(dev->adjacent_radar_reported))
++			return;
++
++		WRITE_ONCE(dev->adjacent_radar_reported, true);
++		cfg80211_background_radar_event(adjacent->mt76->hw->wiphy,
++						&dev->adjacent_cac_chandef,
++						GFP_ATOMIC);
++		dev->hw_pattern++;
++		return;
++	}
++
+ 	switch (r->rdd_idx) {
+ 	case MT_RDD_IDX_BAND0:
+ 		break;
+@@ -350,6 +365,12 @@
+ 	phy = (struct mt7915_phy *)mphy->priv;
+ 	chandef = &phy->mt76->chandef;
+ 
++	/* A late event from the adjacent CAC is not radar on the lower AP. */
++	if ((is_mt7981(&dev->mt76) || is_mt7986(&dev->mt76)) &&
++	    r->rdd_idx != MT_RDD_IDX_BACKGROUND &&
++	    phy->mt76->dfs_state == MT_DFS_STATE_DISABLED)
++		return;
++
+ 	if (phy->rdd_hw_value == chandef->chan->hw_value) {
+ 		dev_info(dev->mt76.dev,
+ 			 "%s: radar detection for channel=%u in progress, ignore r->rdd_idx=%d\n",
+@@ -3164,6 +3185,18 @@
+ 		req.center_ch2 = ieee80211_frequency_to_channel(freq2);
+ 	}
+ 
++	/*
++	 * Keep the AP at 80 MHz while widening the receiver for the
++	 * adjacent DFS 80 MHz CAC.
++	 */
++	if (cmd == MCU_EXT_CMD(CHANNEL_SWITCH) &&
++	    READ_ONCE(dev->adjacent_cac_phy) == phy) {
++		req.center_ch = 50;
++		req.bw = CMD_CBW_160MHZ;
++		req.ap_bw = CMD_CBW_80MHZ;
++		req.ap_center_ch = 42;
++	}
++
+ 	return mt76_mcu_send_msg(&dev->mt76, cmd, &req, sizeof(req), true);
+ }
+ 
+@@ -5100,6 +5133,21 @@
+         }
+ }
+ 
++int mt7915_mcu_set_adjacent_su(struct mt7915_phy *phy, bool enable)
++{
++	struct mt7915_dev *dev = phy->dev;
++	struct {
++		__le32 cmd;
++		u8 enable_su;
++	} __packed req = {
++		.cmd = cpu_to_le32(MURU_SET_SUTX),
++		.enable_su = enable,
++	};
++
++	return mt76_mcu_send_msg(&dev->mt76, MCU_EXT_CMD(MURU_CTRL), &req,
++				 sizeof(req), false);
++}
++
+ void mt7915_mcu_set_ppdu_tx_type(struct mt7915_phy *phy, u8 ppdu_type)
+ {
+ 	struct mt7915_dev *dev = phy->dev;
+diff --git a/mt7915/mac.c b/mt7915/mac.c
+--- a/mt7915/mac.c
++++ b/mt7915/mac.c
+@@ -2202,6 +2202,34 @@
+ 	return mt7915_mcu_set_pulse_th(dev, &radar_specs->pulse_th);
+ }
+ 
++int mt7915_dfs_start_adjacent_cac(struct mt7915_phy *phy)
++{
++	int err;
++
++	err = mt7915_dfs_init_radar_specs(phy);
++	if (err)
++		return err;
++
++	return mt7915_dfs_start_radar_detector(phy);
++}
++
++int mt7915_dfs_stop_adjacent_cac(struct mt7915_phy *phy)
++{
++	struct mt7915_dev *dev = phy->dev;
++	int rdd_idx = mt7915_get_rdd_idx(phy, false);
++	int err, stop_err;
++
++	if (rdd_idx < 0)
++		return -EINVAL;
++
++	err = mt76_connac_mcu_rdd_cmd(&dev->mt76, RDD_NORMAL_START,
++				       rdd_idx, 0, 0);
++	stop_err = mt76_connac_mcu_rdd_cmd(&dev->mt76, RDD_STOP,
++					    rdd_idx, 0, 0);
++
++	return err ? err : stop_err;
++}
++
+ int mt7915_dfs_init_radar_detector(struct mt7915_phy *phy)
+ {
+ 	struct mt7915_dev *dev = phy->dev;

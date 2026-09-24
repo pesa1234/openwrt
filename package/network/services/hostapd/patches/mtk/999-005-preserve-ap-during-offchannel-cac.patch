@@ -1,0 +1,76 @@
+From: SmartWRT
+Subject: [PATCH] hostapd: keep an enabled AP up during external off-channel CAC
+
+An external nl80211 background CAC request (for example from iw) sends
+DFS-CAC-START to hostapd even when hostapd did not request the CAC itself.
+When the AP is already enabled and the CAC channel does not overlap its
+operating channel, keep the interface state enabled. Otherwise CAC finish
+tries to initialize the already running BSS and disables the AP.
+
+Likewise, a radar event on a non-overlapping channel must update the DFS
+channel state without marking radar on the operating AP.
+
+---
+--- a/src/ap/dfs.c
++++ b/src/ap/dfs.c
+@@ -1610,11 +1610,11 @@ int hostapd_dfs_radar_detected(struct hostapd_iface *iface, int freq,
+ 
+ 	hostapd_ubus_notify_radar_detected(iface, freq, chan_width, cf1, cf2);
+ 
+-	iface->radar_detected = true;
+-
+ 	/* Proceed only if DFS is not offloaded to the driver */
+-	if (iface->drv_flags & WPA_DRIVER_FLAGS_DFS_OFFLOAD)
++	if (iface->drv_flags & WPA_DRIVER_FLAGS_DFS_OFFLOAD) {
++		iface->radar_detected = true;
+ 		return 0;
++	}
+ 
+ 	if (!iface->conf->ieee80211h)
+ 		return 0;
+@@ -1631,6 +1631,8 @@ int hostapd_dfs_radar_detected(struct hostapd_iface *iface, int freq,
+ 			return 0;
+ 	}
+ 
++	iface->radar_detected = true;
++
+ 	if (hostapd_dfs_background_start_channel_switch(iface, freq)) {
+ 		/* Radar detected while operating, switch the channel. */
+ 		return hostapd_dfs_start_channel_switch(iface);
+@@ -1709,6 +1711,7 @@ int hostapd_dfs_start_cac(struct hostapd_data *hapd, int freq,
+ 			  int cf1, int cf2)
+ {
+ 	struct hostapd_iface *iface = hapd->iface;
++	bool offchannel_cac;
+ 
+ 	if (!hostapd_is_freq_in_current_hw_info(iface, freq)) {
+ 		wpa_msg(iface->bss[0]->msg_ctx, MSG_INFO, DFS_EVENT_CAC_START
+@@ -1717,9 +1720,18 @@ int hostapd_dfs_start_cac(struct hostapd_data *hapd, int freq,
+ 		return 0;
+ 	}
+ 
++	/* MT7981/MT7986 adjacent CAC must not restart the lower 80 MHz AP. */
++	offchannel_cac = iface->state == HAPD_IFACE_ENABLED &&
++		iface->conf->channel >= 36 && iface->conf->channel <= 48 &&
++		hostapd_get_oper_chwidth(iface->conf) ==
++			CONF_OPER_CHWIDTH_80MHZ &&
++		hostapd_get_oper_centr_freq_seg0_idx(iface->conf) == 42 &&
++		chan_width == CHAN_WIDTH_80 && cf1 == 5290 &&
++		freq >= 5260 && freq <= 5320;
++
+ 	if (hostapd_dfs_is_background_event(iface, freq)) {
+ 		iface->radar_background.cac_started = 1;
+-	} else {
++	} else if (!offchannel_cac) {
+ 		/* This is called when the driver indicates that an offloaded
+ 		 * DFS has started CAC. radar_detected might be set for previous
+ 		 * DFS channel. Clear it for this new CAC process. */
+@@ -1740,6 +1752,7 @@ int hostapd_dfs_start_cac(struct hostapd_data *hapd, int freq,
+ 		freq, (freq - 5000) / 5, chan_offset, chan_width, cf1, cf2,
+ 		iface->dfs_cac_ms / 1000,
+-		hostapd_dfs_is_background_event(iface, freq) ?
++		(hostapd_dfs_is_background_event(iface, freq) ||
++		 offchannel_cac) ?
+ 		" (background)" : "");
+ 
+ 	os_get_reltime(&iface->dfs_cac_start);

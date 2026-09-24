@@ -1,0 +1,59 @@
+Subject: [PATCH] wifi: mt76: mt7915: match MT7986 adjacent RDD mode
+
+The MT7986 mt_wifi TX80/RX160 path sends BW=APBW=160 to the firmware and
+uses RDD_NORMAL_START before enabling radar detection, keeping MAC TX
+enabled during adjacent CAC. The initial mt76 prototype sent APBW=80 and
+RDD_CAC_START, which silences the active AP. This is still experimental:
+beacon continuity and radar sensitivity are not yet validated.
+
+---
+diff --git a/mt7915/main.c b/mt7915/main.c
+--- a/mt7915/main.c
++++ b/mt7915/main.c
+@@ -2083,8 +2083,11 @@
+ 		dev->adjacent_cac_chandef = *chandef;
+ 		WRITE_ONCE(dev->adjacent_radar_reported, false);
+ 		WRITE_ONCE(dev->adjacent_cac_phy, phy);
+-		ret = mt7915_mcu_set_chan_info(phy, MCU_EXT_CMD(CHANNEL_SWITCH));
++		ret = mt76_connac_mcu_rdd_cmd(&dev->mt76, RDD_NORMAL_START,
++					       mt7915_get_rdd_idx(phy, false), 0, 0);
++		if (!ret)
++			ret = mt7915_mcu_set_chan_info(phy, MCU_EXT_CMD(CHANNEL_SWITCH));
+ 		if (!ret)
+ 			ret = mt7915_mcu_set_chan_info(phy, MCU_EXT_CMD(SET_RX_PATH));
+ 		if (!ret)
+ 			ret = mt7915_dfs_start_adjacent_cac(phy);
+diff --git a/mt7915/mac.c b/mt7915/mac.c
+--- a/mt7915/mac.c
++++ b/mt7915/mac.c
+@@ -2205,10 +2205,14 @@
+ int mt7915_dfs_start_adjacent_cac(struct mt7915_phy *phy)
+ {
+-	int err;
++	int err, rdd_idx;
+ 
+ 	err = mt7915_dfs_init_radar_specs(phy);
+ 	if (err)
+ 		return err;
+ 
+-	return mt7915_dfs_start_radar_detector(phy);
++	rdd_idx = mt7915_get_rdd_idx(phy, false);
++	if (rdd_idx < 0)
++		return -EINVAL;
++
++	return mt7915_dfs_start_rdd(phy->dev, rdd_idx);
+ }
+diff --git a/mt7915/mcu.c b/mt7915/mcu.c
+--- a/mt7915/mcu.c
++++ b/mt7915/mcu.c
+@@ -3192,9 +3192,9 @@
+ 	if ((cmd == MCU_EXT_CMD(CHANNEL_SWITCH) ||
+ 	     cmd == MCU_EXT_CMD(SET_RX_PATH)) &&
+ 	    READ_ONCE(dev->adjacent_cac_phy) == phy) {
+ 		req.center_ch = 50;
+ 		req.bw = CMD_CBW_160MHZ;
+-		req.ap_bw = CMD_CBW_80MHZ;
++		req.ap_bw = CMD_CBW_160MHZ;
+ 		req.ap_center_ch = 42;
+ 	}
+ 

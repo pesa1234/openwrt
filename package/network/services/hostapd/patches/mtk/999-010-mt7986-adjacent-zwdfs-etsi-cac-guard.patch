@@ -1,0 +1,28 @@
+From: SmartWRT
+Subject: [PATCH] hostapd: keep TX blocked on radar CSA and log ETSI CAC
+
+The optional CSA into a pre-cleared DFS block may keep TX enabled, but a
+radar-triggered return from 160 to 80 MHz must retain normal block_tx.
+Report the six-minute ETSI off-channel CAC used by cfg80211 for the
+adjacent 52-64 block instead of the generic 60-second value.
+
+--- a/src/ap/dfs.c
++++ b/src/ap/dfs.c
+@@ -1163,5 +1163,6 @@
+ 	/* No radar was seen on the non-DFS AP when entering the cleared block. */
+ 	if (dfs_use_adjacent_zwdfs(iface) &&
++	    !iface->radar_detected &&
+ 	    channel == (iface->conf->adjacent_zwdfs_channel ?
+ 		iface->conf->adjacent_zwdfs_channel : 52) &&
+ 	    iface->conf->channel == 36) {
+@@ -1927,6 +1928,10 @@
+ 	}
+ 	/* TODO: How to check CAC time for ETSI weather channels? */
+ 	iface->dfs_cac_ms = 60000;
++	if (dfs_use_adjacent_zwdfs(iface) &&
++	    iface->dfs_domain == HOSTAPD_DFS_REGION_ETSI &&
++	    (hostapd_dfs_is_background_event(iface, freq) || offchannel_cac))
++		iface->dfs_cac_ms = 360000;
+ 	wpa_msg(hapd->msg_ctx, MSG_INFO, DFS_EVENT_CAC_START
+ 		"freq=%d chan=%d chan_offset=%d width=%d seg0=%d "
+ 		"seg1=%d cac_time=%ds%s",
