@@ -574,16 +574,14 @@ function generate(config) {
 	append_vars(config, [ 'rssi_reject_assoc_rssi', 'rssi_reject_assoc_timeout', 'rssi_ignore_probe_request', 'iface_max_num_sta' ]);
 
 	/* ACS / Radar */
-	if (!phy_features.radar_background || config.band != '5g') {
+	if (!phy_features.radar_background || config.band != '5g')
 		delete config.enable_background_radar;
-	} else {
-		/* Ignore legacy background radar settings; staged CAC uses the
-		 * capability independently of hostapd's generic radar mode. */
-		config.enable_background_radar = false;
-	}
+	else
+		set_default(config, 'enable_background_radar', false);
 
 	/* Keep the requested primary while the AP serves on the lower
-	 * non-DFS 80 MHz block during background CAC. */
+	 * non-DFS 80 MHz block during background CAC. Staged CAC owns the
+	 * background chain, so hostapd ignores enable_background_radar. */
 	if (config.zero_wait_dfs && phy_features.radar_background &&
 	    config.band == '5g') {
 		let channel = int(config.channel);
