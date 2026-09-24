@@ -542,6 +542,10 @@ function device_capabilities(config) {
 	phy_features.ftm_responder = device_extended_features(phy.extended_features, NL80211_EXT_FEATURE_ENABLE_FTM_RESPONDER);
 	phy_features.radar_background = device_extended_features(phy.extended_features, NL80211_EXT_FEATURE_RADAR_BACKGROUND);
 	phy_features.cipher_gcmp256 = WLAN_CIPHER_SUITE_GCMP_256 in (phy.cipher_suites ?? []);
+
+	/* MT7981/MT7986 expose background radar only for staged zero-wait DFS. */
+	let compatible = fs.readfile(`/sys/class/ieee80211/${config.phy}/device/of_node/compatible`) ?? '';
+	phy_features.mt798x_wmac = !!match(compatible, /mediatek,mt798[16]-wmac/);
 }
 
 function generate(config) {
@@ -574,14 +578,14 @@ function generate(config) {
 	append_vars(config, [ 'rssi_reject_assoc_rssi', 'rssi_reject_assoc_timeout', 'rssi_ignore_probe_request', 'iface_max_num_sta' ]);
 
 	/* ACS / Radar */
-	if (!phy_features.radar_background || config.band != '5g')
+	if (!phy_features.radar_background || config.band != '5g' ||
+	    phy_features.mt798x_wmac)
 		delete config.enable_background_radar;
 	else
 		set_default(config, 'enable_background_radar', false);
 
 	/* Keep the requested primary while the AP serves on the lower
-	 * non-DFS 80 MHz block during background CAC. Staged CAC owns the
-	 * background chain, so hostapd ignores enable_background_radar. */
+	 * non-DFS 80 MHz block during background CAC. */
 	if (config.zero_wait_dfs && phy_features.radar_background &&
 	    config.band == '5g') {
 		let channel = int(config.channel);
