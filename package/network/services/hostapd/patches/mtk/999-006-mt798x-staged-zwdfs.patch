@@ -1,0 +1,433 @@
+Subject: [PATCH] hostapd: stage MT798x zero-wait DFS CAC
+
+Stage an 80 MHz AP on the lower non-DFS block, start background CAC
+on the adjacent upper block, then use CSA to reach the configured
+80 or 160 MHz channel when it is available. Preserve ETSI CAC and
+radar safeguards, including NOP checks before 160 MHz expansion.
+
+This path is enabled only by enable_staged_zwdfs. "Staged" describes
+the hostapd channel sequence: MT7986 uses adjacent TX80/RX160 while
+MT7981 uses a dedicated RX path. RF behavior needs hardware validation
+on both devices. The generic enable_background_radar setting is ignored
+in this firmware; staged CAC uses the driver capability separately.
+---
+diff --git a/hostapd/config_file.c b/hostapd/config_file.c
+index 87872e5..805c1c4 100644
+--- a/hostapd/config_file.c
++++ b/hostapd/config_file.c
+@@ -3437,6 +3437,12 @@ static int hostapd_config_fill(struct hostapd_config *conf,
+ 		conf->acs_exclude_6ghz_non_psc = atoi(pos);
+ 	} else if (os_strcmp(buf, "enable_background_radar") == 0) {
+-		conf->enable_background_radar = atoi(pos);
++		conf->enable_background_radar = 0;
++	} else if (os_strcmp(buf, "enable_staged_zwdfs") == 0) {
++		conf->enable_staged_zwdfs = atoi(pos) == 1;
++	} else if (os_strcmp(buf, "staged_zwdfs_channel") == 0) {
++		conf->staged_zwdfs_channel = atoi(pos);
++	} else if (os_strcmp(buf, "staged_zwdfs_width") == 0) {
++		conf->staged_zwdfs_width = atoi(pos) == 160 ? 160 : 0;
+ 	} else if (os_strcmp(buf, "min_tx_power") == 0) {
+ 		int val = atoi(pos);
+ 
+diff --git a/src/ap/ap_config.h b/src/ap/ap_config.h
+index e28f19f..5aa4632 100644
+--- a/src/ap/ap_config.h
++++ b/src/ap/ap_config.h
+@@ -1125,6 +1125,9 @@ struct hostapd_config {
+ 	bool hw_mode_set;
+ 	int acs_exclude_6ghz_non_psc;
+ 	int enable_background_radar;
++	int enable_staged_zwdfs;
++	int staged_zwdfs_channel;
++	int staged_zwdfs_width;
+ 	enum {
+ 		LONG_PREAMBLE = 0,
+ 		SHORT_PREAMBLE = 1
+diff --git a/src/ap/dfs.c b/src/ap/dfs.c
+index 500e05e..6e9a3af 100644
+--- a/src/ap/dfs.c
++++ b/src/ap/dfs.c
+@@ -42,6 +42,15 @@ static bool dfs_use_radar_background(struct hostapd_iface *iface)
+ }
+ 
+ 
++static bool dfs_use_staged_zwdfs(struct hostapd_iface *iface)
++{
++	return iface->conf->enable_staged_zwdfs &&
++		(iface->drv_flags2 & WPA_DRIVER_FLAGS2_RADAR_BACKGROUND) &&
++		iface->conf->ieee80211h && iface->current_mode &&
++		iface->current_mode->mode == HOSTAPD_MODE_IEEE80211A;
++}
++
++
+ static int dfs_get_used_n_chans(struct hostapd_iface *iface, int *seg1)
+ {
+ 	int n_chans = 1;
+@@ -317,6 +326,99 @@ static int dfs_find_channel(struct hostapd_iface *iface,
+ }
+ 
+ 
++static int
++hostapd_dfs_start_channel_switch_background(struct hostapd_iface *iface);
++
++
++void hostapd_dfs_start_staged_cac(struct hostapd_iface *iface)
++{
++	struct hostapd_hw_modes *mode;
++	struct hostapd_channel_data *chan;
++	struct hostapd_channel_data *target_chan = NULL;
++	bool already_available;
++	int target = iface->conf->staged_zwdfs_channel;
++	int final_channel = target;
++	int secondary_channel;
++	int i;
++
++	if (!target)
++		target = 52;
++	/* At 160 MHz, the lower 80 MHz primary still needs upper-half CAC. */
++	if (iface->conf->staged_zwdfs_width == 160 &&
++	    final_channel >= 36 && final_channel <= 48)
++		target = 52;
++	if (target != 52 && target != 56 && target != 60 && target != 64)
++		return;
++	secondary_channel = (target == 56 || target == 64) ? -1 : 1;
++
++	/* This staged mode checks 52-64 while the AP stays on 36-48. */
++	if (!dfs_use_staged_zwdfs(iface) ||
++	    iface->state != HAPD_IFACE_ENABLED ||
++	    iface->conf->channel != 36 ||
++	    hostapd_get_oper_chwidth(iface->conf) != CONF_OPER_CHWIDTH_80MHZ ||
++	    hostapd_get_oper_centr_freq_seg0_idx(iface->conf) != 42 ||
++	    iface->radar_background.channel > 0)
++		return;
++
++	mode = iface->current_mode;
++	for (i = 0; i < mode->num_channels; i++) {
++		if (mode->channels[i].chan == target) {
++			target_chan = &mode->channels[i];
++			break;
++		}
++	}
++	if (!target_chan || !is_in_chanlist(iface, target_chan) ||
++	    !chan_pri_allowed(target_chan))
++		return;
++
++	for (i = 0; i < mode->num_channels; i++) {
++		chan = &mode->channels[i];
++		if (chan->chan != 52)
++			continue;
++		already_available =
++			dfs_chan_range_available(mode, i, 4, DFS_AVAILABLE);
++		if (!already_available &&
++		    !dfs_chan_range_available(mode, i, 4, DFS_ANY_CHANNEL))
++			continue;
++
++		iface->radar_background.channel = target;
++		iface->radar_background.freq = target_chan->freq;
++		iface->radar_background.secondary_channel = secondary_channel;
++		iface->radar_background.centr_freq_seg0_idx = 58;
++		iface->radar_background.centr_freq_seg1_idx = 0;
++		if (already_available) {
++			wpa_printf(MSG_INFO,
++				   "Staged ZWDFS: channels 52-64 already available; requesting CSA");
++			if (hostapd_dfs_start_channel_switch_background(iface))
++				wpa_printf(MSG_WARNING,
++					   "Staged ZWDFS: CSA to available channels failed");
++			return;
++		}
++
++		iface->radar_background.cac_started = 1;
++		iface->radar_background.temp_ch = 1;
++		if (hostapd_start_dfs_cac(iface, iface->conf->hw_mode,
++					  target_chan->freq, target,
++					  iface->conf->ieee80211n,
++					  iface->conf->ieee80211ac,
++					  iface->conf->ieee80211ax,
++					  iface->conf->ieee80211be,
++					  secondary_channel, CONF_OPER_CHWIDTH_80MHZ,
++					  58, 0, true)) {
++			wpa_printf(MSG_WARNING,
++				   "Staged ZWDFS: failed to start CAC on channel %d", target);
++			iface->radar_background.channel = -1;
++			iface->radar_background.cac_started = 0;
++			iface->radar_background.temp_ch = 0;
++		} else {
++			wpa_printf(MSG_INFO,
++				   "Staged ZWDFS: checking channel %d while AP stays on 36", target);
++		}
++		return;
++	}
++}
++
++
+ static void dfs_adjust_center_freq(struct hostapd_iface *iface,
+ 				   struct hostapd_channel_data *chan,
+ 				   int secondary_channel,
+@@ -1042,22 +1144,26 @@ static int hostapd_dfs_request_channel_switch(struct hostapd_iface *iface,
+ 					      int channel, int freq,
+ 					      int secondary_channel,
+ 					      u8 current_vht_oper_chwidth,
++					      u8 new_vht_oper_chwidth,
+ 					      u8 oper_centr_freq_seg0_idx,
+ 					      u8 oper_centr_freq_seg1_idx)
+ {
+ 	struct hostapd_hw_modes *cmode = iface->current_mode;
+ 	int ieee80211_mode = IEEE80211_MODE_AP, err;
+ 	struct csa_settings csa_settings;
+-	u8 new_vht_oper_chwidth;
+ 	unsigned int i;
+ 	unsigned int num_err = 0;
+ 	u8 op_class, chan;
++	u8 old_op_class = iface->conf->op_class;
++	bool staged_expand = dfs_use_staged_zwdfs(iface) &&
++		current_vht_oper_chwidth == CONF_OPER_CHWIDTH_80MHZ &&
++		new_vht_oper_chwidth == CONF_OPER_CHWIDTH_160MHZ &&
++		iface->conf->channel == 36;
+ 
+ 	wpa_printf(MSG_DEBUG, "DFS will switch to a new channel %d", channel);
+ 	wpa_msg(iface->bss[0]->msg_ctx, MSG_INFO, DFS_EVENT_NEW_CHANNEL
+ 		"freq=%d chan=%d sec_chan=%d", freq, channel,
+ 		secondary_channel);
+ 
+-	new_vht_oper_chwidth = hostapd_get_oper_chwidth(iface->conf);
+ 	hostapd_set_oper_chwidth(iface->conf, current_vht_oper_chwidth);
+ 	if (ieee80211_freq_to_channel_ext(freq, secondary_channel,
+@@ -1072,6 +1178,15 @@ static int hostapd_dfs_request_channel_switch(struct hostapd_iface *iface,
+ 	os_memset(&csa_settings, 0, sizeof(csa_settings));
+ 	csa_settings.cs_count = 5;
+ 	csa_settings.block_tx = 1;
++	/* No radar was seen on the non-DFS AP when entering the cleared block. */
++	if (dfs_use_staged_zwdfs(iface) &&
++	    !iface->radar_detected &&
++	    channel == (iface->conf->staged_zwdfs_channel ?
++		iface->conf->staged_zwdfs_channel : 52) &&
++	    iface->conf->channel == 36) {
++		csa_settings.cs_count = 10;
++		csa_settings.block_tx = 0;
++	}
+ 	csa_settings.link_id = -1;
+ #ifdef CONFIG_IEEE80211BE
+ 	if (iface->bss[0]->conf->mld_ap)
+@@ -1102,6 +1217,10 @@ static int hostapd_dfs_request_channel_switch(struct hostapd_iface *iface,
+ 	if (err) {
+ 		wpa_printf(MSG_ERROR,
+ 			   "DFS failed to calculate CSA freq params");
++		if (staged_expand) {
++			iface->conf->op_class = old_op_class;
++			return err;
++		}
+ 		hostapd_disable_iface(iface);
+ 		return err;
+ 	}
+@@ -1113,6 +1232,13 @@ static int hostapd_dfs_request_channel_switch(struct hostapd_iface *iface,
+ 	}
+ 
+ 	if (num_err == iface->num_bss) {
++		/* A failed optional 80->160 expansion must leave the AP up. */
++		if (staged_expand) {
++			wpa_printf(MSG_WARNING,
++				   "Staged ZWDFS: 160 MHz CSA failed; retaining 80 MHz AP");
++			iface->conf->op_class = old_op_class;
++			return -1;
++		}
+ 		wpa_printf(MSG_WARNING,
+ 			   "DFS failed to schedule CSA (%d) - trying fallback",
+ 			   err);
+@@ -1221,8 +1347,9 @@ hostapd_is_freq_in_current_hw_info(struct hostapd_iface *iface, int freq)
+ static bool
+ hostapd_dfs_is_background_event(struct hostapd_iface *iface, int freq)
+ {
+-	return dfs_use_radar_background(iface) &&
+-		iface->radar_background.channel != -1 &&
++	return (dfs_use_radar_background(iface) ||
++		dfs_use_staged_zwdfs(iface)) &&
++		iface->radar_background.channel > 0 &&
+ 		iface->radar_background.freq == freq;
+ }
+ 
+@@ -1231,12 +1358,60 @@ static int
+ hostapd_dfs_start_channel_switch_background(struct hostapd_iface *iface)
+ {
+ 	u8 current_vht_oper_chwidth = hostapd_get_oper_chwidth(iface->conf);
++	int final_channel = iface->conf->staged_zwdfs_channel;
++	int secondary_channel;
++	int i;
+ 	int ret;
+ 
++	if (dfs_use_staged_zwdfs(iface)) {
++		if (iface->state != HAPD_IFACE_ENABLED ||
++		    iface->conf->channel != 36 ||
++		    hostapd_get_oper_chwidth(iface->conf) !=
++			CONF_OPER_CHWIDTH_80MHZ ||
++		    hostapd_get_oper_centr_freq_seg0_idx(iface->conf) != 42) {
++			iface->radar_background.channel = -1;
++			return 0;
++		}
++		if (iface->conf->staged_zwdfs_width == 160) {
++			if (!final_channel)
++				final_channel = 36;
++			if (final_channel < 36 || final_channel > 64 ||
++			    (final_channel - 36) % 4) {
++				iface->radar_background.channel = -1;
++				return -1;
++			}
++			secondary_channel = ((final_channel - 36) / 4) % 2 ? -1 : 1;
++			for (i = 0; i < iface->current_mode->num_channels; i++)
++				if (iface->current_mode->channels[i].chan == 52)
++					break;
++			if (i == iface->current_mode->num_channels ||
++			    !dfs_chan_range_available(iface->current_mode, i, 4,
++						      DFS_AVAILABLE)) {
++				iface->radar_background.channel = -1;
++				return -1;
++			}
++			ret = hostapd_dfs_request_channel_switch(
++				iface, final_channel, 5000 + 5 * final_channel,
++				secondary_channel, current_vht_oper_chwidth,
++				CONF_OPER_CHWIDTH_160MHZ, 50, 0);
++			iface->radar_background.channel = -1;
++			return ret;
++		}
++		ret = hostapd_dfs_request_channel_switch(
++			iface, iface->radar_background.channel,
++			iface->radar_background.freq,
++			iface->radar_background.secondary_channel,
++			current_vht_oper_chwidth,
++			current_vht_oper_chwidth, 58, 0);
++		iface->radar_background.channel = -1;
++		return ret;
++	}
++
+ 	ret = hostapd_dfs_request_channel_switch(iface, iface->radar_background.channel,
+ 						 iface->radar_background.freq,
+ 						 iface->radar_background.secondary_channel,
+ 						 current_vht_oper_chwidth,
++						 hostapd_get_oper_chwidth(iface->conf),
+ 						 iface->radar_background.centr_freq_seg0_idx,
+ 						 iface->radar_background.centr_freq_seg1_idx);
+ 
+@@ -1335,7 +1510,12 @@ int hostapd_dfs_complete_cac(struct hostapd_iface *iface, int success, int freq,
+ 		}
+ 	} else if (hostapd_dfs_is_background_event(iface, freq)) {
+ 		iface->radar_background.cac_started = 0;
+-		hostapd_dfs_update_background_chain(iface);
++		if (dfs_use_staged_zwdfs(iface)) {
++			iface->radar_background.channel = -1;
++			iface->radar_background.temp_ch = 0;
++		} else {
++			hostapd_dfs_update_background_chain(iface);
++		}
+ 	}
+ 
+ 	iface->radar_detected = false;
+@@ -1469,6 +1649,15 @@ static int
+ hostapd_dfs_background_start_channel_switch(struct hostapd_iface *iface,
+ 					    int freq)
+ {
++	if (dfs_use_staged_zwdfs(iface) &&
++	    hostapd_dfs_is_background_event(iface, freq)) {
++		/* Radar on the checked channel must not move the live AP. */
++		iface->radar_background.channel = -1;
++		iface->radar_background.cac_started = 0;
++		iface->radar_background.temp_ch = 0;
++		return 0;
++	}
++
+ 	if (!dfs_use_radar_background(iface))
+ 		return -1; /* Background radar chain not supported. */
+ 
+@@ -1533,11 +1722,26 @@ static int hostapd_dfs_start_channel_switch(struct hostapd_iface *iface)
+ 	if (iface->cac_started)
+ 		return hostapd_dfs_start_channel_switch_cac(iface);
+ 
++	/* The original lower 80 MHz block never required CAC. Returning to
++	 * it after radar on the 160 MHz operating channel avoids a new CAC. */
++	if (dfs_use_staged_zwdfs(iface) &&
++	    hostapd_get_oper_chwidth(iface->conf) ==
++		CONF_OPER_CHWIDTH_160MHZ &&
++	    hostapd_get_oper_centr_freq_seg0_idx(iface->conf) == 50)
++		return hostapd_dfs_request_channel_switch(
++			iface, 36, 5180, 1, current_vht_oper_chwidth,
++			CONF_OPER_CHWIDTH_80MHZ, 42, 0);
++
+ 	/*
+ 	 * Allow selection of DFS channel in ETSI to comply with
+ 	 * uniform spreading.
+ 	 */
+-	if (iface->dfs_domain == HOSTAPD_DFS_REGION_ETSI)
++	if (iface->dfs_domain == HOSTAPD_DFS_REGION_ETSI &&
++	    !(dfs_use_staged_zwdfs(iface) &&
++	      iface->conf->channel >= 52 && iface->conf->channel <= 64 &&
++	      hostapd_get_oper_chwidth(iface->conf) ==
++		CONF_OPER_CHWIDTH_80MHZ &&
++	      hostapd_get_oper_centr_freq_seg0_idx(iface->conf) == 58))
+ 		channel_type = DFS_ANY_CHANNEL;
+ 
+ 	/* Perform channel switch/CSA */
+@@ -1586,6 +1790,7 @@ static int hostapd_dfs_start_channel_switch(struct hostapd_iface *iface)
+ 						  channel->freq,
+ 						  secondary_channel,
+ 						  current_vht_oper_chwidth,
++						  hostapd_get_oper_chwidth(iface->conf),
+ 						  oper_centr_freq_seg0_idx,
+ 						  oper_centr_freq_seg1_idx);
+ }
+@@ -1665,6 +1870,9 @@ int hostapd_dfs_nop_finished(struct hostapd_iface *iface, int freq,
+ 	set_dfs_state(iface, freq, ht_enabled, chan_offset, chan_width,
+ 		      cf1, cf2, HOSTAPD_CHAN_DFS_USABLE);
+ 
++	if (dfs_use_staged_zwdfs(iface))
++		hostapd_dfs_start_staged_cac(iface);
++
+ 	if (iface->state == HAPD_IFACE_DFS && !iface->cac_started) {
+ 		/* Handle cases where all channels were initially unavailable */
+ 		hostapd_handle_dfs(iface);
+@@ -1747,6 +1955,10 @@ int hostapd_dfs_start_cac(struct hostapd_data *hapd, int freq,
+ 	}
+ 	/* TODO: How to check CAC time for ETSI weather channels? */
+ 	iface->dfs_cac_ms = 60000;
++	if (dfs_use_staged_zwdfs(iface) &&
++	    iface->dfs_domain == HOSTAPD_DFS_REGION_ETSI &&
++	    (hostapd_dfs_is_background_event(iface, freq) || offchannel_cac))
++		iface->dfs_cac_ms = 360000;
+ 	wpa_msg(hapd->msg_ctx, MSG_INFO, DFS_EVENT_CAC_START
+ 		"freq=%d chan=%d chan_offset=%d width=%d seg0=%d "
+ 		"seg1=%d cac_time=%ds%s",
+diff --git a/src/ap/dfs.h b/src/ap/dfs.h
+index a3cb13c..4130fad 100644
+--- a/src/ap/dfs.h
++++ b/src/ap/dfs.h
+@@ -10,6 +10,7 @@
+ #define DFS_H
+ 
+ int hostapd_handle_dfs(struct hostapd_iface *iface);
++void hostapd_dfs_start_staged_cac(struct hostapd_iface *iface);
+ 
+ int hostapd_dfs_complete_cac(struct hostapd_iface *iface, int success, int freq,
+ 			     int ht_enabled, int chan_offset, int chan_width,
+diff --git a/src/ap/drv_callbacks.c b/src/ap/drv_callbacks.c
+index 7860ceb..1fbd829 100644
+--- a/src/ap/drv_callbacks.c
++++ b/src/ap/drv_callbacks.c
+@@ -1463,6 +1463,9 @@ void hostapd_event_ch_switch(struct hostapd_data *hapd, int freq, int ht,
+ 		hostapd_enable_iface(hapd->iface);
+ 	}
+ 
++	if (hapd == hapd->iface->bss[0])
++		hostapd_dfs_start_staged_cac(hapd->iface);
++
+ 	for (i = 0; i < hapd->iface->num_bss; i++)
+ 		hostapd_neighbor_set_own_report(hapd->iface->bss[i]);
+ 
+diff --git a/src/ap/hostapd.c b/src/ap/hostapd.c
+index c09c4c8..2b632da 100644
+--- a/src/ap/hostapd.c
++++ b/src/ap/hostapd.c
+@@ -2909,6 +2909,7 @@ dfs_offload:
+ 	if (iface->interfaces && iface->interfaces->count > 1)
+ 		ieee802_11_update_beacons(iface);
+ 
++	hostapd_dfs_start_staged_cac(iface);
+ 	return 0;
+ 
+ fail:
