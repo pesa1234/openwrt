@@ -8,7 +8,8 @@ radar safeguards, including NOP checks before 160 MHz expansion.
 This path is enabled only by enable_staged_zwdfs. "Staged" describes
 the hostapd channel sequence: MT7986 uses adjacent TX80/RX160 while
 MT7981 uses a dedicated RX path. RF behavior needs hardware validation
-on both devices.
+on both devices. The generic enable_background_radar setting is ignored
+in this firmware; staged CAC uses the driver capability separately.
 ---
 diff --git a/hostapd/config_file.c b/hostapd/config_file.c
 index 87872e5..805c1c4 100644
@@ -17,7 +18,8 @@ index 87872e5..805c1c4 100644
 @@ -3437,6 +3437,12 @@ static int hostapd_config_fill(struct hostapd_config *conf,
  		conf->acs_exclude_6ghz_non_psc = atoi(pos);
  	} else if (os_strcmp(buf, "enable_background_radar") == 0) {
- 		conf->enable_background_radar = atoi(pos);
+-		conf->enable_background_radar = atoi(pos);
++		conf->enable_background_radar = 0;
 +	} else if (os_strcmp(buf, "enable_staged_zwdfs") == 0) {
 +		conf->enable_staged_zwdfs = atoi(pos) == 1;
 +	} else if (os_strcmp(buf, "staged_zwdfs_channel") == 0) {
