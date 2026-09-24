@@ -1,12 +1,13 @@
-Subject: [PATCH] hostapd: add experimental MT7986 adjacent zero-wait DFS control
+Subject: [PATCH] hostapd: stage experimental MT798x zero-wait DFS CAC
 
 Stage an 80 MHz AP on the lower non-DFS block, start background CAC
 on the adjacent upper block, then use CSA to reach the configured
 80 or 160 MHz channel when it is available. Preserve ETSI CAC and
 radar safeguards, including NOP checks before 160 MHz expansion.
 
-This path is enabled only by enable_adjacent_zwdfs and relies on the
-MT7986 mt76 adjacent CAC experiment. RF behavior is not validated.
+This path is enabled only by enable_adjacent_zwdfs. MT7986 uses
+adjacent TX80/RX160; MT7981 uses a dedicated RX path. RF behavior
+remains unvalidated on both devices.
 ---
 diff --git a/hostapd/config_file.c b/hostapd/config_file.c
 index 87872e5..805c1c4 100644
@@ -83,7 +84,7 @@ index 500e05e..6e9a3af 100644
 +		return;
 +	secondary_channel = (target == 56 || target == 64) ? -1 : 1;
 +
-+	/* The MT7986 prototype can only monitor 52-64 while TX stays on 36-48. */
++	/* This staged mode checks 52-64 while the AP stays on 36-48. */
 +	if (!dfs_use_adjacent_zwdfs(iface) ||
 +	    iface->state != HAPD_IFACE_ENABLED ||
 +	    iface->conf->channel != 36 ||
@@ -166,8 +167,8 @@ index 500e05e..6e9a3af 100644
  	wpa_msg(iface->bss[0]->msg_ctx, MSG_INFO, DFS_EVENT_NEW_CHANNEL
  		"freq=%d chan=%d sec_chan=%d", freq, channel,
  		secondary_channel);
--	new_vht_oper_chwidth = hostapd_get_oper_chwidth(iface->conf);
  
+-	new_vht_oper_chwidth = hostapd_get_oper_chwidth(iface->conf);
  	hostapd_set_oper_chwidth(iface->conf, current_vht_oper_chwidth);
  	if (ieee80211_freq_to_channel_ext(freq, secondary_channel,
 @@ -1072,6 +1160,15 @@ static int hostapd_dfs_request_channel_switch(struct hostapd_iface *iface,

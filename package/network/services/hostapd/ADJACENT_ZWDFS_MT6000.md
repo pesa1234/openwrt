@@ -55,5 +55,5 @@ conformance, including ETSI uniform spreading, detection thresholds, and
 real RF detection, remains unvalidated. The six-minute kernel timer only
 addresses the minimum off-channel CAC duration; it is not certification.
 Do not rely on days without a real radar event as proof of compliance. The
-MT7981/MT3000 uses a different MediaTek zero-wait path and is intentionally
-not covered here.
+MT7981/MT3000 uses a different MediaTek zero-wait path; see
+[the separate MT3000 experiment](DEDICATED_ZWDFS_MT3000.md).

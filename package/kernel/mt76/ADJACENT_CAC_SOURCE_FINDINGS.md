@@ -54,4 +54,6 @@ Next test, if chosen: manage the debug router over Ethernet or 2.4 GHz, use
 an independent 5 GHz client plus beacon observer, and measure ping, station
 association, and beacon continuity through the full background CAC. Only
 after continuity is demonstrated should radar/NOP handling be investigated.
-Do not rename the UI control to "Zero-wait DFS" yet.
+Do not rename the UI control to "Zero-wait DFS" yet. The MT7981
+dedicated-RX experiment is documented separately in
+`../../network/services/hostapd/DEDICATED_ZWDFS_MT3000.md`.
