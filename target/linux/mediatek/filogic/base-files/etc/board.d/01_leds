@@ -71,6 +71,10 @@ bananapi,bpi-r4-poe)
 bananapi,bpi-r4-lite)
 	ucidef_set_led_netdev "sfp0" "sfp0" "green:sfp" "sfp0" "link tx rx"
 	;;
+bananapi,bpi-r4-pro-4e)
+	ucidef_set_led_netdev "lan5" "lan5" "mt7530-0:00:yellow" "lan5" "link tx rx"
+	ucidef_set_led_netdev "lan6" "lan6" "mt7530-0:02:yellow" "lan6" "link tx rx"
+	;;
 bananapi,bpi-r4-pro-8x)
 	ucidef_set_led_netdev "lan5" "lan5" "mt7530-0:00:yellow" "lan5" "link tx rx"
 	;;
@@ -162,6 +166,11 @@ iptime,ax3000sm)
 	;;
 iptime,ax7800m-6e)
 	ucidef_set_led_netdev "wan" "wan" "mdio-bus:06:blue:wan" "eth1" "link tx rx"
+	;;
+keenetic,kn-1012|\
+netcraze,nc-1012)
+	ucidef_set_led_netdev "wan" "wan" "green:wan" "wan" "link tx rx"
+	ucidef_set_led_netdev "internet" "internet" "green:wan-online" "wan" "link"
 	;;
 keenetic,kn-1812|\
 netcraze,nc-1812)
