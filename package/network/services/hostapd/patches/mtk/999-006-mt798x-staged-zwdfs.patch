@@ -78,7 +78,7 @@ diff --git a/src/ap/dfs.c b/src/ap/dfs.c
  }
  
  
-@@ -317,6 +329,113 @@ static int dfs_find_channel(struct hostapd_iface *iface,
+@@ -317,6 +329,112 @@ static int dfs_find_channel(struct hostapd_iface *iface,
  }
  
  
@@ -111,11 +111,10 @@ diff --git a/src/ap/dfs.c b/src/ap/dfs.c
 +	int secondary_channel;
 +	int i;
 +
-+	if (!target)
-+		target = 52;
-+	/* At 160 MHz, the lower 80 MHz primary still needs upper-half CAC. */
++	/* At 160 MHz, the lower 80 MHz primary still needs upper-half CAC.
++	 * At 80 MHz, 36-48 needs no CAC, so only 52-64 is staged. */
 +	if (iface->conf->staged_zwdfs_width == 160 &&
-+	    final_channel >= 36 && final_channel <= 48)
++	    (!final_channel || (final_channel >= 36 && final_channel <= 48)))
 +		target = 52;
 +	if (target != 52 && target != 56 && target != 60 && target != 64)
 +		return;
@@ -192,7 +191,7 @@ diff --git a/src/ap/dfs.c b/src/ap/dfs.c
  static void dfs_adjust_center_freq(struct hostapd_iface *iface,
  				   struct hostapd_channel_data *chan,
  				   int secondary_channel,
-@@ -1042,23 +1161,27 @@ static int hostapd_dfs_request_channel_switch(struct hostapd_iface *iface,
+@@ -1042,23 +1160,27 @@ static int hostapd_dfs_request_channel_switch(struct hostapd_iface *iface,
  					      int channel, int freq,
  					      int secondary_channel,
  					      u8 current_vht_oper_chwidth,
@@ -222,15 +221,14 @@ diff --git a/src/ap/dfs.c b/src/ap/dfs.c
  	hostapd_set_oper_chwidth(iface->conf, current_vht_oper_chwidth);
  	if (ieee80211_freq_to_channel_ext(freq, secondary_channel,
  					  new_vht_oper_chwidth, &op_class,
-@@ -1072,6 +1195,15 @@ static int hostapd_dfs_request_channel_switch(struct hostapd_iface *iface,
+@@ -1072,6 +1194,14 @@ static int hostapd_dfs_request_channel_switch(struct hostapd_iface *iface,
  	os_memset(&csa_settings, 0, sizeof(csa_settings));
  	csa_settings.cs_count = 5;
  	csa_settings.block_tx = 1;
 +	/* No radar was seen on the non-DFS AP when entering the cleared block. */
 +	if (dfs_use_staged_zwdfs(iface) &&
 +	    !iface->radar_detected &&
-+	    channel == (iface->conf->staged_zwdfs_channel ?
-+		iface->conf->staged_zwdfs_channel : 52) &&
++	    channel == iface->conf->staged_zwdfs_channel &&
 +	    iface->conf->channel == 36) {
 +		csa_settings.cs_count = 10;
 +		csa_settings.block_tx = 0;
@@ -238,7 +236,7 @@ diff --git a/src/ap/dfs.c b/src/ap/dfs.c
  	csa_settings.link_id = -1;
  #ifdef CONFIG_IEEE80211BE
  	if (iface->bss[0]->conf->mld_ap)
-@@ -1102,6 +1234,10 @@ static int hostapd_dfs_request_channel_switch(struct hostapd_iface *iface,
+@@ -1102,6 +1232,10 @@ static int hostapd_dfs_request_channel_switch(struct hostapd_iface *iface,
  	if (err) {
  		wpa_printf(MSG_ERROR,
  			   "DFS failed to calculate CSA freq params");
@@ -249,7 +247,7 @@ diff --git a/src/ap/dfs.c b/src/ap/dfs.c
  		hostapd_disable_iface(iface);
  		return err;
  	}
-@@ -1113,6 +1249,13 @@ static int hostapd_dfs_request_channel_switch(struct hostapd_iface *iface,
+@@ -1113,6 +1247,13 @@ static int hostapd_dfs_request_channel_switch(struct hostapd_iface *iface,
  	}
  
  	if (num_err == iface->num_bss) {
@@ -263,7 +261,7 @@ diff --git a/src/ap/dfs.c b/src/ap/dfs.c
  		wpa_printf(MSG_WARNING,
  			   "DFS failed to schedule CSA (%d) - trying fallback",
  			   err);
-@@ -1221,8 +1364,9 @@ hostapd_is_freq_in_current_hw_info(struct hostapd_iface *iface, int freq)
+@@ -1221,8 +1362,9 @@ hostapd_is_freq_in_current_hw_info(struct hostapd_iface *iface, int freq)
  static bool
  hostapd_dfs_is_background_event(struct hostapd_iface *iface, int freq)
  {
@@ -275,7 +273,7 @@ diff --git a/src/ap/dfs.c b/src/ap/dfs.c
  		iface->radar_background.freq == freq;
  }
  
-@@ -1231,12 +1375,60 @@ static int
+@@ -1231,12 +1373,60 @@ static int
  hostapd_dfs_start_channel_switch_background(struct hostapd_iface *iface)
  {
  	u8 current_vht_oper_chwidth = hostapd_get_oper_chwidth(iface->conf);
@@ -336,7 +334,7 @@ diff --git a/src/ap/dfs.c b/src/ap/dfs.c
  						 iface->radar_background.centr_freq_seg0_idx,
  						 iface->radar_background.centr_freq_seg1_idx);
  
-@@ -1305,6 +1497,10 @@ int hostapd_dfs_complete_cac(struct hostapd_iface *iface, int success, int freq,
+@@ -1305,6 +1495,10 @@ int hostapd_dfs_complete_cac(struct hostapd_iface *iface, int success, int freq,
  					return 0;
  
  				iface->radar_background.temp_ch = 0;
@@ -347,7 +345,7 @@ diff --git a/src/ap/dfs.c b/src/ap/dfs.c
  				return hostapd_dfs_start_channel_switch_background(iface);
  			}
  
-@@ -1335,7 +1531,22 @@ int hostapd_dfs_complete_cac(struct hostapd_iface *iface, int success, int freq,
+@@ -1335,7 +1529,22 @@ int hostapd_dfs_complete_cac(struct hostapd_iface *iface, int success, int freq,
  		}
  	} else if (hostapd_dfs_is_background_event(iface, freq)) {
  		iface->radar_background.cac_started = 0;
@@ -371,7 +369,7 @@ diff --git a/src/ap/dfs.c b/src/ap/dfs.c
  	}
  
  	iface->radar_detected = false;
-@@ -1469,6 +1680,15 @@ static int
+@@ -1469,6 +1678,15 @@ static int
  hostapd_dfs_background_start_channel_switch(struct hostapd_iface *iface,
  					    int freq)
  {
@@ -387,7 +385,7 @@ diff --git a/src/ap/dfs.c b/src/ap/dfs.c
  	if (!dfs_use_radar_background(iface))
  		return -1; /* Background radar chain not supported. */
  
-@@ -1533,6 +1753,18 @@ static int hostapd_dfs_start_channel_switch(struct hostapd_iface *iface)
+@@ -1533,6 +1751,18 @@ static int hostapd_dfs_start_channel_switch(struct hostapd_iface *iface)
  	if (iface->cac_started)
  		return hostapd_dfs_start_channel_switch_cac(iface);
  
@@ -406,7 +404,7 @@ diff --git a/src/ap/dfs.c b/src/ap/dfs.c
  	/*
  	 * Allow selection of DFS channel in ETSI to comply with
  	 * uniform spreading.
-@@ -1586,6 +1818,7 @@ static int hostapd_dfs_start_channel_switch(struct hostapd_iface *iface)
+@@ -1586,6 +1816,7 @@ static int hostapd_dfs_start_channel_switch(struct hostapd_iface *iface)
  						  channel->freq,
  						  secondary_channel,
  						  current_vht_oper_chwidth,
@@ -414,7 +412,7 @@ diff --git a/src/ap/dfs.c b/src/ap/dfs.c
  						  oper_centr_freq_seg0_idx,
  						  oper_centr_freq_seg1_idx);
  }
-@@ -1665,6 +1898,9 @@ int hostapd_dfs_nop_finished(struct hostapd_iface *iface, int freq,
+@@ -1665,6 +1896,9 @@ int hostapd_dfs_nop_finished(struct hostapd_iface *iface, int freq,
  	set_dfs_state(iface, freq, ht_enabled, chan_offset, chan_width,
  		      cf1, cf2, HOSTAPD_CHAN_DFS_USABLE);
  
@@ -424,7 +422,7 @@ diff --git a/src/ap/dfs.c b/src/ap/dfs.c
  	if (iface->state == HAPD_IFACE_DFS && !iface->cac_started) {
  		/* Handle cases where all channels were initially unavailable */
  		hostapd_handle_dfs(iface);
-@@ -1747,6 +1983,10 @@ int hostapd_dfs_start_cac(struct hostapd_data *hapd, int freq,
+@@ -1747,6 +1981,10 @@ int hostapd_dfs_start_cac(struct hostapd_data *hapd, int freq,
  	}
  	/* TODO: How to check CAC time for ETSI weather channels? */
  	iface->dfs_cac_ms = 60000;
