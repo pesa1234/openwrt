@@ -592,12 +592,10 @@ function generate(config) {
 
 		if (!config.chanlist &&
 		    config.htmode in [ 'VHT80', 'HE80', 'EHT80' ] &&
-		    channel in [ 36, 52, 56, 60, 64 ]) {
+		    channel in [ 52, 56, 60, 64 ]) {
 			append('enable_staged_zwdfs', 1);
-			if (channel != 36) {
-				append('staged_zwdfs_channel', channel);
-				config.channel = 36;
-			}
+			append('staged_zwdfs_channel', channel);
+			config.channel = 36;
 		} else if (!config.chanlist &&
 		           config.htmode in [ 'VHT160', 'HE160' ] &&
 		           channel in [ 36, 40, 44, 48, 52, 56, 60, 64 ]) {
