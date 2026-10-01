@@ -8,18 +8,24 @@ word; only read the remaining metadata after RX_DMA_DONE has been observed.
 Keep the existing READ_ONCE() path for descriptors outside SRAM and for
 32-bit systems.
 
+The Ethernet SRAM is mapped write-combining (Normal-NC) by the mmio-sram
+driver and the other descriptor rings come from dma_alloc_coherent(), so
+the CPU may reorder the descriptor loads.  Add a dma_rmb() after the
+RX_DMA_DONE check on both paths so that the metadata cannot be sampled
+before the ownership word.
+
 Netsys v3 only consumes rxd1 through rxd5 in the receive path, so stop
 reading rxd6 and rxd7.  Its SRAM fast path consequently needs two 64-bit
 accesses followed by one 32-bit access.
 
 Signed-off-by: SmartWRT <smartwrt@localhost>
 ---
- drivers/net/ethernet/mediatek/mtk_eth_soc.c | 43 ++++++++++++++++++----
- 1 file changed, 37 insertions(+), 6 deletions(-)
+ drivers/net/ethernet/mediatek/mtk_eth_soc.c | 50 ++++++++++++++++++++++++++++++++-----
+ 1 file changed, 44 insertions(+), 6 deletions(-)
 
 --- a/drivers/net/ethernet/mediatek/mtk_eth_soc.c
 +++ b/drivers/net/ethernet/mediatek/mtk_eth_soc.c
-@@ -1408,9 +1408,43 @@ static inline int mtk_max_buf_size(int f
+@@ -1408,21 +1408,59 @@
  	return buf_size;
  }
  
@@ -37,10 +43,15 @@ Signed-off-by: SmartWRT <smartwrt@localhost>
 +	 * engine has released the descriptor.
 +	 */
 +	data = readq_relaxed(desc);
-+	rxd->rxd1 = lower_32_bits(data);
 +	rxd->rxd2 = upper_32_bits(data);
 +	if (!(rxd->rxd2 & RX_DMA_DONE))
 +		return false;
++	rxd->rxd1 = lower_32_bits(data);
++
++	/* The SRAM is mapped write-combining (Normal-NC), so loads may be
++	 * reordered: do not sample the metadata before RX_DMA_DONE.
++	 */
++	dma_rmb();
 +
 +	data = readq_relaxed(desc + 8);
 +	rxd->rxd3 = lower_32_bits(data);
@@ -64,7 +75,9 @@ Signed-off-by: SmartWRT <smartwrt@localhost>
  	rxd->rxd2 = READ_ONCE(dma_rxd->rxd2);
  	if (!(rxd->rxd2 & RX_DMA_DONE))
  		return false;
-@@ -1418,11 +1452,8 @@ static bool mtk_rx_get_desc(struct mtk_e
+ 
++	dma_rmb();
++
  	rxd->rxd1 = READ_ONCE(dma_rxd->rxd1);
  	rxd->rxd3 = READ_ONCE(dma_rxd->rxd3);
  	rxd->rxd4 = READ_ONCE(dma_rxd->rxd4);
@@ -77,7 +90,7 @@ Signed-off-by: SmartWRT <smartwrt@localhost>
  
  	return true;
  }
-@@ -2515,7 +2546,7 @@ static int mtk_poll_rx(struct napi_struc
+@@ -2515,7 +2553,7 @@
  		rxd = ring->dma + RX_DESC_OFS(eth, idx);
  		data = ring->data[idx];
  
