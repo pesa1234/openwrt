@@ -41,7 +41,7 @@
  
  		if (mcr_new != mcr_cur)
  			mtk_w32(mac->hw, mcr_new, MTK_XMAC_RX_CFG2(mac->id));
-@@ -778,7 +793,7 @@ static void mtk_mac_config(struct phylin
+@@ -776,7 +791,7 @@ static void mtk_mac_config(struct phylin
  	}
  
  	mac->interface = state->interface;
@@ -50,7 +50,7 @@
  
  	return;
  
-@@ -842,6 +857,16 @@ static void mtk_mac_link_down(struct phy
+@@ -840,6 +855,16 @@ static void mtk_mac_link_down(struct phy
  	}
  }
  
@@ -67,7 +67,7 @@
  static void mtk_set_queue_speed(struct mtk_eth *eth, unsigned int idx,
  				int speed)
  {
-@@ -3083,7 +3108,7 @@ static int mtk_rx_alloc(struct mtk_eth *
+@@ -3105,7 +3130,7 @@ static int mtk_rx_alloc(struct mtk_eth *
  		rx_data_len = MTK_MAX_LRO_RX_LENGTH;
  		rx_dma_size = MTK_HW_LRO_DMA_SIZE;
  	} else {
@@ -76,7 +76,7 @@
  		rx_dma_size = soc->rx.dma_size;
  	}
  
-@@ -3094,7 +3119,8 @@ static int mtk_rx_alloc(struct mtk_eth *
+@@ -3116,7 +3141,8 @@ static int mtk_rx_alloc(struct mtk_eth *
  	if (!ring->data)
  		return -ENOMEM;
  
@@ -86,7 +86,7 @@
  		struct page_pool *pp;
  
  		pp = mtk_create_page_pool(eth, &ring->xdp_q, ring_no,
-@@ -3103,6 +3129,17 @@ static int mtk_rx_alloc(struct mtk_eth *
+@@ -3125,6 +3151,17 @@ static int mtk_rx_alloc(struct mtk_eth *
  			return PTR_ERR(pp);
  
  		ring->page_pool = pp;
@@ -104,7 +104,7 @@
  	}
  
  	ring->in_sram = rx_flag == MTK_RX_FLAGS_NORMAL && !!eth->sram_pool;
-@@ -4078,6 +4115,17 @@ static int mtk_max_gmac_mtu(struct mtk_e
+@@ -4100,6 +4137,17 @@ static int mtk_max_gmac_mtu(struct mtk_e
  	return max_mtu;
  }
  
@@ -122,7 +122,7 @@
  static int mtk_open(struct net_device *dev)
  {
  	struct mtk_mac *mac = netdev_priv(dev);
-@@ -4269,7 +4317,8 @@ static int mtk_xdp_setup(struct net_devi
+@@ -4291,7 +4339,8 @@ static int mtk_xdp_setup(struct net_devi
  		return -EOPNOTSUPP;
  	}
  
@@ -132,7 +132,7 @@
  		NL_SET_ERR_MSG_MOD(extack, "MTU too large for XDP");
  		return -EOPNOTSUPP;
  	}
-@@ -4911,24 +4960,97 @@ static void mtk_uninit(struct net_device
+@@ -4933,24 +4982,97 @@ static void mtk_uninit(struct net_device
  
  static int mtk_change_mtu(struct net_device *dev, int new_mtu)
  {
@@ -234,7 +234,7 @@
  	return 0;
  }
  
-@@ -5771,7 +5893,7 @@ no_pcs:
+@@ -5809,7 +5931,7 @@ no_pcs:
  
  	mac->phylink = phylink;
  
@@ -243,7 +243,7 @@
  
  	if (MTK_HAS_CAPS(eth->soc->caps, MTK_QDMA)) {
  		mac->device_notifier.notifier_call = mtk_device_event;
-@@ -5925,6 +6047,7 @@ static int mtk_probe(struct platform_dev
+@@ -5963,6 +6085,7 @@ static int mtk_probe(struct platform_dev
  	spin_lock_init(&eth->tx_irq_lock);
  	spin_lock_init(&eth->rx_irq_lock);
  	spin_lock_init(&eth->dim_lock);
@@ -278,17 +278,17 @@
  	MTK_XGMAC_V2_BIT,
 +	MTK_NETSYS_RX_9K_BIT,
  	MTK_36BIT_DMA_BIT,
+ 	MTK_GMAC_EEE_BIT,
  
- 	/* MUX BITS*/
-@@ -1152,6 +1157,7 @@ enum mkt_eth_capabilities {
+@@ -1153,6 +1158,7 @@ enum mkt_eth_capabilities {
  #define MTK_SRAM		BIT_ULL(MTK_SRAM_BIT)
  #define MTK_XGMAC		BIT_ULL(MTK_XGMAC_BIT)
  #define MTK_XGMAC_V2		BIT_ULL(MTK_XGMAC_V2_BIT)
 +#define MTK_NETSYS_RX_9K	BIT_ULL(MTK_NETSYS_RX_9K_BIT)
  #define MTK_36BIT_DMA	BIT_ULL(MTK_36BIT_DMA_BIT)
+ #define MTK_GMAC_EEE		BIT_ULL(MTK_GMAC_EEE_BIT)
  
- #define MTK_ETH_MUX_GDM1_TO_GMAC1_ESW		\
-@@ -1259,7 +1265,8 @@ enum mkt_eth_capabilities {
+@@ -1262,7 +1268,8 @@ enum mkt_eth_capabilities {
  
  #define MT7986_CAPS  (MTK_GMAC1_SGMII | MTK_GMAC2_SGMII | \
  		      MTK_MUX_GMAC12_TO_GEPHY_SGMII | MTK_QDMA | \
@@ -298,7 +298,7 @@
  
  #define MT7987_CAPS  (MTK_36BIT_DMA | MTK_GMAC1_SGMII | \
  		      MTK_GMAC2_2P5GPHY_V2 | MTK_GMAC2_SGMII | MTK_GMAC3_SGMII | \
-@@ -1497,6 +1504,7 @@ struct mtk_eth {
+@@ -1500,6 +1507,7 @@ struct mtk_eth {
  
  	spinlock_t			dim_lock;
  

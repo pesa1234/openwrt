@@ -26,7 +26,7 @@ Signed-off-by: Codex <codex@openai.com>
  /* GMAC Identifier */
  enum mtk_gmac_id {
  	MTK_GMAC1_ID = 0,
-@@ -1701,6 +1705,20 @@ void mtk_w32(struct mtk_eth *eth, u32 va
+@@ -1703,6 +1707,20 @@ void mtk_w32(struct mtk_eth *eth, u32 va
  u32 mtk_r32(struct mtk_eth *eth, unsigned reg);
  u32 mtk_m32(struct mtk_eth *eth, u32 mask, u32 set, unsigned int reg);
  

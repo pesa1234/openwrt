@@ -58,7 +58,7 @@ Link: https://github.com/pesa1234/mtk-openwrt-feeds/commit/2099fc641def024f04713
  static void
  flow_offload_fill_dir(struct flow_offload *flow,
  		      enum flow_offload_tuple_dir dir)
-@@ -390,6 +405,130 @@ void flow_offload_teardown(struct flow_o
+@@ -397,6 +412,130 @@ void flow_offload_teardown(struct flow_o
  }
  EXPORT_SYMBOL_GPL(flow_offload_teardown);
  
@@ -189,7 +189,7 @@ Link: https://github.com/pesa1234/mtk-openwrt-feeds/commit/2099fc641def024f04713
  struct flow_offload_tuple_rhash *
  flow_offload_lookup(struct nf_flowtable *flow_table,
  		    struct flow_offload_tuple *tuple)
-@@ -849,8 +988,26 @@ static int __init nf_flow_table_module_i
+@@ -856,8 +995,26 @@ static int __init nf_flow_table_module_i
  	if (ret)
  		goto out_bpf;
  
@@ -216,7 +216,7 @@ Link: https://github.com/pesa1234/mtk-openwrt-feeds/commit/2099fc641def024f04713
  out_bpf:
  	nf_flow_table_offload_exit();
  out_offload:
-@@ -860,6 +1017,11 @@ out_offload:
+@@ -867,6 +1024,11 @@ out_offload:
  
  static void __exit nf_flow_table_module_exit(void)
  {
@@ -226,5 +226,5 @@ Link: https://github.com/pesa1234/mtk-openwrt-feeds/commit/2099fc641def024f04713
 +	destroy_workqueue(flow_mac_cleanup_wq);
 +#endif
  	unregister_netdevice_notifier(&flow_offload_netdev_notifier);
+ 	rcu_barrier();
  	nf_flow_table_offload_exit();
- 	unregister_pernet_subsys(&nf_flow_table_net_ops);

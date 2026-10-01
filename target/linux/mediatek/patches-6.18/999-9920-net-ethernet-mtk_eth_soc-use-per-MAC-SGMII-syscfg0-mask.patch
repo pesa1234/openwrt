@@ -51,9 +51,9 @@ Signed-off-by: evan.zhang <evan.zhang@mediatek.com>
 -	u32 i;
 +	u32 i, sgmii_mask;
  
- 	/* MT76x8 has no hardware settings between for the MAC */
- 	if (!MTK_HAS_CAPS(eth->soc->caps, MTK_SOC_MT7628) &&
-@@ -754,11 +773,12 @@ static void mtk_mac_config(struct phylin
+ 	if (mac->interface != state->interface) {
+ 		/* Setup soc pin functions */
+@@ -752,11 +771,12 @@ static void mtk_mac_config(struct phylin
  		/* The path GMAC to SGMII will be enabled once the SGMIISYS is
  		 * being setup done.
  		 */
@@ -68,7 +68,7 @@ Signed-off-by: evan.zhang <evan.zhang@mediatek.com>
  
  		/* Save the syscfg0 value for mac_finish */
  		mac->syscfg0 = val;
-@@ -817,9 +837,12 @@ static int mtk_mac_finish(struct phylink
+@@ -815,9 +835,12 @@ static int mtk_mac_finish(struct phylink
  
  	/* Enable SGMII */
  	if (interface == PHY_INTERFACE_MODE_SGMII ||

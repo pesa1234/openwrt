@@ -53,7 +53,7 @@ total CPU usage.
  static void mtk_mac_config(struct phylink_config *config, unsigned int mode,
  			   const struct phylink_link_state *state)
  {
-@@ -746,6 +778,7 @@ static void mtk_mac_config(struct phylin
+@@ -744,6 +776,7 @@ static void mtk_mac_config(struct phylin
  	}
  
  	mac->interface = state->interface;
@@ -61,7 +61,7 @@ total CPU usage.
  
  	return;
  
-@@ -1323,8 +1356,8 @@ static void mtk_get_stats64(struct net_d
+@@ -1345,8 +1378,8 @@ static void mtk_get_stats64(struct net_d
  static inline int mtk_max_frag_size(int mtu)
  {
  	/* make sure buf_size will be at least MTK_MAX_RX_LENGTH */
@@ -72,7 +72,7 @@ total CPU usage.
  
  	return SKB_DATA_ALIGN(MTK_RX_HLEN + mtu) +
  		SKB_DATA_ALIGN(sizeof(struct skb_shared_info));
-@@ -1335,7 +1368,7 @@ static inline int mtk_max_buf_size(int f
+@@ -1357,7 +1390,7 @@ static inline int mtk_max_buf_size(int f
  	int buf_size = frag_size - NET_SKB_PAD - NET_IP_ALIGN -
  		       SKB_DATA_ALIGN(sizeof(struct skb_shared_info));
  
@@ -81,7 +81,7 @@ total CPU usage.
  
  	return buf_size;
  }
-@@ -4378,30 +4411,6 @@ static void mtk_dim_tx(struct work_struc
+@@ -4400,30 +4433,6 @@ static void mtk_dim_tx(struct work_struc
  	dim->state = DIM_START_MEASURE;
  }
  
@@ -112,7 +112,7 @@ total CPU usage.
  static void mtk_hw_dump_reg(struct mtk_eth *eth, char *name, u32 offset, u32 range)
  {
  	u32 cur = offset;
-@@ -4732,14 +4741,10 @@ static int mtk_hw_init(struct mtk_eth *e
+@@ -4754,14 +4763,10 @@ static int mtk_hw_init(struct mtk_eth *e
  	 * invoked.
  	 */
  	for (i = 0; i < MTK_MAX_DEVS; i++) {
@@ -128,7 +128,7 @@ total CPU usage.
  	}
  
  	/* Indicates CDM to parse the MTK special tag from CPU
-@@ -5756,10 +5761,7 @@ no_pcs:
+@@ -5794,10 +5799,7 @@ no_pcs:
  
  	mac->phylink = phylink;
  

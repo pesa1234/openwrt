@@ -14,7 +14,7 @@ Signed-off-by: Bo-Cun Chen <bc-bocun.chen@mediatek.com>
 
 --- a/drivers/net/ethernet/mediatek/mtk_eth_soc.c
 +++ b/drivers/net/ethernet/mediatek/mtk_eth_soc.c
-@@ -865,6 +865,8 @@ static void mtk_set_queue_speed(struct m
+@@ -863,6 +863,8 @@ static void mtk_set_queue_speed(struct m
  	if (mtk_is_netsys_v1(eth))
  		val |= MTK_QTX_SCH_LEAKY_BUCKET_EN;
  
@@ -23,7 +23,7 @@ Signed-off-by: Bo-Cun Chen <bc-bocun.chen@mediatek.com>
  	if (IS_ENABLED(CONFIG_SOC_MT7621)) {
  		switch (speed) {
  		case SPEED_10:
-@@ -932,6 +934,12 @@ static void mtk_set_queue_speed(struct m
+@@ -930,6 +932,12 @@ static void mtk_set_queue_speed(struct m
  			       FIELD_PREP(MTK_QTX_SCH_MAX_RATE_EXP, 6) |
  			       FIELD_PREP(MTK_QTX_SCH_MAX_RATE_WEIGHT, 10);
  			break;
@@ -36,7 +36,7 @@ Signed-off-by: Bo-Cun Chen <bc-bocun.chen@mediatek.com>
  		default:
  			break;
  		}
-@@ -939,6 +947,8 @@ static void mtk_set_queue_speed(struct m
+@@ -937,6 +945,8 @@ static void mtk_set_queue_speed(struct m
  
  	mtk_w32(eth, idx / MTK_QTX_PER_PAGE, soc->reg_map->qdma.page);
  	ofs = MTK_QTX_OFFSET * (idx % MTK_QTX_PER_PAGE);

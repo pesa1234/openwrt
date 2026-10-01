@@ -25,7 +25,7 @@ Signed-off-by: SmartWRT <smartwrt@localhost>
 
 --- a/drivers/net/ethernet/mediatek/mtk_eth_soc.c
 +++ b/drivers/net/ethernet/mediatek/mtk_eth_soc.c
-@@ -1408,21 +1408,59 @@
+@@ -1430,21 +1430,59 @@ static inline int mtk_max_buf_size(int f
  	return buf_size;
  }
  
@@ -90,7 +90,7 @@ Signed-off-by: SmartWRT <smartwrt@localhost>
  
  	return true;
  }
-@@ -2515,7 +2553,7 @@
+@@ -2537,7 +2575,7 @@ static int mtk_poll_rx(struct napi_struc
  		rxd = ring->dma + RX_DESC_OFS(eth, idx);
  		data = ring->data[idx];
  
