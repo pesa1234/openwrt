@@ -10,6 +10,7 @@
 #include <net/arp.h>
 #include <net/fib_notifier.h>
 #include <net/ip6_fib.h>
+#include <net/ndisc.h>
 #include <net/netevent.h>
 #include <net/nexthop.h>
 #include <uapi/linux/rtnetlink.h>
@@ -29,6 +30,8 @@ struct otto_l3_net_event_work {
 	u64 mac;
 	struct in6_addr gw_addr;
 	int ifindex;
+	bool valid;
+	u8 type;
 };
 
 struct otto_l3_fib_event_work {
@@ -931,6 +934,31 @@ static int otto_l3_alloc_egress_intf(struct otto_l3_ctrl *ctrl, u64 mac, int vla
 /* Row 0 is not used, see otto_l3_930x_setup(). */
 #define FIRST_PREFIX_ROW	1
 
+/* An IPv6 prefix route is matched over three consecutive rows, and only rows
+ * 0 and 3 of every eight can hold the first of the three, so two rows in every
+ * eight start no route at all. The last row one may start at is four below the
+ * last row of the table. The IPv6 rows therefore run downwards from there
+ * against the IPv4 rows, which run upwards from FIRST_PREFIX_ROW (Realtek GPL
+ * SDK, dal_longan_l3.c: L3_ROUTE_TBL_USED, IS_L3_ROUTE_IPV6_IDX_VALID and
+ * L3_ROUTE_IPV6_IDX_MAX).
+ */
+#define V6_PREFIX_ROWS		3
+/* One access at an entry's first row reads or writes the whole entry, so a
+ * move copies that row alone
+ */
+#define V6_MOVE_ROWS		1
+#define FIRST_V6_ROW		(MAX_ROUTES - 1 - 4)
+
+static int otto_l3_v6_row(int slot)
+{
+	return FIRST_V6_ROW - (slot / 2) * 8 - (slot % 2) * V6_PREFIX_ROWS;
+}
+
+static int otto_l3_v6_slot(int row)
+{
+	return 2 * (FIRST_V6_ROW / 8 - row / 8) + (row % 8 ? 0 : 1);
+}
+
 /* The programmed prefix routes of one address family sit in one dense block,
  * longest prefix first, because the hardware answers a lookup with the lowest
  * matching row rather than the most specific one. A lookup carries the entry
@@ -975,8 +1003,8 @@ static void otto_l3_rows_stale(struct otto_l3_ctrl *ctrl, struct otto_l3_route *
 /* Open the row this route belongs at, pushing everything below it down. */
 static int otto_l3_route_place(struct otto_l3_ctrl *ctrl, struct otto_l3_route *r)
 {
+	int below, rows, row, last, v6_rows, err;
 	struct otto_l3_route *q;
-	int row, last, err;
 
 	if (!ctrl->cfg->route_rows_move)
 		return r->id;
@@ -984,8 +1012,52 @@ static int otto_l3_route_place(struct otto_l3_ctrl *ctrl, struct otto_l3_route *
 	if (ctrl->prefix_rows_stale)
 		return -1;
 
-	row = FIRST_PREFIX_ROW + otto_l3_prefix_rows(ctrl, r->attr.type, r->prefix_len);
-	last = FIRST_PREFIX_ROW + otto_l3_prefix_rows(ctrl, r->attr.type, 0);
+	below = otto_l3_prefix_rows(ctrl, r->attr.type, r->prefix_len);
+	rows = otto_l3_prefix_rows(ctrl, r->attr.type, 0);
+
+	if (r->attr.type == ROUTE_TYPE_IP6UC) {
+		int v4_rows = otto_l3_prefix_rows(ctrl, ROUTE_TYPE_IP4UC, 0);
+
+		if (otto_l3_v6_row(rows) < FIRST_PREFIX_ROW + v4_rows) {
+			dev_err(ctrl->dev, "prefix route table full, %d IPv4 and %d IPv6 routes\n",
+				v4_rows, rows);
+			return -1;
+		}
+
+		/* Deepest first, so a route is only written over a slot the
+		 * route that held it has already left. Once one slot has
+		 * moved, a failure leaves the block half shifted whatever the
+		 * failing move wrote itself.
+		 */
+		for (int s = rows - 1; s >= rows - below; s--) {
+			err = ctrl->cfg->route_rows_move(ctrl, otto_l3_v6_row(s + 1),
+							 otto_l3_v6_row(s), V6_MOVE_ROWS);
+			if (err) {
+				if (err == -EIO || s < rows - 1)
+					otto_l3_rows_stale(ctrl, r, otto_l3_v6_row(s));
+				return -1;
+			}
+		}
+
+		row = otto_l3_v6_row(rows - below);
+
+		list_for_each_entry(q, &ctrl->routes_list, list)
+			if (!q->is_host_route && q->attr.type == r->attr.type &&
+			    q->row >= FIRST_PREFIX_ROW && q->row <= row)
+				q->row = otto_l3_v6_row(otto_l3_v6_slot(q->row) + 1);
+
+		return row;
+	}
+
+	v6_rows = otto_l3_prefix_rows(ctrl, ROUTE_TYPE_IP6UC, 0);
+	row = FIRST_PREFIX_ROW + below;
+	last = FIRST_PREFIX_ROW + rows;
+
+	if (v6_rows && otto_l3_v6_row(v6_rows - 1) <= last) {
+		dev_err(ctrl->dev, "prefix route table full, %d IPv4 and %d IPv6 routes\n",
+			rows, v6_rows);
+		return -1;
+	}
 
 	if (row < last) {
 		/* A move that fails partway leaves the block half shifted, and
@@ -1012,40 +1084,199 @@ static int otto_l3_route_place(struct otto_l3_ctrl *ctrl, struct otto_l3_route *
 static void otto_l3_route_compact(struct otto_l3_ctrl *ctrl, struct otto_l3_route *r)
 {
 	struct otto_l3_route *q;
-	int last;
+	int rows, last;
 
 	if (!ctrl->cfg->route_rows_move || r->row < FIRST_PREFIX_ROW ||
 	    ctrl->prefix_rows_stale)
 		return;
 
-	last = FIRST_PREFIX_ROW + otto_l3_prefix_rows(ctrl, r->attr.type, 0) - 1;
-	if (r->row >= last)
-		return;
+	rows = otto_l3_prefix_rows(ctrl, r->attr.type, 0);
 
 	/* The leaving row is already invalid, so even a move that wrote nothing
 	 * leaves a hole in the block that the row count cannot see.
 	 */
-	if (ctrl->cfg->route_rows_move(ctrl, r->row, r->row + 1, last - r->row)) {
-		otto_l3_rows_stale(ctrl, r, r->row);
-		return;
+	if (r->attr.type == ROUTE_TYPE_IP6UC) {
+		int slot = otto_l3_v6_slot(r->row);
+
+		last = otto_l3_v6_row(rows - 1);
+		if (slot >= rows - 1)
+			return;
+
+		for (int s = slot + 1; s < rows; s++)
+			if (ctrl->cfg->route_rows_move(ctrl, otto_l3_v6_row(s - 1),
+						       otto_l3_v6_row(s), V6_MOVE_ROWS)) {
+				otto_l3_rows_stale(ctrl, r, otto_l3_v6_row(s));
+				return;
+			}
+
+		list_for_each_entry(q, &ctrl->routes_list, list)
+			if (!q->is_host_route && q->attr.type == r->attr.type &&
+			    q->row >= FIRST_PREFIX_ROW && q->row < r->row)
+				q->row = otto_l3_v6_row(otto_l3_v6_slot(q->row) - 1);
+	} else {
+		last = FIRST_PREFIX_ROW + rows - 1;
+		if (r->row >= last)
+			return;
+
+		if (ctrl->cfg->route_rows_move(ctrl, r->row, r->row + 1, last - r->row)) {
+			otto_l3_rows_stale(ctrl, r, r->row);
+			return;
+		}
+
+		list_for_each_entry(q, &ctrl->routes_list, list)
+			if (!q->is_host_route && q->attr.type == r->attr.type &&
+			    q->row > r->row)
+				q->row--;
 	}
 
-	list_for_each_entry(q, &ctrl->routes_list, list)
-		if (!q->is_host_route && q->attr.type == r->attr.type &&
-		    q->row > r->row)
-			q->row--;
-
-	/* The tail now holds a copy of the row above it. */
+	/* The tail now holds a copy of the row the block has pulled up. */
 	r->attr.valid = false;
 	ctrl->cfg->route_write(ctrl, last, r);
 }
 
-/* Updates an L3 next hop entry in the ROUTING table */
-static int otto_l3_nexthop_update(struct otto_l3_ctrl *ctrl, u8 type, int ifindex,
-				  const struct in6_addr *gw, u64 mac)
+static void otto_l3_route_update_hw(struct otto_l3_ctrl *ctrl, struct otto_l3_route *r,
+				    u64 mac)
 {
 	struct rtl838x_switch_priv *priv = ctrl->priv;
 	bool require_existing = ctrl->cfg->use_l3_tables;
+	bool no_port;
+
+	dev_dbg(ctrl->dev, "setting up fwding: gw %pI6c, mac %016llx\n",
+		&r->gw_ip, mac);
+
+	dev_dbg(ctrl->dev, "Route with id %d to %pI4 / %d\n",
+		r->id, &r->dst_ip, r->prefix_len);
+
+	r->nh.mac = r->nh.gw = mac;
+	r->nh.port = priv->r->port_ignore;
+	r->nh.id = r->id;
+
+	/* Do we need to explicitly add a DMAC entry with the route's nh index? */
+	if (ctrl->cfg->set_egress_mac)
+		ctrl->cfg->set_egress_mac(ctrl, r->id, mac);
+
+	/* Update ROUTING table: map gateway-mac and switch-mac id to route id */
+	if (!rtldsa_l2_nexthop_add(priv, &r->nh, require_existing))
+		r->nh.l2_installed = true;
+
+	/* A next hop with no port delivers the frame twice, so where the
+	 * route entry can trap, let the CPU route it alone until an update
+	 * brings one, the way otto_l3_fib_add_v4() treats a host route
+	 * with no gateway. A family that routes through a PIE rule keeps
+	 * the rule it had.
+	 */
+	no_port = ctrl->cfg->use_l3_tables &&
+		  r->nh.port == priv->r->port_ignore;
+	if (no_port && r->attr.action != ROUTE_ACT_TRAP2CPU)
+		dev_info(ctrl->dev, "no port for %pI4, routing %pI4/%d in software\n",
+			 &r->gw_ip.s6_addr32[3], &r->dst_ip, r->prefix_len);
+
+	r->attr.valid = true;
+	r->attr.action = no_port ? ROUTE_ACT_TRAP2CPU : ROUTE_ACT_FORWARD;
+	r->attr.hit = false; /* Reset route-used indicator */
+
+	/* Forwarding a packet is what makes this a hop, and a hop
+	 * spends one of the packet's. The two bits are what the SDK
+	 * asks for on an entry it creates with no flags of its own.
+	 * A route trapped for want of a port does not forward, so it
+	 * keeps them clear.
+	 */
+	r->attr.ttl_dec = !no_port;
+	r->attr.ttl_check = !no_port;
+
+	if (r->attr.type == ROUTE_TYPE_IP4UC) {
+		/* Add PIE entry with dst_ip and prefix_len */
+		r->pr.dip = r->dst_ip;
+		r->pr.dip_m = inet_make_mask(r->prefix_len);
+	}
+
+	if (r->is_host_route) {
+		int slot = ctrl->cfg->find_slot(ctrl, r, true);
+
+		if (slot < 0)
+			slot = ctrl->cfg->find_slot(ctrl, r, false);
+
+		if (slot < 0) {
+			dev_err(ctrl->dev, "no slot for host route %pI4\n",
+				&r->dst_ip);
+			return;
+		}
+
+		dev_info(ctrl->dev, "Got slot for route: %d\n", slot);
+		ctrl->cfg->host_route_write(ctrl, slot, r);
+	} else {
+		if (r->row < 0)
+			r->row = otto_l3_route_place(ctrl, r);
+
+		if (r->row < 0)
+			return;
+
+		ctrl->cfg->route_write(ctrl, r->row, r);
+		r->pr.fwd_sel = true;
+		r->pr.fwd_data = r->nh.l2_id;
+		r->pr.fwd_act = PIE_ACT_ROUTE_UC;
+	}
+
+	if (ctrl->cfg->set_nexthop)
+		ctrl->cfg->set_nexthop(ctrl, r->nh.id, r->nh.l2_id, r->nh.if_id);
+
+	if (ctrl->cfg->use_l3_tables)
+		return;
+
+	if (r->pr.id < 0) {
+		r->pr.packet_cntr = rtldsa_packet_cntr_alloc(priv);
+		if (r->pr.packet_cntr >= 0) {
+			dev_info(ctrl->dev, "Using packet counter %d\n",
+				 r->pr.packet_cntr);
+			r->pr.log_sel = true;
+			r->pr.log_data = r->pr.packet_cntr;
+		}
+		priv->r->pie_rule_add(priv, &r->pr);
+	} else {
+		int pkts = priv->r->packet_cntr_read(priv, r->pr.packet_cntr);
+
+		dev_dbg(ctrl->dev, "total packets: %d\n", pkts);
+
+		priv->r->pie_rule_write(priv, r->pr.id, &r->pr);
+	}
+}
+
+/* The hardware would go on forwarding to the address the gateway last
+ * answered from. The CPU resolves it again or reports it unreachable, and the
+ * next update with a valid neighbour gives the route back. A family that
+ * routes through a PIE rule keeps the rule it had.
+ */
+static void otto_l3_route_trap_hw(struct otto_l3_ctrl *ctrl, struct otto_l3_route *r)
+{
+	int slot = r->row;
+
+	if (!ctrl->cfg->use_l3_tables || r->attr.action == ROUTE_ACT_TRAP2CPU)
+		return;
+
+	if (r->is_host_route)
+		slot = ctrl->cfg->find_slot(ctrl, r, true);
+
+	/* Not in the hardware, so nothing forwards to the old address */
+	if (slot < 0)
+		return;
+
+	dev_info(ctrl->dev, "no valid neighbour for %pI4, routing %pI4/%d in software\n",
+		 &r->gw_ip.s6_addr32[3], &r->dst_ip, r->prefix_len);
+
+	r->attr.action = ROUTE_ACT_TRAP2CPU;
+	r->attr.ttl_dec = false;
+	r->attr.ttl_check = false;
+
+	if (r->is_host_route)
+		ctrl->cfg->host_route_write(ctrl, slot, r);
+	else
+		ctrl->cfg->route_write(ctrl, slot, r);
+}
+
+/* Updates an L3 next hop entry in the ROUTING table */
+static int otto_l3_nexthop_update(struct otto_l3_ctrl *ctrl, u8 type, int ifindex,
+				  const struct in6_addr *gw, u64 mac, bool valid)
+{
 	struct otto_l3_route *r;
 	bool known;
 
@@ -1065,8 +1296,6 @@ static int otto_l3_nexthop_update(struct otto_l3_ctrl *ctrl, u8 type, int ifinde
 		return -ENOENT;
 
 	list_for_each_entry(r, &ctrl->routes_list, list) {
-		bool no_port;
-
 		/* An IPv4 gateway written v4-mapped is a valid IPv6 one, so
 		 * the key alone does not say whose route this is.
 		 */
@@ -1074,133 +1303,40 @@ static int otto_l3_nexthop_update(struct otto_l3_ctrl *ctrl, u8 type, int ifinde
 		    !ipv6_addr_equal(&r->gw_ip, gw))
 			continue;
 
-		dev_dbg(ctrl->dev, "setting up fwding: gw %pI6c, mac %016llx\n",
-			gw, mac);
-
-		dev_dbg(ctrl->dev, "Route with id %d to %pI4 / %d\n",
-			r->id, &r->dst_ip, r->prefix_len);
-
-		r->nh.mac = r->nh.gw = mac;
-		r->nh.port = priv->r->port_ignore;
-		r->nh.id = r->id;
-
-		/* Do we need to explicitly add a DMAC entry with the route's nh index? */
-		if (ctrl->cfg->set_egress_mac)
-			ctrl->cfg->set_egress_mac(ctrl, r->id, mac);
-
-		/* Update ROUTING table: map gateway-mac and switch-mac id to route id */
-		if (!rtldsa_l2_nexthop_add(priv, &r->nh, require_existing))
-			r->nh.l2_installed = true;
-
-		/* A next hop with no port delivers the frame twice, so where the
-		 * route entry can trap, let the CPU route it alone until an update
-		 * brings one, the way otto_l3_fib_add_v4() treats a host route
-		 * with no gateway. A family that routes through a PIE rule keeps
-		 * the rule it had.
-		 */
-		no_port = ctrl->cfg->use_l3_tables &&
-			  r->nh.port == priv->r->port_ignore;
-		if (no_port && r->attr.action != ROUTE_ACT_TRAP2CPU)
-			dev_info(ctrl->dev, "no port for %pI4, routing %pI4/%d in software\n",
-				 &gw->s6_addr32[3], &r->dst_ip, r->prefix_len);
-
-		r->attr.valid = true;
-		r->attr.action = no_port ? ROUTE_ACT_TRAP2CPU : ROUTE_ACT_FORWARD;
-		r->attr.hit = false; /* Reset route-used indicator */
-
-		/* Forwarding a packet is what makes this a hop, and a hop
-		 * spends one of the packet's. The two bits are what the SDK
-		 * asks for on an entry it creates with no flags of its own.
-		 * A route trapped for want of a port does not forward, so it
-		 * keeps them clear.
-		 */
-		r->attr.ttl_dec = !no_port;
-		r->attr.ttl_check = !no_port;
-
-		if (r->attr.type == ROUTE_TYPE_IP4UC) {
-			/* Add PIE entry with dst_ip and prefix_len */
-			r->pr.dip = r->dst_ip;
-			r->pr.dip_m = inet_make_mask(r->prefix_len);
-		}
-
-		if (r->is_host_route) {
-			int slot = ctrl->cfg->find_slot(ctrl, r, true);
-
-			if (slot < 0)
-				slot = ctrl->cfg->find_slot(ctrl, r, false);
-
-			if (slot < 0) {
-				dev_err(ctrl->dev, "no slot for host route %pI4\n",
-					&r->dst_ip);
-				continue;
-			}
-
-			dev_info(ctrl->dev, "Got slot for route: %d\n", slot);
-			ctrl->cfg->host_route_write(ctrl, slot, r);
-		} else {
-			if (r->row < 0)
-				r->row = otto_l3_route_place(ctrl, r);
-
-			if (r->row < 0)
-				continue;
-
-			ctrl->cfg->route_write(ctrl, r->row, r);
-			r->pr.fwd_sel = true;
-			r->pr.fwd_data = r->nh.l2_id;
-			r->pr.fwd_act = PIE_ACT_ROUTE_UC;
-		}
-
-		if (ctrl->cfg->set_nexthop)
-			ctrl->cfg->set_nexthop(ctrl, r->nh.id, r->nh.l2_id, r->nh.if_id);
-
-		if (ctrl->cfg->use_l3_tables)
-			continue;
-
-		if (r->pr.id < 0) {
-			r->pr.packet_cntr = rtldsa_packet_cntr_alloc(priv);
-			if (r->pr.packet_cntr >= 0) {
-				dev_info(ctrl->dev, "Using packet counter %d\n",
-					 r->pr.packet_cntr);
-				r->pr.log_sel = true;
-				r->pr.log_data = r->pr.packet_cntr;
-			}
-			priv->r->pie_rule_add(priv, &r->pr);
-		} else {
-			int pkts = priv->r->packet_cntr_read(priv, r->pr.packet_cntr);
-
-			dev_dbg(ctrl->dev, "total packets: %d\n", pkts);
-
-			priv->r->pie_rule_write(priv, r->pr.id, &r->pr);
-		}
+		if (valid)
+			otto_l3_route_update_hw(ctrl, r, mac);
+		else
+			otto_l3_route_trap_hw(ctrl, r);
 	}
 
 	return 0;
 }
 
-static int otto_l3_port_ipv4_resolve(struct otto_l3_ctrl *ctrl,
-				     struct net_device *dev, __be32 ip_addr)
+static int otto_l3_port_gw_resolve(struct otto_l3_ctrl *ctrl, struct net_device *dev,
+				   struct neigh_table *tbl, const struct in6_addr *gw)
 {
-	struct neighbour *n = neigh_lookup(&arp_tbl, &ip_addr, dev);
+	/* An ARP neighbour is keyed on four bytes, which in a v4-mapped
+	 * address are the last word of it.
+	 */
+	const void *key = tbl == &arp_tbl ? (const void *)&gw->s6_addr32[3] : gw;
+	u8 type = tbl == &arp_tbl ? ROUTE_TYPE_IP4UC : ROUTE_TYPE_IP6UC;
+	struct neighbour *n = neigh_lookup(tbl, key, dev);
 	int err = 0;
 	u64 mac;
 
 	if (!n) {
-		n = neigh_create(&arp_tbl, &ip_addr, dev);
+		n = neigh_create(tbl, key, dev);
 		if (IS_ERR(n))
 			return PTR_ERR(n);
 	}
 
 	/* If the neigh is already resolved, then go ahead and
-	 * install the entry, otherwise start the ARP process to
-	 * resolve the neigh.
+	 * install the entry, otherwise start the resolution.
 	 */
 	if (n->nud_state & NUD_VALID) {
-		struct in6_addr gw;
-
 		mac = ether_addr_to_u64(n->ha);
 		dev_info(ctrl->dev, "resolved mac: %016llx\n", mac);
-		ipv6_addr_set_v4mapped(ip_addr, &gw);
-		otto_l3_nexthop_update(ctrl, ROUTE_TYPE_IP4UC, dev->ifindex, &gw, mac);
+		otto_l3_nexthop_update(ctrl, type, dev->ifindex, gw, mac, true);
 	} else {
 		dev_info(ctrl->dev, "need to wait\n");
 		neigh_event_send(n, NULL);
@@ -1526,13 +1662,14 @@ static int otto_l3_fib_add_v4(struct otto_l3_ctrl *ctrl, struct fib_entry_notifi
 	struct fib_nh *nh;
 	int port, vlan;
 
-	/* A route through a nexthop object is not offloaded and has no
-	 * nexthop array to read, but it can replace a route that is. An
-	 * offloaded shorter prefix would forward its traffic, so trap it where
-	 * the host table can hold it.
+	/* A route through a nexthop object has no nexthop array to read, and a
+	 * blackhole, unreachable or prohibit route has no device behind its
+	 * nexthop. Neither is offloaded, but either can replace a route that
+	 * is. An offloaded shorter prefix would forward its traffic, so trap
+	 * it where the host table can hold it.
 	 */
-	if (info->fi->nh) {
-		dev_dbg(ctrl->dev, "route through a nexthop object, not offloaded\n");
+	if (info->fi->nh || !fib_info_nh(info->fi, 0)->fib_nh_dev) {
+		dev_dbg(ctrl->dev, "route not offloaded: no device or a nexthop object\n");
 		route = otto_l3_route_find(ctrl, info->tb_id, ROUTE_TYPE_IP4UC, info->dst,
 					   NULL, info->dst_len);
 		if (route)
@@ -1626,7 +1763,7 @@ static int otto_l3_fib_add_v4(struct otto_l3_ctrl *ctrl, struct fib_entry_notifi
 
 	/* We need to resolve the mac address of the GW */
 	if (nh->fib_nh_gw4)
-		otto_l3_port_ipv4_resolve(ctrl, ndev, nh->fib_nh_gw4);
+		otto_l3_port_gw_resolve(ctrl, ndev, &arp_tbl, &gw);
 
 	nh->fib_nh_flags |= RTNH_F_OFFLOAD;
 
@@ -1646,8 +1783,10 @@ static int otto_l3_fib_del_v4(struct otto_l3_ctrl *ctrl, struct fib_entry_notifi
 	struct in6_addr gw;
 	struct fib_nh *nh;
 
-	/* A route through a nexthop object holds at most a trap entry */
-	if (info->fi->nh) {
+	/* A route through a nexthop object or without a device holds at most a
+	 * trap entry
+	 */
+	if (info->fi->nh || !fib_info_nh(info->fi, 0)->fib_nh_dev) {
 		route = otto_l3_route_find(ctrl, info->tb_id, ROUTE_TYPE_IP4UC, info->dst,
 					   NULL, info->dst_len);
 		if (route)
@@ -1817,10 +1956,18 @@ static void otto_l3_net_event_work_do(struct work_struct *work)
 	struct otto_l3_net_event_work *net_work =
 		container_of(work, struct otto_l3_net_event_work, work);
 
-	otto_l3_nexthop_update(net_work->ctrl, ROUTE_TYPE_IP4UC, net_work->ifindex,
-			       &net_work->gw_addr, net_work->mac);
+	otto_l3_nexthop_update(net_work->ctrl, net_work->type, net_work->ifindex,
+			       &net_work->gw_addr, net_work->mac, net_work->valid);
 
 	kfree(net_work);
+}
+
+/* nd_tbl exists only where IPv6 is built in, or is a module this driver
+ * can reach
+ */
+static bool otto_l3_is_nd_tbl(const struct neigh_table *tbl)
+{
+	return IS_REACHABLE(CONFIG_IPV6) && tbl == &nd_tbl;
 }
 
 static int otto_l3_netevent_notifier(struct notifier_block *this, unsigned long event, void *ptr)
@@ -1838,12 +1985,19 @@ static int otto_l3_netevent_notifier(struct notifier_block *this, unsigned long 
 		if (!ctrl->cfg->setup)
 			return NOTIFY_DONE;
 
-		if (n->tbl != &arp_tbl)
+		if (n->tbl != &arp_tbl && !otto_l3_is_nd_tbl(n->tbl))
+			return NOTIFY_DONE;
+
+		/* Only where the L3 tables carry an IPv6 destination can a
+		 * route be waiting on an ndisc neighbour, which is how the
+		 * FIB side of the same question is answered.
+		 */
+		if (otto_l3_is_nd_tbl(n->tbl) && !ctrl->cfg->use_l3_tables)
 			return NOTIFY_DONE;
 		dev = n->dev;
 		port = otto_l3_port_dev_lower_find(dev, ctrl);
-		if (port < 0 || !(n->nud_state & NUD_VALID)) {
-			dev_dbg(ctrl->dev, "Neigbour invalid, not updating\n");
+		if (port < 0) {
+			dev_dbg(ctrl->dev, "Neighbour not on a switch port, not updating\n");
 			return NOTIFY_DONE;
 		}
 
@@ -1854,9 +2008,22 @@ static int otto_l3_netevent_notifier(struct notifier_block *this, unsigned long 
 		INIT_WORK(&net_work->work, otto_l3_net_event_work_do);
 		net_work->ctrl = ctrl;
 
+		/* A neighbour taken out of the table is marked dead, and keeps a
+		 * NUD_VALID state if it had one
+		 */
+		read_lock_bh(&n->lock);
+		net_work->valid = (n->nud_state & NUD_VALID) && !n->dead;
 		net_work->mac = ether_addr_to_u64(n->ha);
+		read_unlock_bh(&n->lock);
 		net_work->ifindex = dev->ifindex;
-		ipv6_addr_set_v4mapped(*(__be32 *)n->primary_key, &net_work->gw_addr);
+		if (n->tbl == &arp_tbl) {
+			ipv6_addr_set_v4mapped(*(__be32 *)n->primary_key,
+					       &net_work->gw_addr);
+			net_work->type = ROUTE_TYPE_IP4UC;
+		} else {
+			net_work->gw_addr = *(struct in6_addr *)n->primary_key;
+			net_work->type = ROUTE_TYPE_IP6UC;
+		}
 
 		dev_dbg(ctrl->dev, "updating neighbour on port %d, mac %016llx\n",
 			port, net_work->mac);
@@ -1894,6 +2061,16 @@ static const char * const otto_l3_930x_dump_action_name[4] = {
 	[ROUTE_ACT_COPY2CPU] = "copy",
 	[ROUTE_ACT_DROP]     = "drop",
 };
+
+/* Rows one entry of the prefix route table covers, by type: IPv4 unicast,
+ * IPv4 multicast, IPv6 unicast, IPv6 multicast. The rows behind the first
+ * read back as entries of their own, so anything walking the table has to
+ * step over them. The multicast pair is the Realtek GPL SDK's
+ * (dal_longan_l3.h: LONGAN_L3_ROUTE_IPMC_WIDTH_IPV4 and _IPV6); nothing here
+ * programs a multicast entry, and the walk has to step over one it meets all
+ * the same.
+ */
+static const u8 otto_l3_930x_prefix_widths[] = { 1, 2, V6_PREFIX_ROWS, 8 };
 
 /* One valid entry, decoded and ready to print. Multicast entries (type 1 and
  * 3) only carry what word 0 says (valid, type, hence width): no field
@@ -1982,7 +2159,7 @@ static bool otto_l3_930x_dump_decode_prefix(const u32 *data, u32 addr,
 	rec->addr = addr;
 	rec->idx = addr;
 	rec->type = (data[0] >> 29) & 0x3;
-	rec->width = 1;
+	rec->width = otto_l3_930x_prefix_widths[rec->type];
 
 	if (rec->type != 0 && rec->type != 2)
 		return true; /* multicast: type/width only */
@@ -2117,18 +2294,21 @@ static int otto_l3_930x_dump_show(struct seq_file *m, void *v)
 	if (handle < 0)
 		return handle;
 
-	for (addr = 0; addr < rows; addr++) {
-		if (!(addr % 64))
+	for (addr = 0, n = 0; addr < rows; n++) {
+		if (!(n % 64))
 			cond_resched();
 
 		__otto_table_read(handle, addr, &prefix_data);
-		if (!otto_l3_930x_dump_decode_prefix(prefix_data, addr, &rec))
+		if (!otto_l3_930x_dump_decode_prefix(prefix_data, addr, &rec)) {
+			addr++;
 			continue;
+		}
 
 		if (!rec.decoded)
 			mc_seen++;
 
 		otto_l3_930x_dump_print(m, &rec);
+		addr += rec.width;
 	}
 
 	otto_table_release(handle);
@@ -2309,10 +2489,12 @@ static int otto_l3_930x_clear_hit_prefix(unsigned int *cleared, unsigned int *sk
 	if (handle < 0)
 		return handle;
 
-	for (addr = 0; addr < rows; addr++) {
+	for (addr = 0; addr < rows;) {
 		__otto_table_read(handle, addr, &data);
-		if (!otto_l3_930x_dump_decode_prefix(data, addr, &rec))
+		if (!otto_l3_930x_dump_decode_prefix(data, addr, &rec)) {
+			addr++;
 			continue;
+		}
 
 		if (!rec.decoded) {
 			(*skipped_mc)++;
@@ -2321,6 +2503,8 @@ static int otto_l3_930x_clear_hit_prefix(unsigned int *cleared, unsigned int *sk
 			__otto_table_write(handle, addr, &data);
 			(*cleared)++;
 		}
+
+		addr += rec.width;
 	}
 
 	otto_table_release(handle);
