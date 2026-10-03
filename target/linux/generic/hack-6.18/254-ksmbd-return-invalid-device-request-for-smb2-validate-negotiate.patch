@@ -1,0 +1,42 @@
+From: Andrea Pesaresi <andreapesaresi82@gmail.com>
+Date: Sat, 3 Oct 2026 12:00:00 +0200
+Subject: [PATCH] ksmbd: return STATUS_INVALID_DEVICE_REQUEST for SMB 2.x
+ validate negotiate
+
+Samba clients validate the negotiate exchange after every tree connect on
+SMB 2.0.2 and 2.1 sessions as well, not only on SMB 3.0 and 3.0.2.
+Releases 4.2.0 to 4.5.10 and 4.6.0 to 4.6.6 accept only
+STATUS_FILE_CLOSED, STATUS_INVALID_DEVICE_REQUEST and
+STATUS_FS_DRIVER_REQUIRED as a signed "not supported" reply. ksmbd
+answers STATUS_NOT_SUPPORTED, so those clients fail the tree connect.
+
+Samba fixed the client in 4.5.11, 4.6.7 and 4.7.0 (Samba bug 12808).
+The affected releases default to SMB1, so this only matters when the
+client is forced to SMB 2.x, e.g. "client max protocol = SMB2".
+
+Return STATUS_INVALID_DEVICE_REQUEST, which every Samba 4 client
+accepts. SMB 3.x sessions are not affected.
+
+Signed-off-by: Andrea Pesaresi <andreapesaresi82@gmail.com>
+---
+ fs/smb/server/smb2pdu.c | 8 +++++++-
+ 1 file changed, 7 insertions(+), 1 deletion(-)
+
+--- a/fs/smb/server/smb2pdu.c
++++ b/fs/smb/server/smb2pdu.c
+@@ -8457,8 +8457,14 @@ int smb2_ioctl(struct ksmbd_work *work)
+ 		break;
+ 	case FSCTL_VALIDATE_NEGOTIATE_INFO:
+ 		if (conn->dialect < SMB30_PROT_ID) {
++			/*
++			 * Samba clients 4.2.0 to 4.5.10 and 4.6.0 to 4.6.6
++			 * also validate SMB 2.x sessions and drop the
++			 * connection on STATUS_NOT_SUPPORTED.
++			 */
+ 			ret = -EOPNOTSUPP;
+-			goto out;
++			rsp->hdr.Status = STATUS_INVALID_DEVICE_REQUEST;
++			goto out2;
+ 		}
+
+ 		if (in_buf_len < offsetof(struct validate_negotiate_info_req,
