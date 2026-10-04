@@ -184,7 +184,7 @@ define Build/znet-header
 		payload_size_crc="$$(dd if=$@ ibs=1 count=$$payload_len 2>/dev/null | gzip -c | \
 			tail -c 8 | od -An -N4 -tx4 --endian big | tr -d ' \n')"; \
 		echo -ne "$(magic)" | dd bs=4 count=1 conv=sync 2>/dev/null; \
-		echo -ne "$$(printf '%08x' $$(stat -c%s $@) | fold -s2 | xargs -I {} echo \\x{} | tac | tr -d '\n')" | \
+		echo -ne "$$(printf '%08x' $$(stat -c%s $@) | fold -w2 | xargs -I {} echo \\x{} | tac | tr -d '\n')" | \
 			dd bs=4 count=1 conv=sync 2>/dev/null; \
 		echo -ne "$$(echo $$data_size_crc | sed 's/../\\x&/g')" | \
 			dd bs=4 count=1 conv=sync 2>/dev/null; \
@@ -3183,6 +3183,21 @@ define Device/tplink_ex220-v1
   IMAGE_SIZE := 15744k
 endef
 TARGET_DEVICES += tplink_ex220-v1
+
+define Device/tplink_ex220-v1-nand
+  $(Device/nand)
+  DEVICE_VENDOR := TP-Link
+  DEVICE_MODEL := EX220
+  DEVICE_VARIANT := v1 (NAND)
+  DEVICE_DTS := mt7621_tplink_ex220-v1-nand
+  DEVICE_DTS_CONFIG := config@1
+  DEVICE_PACKAGES := kmod-mt7915-firmware -uboot-envtools
+  KERNEL_LOADADDR := 0x82000000
+  KERNEL := kernel-bin | relocate-kernel $(loadaddr-y) | lzma | \
+	fit lzma $$(KDIR)/image-$$(firstword $$(DEVICE_DTS)).dtb
+  IMAGE_SIZE := 39936k
+endef
+TARGET_DEVICES += tplink_ex220-v1-nand
 
 define Device/tplink_ex220-v2
   $(Device/dsa-migration)
