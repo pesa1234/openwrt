@@ -23,24 +23,7 @@
  static int mtk_free_dev(struct mtk_eth *eth)
  {
  	int i;
-@@ -5215,12 +5231,15 @@ static int mtk_unreg_dev(struct mtk_eth
- 
- 	for (i = 0; i < MTK_MAX_DEVS; i++) {
- 		struct mtk_mac *mac;
-+
- 		if (!eth->netdev[i])
- 			continue;
-+
- 		mac = netdev_priv(eth->netdev[i]);
- 		if (MTK_HAS_CAPS(eth->soc->caps, MTK_QDMA))
- 			unregister_netdevice_notifier(&mac->device_notifier);
--		unregister_netdev(eth->netdev[i]);
-+		if (eth->netdev[i]->reg_state == NETREG_REGISTERED)
-+			unregister_netdev(eth->netdev[i]);
- 	}
- 
- 	return 0;
-@@ -6324,20 +6343,6 @@ static int mtk_probe(struct platform_dev
+@@ -6328,20 +6344,6 @@ static int mtk_probe(struct platform_dev
  		}
  	}
  
@@ -51,7 +34,7 @@
 -		err = register_netdev(eth->netdev[i]);
 -		if (err) {
 -			dev_err(eth->dev, "error bringing up device\n");
--			goto err_deinit_ppe;
+-			goto err_unreg_netdev;
 -		} else
 -			netif_info(eth, probe, eth->netdev[i],
 -				   "mediatek frame engine at 0x%08lx, irq %d\n",
@@ -61,7 +44,7 @@
  	/* we run 2 devices on the same DMA ring so we need a dummy device
  	 * for NAPI to work
  	 */
-@@ -6345,9 +6350,10 @@ static int mtk_probe(struct platform_dev
+@@ -6349,9 +6351,10 @@ static int mtk_probe(struct platform_dev
  	if (!eth->dummy_dev) {
  		err = -ENOMEM;
  		dev_err(eth->dev, "failed to allocate dummy device\n");
@@ -74,7 +57,7 @@
  	netif_napi_add_weight(eth->dummy_dev, &eth->rx_napi[0].napi, mtk_napi_rx,
  			      MTK_NAPI_WEIGHT);
  
-@@ -6358,6 +6364,21 @@ static int mtk_probe(struct platform_dev
+@@ -6362,6 +6365,21 @@ static int mtk_probe(struct platform_dev
  					      mtk_napi_rx, MTK_NAPI_WEIGHT);
  	}
  
@@ -96,7 +79,7 @@
  	platform_set_drvdata(pdev, eth);
  	schedule_delayed_work(&eth->reset.monitor_work,
  			      MTK_DMA_MONITOR_TIMEOUT);
-@@ -6366,6 +6387,9 @@ static int mtk_probe(struct platform_dev
+@@ -6370,6 +6388,9 @@ static int mtk_probe(struct platform_dev
  
  err_unreg_netdev:
  	mtk_unreg_dev(eth);
@@ -106,7 +89,7 @@
  err_deinit_ppe:
  	mtk_ppe_deinit(eth);
  	mtk_mdio_cleanup(eth);
-@@ -6399,13 +6423,7 @@ static void mtk_remove(struct platform_d
+@@ -6403,13 +6424,7 @@ static void mtk_remove(struct platform_d
  	mtk_wed_exit();
  	mtk_hw_deinit(eth);
  

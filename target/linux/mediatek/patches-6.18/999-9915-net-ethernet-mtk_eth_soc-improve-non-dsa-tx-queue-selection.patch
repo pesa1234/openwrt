@@ -1,6 +1,6 @@
 --- a/drivers/net/ethernet/mediatek/mtk_eth_soc.c
 +++ b/drivers/net/ethernet/mediatek/mtk_eth_soc.c
-@@ -5589,6 +5589,43 @@ static int mtk_set_rxfh(struct net_devic
+@@ -5590,6 +5590,43 @@ static int mtk_set_rxfh(struct net_devic
  	return 0;
  }
  
@@ -44,7 +44,7 @@
  static u16 mtk_select_queue(struct net_device *dev, struct sk_buff *skb,
  			    struct net_device *sb_dev)
  {
-@@ -5601,6 +5638,8 @@ static u16 mtk_select_queue(struct net_d
+@@ -5602,6 +5639,8 @@ static u16 mtk_select_queue(struct net_d
  		if (dp_idx < MTK_DSA_USER_PORT_MAX)
  			queue = mac->dsa_queue_base +
  				mac->dsa_port_rank[dp_idx];
