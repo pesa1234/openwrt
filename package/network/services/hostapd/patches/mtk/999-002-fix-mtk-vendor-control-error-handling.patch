@@ -115,7 +115,7 @@ the previous MU setting on failure, and use a portable format for u64.
  }
  
  
-@@ -4356,15 +4353,17 @@ hostapd_ctrl_iface_get_aval_color_bmp(st
+@@ -4356,14 +4353,16 @@ hostapd_ctrl_iface_get_aval_color_bmp(st
  	int i;
  	u64 aval_color_bmp = 0;
  
@@ -123,7 +123,6 @@ the previous MU setting on failure, and use a portable format for u64.
 +	if (hostapd_drv_get_aval_bss_color_bmp(hapd,
 +						&aval_color_bmp) < 0)
 +		return -1;
- 	hapd->color_collision_bitmap = ~aval_color_bmp;
  
  	pos = buf;
  	end = buf + buflen;

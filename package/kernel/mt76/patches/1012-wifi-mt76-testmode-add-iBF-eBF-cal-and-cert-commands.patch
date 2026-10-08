@@ -144,9 +144,9 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  	dev->mt76.vif_mask |= BIT_ULL(mvif->mt76.idx);
  	phy->omac_mask |= BIT_ULL(mvif->mt76.omac_idx);
 @@ -294,26 +283,44 @@ static int mt7915_add_interface(struct i
+ 	rcu_assign_pointer(dev->mt76.wcid[idx], &mvif->sta.wcid);
  	mt7915_mcu_add_bss_info(phy, vif, true);
  	mt7915_mcu_add_sta(dev, vif, NULL, CONN_STATE_PORT_SECURE, true);
- 	rcu_assign_pointer(dev->mt76.wcid[idx], &mvif->sta.wcid);
  
 -	mutex_unlock(&dev->mt76.mutex);
 -

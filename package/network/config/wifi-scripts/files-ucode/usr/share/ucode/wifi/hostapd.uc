@@ -15,8 +15,6 @@ import * as libuci from 'uci';
 const NL80211_EXT_FEATURE_ENABLE_FTM_RESPONDER = 33;
 const NL80211_EXT_FEATURE_RADAR_BACKGROUND = 61;
 
-const WLAN_CIPHER_SUITE_GCMP_256 = 0x000fac09;
-
 let phy_features = {};
 let phy_capabilities = {};
 
@@ -541,7 +539,7 @@ function device_capabilities(config) {
 
 	phy_features.ftm_responder = device_extended_features(phy.extended_features, NL80211_EXT_FEATURE_ENABLE_FTM_RESPONDER);
 	phy_features.radar_background = device_extended_features(phy.extended_features, NL80211_EXT_FEATURE_RADAR_BACKGROUND);
-	phy_features.cipher_gcmp256 = WLAN_CIPHER_SUITE_GCMP_256 in (phy.cipher_suites ?? []);
+	phy_features.cipher_gcmp256 = iface.phy_cipher_gcmp256(phy);
 
 	/* MT7981/MT7986 expose background radar only for staged zero-wait DFS. */
 	let compatible = fs.readfile(`/sys/class/ieee80211/${config.phy}/device/of_node/compatible`) ?? '';
@@ -646,8 +644,13 @@ let iface_idx = 0;
 function setup_interface(interface, data, config, vlans, stas, phy_features, fixup) {
 	config = { ...config, fixup };
 
-	config.idx = iface_idx++;
-	ap.generate(interface, data, config, vlans, stas, phy_features);
+	/* idx 0 writes the `interface=` line, so a BSS left out keeps its idx */
+	config.idx = iface_idx;
+	if (!ap.bss_add(interface, data, config, vlans, stas, phy_features))
+		return false;
+
+	iface_idx++;
+	return true;
 }
 
 export function setup(data) {
@@ -679,9 +682,10 @@ export function setup(data) {
 		interface.config.network_bridge = interface.bridge;
 		interface.config.network_ifname = interface['bridge-ifname'];
 
-		let owe = interface.config.encryption == 'owe' && interface.config.owe_transition;
+		let owe = ap.owe_transition(interface.config, data.config.band);
 
-		setup_interface(k, data, interface.config, interface.vlans, interface.stas, phy_features, owe ? 'owe' : null );
+		if (!setup_interface(k, data, interface.config, interface.vlans, interface.stas, phy_features, owe ? 'owe' : null))
+			continue;
 		if (owe)
 			setup_interface(k, data, interface.config, interface.vlans, interface.stas, phy_features, 'owe-transition');
 		has_ap = true;
