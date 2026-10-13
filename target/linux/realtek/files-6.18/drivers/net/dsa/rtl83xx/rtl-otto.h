@@ -11,6 +11,7 @@
 #include "l2.h"
 #include "l3_limits.h"
 #include "lag.h"
+#include "mac.h"
 #include "mirror.h"
 #include "pie.h"
 #include "stats.h"
@@ -82,8 +83,8 @@ struct rtldsa_port {
 	bool enable:1;
 	bool phy:1;
 	bool isolated:1;
-	bool rate_police_egress:1;
-	bool rate_police_ingress:1;
+	unsigned long rate_police_egress;
+	unsigned long rate_police_ingress;
 	unsigned long cached_flags;
 	u64 pm;
 	u16 pvid;
@@ -110,7 +111,7 @@ enum l2_entry_type {
  */
 struct rtldsa_l2_uc {
 	bool fdb_ref:1;		/* written by an fdb handler */
-	u8 l3_refcount:7;	/* routes forwarding through it */
+	u16 l3_refcount:15;	/* routes forwarding through it */
 };
 
 struct rtl838x_l2_entry {
@@ -394,9 +395,13 @@ struct rtldsa_config {
 	int (*stp_get)(struct rtl838x_switch_priv *priv, u16 msti, int port);
 	void (*stp_set)(struct rtl838x_switch_priv *priv, u16 msti, int port, int state);
 	int mac_link_sts;
-	u32 mac_force_mode_mask;
+	struct rtldsa_mac_force_mode_cfg mac_force_mode;
 	int  (*mac_force_mode_ctrl)(int port);
 	int  (*mac_port_ctrl)(int port);
+	int (*mac_link_state_source_set)(struct rtl838x_switch_priv *priv,
+					 int port,
+					 enum rtldsa_mac_link_state_source source,
+					 phy_interface_t interface);
 
 	/**
 	 * @mac_capabilities: supported MAC capabilities
@@ -492,6 +497,7 @@ struct rtl838x_switch_priv {
 	struct device *dev;
 	u16 family_id;
 	struct rtldsa_port ports[57];
+	struct regmap *map;
 	struct mutex reg_mutex;		/* Mutex for individual register manipulations */
 	struct mutex pie_mutex;		/* Mutex for Packet Inspection Engine */
 	int link_state_irq;
