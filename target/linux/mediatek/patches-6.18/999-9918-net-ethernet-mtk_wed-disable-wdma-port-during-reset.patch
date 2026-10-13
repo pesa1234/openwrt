@@ -58,7 +58,7 @@ Signed-off-by: Codex <codex@openai.com>
  	for (i = 0; i < ARRAY_SIZE(dev->tx_ring); i++) {
  		if (!dev->tx_ring[i].desc)
  			continue;
-@@ -2427,6 +2429,7 @@ mtk_wed_start(struct mtk_wed_device *dev
+@@ -2432,6 +2434,7 @@ mtk_wed_start(struct mtk_wed_device *dev
  	mtk_wed_amsdu_init(dev);
  
  	mtk_wed_dma_enable(dev);

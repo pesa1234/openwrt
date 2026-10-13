@@ -66,7 +66,7 @@
  		return -ENOMEM;
  
  	if (mtk_wed_is_v3_or_greater(dev->hw)) {
-@@ -2378,10 +2381,6 @@ mtk_wed_start(struct mtk_wed_device *dev
+@@ -2383,10 +2386,6 @@ mtk_wed_start(struct mtk_wed_device *dev
  	if (mtk_wed_get_rx_capa(dev) && mtk_wed_rx_buffer_alloc(dev))
  		return;
  
@@ -77,7 +77,7 @@
  	if (dev->wlan.hw_rro) {
  		for (i = 0; i < MTK_WED_RX_PAGE_QUEUES; i++) {
  			u32 addr = MTK_WED_RRO_MSDU_PG_CTRL0(i) +
-@@ -2537,12 +2536,12 @@ mtk_wed_tx_ring_setup(struct mtk_wed_dev
+@@ -2542,12 +2541,12 @@ mtk_wed_tx_ring_setup(struct mtk_wed_dev
  	if (WARN_ON(idx >= ARRAY_SIZE(dev->tx_ring)))
  		return -EINVAL;
  
@@ -94,7 +94,7 @@
  		return -ENOMEM;
  
  	ring->reg_base = MTK_WED_RING_TX(idx);
-@@ -2613,8 +2612,9 @@ mtk_wed_rx_ring_setup(struct mtk_wed_dev
+@@ -2618,8 +2617,9 @@ mtk_wed_rx_ring_setup(struct mtk_wed_dev
  	if (WARN_ON(idx >= ARRAY_SIZE(dev->rx_ring)))
  		return -EINVAL;
  

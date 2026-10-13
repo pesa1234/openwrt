@@ -50,7 +50,7 @@
  	wdma_w32(dev, MTK_WDMA_RING_TX(idx) + MTK_WED_RING_OFS_BASE,
  		 wdma->desc_phys);
  	wdma_w32(dev, MTK_WDMA_RING_TX(idx) + MTK_WED_RING_OFS_COUNT,
-@@ -2530,6 +2547,7 @@ mtk_wed_tx_ring_setup(struct mtk_wed_dev
+@@ -2535,6 +2552,7 @@ mtk_wed_tx_ring_setup(struct mtk_wed_dev
  
  	ring->reg_base = MTK_WED_RING_TX(idx);
  	ring->wpdma = regs;
