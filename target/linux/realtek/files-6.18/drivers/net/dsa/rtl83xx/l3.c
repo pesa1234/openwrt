@@ -266,7 +266,7 @@ static int otto_l3_839x_route_write(struct otto_l3_ctrl *ctrl, int idx, struct o
 		}
 	}
 
-	err = rtl839x_pie_l3_rule_write(priv, idx, &pr);
+	err = otto_pie_839x_l3_rule_write(priv, idx, &pr);
 	if (err)
 		dev_err(ctrl->dev, "L3 rule %d not written: %d\n", idx, err);
 
@@ -322,7 +322,7 @@ static int otto_l3_839x_route_matches(struct otto_l3_ctrl *ctrl, int row,
 	struct pie_rule pr;
 	int err;
 
-	err = rtl839x_pie_l3_rule_read(priv, row, &pr);
+	err = otto_pie_839x_l3_rule_read(priv, row, &pr);
 	if (err)
 		return err;
 
@@ -1712,6 +1712,7 @@ static void otto_l3_host_unshadow(struct otto_l3_ctrl *ctrl, struct otto_l3_rout
 		slot = ctrl->cfg->find_slot(ctrl, q, false);
 		if (slot >= 0) {
 			ctrl->cfg->host_route_write(ctrl, slot, q);
+			q->hw_forward = q->attr.action == ROUTE_ACT_FORWARD;
 			otto_l3_fib4_flags_set(q, q->attr.action == ROUTE_ACT_FORWARD,
 					       q->attr.action != ROUTE_ACT_FORWARD, false);
 		}
@@ -1959,6 +1960,7 @@ static void otto_l3_route_trap_sw(struct otto_l3_ctrl *ctrl, struct otto_l3_rout
 	r->attr.action = ROUTE_ACT_TRAP2CPU;
 	r->attr.ttl_dec = false;
 	r->attr.ttl_check = false;
+	r->hw_forward = false;
 	otto_l3_route_rewrite(ctrl, r);
 }
 
@@ -2064,6 +2066,7 @@ static void otto_l3_route_update_hw(struct otto_l3_ctrl *ctrl, struct otto_l3_ro
 	}
 
 	r->l2_taken = false;
+	r->hw_forward = false;
 	r->nh.mac = r->nh.gw = mac;
 	r->nh.port = priv->r->port_ignore;
 	r->nh.id = r->id;
@@ -2116,11 +2119,16 @@ static void otto_l3_route_update_hw(struct otto_l3_ctrl *ctrl, struct otto_l3_ro
 	if (ctrl->cfg->set_nexthop)
 		ctrl->cfg->set_nexthop(ctrl, r->nh.id, r->nh.l2_id, r->nh.if_id);
 
-	/* A PIE rule counts the packets of its route while a counter is free */
+	/* A PIE rule counts the packets of its route while a counter is free,
+	 * from zero: the counter may still hold the count of its last user.
+	 */
 	if (!ctrl->cfg->use_l3_tables && r->pr.packet_cntr < 0) {
 		r->pr.packet_cntr = otto_stats_packet_cntr_alloc(priv);
-		if (r->pr.packet_cntr >= 0)
+		if (r->pr.packet_cntr >= 0) {
 			dev_dbg(ctrl->dev, "Using packet counter %d\n", r->pr.packet_cntr);
+			scoped_guard(mutex, &priv->reg_mutex)
+				priv->r->packet_cntr_clear(priv, r->pr.packet_cntr);
+		}
 	}
 
 	if (otto_l3_route_install(ctrl, r)) {
@@ -2130,6 +2138,7 @@ static void otto_l3_route_update_hw(struct otto_l3_ctrl *ctrl, struct otto_l3_ro
 
 	shadowed = otto_l3_host_shadowed(ctrl, r);
 	otto_l3_fib4_flags_set(r, !trap && !shadowed, trap || shadowed, false);
+	r->hw_forward = !trap && !shadowed;
 	return;
 
 undo_sa:
@@ -2155,6 +2164,7 @@ static void otto_l3_route_trap_hw(struct otto_l3_ctrl *ctrl, struct otto_l3_rout
 	r->attr.action = ROUTE_ACT_TRAP2CPU;
 	r->attr.ttl_dec = false;
 	r->attr.ttl_check = false;
+	r->hw_forward = false;
 
 	if (r->is_host_route)
 		slot = ctrl->cfg->find_slot(ctrl, r, true);
@@ -2217,6 +2227,10 @@ static int otto_l3_nexthop_update(struct otto_l3_ctrl *ctrl, u8 type, int ifinde
 		 * the address alone does not say whose route this is.
 		 */
 		if (r->attr.type != type || r->gw_ifindex != ifindex)
+			continue;
+
+		if (valid && r->hw_forward && r->nh.mac == mac &&
+		    otto_l2_nexthop_current(ctrl->priv, &r->nh))
 			continue;
 
 		if (valid)
@@ -3713,6 +3727,7 @@ static void otto_l3_rules_check(struct otto_l3_ctrl *ctrl, int family)
 			r->attr.action = ROUTE_ACT_TRAP2CPU;
 			r->attr.ttl_dec = false;
 			r->attr.ttl_check = false;
+			r->hw_forward = false;
 			otto_l3_route_rewrite(ctrl, r);
 			otto_l3_fib4_trap_report(ctrl, r);
 			if (IS_REACHABLE(CONFIG_IPV6) && r->f6i && r->row >= FIRST_PREFIX_ROW)
@@ -4526,7 +4541,7 @@ static int otto_l3_839x_route_show(struct seq_file *m, void *v)
 		if (!(idx % 64))
 			cond_resched();
 
-		rtl839x_pie_l3_rule_read(priv, idx, &pr);
+		otto_pie_839x_l3_rule_read(priv, idx, &pr);
 		if (!pr.valid || !pr.fwd_sel || (pr.fwd_act != PIE_ACT_ROUTE_UC &&
 						 pr.fwd_act != PIE_ACT_REDIRECT_TO_PORT))
 			continue;
