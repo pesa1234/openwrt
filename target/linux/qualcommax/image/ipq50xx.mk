@@ -1,5 +1,28 @@
 DTS_DIR := $(DTS_DIR)/qcom
-DEVICE_VARS += BOOT_SCRIPT MERCUSYS_SUPPORT_STRING
+DEVICE_VARS += AVM_CONTAINER_CONFIG BOOT_SCRIPT MERCUSYS_SUPPORT_STRING
+
+define Build/fit-avm
+	$(call Build/fit-its,$(1))
+	$(SED) '/algo = "crc32";/a\value = <0>;' \
+		-e '/hash-2/,+2d' \
+		-e 's/compression = "none";/compression = "lzma";/g' \
+		$@.its
+	$(eval dtb=$(basename $(word 2,$(1))))
+	$(if $(dtb),$(STAGING_DIR_HOST)/bin/lzma e $(dtb) -lc3 -lp0 -pb2 $(dtb).lzma)
+	$(call Build/fit-image,$(1))
+endef
+
+define Build/avm-header
+	$(TOPDIR)/scripts/fit-add-avm-header.sh $@ > $@.new
+	mv $@.new $@
+endef
+
+define Build/avm-container
+	$(TOPDIR)/scripts/mkits-avm-container.sh \
+		$@.its $@ $(AVM_CONTAINER_CONFIG) $(KERNEL_LOADADDR)
+	PATH=$(LINUX_DIR)/scripts/dtc:$(PATH) mkimage -f $@.its $@.new
+	@mv $@.new $@
+endef
 
 define Build/mstc-header
 	$(eval version=$(word 1,$(1)))
@@ -34,6 +57,26 @@ define Build/tplink-re700x-factory
 	$(TOPDIR)/scripts/tplink-re700x-factory.py --rootfs $@ --output $@.factory
 	mv $@.factory $@
 endef
+
+define Device/avm_fritzbox-4050
+	$(call Device/FitImageLzma)
+	DEVICE_VENDOR := AVM
+	DEVICE_MODEL := FRITZ!Box 4050
+	DEVICE_DTS_CONFIG := maple_HW287_config_0
+	AVM_CONTAINER_CONFIG := maple_HW287_config_1
+	DEVICE_DTS_LOADADDR := 0x43000000
+	SOC := ipq5018
+	KERNEL = kernel-bin | lzma | fit-avm lzma $$(KDIR)/image-$$(DEVICE_DTS).dtb.lzma | avm-header | \
+		check-size $$(KERNEL_SIZE)
+	KERNEL_INITRAMFS = kernel-bin | lzma | fit-avm lzma $$(KDIR)/image-$$(DEVICE_DTS).dtb.lzma with-initrd | \
+		avm-header | avm-container | avm-header
+	KERNEL_SIZE := 8192k
+	DEVICE_PACKAGES := ath11k-firmware-ipq5018-qcn6122 \
+		ipq-wifi-avm_fritzbox-4050 \
+		fritz-caldata -uboot-envtools \
+		kmod-spi-gpio kmod-gpio-nxp-74hc164
+endef
+TARGET_DEVICES += avm_fritzbox-4050
 
 define Device/cmcc_mr3000d-ci
 	$(call Device/FitImageLzma)
@@ -467,6 +510,24 @@ define Device/yuncore_ax850
 		ipq-wifi-yuncore_ax850
 endef
 TARGET_DEVICES += yuncore_ax850
+
+define Device/zte_t5400
+	$(call Device/FitImageLzma)
+	$(call Device/UbiFit)
+	DEVICE_VENDOR := ZTE
+	DEVICE_MODEL := T5400
+	DEVICE_DTS_CONFIG := config@mp03.1
+	SOC := ipq5018
+	BLOCKSIZE := 128k
+	PAGESIZE := 2048
+	IMAGE_SIZE := 61440k
+	NAND_SIZE := 256m
+	DEVICE_PACKAGES := ath11k-firmware-ipq5018 \
+		kmod-ath11k-pci \
+		ath11k-firmware-qcn9074 \
+		ipq-wifi-zte_t5400
+endef
+TARGET_DEVICES += zte_t5400
 
 define Device/zyxel_scr50axe
 	$(call Device/FitImage)

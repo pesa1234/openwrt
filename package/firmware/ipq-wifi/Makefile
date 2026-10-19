@@ -2,13 +2,13 @@ include $(TOPDIR)/rules.mk
 include $(INCLUDE_DIR)/version.mk
 
 PKG_NAME:=ipq-wifi
-PKG_RELEASE:=2
+PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL=$(PROJECT_GIT)/project/firmware/qca-wireless.git
-PKG_SOURCE_DATE:=2026-10-15
-PKG_SOURCE_VERSION:=5c5244c0b4fcd86738dfbf7a83d978b4ded574ef
-PKG_MIRROR_HASH:=6435f083103a3af794a381f586d6e40f35fcbb5b7ee344788b1bb5e08056b9d4
+PKG_SOURCE_DATE:=2026-10-18
+PKG_SOURCE_VERSION:=0f8eb5d74be32befb4d8bfc8e48cb98080cc86f1
+PKG_MIRROR_HASH:=4ad228d157e14c680b3300a350d22c982b7698cb2c2f692be8834bdf246af819
 PKG_FLAGS:=nonshared
 
 include $(INCLUDE_DIR)/package.mk
@@ -34,6 +34,7 @@ ALLWIFIBOARDS:= \
 	arcadyan_aw1000 \
 	askey_sbe1v1k \
 	asus_rt-ax89x \
+	avm_fritzbox-4050 \
 	buffalo_wxr-5950ax12 \
 	cambiumnetworks_xe34 \
 	cmcc_mr3000d-ci \
@@ -130,6 +131,7 @@ ALLWIFIBOARDS:= \
 	zte_mf286c \
 	zte_mf287 \
 	zte_mf287plus \
+	zte_t5400 \
 	zyxel_nbg7815 \
 	zyxel_nwa110ax \
 	zyxel_nwa210ax \
@@ -245,6 +247,7 @@ $(eval $(call generate-ipq-wifi-package,aliyun_ap8220,Aliyun AP8220))
 $(eval $(call generate-ipq-wifi-package,arcadyan_aw1000,Arcadyan AW1000))
 $(eval $(call generate-ipq-wifi-package,askey_sbe1v1k,Askey SBE1V1K))
 $(eval $(call generate-ipq-wifi-package,asus_rt-ax89x,Asus RT-AX89X))
+$(eval $(call generate-ipq-wifi-package,avm_fritzbox-4050,AVM FRITZ!Box 4050))
 $(eval $(call generate-ipq-wifi-package,buffalo_wxr-5950ax12,Buffalo WXR-5950AX12))
 $(eval $(call generate-ipq-wifi-package,cambiumnetworks_xe34,Cambium Networks XE3-4))
 $(eval $(call generate-ipq-wifi-package,cmcc_mr3000d-ci,CMCC MR3000D-CI))
@@ -341,6 +344,7 @@ $(eval $(call generate-ipq-wifi-package,zte_mf286ar,ZTE MF286A/R))
 $(eval $(call generate-ipq-wifi-package,zte_mf286c,ZTE MF286C))
 $(eval $(call generate-ipq-wifi-package,zte_mf287,ZTE MF287))
 $(eval $(call generate-ipq-wifi-package,zte_mf287plus,ZTE MF287Plus))
+$(eval $(call generate-ipq-wifi-package,zte_t5400,ZTE T5400))
 $(eval $(call generate-ipq-wifi-package,zyxel_nbg7815,Zyxel NBG7815))
 $(eval $(call generate-ipq-wifi-package,zyxel_nwa110ax,Zyxel NWA110AX))
 $(eval $(call generate-ipq-wifi-package,zyxel_nwa210ax,Zyxel NWA210AX))
