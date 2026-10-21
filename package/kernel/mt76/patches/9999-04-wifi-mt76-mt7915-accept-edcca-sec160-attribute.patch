@@ -1,0 +1,70 @@
+--- a/mt7915/vendor.c
++++ b/mt7915/vendor.c
+@@ -87,6 +87,7 @@ edcca_ctrl_policy[NUM_MTK_VENDOR_ATTRS_E
+        [MTK_VENDOR_ATTR_EDCCA_CTRL_SEC40_VAL] = { .type = NLA_U8 },
+        [MTK_VENDOR_ATTR_EDCCA_CTRL_SEC80_VAL] = { .type = NLA_U8 },
+        [MTK_VENDOR_ATTR_EDCCA_CTRL_COMPENSATE] = { .type = NLA_S8 },
++       [MTK_VENDOR_ATTR_EDCCA_CTRL_SEC160_VAL] = { .type = NLA_U8 },
+ };
+ 
+ static const struct nla_policy
+@@ -95,6 +96,7 @@ edcca_dump_policy[NUM_MTK_VENDOR_ATTRS_E
+        [MTK_VENDOR_ATTR_EDCCA_DUMP_PRI20_VAL] = { .type = NLA_U8 },
+        [MTK_VENDOR_ATTR_EDCCA_DUMP_SEC40_VAL] = { .type = NLA_U8 },
+        [MTK_VENDOR_ATTR_EDCCA_DUMP_SEC80_VAL] = { .type = NLA_U8 },
++       [MTK_VENDOR_ATTR_EDCCA_DUMP_SEC160_VAL] = { .type = NLA_U8 },
+ };
+ 
+ static const struct nla_policy
+@@ -1296,7 +1298,7 @@ static int mt7915_vendor_edcca_ctrl(stru
+ 	struct nlattr *tb[NUM_MTK_VENDOR_ATTRS_EDCCA_CTRL];
+ 	int err;
+ 	u8 edcca_mode;
+-	s8 edcca_compensation;
++	s8 edcca_compensation = 0;
+ 	u8 edcca_value[EDCCA_THRES_NUM] = {0};
+ 
+ 	err = nla_parse(tb, MTK_VENDOR_ATTR_EDCCA_CTRL_MAX, data, data_len,
+@@ -1330,6 +1332,9 @@ static int mt7915_vendor_edcca_ctrl(stru
+ 			 edcca_value[0] ? "auto" : "force-disable",
+ 			 edcca_compensation);
+ 	} else if (edcca_mode == EDCCA_CTRL_SET_THERS) {
++		/* The connac2 firmware has thresholds for BW20/40/80 only.
++		 * hostapd also sends SEC160, which is accepted and ignored.
++		 */
+ 		if (!tb[MTK_VENDOR_ATTR_EDCCA_CTRL_PRI20_VAL] ||
+ 		    !tb[MTK_VENDOR_ATTR_EDCCA_CTRL_SEC40_VAL] ||
+ 		    !tb[MTK_VENDOR_ATTR_EDCCA_CTRL_SEC80_VAL]) {
+@@ -1395,9 +1400,13 @@ mt7915_vendor_edcca_ctrl_dump(struct wip
+ 	if (err)
+ 		return err;
+ 
++	/* No BW160 threshold in the firmware: report 0, which hostapd
++	 * expects as SEC160.
++	 */
+ 	if (nla_put_u8(skb, MTK_VENDOR_ATTR_EDCCA_DUMP_PRI20_VAL, value[0]) ||
+ 	    nla_put_u8(skb, MTK_VENDOR_ATTR_EDCCA_DUMP_SEC40_VAL, value[1]) ||
+-	    nla_put_u8(skb, MTK_VENDOR_ATTR_EDCCA_DUMP_SEC80_VAL, value[2]))
++	    nla_put_u8(skb, MTK_VENDOR_ATTR_EDCCA_DUMP_SEC80_VAL, value[2]) ||
++	    nla_put_u8(skb, MTK_VENDOR_ATTR_EDCCA_DUMP_SEC160_VAL, 0))
+ 		return -ENOMEM;
+ 
+ 	return len;
+--- a/mt7915/vendor.h
++++ b/mt7915/vendor.h
+@@ -30,6 +30,7 @@ enum mtk_vendor_attr_edcca_ctrl {
+         MTK_VENDOR_ATTR_EDCCA_CTRL_SEC40_VAL,
+         MTK_VENDOR_ATTR_EDCCA_CTRL_SEC80_VAL,
+         MTK_VENDOR_ATTR_EDCCA_CTRL_COMPENSATE,
++        MTK_VENDOR_ATTR_EDCCA_CTRL_SEC160_VAL,
+ 
+         /* keep last */
+         NUM_MTK_VENDOR_ATTRS_EDCCA_CTRL,
+@@ -45,6 +46,7 @@ enum mtk_vendor_attr_edcca_dump {
+         MTK_VENDOR_ATTR_EDCCA_DUMP_PRI20_VAL,
+         MTK_VENDOR_ATTR_EDCCA_DUMP_SEC40_VAL,
+         MTK_VENDOR_ATTR_EDCCA_DUMP_SEC80_VAL,
++        MTK_VENDOR_ATTR_EDCCA_DUMP_SEC160_VAL,
+ 
+         /* keep last */
+         NUM_MTK_VENDOR_ATTRS_EDCCA_DUMP,
