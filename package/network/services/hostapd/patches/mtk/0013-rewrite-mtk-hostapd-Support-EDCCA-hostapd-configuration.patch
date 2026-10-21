@@ -73,7 +73,7 @@ vendor responses.
  static int hostapd_config_bss(struct hostapd_config *conf, const char *ifname)
  {
  	struct hostapd_bss_config **all, *bss;
-@@ -5264,6 +5306,42 @@ static int hostapd_config_fill(struct ho
+@@ -5272,6 +5314,42 @@ static int hostapd_config_fill(struct ho
  		os_strlcpy(bss->apup_peer_ifname_prefix,
  		           pos, sizeof(bss->apup_peer_ifname_prefix));
  #endif // def CONFIG_APUP
@@ -138,7 +138,7 @@ vendor responses.
  static int hostapd_ctrl_iface_wps_get_status(struct hostapd_data *hapd,
  					     char *buf, size_t buflen)
  {
-@@ -4062,6 +4075,144 @@ static int hostapd_ctrl_afc_send_request
+@@ -4067,6 +4080,144 @@ static int hostapd_ctrl_afc_send_request
  #endif /* CONFIG_AFC */
  
  
@@ -283,7 +283,7 @@ vendor responses.
  static int hostapd_ctrl_iface_receive_process(struct hostapd_data *hapd,
  					      char *buf, char *reply,
  					      int reply_size,
-@@ -4698,6 +4849,12 @@ static int hostapd_ctrl_iface_receive_pr
+@@ -4706,6 +4857,12 @@ static int hostapd_ctrl_iface_receive_pr
  		if (hostapd_ctrl_afc_send_request(hapd, buf + 16) < 0)
  			reply_len = -1;
  #endif /* CONFIG_AFC */
@@ -318,7 +318,7 @@ vendor responses.
  #ifdef CONFIG_AFC
 --- a/src/ap/ap_config.h
 +++ b/src/ap/ap_config.h
-@@ -1319,6 +1319,11 @@ struct hostapd_config {
+@@ -1320,6 +1320,11 @@ struct hostapd_config {
  	/* Disable MCS15 Subfield in EHT operation element */
  	bool disable_mcs15_rx;
  
@@ -330,7 +330,7 @@ vendor responses.
  #ifdef CONFIG_AFC
  	struct {
  		char *socket;
-@@ -1362,6 +1367,34 @@ struct hostapd_config {
+@@ -1363,6 +1368,34 @@ struct hostapd_config {
  };
  
  
@@ -367,7 +367,7 @@ vendor responses.
  {
 --- a/src/ap/ap_drv_ops.c
 +++ b/src/ap/ap_drv_ops.c
-@@ -1430,3 +1430,27 @@ int hostapd_remove_pmkid(struct hostapd_
+@@ -1438,3 +1438,27 @@ int hostapd_remove_pmkid(struct hostapd_
  
  	return hostapd_drv_remove_pmkid(hapd, &params);
  }
@@ -397,7 +397,7 @@ vendor responses.
 +}
 --- a/src/ap/ap_drv_ops.h
 +++ b/src/ap/ap_drv_ops.h
-@@ -154,7 +154,10 @@ int hostapd_drv_set_secure_ranging_ctx(s
+@@ -155,7 +155,10 @@ int hostapd_drv_set_secure_ranging_ctx(s
  				       u32 cipher, u8 key_len, const u8 *key,
  				       u8 ltf_keyseed_len,
  				       const u8 *ltf_keyseed, u32 action);
@@ -411,7 +411,7 @@ vendor responses.
  
 --- a/src/ap/hostapd.c
 +++ b/src/ap/hostapd.c
-@@ -2881,6 +2881,13 @@ dfs_offload:
+@@ -3347,6 +3347,13 @@ dfs_offload:
  	}
  #endif /* CONFIG_MESH */
  
@@ -480,7 +480,7 @@ vendor responses.
  
 --- a/src/drivers/driver.h
 +++ b/src/drivers/driver.h
-@@ -5995,6 +5995,10 @@ struct wpa_driver_ops {
+@@ -6003,6 +6003,10 @@ struct wpa_driver_ops {
  	 */
  	void (*stop_peer_measurement)(void *priv);
  #endif /* CONFIG_PR */
@@ -502,7 +502,7 @@ vendor responses.
  
  
  #ifndef NETLINK_CAP_ACK
-@@ -13340,7 +13342,6 @@ wpa_driver_nl80211_join_mesh(void *priv,
+@@ -13410,7 +13412,6 @@ wpa_driver_nl80211_join_mesh(void *priv,
  	return ret;
  }
  
@@ -510,7 +510,7 @@ vendor responses.
  static int wpa_driver_nl80211_leave_mesh(void *priv)
  {
  	struct i802_bss *bss = priv;
-@@ -15850,6 +15851,214 @@ wpa_driver_get_multi_hw_info(void *priv,
+@@ -15920,6 +15921,214 @@ wpa_driver_get_multi_hw_info(void *priv,
  	return nl80211_get_multi_hw_info(bss, num_multi_hws);
  }
  
@@ -725,7 +725,7 @@ vendor responses.
  
  #ifdef CONFIG_NAN
  
-@@ -16998,4 +17207,7 @@ const struct wpa_driver_ops wpa_driver_n
+@@ -17069,4 +17278,7 @@ const struct wpa_driver_ops wpa_driver_n
  	.start_peer_measurement = nl80211_start_peer_measurement,
  	.stop_peer_measurement = nl80211_stop_peer_measurement,
  #endif /* CONFIG_PR */
@@ -735,10 +735,10 @@ vendor responses.
  };
 --- a/src/drivers/driver_nl80211.h
 +++ b/src/drivers/driver_nl80211.h
-@@ -222,6 +222,7 @@ struct wpa_driver_nl80211_data {
- 	unsigned int qca_ap_allowed_freqs:1;
+@@ -223,6 +223,7 @@ struct wpa_driver_nl80211_data {
  	unsigned int connect_ext_vendor_cmd_avail:1;
  	unsigned int support_ap_scan:1;
+ 	unsigned int mesh_handle_dfs:1;
 +	unsigned int mtk_edcca_vendor_cmd_avail:1;
  
  	u8 extra_bss_membership_selectors[8];
@@ -753,7 +753,7 @@ vendor responses.
  
  
  static int protocol_feature_handler(struct nl_msg *msg, void *arg)
-@@ -1540,6 +1541,12 @@ static int wiphy_info_handler(struct nl_
+@@ -1536,6 +1537,12 @@ static int wiphy_info_handler(struct nl_
  					break;
  				}
  #endif /* CONFIG_DRIVER_NL80211_BRCM */

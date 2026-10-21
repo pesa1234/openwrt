@@ -21,7 +21,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
 
 --- a/hostapd/config_file.c
 +++ b/hostapd/config_file.c
-@@ -5351,6 +5351,10 @@ static int hostapd_config_fill(struct ho
+@@ -5359,6 +5359,10 @@ static int hostapd_config_fill(struct ho
  			return 1;
  		}
  		conf->edcca_compensation = (s8) val;
@@ -44,7 +44,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  
 --- a/src/ap/ap_config.h
 +++ b/src/ap/ap_config.h
-@@ -1324,6 +1324,7 @@ struct hostapd_config {
+@@ -1325,6 +1325,7 @@ struct hostapd_config {
  	u8 edcca_enable;
  	s8 edcca_compensation;
  	int *edcca_threshold;
@@ -52,7 +52,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  
  #ifdef CONFIG_AFC
  	struct {
-@@ -1389,6 +1390,17 @@ enum mtk_vendor_attr_edcca_ctrl_mode {
+@@ -1390,6 +1391,17 @@ enum mtk_vendor_attr_edcca_ctrl_mode {
  	EDCCA_CTRL_NUM,
  };
  
@@ -72,7 +72,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  #define EDCCA_MAX_COMPENSATION 126
 --- a/src/ap/ap_drv_ops.c
 +++ b/src/ap/ap_drv_ops.c
-@@ -1468,3 +1468,14 @@ int hostapd_drv_mu_dump(struct hostapd_d
+@@ -1476,3 +1476,14 @@ int hostapd_drv_mu_dump(struct hostapd_d
  		return 0;
  	return hapd->driver->mu_dump(hapd->drv_priv, mu_onoff);
  }
@@ -89,7 +89,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
 +}
 --- a/src/ap/ap_drv_ops.h
 +++ b/src/ap/ap_drv_ops.h
-@@ -160,6 +160,7 @@ int hostapd_drv_configure_edcca_threshol
+@@ -161,6 +161,7 @@ int hostapd_drv_configure_edcca_threshol
  int hostapd_drv_get_edcca(struct hostapd_data *hapd, const u8 mode, u8 *value);
  int hostapd_drv_mu_ctrl(struct hostapd_data *hapd);
  int hostapd_drv_mu_dump(struct hostapd_data *hapd, u8 *mu_onoff);
@@ -99,7 +99,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  
 --- a/src/ap/hostapd.c
 +++ b/src/ap/hostapd.c
-@@ -2889,6 +2889,8 @@ dfs_offload:
+@@ -3355,6 +3355,8 @@ dfs_offload:
  		goto fail;
  	if (hostapd_drv_mu_ctrl(hapd) < 0)
  		goto fail;
@@ -142,7 +142,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  
 --- a/src/drivers/driver.h
 +++ b/src/drivers/driver.h
-@@ -6012,6 +6012,14 @@ struct wpa_driver_ops {
+@@ -6020,6 +6020,14 @@ struct wpa_driver_ops {
  	 */
  	 int (*mu_ctrl)(void *priv, u8 mu_onoff);
  	 int (*mu_dump)(void *priv, u8 *mu_onoff);
@@ -159,7 +159,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  /**
 --- a/src/drivers/driver_nl80211.c
 +++ b/src/drivers/driver_nl80211.c
-@@ -17129,6 +17129,39 @@ static void nl80211_stop_peer_measuremen
+@@ -17199,6 +17199,39 @@ static void nl80211_stop_peer_measuremen
  #endif /* CONFIG_PR */
  
  
@@ -199,7 +199,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  const struct wpa_driver_ops wpa_driver_nl80211_ops = {
  	.name = "nl80211",
  	.desc = "Linux nl80211/cfg80211",
-@@ -17320,4 +17353,5 @@ const struct wpa_driver_ops wpa_driver_n
+@@ -17391,4 +17424,5 @@ const struct wpa_driver_ops wpa_driver_n
  	.configure_edcca_enable = nl80211_configure_edcca_enable,
  	.configure_edcca_threshold = nl80211_configure_edcca_threshold,
  	.get_edcca = nl80211_get_edcca,
@@ -207,8 +207,8 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  };
 --- a/src/drivers/driver_nl80211.h
 +++ b/src/drivers/driver_nl80211.h
-@@ -224,6 +224,7 @@ struct wpa_driver_nl80211_data {
- 	unsigned int support_ap_scan:1;
+@@ -225,6 +225,7 @@ struct wpa_driver_nl80211_data {
+ 	unsigned int mesh_handle_dfs:1;
  	unsigned int mtk_edcca_vendor_cmd_avail:1;
  	unsigned int mtk_mu_vendor_cmd_avail:1;
 +	unsigned int mtk_3wire_vendor_cmd_avail:1;
@@ -217,7 +217,7 @@ Signed-off-by: StanleyYP Wang <StanleyYP.Wang@mediatek.com>
  
 --- a/src/drivers/driver_nl80211_capa.c
 +++ b/src/drivers/driver_nl80211_capa.c
-@@ -1549,6 +1549,9 @@ static int wiphy_info_handler(struct nl_
+@@ -1545,6 +1545,9 @@ static int wiphy_info_handler(struct nl_
  				case MTK_NL80211_VENDOR_SUBCMD_MU_CTRL :
  					drv->mtk_mu_vendor_cmd_avail = 1;
  					break;

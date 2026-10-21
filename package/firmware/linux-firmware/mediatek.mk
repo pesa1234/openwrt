@@ -78,7 +78,7 @@ define Package/mt7925bt-firmware/install
 endef
 $(eval $(call BuildPackage,mt7925bt-firmware))
 
-Package/mt7987-2p5g-phy-firmware = $(call Package/firmware-default,MT7987 built-in 2.5G Ethernet PHY firmware,@TARGET_mediatek_filogic +LINUX_6_18:kmod-phy-mediatek-2p5g,LICENCE.mediatek,,nonshared)
+Package/mt7987-2p5g-phy-firmware = $(call Package/firmware-default,MT7987 built-in 2.5G Ethernet PHY firmware,@TARGET_mediatek_filogic +kmod-phy-mediatek-2p5g,LICENCE.mediatek,,nonshared)
 define Package/mt7987-2p5g-phy-firmware/install
 	$(INSTALL_DIR) $(1)/lib/firmware/mediatek/mt7987
 	$(INSTALL_DATA) \
@@ -88,7 +88,7 @@ define Package/mt7987-2p5g-phy-firmware/install
 endef
 $(eval $(call BuildPackage,mt7987-2p5g-phy-firmware))
 
-Package/mt7988-2p5g-phy-firmware = $(call Package/firmware-default,MT7988 built-in 2.5G Ethernet PHY firmware,@TARGET_mediatek_filogic +LINUX_6_18:kmod-phy-mediatek-2p5g,LICENCE.mediatek,,nonshared)
+Package/mt7988-2p5g-phy-firmware = $(call Package/firmware-default,MT7988 built-in 2.5G Ethernet PHY firmware,@TARGET_mediatek_filogic +kmod-phy-mediatek-2p5g,LICENCE.mediatek,,nonshared)
 define Package/mt7988-2p5g-phy-firmware/install
 	$(INSTALL_DIR) $(1)/lib/firmware/mediatek/mt7988
 	$(INSTALL_DATA) \
