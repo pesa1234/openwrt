@@ -18,6 +18,8 @@
 #include "stp.h"
 #include "vlan.h"
 
+#define MAX_PRIOS 8
+
 /* special port action controls */
 /* values:
  *      0 = FORWARD (default)
@@ -88,6 +90,10 @@ struct rtldsa_port {
 	bool vlan_filtering:1;
 	unsigned long rate_police_egress;
 	unsigned long rate_police_ingress;
+	u32 ets_handle;
+	u16 ets_children;
+	bool ets_offloadable;
+	u8 ets_weights[MAX_PRIOS];
 	unsigned long cached_flags;
 	u64 pm;
 	u16 pvid;
@@ -396,12 +402,14 @@ struct rtldsa_config {
 	int (*fast_age)(struct otto_dsa_priv *priv, int port, int vid);
 	void (*set_vlan_igr_filter)(int port, enum igr_filter state);
 	void (*set_vlan_egr_filter)(int port, enum egr_filter state);
-	void (*enable_learning)(int port, bool enable);
-	void (*enable_l2_new_sa_fwd)(int port, enum rtldsa_flood_type flood_type);
-	void (*enable_flood)(int port, enum rtldsa_flood_type flood_type);
-	void (*enable_mcast_flood)(int port, bool enable);
-	void (*enable_bcast_flood)(int port, bool enable);
-	void (*set_static_move_action)(int port, bool forward);
+	void (*enable_learning)(struct otto_dsa_priv *priv, int port, bool enable);
+	void (*enable_l2_new_sa_fwd)(struct otto_dsa_priv *priv, int port,
+			      enum rtldsa_flood_type flood_type);
+	void (*enable_flood)(struct otto_dsa_priv *priv, int port,
+			    enum rtldsa_flood_type flood_type);
+	void (*enable_mcast_flood)(struct otto_dsa_priv *priv, int port, bool enable);
+	void (*enable_bcast_flood)(struct otto_dsa_priv *priv, int port, bool enable);
+	void (*set_static_move_action)(struct otto_dsa_priv *priv, int port, bool forward);
 	int (*stp_get)(struct otto_dsa_priv *priv, u16 msti, int port);
 	void (*stp_set)(struct otto_dsa_priv *priv, u16 msti, int port, int state);
 	int mac_link_sts;
@@ -449,7 +457,7 @@ struct rtldsa_config {
 
 	int  (*l2_port_new_salrn)(int port);
 	int  (*l2_port_new_sa_fwd)(int port);
-	int (*set_ageing_time)(unsigned long msec);
+	int (*set_ageing_time)(struct otto_dsa_priv *priv, unsigned long msec);
 	int (*get_mirror_config)(struct rtldsa_mirror_config *config, int group, int port);
 	int (*port_rate_police_add)(struct dsa_switch *ds, int port,
 				    const struct flow_action_entry *act, bool ingress);
@@ -457,7 +465,8 @@ struct rtldsa_config {
 				    bool ingress);
 	void (*print_matrix)(void);
 	u64 (*read_l2_entry_using_hash)(u32 hash, u32 position, struct rtl838x_l2_entry *e);
-	void (*write_l2_entry_using_hash)(u32 hash, u32 pos, struct rtl838x_l2_entry *e);
+	void (*write_l2_entry_using_hash)(struct otto_dsa_priv *priv, u32 hash, u32 pos,
+					struct rtl838x_l2_entry *e);
 	u64 (*read_cam)(int idx, struct rtl838x_l2_entry *e);
 	void (*write_cam)(int idx, struct rtl838x_l2_entry *e);
 	int rma_bpdu_fld_pmask;
@@ -477,13 +486,15 @@ struct rtldsa_config {
 	int (*pie_rule_write)(struct otto_dsa_priv *priv, int idx, struct pie_rule *pr);
 	int (*pie_rule_add)(struct otto_dsa_priv *priv, struct pie_rule *rule);
 	void (*pie_rule_rm)(struct otto_dsa_priv *priv, struct pie_rule *rule);
-	void (*l2_learning_setup)(void);
+	void (*l2_learning_setup)(struct otto_dsa_priv *priv);
 	u32 (*packet_cntr_read)(struct otto_dsa_priv *priv, int counter);
 	void (*packet_cntr_clear)(struct otto_dsa_priv *priv, int counter);
 	void (*set_receive_management_action)(int port, rma_ctrl_t type, action_type_t action);
 	void (*led_init)(struct otto_dsa_priv *priv);
 	u32 (*get_egress_rate)(struct otto_dsa_priv *priv, int port);
 	int (*set_egress_rate)(struct otto_dsa_priv *priv, int port, u32 rate);
+	void (*queue_sched_set)(struct otto_dsa_priv *priv, int port, int queue, u32 weight,
+				bool strict);
 	void (*qos_init)(struct otto_dsa_priv *priv);
 	int (*trk_mbr_ctr)(int group);
 	void (*lag_switch_init)(struct otto_dsa_priv *priv);
