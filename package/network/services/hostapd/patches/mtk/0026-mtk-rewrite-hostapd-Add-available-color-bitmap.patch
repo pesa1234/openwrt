@@ -166,7 +166,7 @@ Signed-off-by: Yi-Chia Hsieh <yi-chia.hsieh@mediatek.com>
 +				       u64 *aval_color_bmp);
  
  #include "drivers/driver.h"
- 
+ #include "scs.h"
 --- a/src/common/mtk_vendor.h
 +++ b/src/common/mtk_vendor.h
 @@ -15,6 +15,7 @@ enum mtk_nl80211_vendor_subcmds {

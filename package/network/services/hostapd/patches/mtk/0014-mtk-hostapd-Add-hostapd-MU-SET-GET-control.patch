@@ -203,7 +203,7 @@ Subject: [PATCH 014/149] mtk: hostapd: Add hostapd MU SET/GET control
 +int hostapd_drv_mu_dump(struct hostapd_data *hapd, u8 *mu_onoff);
  
  #include "drivers/driver.h"
- 
+ #include "scs.h"
 --- a/src/ap/hostapd.c
 +++ b/src/ap/hostapd.c
 @@ -3353,6 +3353,8 @@ dfs_offload:

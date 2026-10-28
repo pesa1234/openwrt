@@ -74,9 +74,9 @@ vendor responses.
  {
  	struct hostapd_bss_config **all, *bss;
 @@ -5272,6 +5314,42 @@ static int hostapd_config_fill(struct ho
- 		os_strlcpy(bss->apup_peer_ifname_prefix,
- 		           pos, sizeof(bss->apup_peer_ifname_prefix));
- #endif // def CONFIG_APUP
+ 	} else if (os_strcmp(buf, "robust_av_scs_disabled") == 0) {
+ 		bss->robust_av_scs_disabled = !!atoi(pos);
+ #endif /* CONFIG_ROBUST_AV */
 +	} else if (os_strcmp(buf, "edcca_threshold") == 0) {
 +		if (hostapd_parse_edcca_threshold(&conf->edcca_threshold,
 +						  pos)) {
@@ -284,9 +284,9 @@ vendor responses.
  					      char *buf, char *reply,
  					      int reply_size,
 @@ -4706,6 +4857,12 @@ static int hostapd_ctrl_iface_receive_pr
- 		if (hostapd_ctrl_afc_send_request(hapd, buf + 16) < 0)
+ 		if (hostapd_ctrl_iface_del_mscs(hapd, buf + 9))
  			reply_len = -1;
- #endif /* CONFIG_AFC */
+ #endif /* CONFIG_ROBUST_AV */
 +	} else if (os_strncmp(buf, "SET_EDCCA ", 10) == 0) {
 +		reply_len = hostapd_ctrl_iface_set_edcca(hapd, buf + 10, reply,
 +							  reply_size);
@@ -408,7 +408,7 @@ vendor responses.
 +int hostapd_drv_get_edcca(struct hostapd_data *hapd, const u8 mode, u8 *value);
  
  #include "drivers/driver.h"
- 
+ #include "scs.h"
 --- a/src/ap/hostapd.c
 +++ b/src/ap/hostapd.c
 @@ -3347,6 +3347,13 @@ dfs_offload:

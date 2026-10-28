@@ -94,9 +94,9 @@ Signed-off-by: mtk27835 <shurong.wen@mediatek.com>
  	const char *cmd;
  	int (*handler)(struct wpa_ctrl *ctrl, int argc, char *argv[]);
 @@ -1976,6 +1983,8 @@ static const struct hostapd_cli_cmd host
- 	{ "afc_send_request", hostapd_cli_cmd_afc_send_request, NULL,
- 	  " = Send another AFC request and upadte the timeout"},
- #endif /* CONFIG_AFC */
+ 	{ "del_mscs", hostapd_cli_cmd_del_mscs, NULL,
+ 	  "<addr> = Remove the MSCS of a station" },
+ #endif /* CONFIG_ROBUST_AV */
 +	{ "get_ibf", hostapd_cli_cmd_get_ibf, NULL,
 +	  " = show iBF state (enabled/disabled)"},
  	{ NULL, NULL, NULL, NULL }
@@ -161,7 +161,7 @@ Signed-off-by: mtk27835 <shurong.wen@mediatek.com>
 +int hostapd_drv_ibf_dump(struct hostapd_data *hapd, u8 *ibf_enable);
  
  #include "drivers/driver.h"
- 
+ #include "scs.h"
 --- a/src/ap/hostapd.c
 +++ b/src/ap/hostapd.c
 @@ -2891,6 +2891,8 @@ dfs_offload:
