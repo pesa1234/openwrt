@@ -12,8 +12,8 @@ import * as ap from 'wifi.ap';
 import * as fs from 'fs';
 import * as libuci from 'uci';
 
-const NL80211_EXT_FEATURE_ENABLE_FTM_RESPONDER = 33;
-const NL80211_EXT_FEATURE_RADAR_BACKGROUND = 61;
+const NL80211_EXT_FEATURE_ENABLE_FTM_RESPONDER = 32;
+const NL80211_EXT_FEATURE_RADAR_BACKGROUND = 60;
 
 let phy_features = {};
 let phy_capabilities = {};
@@ -307,14 +307,14 @@ function device_htmode_append(config) {
 					break;
 				}
 			config.op_class = 137;
-			config.eht_oper_chwidth = 7;
+			config.eht_oper_chwidth = 9;
 
 			/*
 			 * Set HE operation values for 160MHz backward compatibility
 			 * with WiFi 6E clients. Pick the 160MHz half that contains
 			 * the primary channel.
 			 */
-			config.he_oper_chwidth = 3;
+			config.he_oper_chwidth = 2;
 			if (config.channel < config.eht_oper_centr_freq_seg0_idx)
 				config.he_oper_centr_freq_seg0_idx = config.eht_oper_centr_freq_seg0_idx - 16;
 			else
@@ -515,7 +515,7 @@ function device_htmode_append(config) {
 
 		append_vars(config, [
 			'ieee80211be', 'eht_su_beamformer', 'eht_su_beamformee',
-			'eht_mu_beamformer',
+			'eht_mu_beamformer', 'punct_bitmap',
 		]);
 
 		if (config.hw_mode == 'a')

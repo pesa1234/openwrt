@@ -6,9 +6,9 @@ PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL=$(PROJECT_GIT)/project/firmware/qca-wireless.git
-PKG_SOURCE_DATE:=2026-10-18
-PKG_SOURCE_VERSION:=0f8eb5d74be32befb4d8bfc8e48cb98080cc86f1
-PKG_MIRROR_HASH:=4ad228d157e14c680b3300a350d22c982b7698cb2c2f692be8834bdf246af819
+PKG_SOURCE_DATE:=2026-10-25
+PKG_SOURCE_VERSION:=49ce14c099b16044b7062df54bdabeb495b804ad
+PKG_MIRROR_HASH:=b9c6723021af9267035b7e25762b80c06887a5ea9c524b2649b0b27ea58b121c
 PKG_FLAGS:=nonshared
 
 include $(INCLUDE_DIR)/package.mk
@@ -114,6 +114,7 @@ ALLWIFIBOARDS:= \
 	ubnt_utr \
 	wallys_dr40x9 \
 	wallys_dr5018s \
+	wallys_dr6018s \
 	xiaomi_aiot-ac2350 \
 	xiaomi_ax3600 \
 	xiaomi_ax6000 \
@@ -327,6 +328,7 @@ $(eval $(call generate-ipq-wifi-package,tplink_tl-wa1201-v2,TP-Link TL-WA1201 V2
 $(eval $(call generate-ipq-wifi-package,ubnt_utr,Ubiquiti UniFi Travel Router))
 $(eval $(call generate-ipq-wifi-package,wallys_dr40x9,Wallys DR40X9))
 $(eval $(call generate-ipq-wifi-package,wallys_dr5018s,Wallys DR5018S))
+$(eval $(call generate-ipq-wifi-package,wallys_dr6018s,Wallys DR6018S))
 $(eval $(call generate-ipq-wifi-package,xiaomi_aiot-ac2350,Xiaomi AIoT AC2350))
 $(eval $(call generate-ipq-wifi-package,xiaomi_ax3600,Xiaomi AX3600))
 $(eval $(call generate-ipq-wifi-package,xiaomi_ax6000,Xiaomi AX6000))
