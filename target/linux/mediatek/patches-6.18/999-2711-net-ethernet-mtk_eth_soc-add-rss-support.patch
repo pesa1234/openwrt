@@ -118,7 +118,7 @@ Subject: [PATCH] net: ethernet: mtk_eth_soc: add rss support
  		data = ring->data[idx];
 @@ -2661,7 +2626,7 @@ static int mtk_poll_rx(struct napi_struc
  		if (reason == MTK_PPE_CPU_REASON_HIT_UNBIND_RATE_REACHED)
- 			mtk_ppe_check_skb(eth->ppe[ppe_idx], skb, hash);
+ 			mtk_ppe_check_skb(eth->ppe[ppe_idx], skb, hash, -1, 0);
  
 -		skb_record_rx_queue(skb, 0);
 +		skb_record_rx_queue(skb, ring->ring_no);

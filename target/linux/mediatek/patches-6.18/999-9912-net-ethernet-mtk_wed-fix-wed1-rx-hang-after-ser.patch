@@ -1,14 +1,5 @@
 --- a/drivers/net/ethernet/mediatek/mtk_wed.c
 +++ b/drivers/net/ethernet/mediatek/mtk_wed.c
-@@ -257,7 +257,7 @@ mtk_wdma_rx_reset(struct mtk_wed_device
- 	wdma_w32(dev, MTK_WDMA_RESET_IDX, 0);
- 
- 	for (i = 0; i < ARRAY_SIZE(dev->rx_wdma); i++) {
--		if (dev->rx_wdma[i].desc)
-+		if (!dev->rx_wdma[i].desc)
- 			continue;
- 
- 		wdma_w32(dev,
 @@ -1795,6 +1795,21 @@ mtk_wed_reset_dma(struct mtk_wed_device
  			wed_clr(dev, MTK_WED_WDMA_RX_PREF_CFG,
  				MTK_WED_WDMA_RX_PREF_DDONE2_EN);
