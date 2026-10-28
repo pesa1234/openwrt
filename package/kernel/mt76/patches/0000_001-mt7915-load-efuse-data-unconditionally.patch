@@ -8,13 +8,13 @@ This allows looking at the data through the 'otp' debugfs file.
 Signed-off-by: Felix Fietkau <nbd@nbd.name>
 ---
  mt7915/eeprom.c | 62 +++++++++++++++++++++++++++++++------------------
- mt7915/mcu.c    | 11 +++++----
+ mt7915/mcu.c    | 24 +++++--------------
  mt7915/mt7915.h |  2 +-
- 3 files changed, 47 insertions(+), 28 deletions(-)
+ 3 files changed, 47 insertions(+), 41 deletions(-)
 
 --- a/mt7915/eeprom.c
 +++ b/mt7915/eeprom.c
-@@ -120,6 +120,43 @@ out:
+@@ -126,6 +126,43 @@ out:
  	return ret;
  }
  
@@ -58,7 +58,7 @@ Signed-off-by: Felix Fietkau <nbd@nbd.name>
  static int mt7915_eeprom_load(struct mt7915_dev *dev)
  {
  	int ret;
-@@ -129,29 +166,10 @@ static int mt7915_eeprom_load(struct mt7
+@@ -135,29 +172,10 @@ static int mt7915_eeprom_load(struct mt7915_dev *dev)
  	if (ret < 0)
  		return ret;
  
@@ -82,7 +82,7 @@ Signed-off-by: Felix Fietkau <nbd@nbd.name>
 -		block_num = DIV_ROUND_UP(eeprom_size, eeprom_blk_size);
 -		for (i = 0; i < block_num; i++) {
 -			ret = mt7915_mcu_get_eeprom(dev, i * eeprom_blk_size, NULL);
--			if (ret < 0)
+-			if (ret < 0 && ret != -ENODATA)
 -				return ret;
 -		}
 -	}
@@ -93,7 +93,7 @@ Signed-off-by: Felix Fietkau <nbd@nbd.name>
  }
 --- a/mt7915/mcu.c
 +++ b/mt7915/mcu.c
-@@ -2924,7 +2924,7 @@ int mt7915_mcu_set_eeprom(struct mt7915_
+@@ -2947,7 +2947,7 @@ int mt7915_mcu_set_eeprom(struct mt7915_dev *dev)
  				 &req, sizeof(req), true);
  }
  
@@ -102,7 +102,7 @@ Signed-off-by: Felix Fietkau <nbd@nbd.name>
  {
  	struct mt7915_mcu_eeprom_info req = {
  		.addr = cpu_to_le32(round_down(offset,
-@@ -2932,7 +2932,6 @@ int mt7915_mcu_get_eeprom(struct mt7915_
+@@ -2955,7 +2955,6 @@ int mt7915_mcu_get_eeprom(struct mt7915_dev *dev, u32 offset, u8 *read_buf)
  	};
  	struct mt7915_mcu_eeprom_info *res;
  	struct sk_buff *skb;
@@ -110,10 +110,15 @@ Signed-off-by: Felix Fietkau <nbd@nbd.name>
  	int ret;
  
  	ret = mt76_mcu_send_and_get_msg(&dev->mt76,
-@@ -2942,20 +2941,14 @@ int mt7915_mcu_get_eeprom(struct mt7915_
- 		return ret;
+@@ -2969,25 +2968,14 @@ int mt7915_mcu_get_eeprom(struct mt7915_dev *dev, u32 offset, u8 *read_buf)
+ 	}
  
  	res = (struct mt7915_mcu_eeprom_info *)skb->data;
+-	if (!le32_to_cpu(res->valid)) {
+-		dev_kfree_skb(skb);
+-		return -ENODATA;
+-	}
+-
 -	if (!buf) {
 -		u32 addr = le32_to_cpu(res->addr);
 -
@@ -124,7 +129,7 @@ Signed-off-by: Felix Fietkau <nbd@nbd.name>
 -		buf = dev->mt76.eeprom.data + addr;
 -	}
 -	memcpy(buf, res->data, MT7915_EEPROM_BLOCK_SIZE);
-+	if (res->valid)
++	if (le32_to_cpu(res->valid))
 +		memcpy(buf, res->data, MT7915_EEPROM_BLOCK_SIZE);
 +	else
 +		ret = -EINVAL;
@@ -138,7 +143,7 @@ Signed-off-by: Felix Fietkau <nbd@nbd.name>
  int mt7915_mcu_get_eeprom_free_block(struct mt7915_dev *dev, u8 *block_num)
 --- a/mt7915/mt7915.h
 +++ b/mt7915/mt7915.h
-@@ -502,7 +502,7 @@ int mt7915_mcu_set_fixed_rate_ctrl(struc
+@@ -534,7 +534,7 @@ int mt7915_mcu_set_fixed_rate_ctrl(struct mt7915_dev *dev,
  				   struct mt76_wcid *wcid,
  				   void *data, u32 field);
  int mt7915_mcu_set_eeprom(struct mt7915_dev *dev);
