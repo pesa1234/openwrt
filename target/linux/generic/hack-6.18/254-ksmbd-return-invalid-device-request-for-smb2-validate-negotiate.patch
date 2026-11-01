@@ -24,7 +24,7 @@ Signed-off-by: Andrea Pesaresi <andreapesaresi82@gmail.com>
 
 --- a/fs/smb/server/smb2pdu.c
 +++ b/fs/smb/server/smb2pdu.c
-@@ -8457,8 +8457,14 @@ int smb2_ioctl(struct ksmbd_work *work)
+@@ -8488,8 +8488,14 @@ int smb2_ioctl(struct ksmbd_work *work)
  		break;
  	case FSCTL_VALIDATE_NEGOTIATE_INFO:
  		if (conn->dialect < SMB30_PROT_ID) {

@@ -24,7 +24,7 @@ Signed-off-by: Jakub Kicinski <kuba@kernel.org>
 
 --- a/drivers/net/dsa/mt7530.c
 +++ b/drivers/net/dsa/mt7530.c
-@@ -182,14 +182,18 @@ mt7530_mii_read(struct mt7530_priv *priv
+@@ -185,14 +185,18 @@ mt7530_mii_read(struct mt7530_priv *priv
  	return val;
  }
  
@@ -45,7 +45,7 @@ Signed-off-by: Jakub Kicinski <kuba@kernel.org>
  }
  
  static u32
-@@ -246,7 +250,9 @@ mt7530_fdb_cmd(struct mt7530_priv *priv,
+@@ -249,7 +253,9 @@ mt7530_fdb_cmd(struct mt7530_priv *priv,
  
  	/* Set the command operating upon the MAC address entries */
  	val = ATC_BUSY | ATC_MAT(0) | cmd;
@@ -56,7 +56,7 @@ Signed-off-by: Jakub Kicinski <kuba@kernel.org>
  
  	mt7530_mutex_lock(priv);
  
-@@ -1570,7 +1576,9 @@ mt7530_vlan_cmd(struct mt7530_priv *priv
+@@ -1620,7 +1626,9 @@ mt7530_vlan_cmd(struct mt7530_priv *priv
  	int ret;
  
  	val = VTCR_BUSY | VTCR_FUNC(cmd) | vid;

@@ -29,7 +29,7 @@ Signed-off-by: Jakub Kicinski <kuba@kernel.org>
 
 --- a/drivers/net/dsa/mt7530.c
 +++ b/drivers/net/dsa/mt7530.c
-@@ -239,15 +239,20 @@ mt7530_fdb_cmd(struct mt7530_priv *priv,
+@@ -242,15 +242,20 @@ mt7530_fdb_cmd(struct mt7530_priv *priv,
  {
  	u32 val;
  	int ret;
@@ -54,7 +54,7 @@ Signed-off-by: Jakub Kicinski <kuba@kernel.org>
  	if (ret < 0) {
  		dev_err(priv->dev, "reset timeout\n");
  		return ret;
-@@ -256,7 +261,6 @@ mt7530_fdb_cmd(struct mt7530_priv *priv,
+@@ -259,7 +264,6 @@ mt7530_fdb_cmd(struct mt7530_priv *priv,
  	/* Additional sanity for read command if the specified
  	 * entry is invalid
  	 */
@@ -62,7 +62,7 @@ Signed-off-by: Jakub Kicinski <kuba@kernel.org>
  	if ((cmd == MT7530_FDB_READ) && (val & ATC_INVALID))
  		return -EINVAL;
  
-@@ -1558,22 +1562,26 @@ mt7530_port_bridge_join(struct dsa_switc
+@@ -1608,22 +1612,26 @@ mt7530_port_bridge_join(struct dsa_switc
  static int
  mt7530_vlan_cmd(struct mt7530_priv *priv, enum mt7530_vlan_cmd cmd, u16 vid)
  {

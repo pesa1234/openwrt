@@ -54,7 +54,7 @@ Signed-off-by: Jakub Kicinski <kuba@kernel.org>
 
 --- a/drivers/net/dsa/mt7530.c
 +++ b/drivers/net/dsa/mt7530.c
-@@ -2257,6 +2257,21 @@ static const struct regmap_irq mt7530_ir
+@@ -2307,6 +2307,21 @@ static const struct regmap_irq mt7530_ir
  	REGMAP_IRQ_REG_LINE(31, 32), /* ACL */
  };
  
@@ -76,7 +76,7 @@ Signed-off-by: Jakub Kicinski <kuba@kernel.org>
  static const struct regmap_irq_chip mt7530_regmap_irq_chip = {
  	.name = KBUILD_MODNAME,
  	.status_base = MT7530_SYS_INT_STS,
-@@ -2266,12 +2281,14 @@ static const struct regmap_irq_chip mt75
+@@ -2316,12 +2331,14 @@ static const struct regmap_irq_chip mt75
  	.irqs = mt7530_irqs,
  	.num_irqs = ARRAY_SIZE(mt7530_irqs),
  	.num_regs = 1,
@@ -91,7 +91,7 @@ Signed-off-by: Jakub Kicinski <kuba@kernel.org>
  	struct device *dev = priv->dev;
  	struct device_node *np = dev->of_node;
  	int irq, ret;
-@@ -2291,10 +2308,17 @@ mt7530_setup_irq(struct mt7530_priv *pri
+@@ -2341,10 +2358,17 @@ mt7530_setup_irq(struct mt7530_priv *pri
  	if (priv->id == ID_MT7530 || priv->id == ID_MT7621)
  		mt7530_set(priv, MT7530_TOP_SIG_CTRL, TOP_SIG_CTRL_NORMAL);
  

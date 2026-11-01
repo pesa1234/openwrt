@@ -49,7 +49,7 @@ Signed-off-by: Codex <codex@openai.com>
  int mtk_gmac_gephy_path_setup(struct mtk_eth *eth, int mac_id);
 --- a/drivers/net/ethernet/mediatek/mtk_wed.c
 +++ b/drivers/net/ethernet/mediatek/mtk_wed.c
-@@ -1756,6 +1756,8 @@ mtk_wed_reset_dma(struct mtk_wed_device
+@@ -1794,6 +1794,8 @@ mtk_wed_reset_dma(struct mtk_wed_device
  	u32 val;
  	int i;
  
@@ -58,7 +58,7 @@ Signed-off-by: Codex <codex@openai.com>
  	for (i = 0; i < ARRAY_SIZE(dev->tx_ring); i++) {
  		if (!dev->tx_ring[i].desc)
  			continue;
-@@ -2432,6 +2434,7 @@ mtk_wed_start(struct mtk_wed_device *dev
+@@ -2506,6 +2508,7 @@ mtk_wed_start(struct mtk_wed_device *dev
  	mtk_wed_amsdu_init(dev);
  
  	mtk_wed_dma_enable(dev);

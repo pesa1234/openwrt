@@ -1,6 +1,6 @@
 --- a/drivers/net/ethernet/mediatek/mtk_wed.c
 +++ b/drivers/net/ethernet/mediatek/mtk_wed.c
-@@ -1954,29 +1954,31 @@ mtk_wed_ring_alloc(struct mtk_wed_device *dev, struct mtk_wed_ring *ring,
+@@ -1954,29 +1954,31 @@ mtk_wed_ring_alloc(struct mtk_wed_device
  }
  
  static int
@@ -20,16 +20,17 @@
 -	if (!reset && mtk_wed_ring_alloc(dev, wdma, MTK_WED_WDMA_RING_SIZE,
 -					 dev->hw->soc->wdma_desc_size, true))
 -		return -ENOMEM;
-+		if (!wdma->desc &&
-+		    mtk_wed_ring_alloc(dev, wdma, MTK_WED_WDMA_RING_SIZE,
-+				       dev->hw->soc->wdma_desc_size, true))
-+			return -ENOMEM;
- 
+-
 -	wdma_w32(dev, MTK_WDMA_RING_RX(idx) + MTK_WED_RING_OFS_BASE,
 -		 wdma->desc_phys);
 -	wdma_w32(dev, MTK_WDMA_RING_RX(idx) + MTK_WED_RING_OFS_COUNT,
 -		 size);
 -	wdma_w32(dev, MTK_WDMA_RING_RX(idx) + MTK_WED_RING_OFS_CPU_IDX, 0);
++		if (!wdma->desc &&
++		    mtk_wed_ring_alloc(dev, wdma, MTK_WED_WDMA_RING_SIZE,
++				       dev->hw->soc->wdma_desc_size, true))
++			return -ENOMEM;
++
 +		wdma_w32(dev, MTK_WDMA_RING_RX(idx) + MTK_WED_RING_OFS_BASE,
 +			 wdma->desc_phys);
 +		wdma_w32(dev, MTK_WDMA_RING_RX(idx) + MTK_WED_RING_OFS_COUNT,
@@ -49,7 +50,7 @@
  
  	return 0;
  }
-@@ -1991,8 +1993,9 @@ mtk_wed_wdma_tx_ring_setup(struct mtk_wed_device *dev, int idx, int size,
+@@ -1991,8 +1993,9 @@ mtk_wed_wdma_tx_ring_setup(struct mtk_we
  		return -EINVAL;
  
  	wdma = &dev->tx_wdma[idx];
@@ -61,7 +62,7 @@
  		return -ENOMEM;
  
  	if (mtk_wed_is_v3_or_greater(dev->hw)) {
-@@ -2447,13 +2450,6 @@ mtk_wed_start(struct mtk_wed_device *dev, u32 irq_mask)
+@@ -2447,13 +2450,6 @@ mtk_wed_start(struct mtk_wed_device *dev
  	if (mtk_wed_get_rx_capa(dev) && mtk_wed_rx_buffer_alloc(dev))
  		return;
  
@@ -75,7 +76,7 @@
  	/*
  	 * non-DBDC MT7986 allocates only rx_ring[1] and tx_wdma[1] during setup
  	 * but tx_wdma[0] is also needed for WED to function.
-@@ -2619,12 +2615,12 @@ mtk_wed_tx_ring_setup(struct mtk_wed_device *dev, int idx, void __iomem *regs,
+@@ -2619,12 +2615,12 @@ mtk_wed_tx_ring_setup(struct mtk_wed_dev
  	if (WARN_ON(idx >= ARRAY_SIZE(dev->tx_ring)))
  		return -EINVAL;
  
@@ -92,7 +93,7 @@
  		return -ENOMEM;
  
  	ring->reg_base = MTK_WED_RING_TX(idx);
-@@ -2694,8 +2690,9 @@ mtk_wed_rx_ring_setup(struct mtk_wed_device *dev, int idx, void __iomem *regs,
+@@ -2694,8 +2690,9 @@ mtk_wed_rx_ring_setup(struct mtk_wed_dev
  	if (WARN_ON(idx >= ARRAY_SIZE(dev->rx_ring)))
  		return -EINVAL;
  

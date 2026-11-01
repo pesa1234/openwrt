@@ -189,7 +189,7 @@ Link: https://github.com/pesa1234/mtk-openwrt-feeds/commit/2099fc641def024f04713
  struct flow_offload_tuple_rhash *
  flow_offload_lookup(struct nf_flowtable *flow_table,
  		    struct flow_offload_tuple *tuple)
-@@ -896,8 +1035,26 @@ static int __init nf_flow_table_module_i
+@@ -901,8 +1040,26 @@ static int __init nf_flow_table_module_i
  	if (ret)
  		goto out_bpf;
  
@@ -216,7 +216,7 @@ Link: https://github.com/pesa1234/mtk-openwrt-feeds/commit/2099fc641def024f04713
  out_bpf:
  	nf_flow_table_offload_exit();
  out_offload:
-@@ -907,6 +1064,11 @@ out_offload:
+@@ -912,6 +1069,11 @@ out_offload:
  
  static void __exit nf_flow_table_module_exit(void)
  {
