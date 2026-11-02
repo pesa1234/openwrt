@@ -90,7 +90,7 @@ Signed-off-by: SmartWRT <smartwrt@localhost>
  
  	return true;
  }
-@@ -2537,7 +2575,7 @@ static int mtk_poll_rx(struct napi_struc
+@@ -2541,7 +2579,7 @@ static int mtk_poll_rx(struct napi_struc
  		rxd = ring->dma + RX_DESC_OFS(eth, idx);
  		data = ring->data[idx];
  
