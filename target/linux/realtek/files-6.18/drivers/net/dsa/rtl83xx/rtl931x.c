@@ -22,6 +22,8 @@
 
 #define RTL931X_RMA_BPDU_FLD_PMSK		(0x8950)
 
+#define RTL931X_VLAN_PORT_AFT			(0x9400)
+
 /* IMR_GLB does not exit on RTL931X */
 #define RTL931X_IMR_PORT_LINK_STS_CHG		(0x126C)
 #define RTL931X_ISR_GLB_SRC			(0x12B4)
@@ -189,19 +191,6 @@ static void rtl931x_traffic_disable(struct otto_dsa_priv *priv, int source, int 
 	buf[idx] &= ~BIT((dest + 7) % 32);
 	__otto_table_write(tbl, source, &buf);
 	otto_table_release(tbl);
-}
-
-static void rtl931x_set_igr_filter(struct otto_dsa_priv *priv, int port, enum igr_filter state)
-{
-	regmap_write_bits(priv->map, RTL931X_VLAN_PORT_IGR_FLTR + (((port >> 4) << 2)),
-			  GENMASK(1, 0) << ((port & 0xf) << 1),
-			  (u32)(state & 0x3) << ((port & 0xf) << 1));
-}
-
-static void rtl931x_set_egr_filter(struct otto_dsa_priv *priv, int port, enum egr_filter state)
-{
-	regmap_write_bits(priv->map, RTL931X_VLAN_PORT_EGR_FLTR + (((port >> 5) << 2)),
-			  BIT(port % 0x20), (u32)(state & 0x1) << (port % 0x20));
 }
 
 static void rtldsa_931x_led_get_forced(const struct device_node *node,
@@ -427,6 +416,7 @@ const struct rtldsa_config rtldsa_931x_cfg = {
 	.vlan_profile_dump = otto_vlan_931x_profile_dump,
 	.vlan_profile_setup = otto_vlan_931x_profile_setup,
 	.vlan_fwd_on_inner = otto_vlan_931x_port_forward_on_inner,
+	.vlan_port_aft = RTL931X_VLAN_PORT_AFT,
 	.stp_get = otto_stp_931x_get,
 	.stp_set = otto_stp_931x_set,
 	.mac_force_mode = {
@@ -463,8 +453,8 @@ const struct rtldsa_config rtldsa_931x_cfg = {
 	.fast_age = otto_l2_931x_fast_age,
 	.trk_mbr_ctr = otto_lag_931x_trk_mbr_ctr,
 	.rma_bpdu_fld_pmask = RTL931X_RMA_BPDU_FLD_PMSK,
-	.set_vlan_igr_filter = rtl931x_set_igr_filter,
-	.set_vlan_egr_filter = rtl931x_set_egr_filter,
+	.vlan_set_igr_filter = otto_vlan_931x_set_igr_filter,
+	.vlan_set_egr_filter = otto_vlan_931x_set_egr_filter,
 	.l2_hash_key = otto_l2_931x_hash_key,
 	.l2_hash_seed = otto_l2_931x_hash_seed,
 	.read_mcast_pmask = otto_l2_931x_read_mcast_pmask,
