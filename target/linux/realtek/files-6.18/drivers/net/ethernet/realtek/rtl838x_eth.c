@@ -452,8 +452,14 @@ static void rteth_838x_hw_en_rxtx(struct rteth_ctrl *ctrl)
 	 */
 	regmap_write(ctrl->map, ctrl->cfg->mac_force_mode_ctrl, 0x6192F);
 
-	/* Enable CRC checks on CPU-port */
-	regmap_update_bits(ctrl->map, ctrl->cfg->mac_l2_port_ctrl, BIT(3), BIT(3));
+	/*
+	 * Forward packets received on the CPU port even if the ethernet driver
+	 * hands over an uncomputed layer 2 FCS in its transmit path
+	 * (RX_CHK_CRC_EN). Force FCS recalculation in hardware (CRC_CPU_RC_EN).
+	 */
+	regmap_update_bits(ctrl->map, RTETH_838X_CRC_CPU_RC_CTRL, RTETH_838X_CRC_CPU_RC_EN, 1);
+	regmap_update_bits(ctrl->map, ctrl->cfg->mac_l2_port_ctrl,
+			   RTETH_838X_RX_CHK_CRC_EN, RTETH_838X_RX_CHK_CRC_EN);
 }
 
 static void rteth_839x_hw_en_rxtx(struct rteth_ctrl *ctrl)
@@ -1458,17 +1464,6 @@ static void rteth_set_rx_mode(struct net_device *dev)
 	ctrl->cfg->set_rx_mode(dev);
 }
 
-static int rteth_set_features(struct net_device *dev, netdev_features_t features)
-{
-	struct rteth_ctrl *ctrl = netdev_priv(dev);
-
-	if ((features ^ dev->features) & NETIF_F_RXCSUM)
-		regmap_assign_bits(ctrl->map, ctrl->cfg->mac_l2_port_ctrl,
-				   ctrl->cfg->rx_csum_mask, features & NETIF_F_RXCSUM);
-
-	return 0;
-}
-
 static int rteth_setup_tc(struct net_device *dev, enum tc_setup_type type, void *type_data)
 {
 	struct dsa_switch *ds;
@@ -1495,7 +1490,6 @@ static const struct net_device_ops rteth_netdev_ops = {
 	.ndo_validate_addr	= eth_validate_addr,
 	.ndo_set_rx_mode	= rteth_set_rx_mode,
 	.ndo_tx_timeout		= rteth_tx_timeout,
-	.ndo_set_features	= rteth_set_features,
 	.ndo_setup_tc		= rteth_setup_tc,
 };
 
@@ -1536,7 +1530,6 @@ static const struct rteth_cfg rteth_838x_cfg = {
 	.set_hol		= rteth_83xx_set_hol,
 	.set_max_packet_length	= rteth_838x_set_max_packet_length,
 	.set_rx_mode		= rteth_838x_set_rx_mode,
-	.rx_csum_mask		= BIT(3),
 };
 
 static const struct rteth_cfg rteth_839x_cfg = {
@@ -1574,7 +1567,6 @@ static const struct rteth_cfg rteth_839x_cfg = {
 	.set_hol		= rteth_83xx_set_hol,
 	.set_max_packet_length	= rteth_839x_set_max_packet_length,
 	.set_rx_mode		= rteth_839x_set_rx_mode,
-	.rx_csum_mask		= BIT(3),
 };
 
 static const struct rteth_cfg rteth_930x_cfg = {
@@ -1614,7 +1606,6 @@ static const struct rteth_cfg rteth_930x_cfg = {
 	.set_hol		= rteth_93xx_set_hol,
 	.set_max_packet_length	= rteth_930x_set_max_packet_length,
 	.set_rx_mode		= rteth_930x_set_rx_mode,
-	.rx_csum_mask		= BIT(4),
 };
 
 static const struct rteth_cfg rteth_931x_cfg = {
@@ -1653,7 +1644,6 @@ static const struct rteth_cfg rteth_931x_cfg = {
 	.set_hol		= rteth_93xx_set_hol,
 	.set_max_packet_length	= rteth_931x_set_max_packet_length,
 	.set_rx_mode		= rteth_931x_set_rx_mode,
-	.rx_csum_mask		= BIT(4),
 };
 
 static const struct phylink_mac_ops rteth_mac_ops = {

@@ -8,6 +8,8 @@
 /* Register definition */
 
 #define RTETH_838X_CPU_PORT			28
+#define RTETH_838X_CRC_CPU_RC_CTRL		(0xa4a4)
+#define RTETH_838X_CRC_CPU_RC_EN		GENMASK(1, 0)
 #define RTETH_838X_DMA_IF_CTRL			(0x9f58)
 #define RTETH_838X_DMA_IF_INTR_MSK		(0x9f50)
 #define RTETH_838X_DMA_IF_INTR_STS		(0x9f54)
@@ -28,6 +30,7 @@
 #define RTETH_838X_RMA_CTRL_0			(0x4300)
 #define RTETH_838X_RMA_CTRL_0_SLOW_TRAP		(2 << 2)
 #define RTETH_838X_RMA_CTRL_1			(0x4304)
+#define RTETH_838X_RX_CHK_CRC_EN		BIT(3)
 #define RTETH_838X_TAG1_PROTO_MASK		GENMASK(15, 8)
 #define RTETH_838X_TAG1_PROTO			0x04
 /* TX CPU tag: bypass the egress spanning-tree port state and egress VLAN filtering */
@@ -336,7 +339,6 @@ struct rteth_cfg {
 	void (*set_max_packet_length)(struct rteth_ctrl *ctrl, int len);
 	void (*update_counter)(struct rteth_ctrl *ctrl, int ring, int released);
 	void (*set_rx_mode)(struct net_device *dev);
-	u32 rx_csum_mask;
 };
 
 
