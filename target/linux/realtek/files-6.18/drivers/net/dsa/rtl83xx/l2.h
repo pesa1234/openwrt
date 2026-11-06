@@ -10,8 +10,6 @@ struct rtl838x_l2_entry;
 
 #define RTL838X_PORT_ISO_CTRL(port)		(0x4100 + ((port) << 2))
 
-#define RTL930X_L2_CTRL				(0x8FD8)
-#define RTL931X_L2_CTRL				(0xC800)
 #define RTL838X_L2_CTRL_1			(0x3204)
 #define RTL839X_L2_CTRL_1			(0x3804)
 #define RTL930X_L2_AGE_CTRL			(0x8FDC)
@@ -20,9 +18,6 @@ struct rtl838x_l2_entry;
 #define RTL839X_L2_PORT_AGING_OUT		(0x3b74)
 #define	RTL930X_L2_PORT_AGE_CTRL		(0x8FE0)
 #define	RTL931X_L2_PORT_AGE_CTRL		(0xc808)
-
-#define RTL930X_L2_TBL_FLUSH_CTRL		(0x9404)
-#define RTL931X_L2_TBL_FLUSH_CTRL		(0xCD9C)
 
 #define SALRN_PORT_SHIFT(p)			((p % 16) * 2)
 #define SALRN_MODE_MASK				0x3
