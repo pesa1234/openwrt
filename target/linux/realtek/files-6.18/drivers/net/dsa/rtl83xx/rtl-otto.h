@@ -133,7 +133,7 @@ struct rtldsa_l2_uc {
 	u16 l3_refcount:15;	/* routes forwarding through it */
 };
 
-struct rtl838x_l2_entry {
+struct otto_l2_entry {
 	u8 mac[6];
 	u16 vid;
 	u16 rvid;
@@ -338,7 +338,6 @@ struct rtldsa_config {
 	void (*mask_port_reg_be)(u64 clear, u64 set, int reg);
 	void (*set_port_reg_be)(u64 set, int reg);
 	u64 (*get_port_reg_be)(int reg);
-	void (*mask_port_reg_le)(u64 clear, u64 set, int reg);
 	void (*set_port_reg_le)(u64 set, int reg);
 	u64 (*get_port_reg_le)(int reg);
 	int stat_port_rst;
@@ -471,11 +470,11 @@ struct rtldsa_config {
 	int (*port_rate_police_del)(struct dsa_switch *ds, int port, struct flow_cls_offload *cls,
 				    bool ingress);
 	void (*print_matrix)(struct otto_dsa_priv *priv);
-	u64 (*read_l2_entry_using_hash)(u32 hash, u32 position, struct rtl838x_l2_entry *e);
+	u64 (*read_l2_entry_using_hash)(u32 hash, u32 position, struct otto_l2_entry *e);
 	void (*write_l2_entry_using_hash)(struct otto_dsa_priv *priv, u32 hash, u32 pos,
-					struct rtl838x_l2_entry *e);
-	u64 (*read_cam)(int idx, struct rtl838x_l2_entry *e);
-	void (*write_cam)(int idx, struct rtl838x_l2_entry *e);
+					struct otto_l2_entry *e);
+	u64 (*read_cam)(int idx, struct otto_l2_entry *e);
+	void (*write_cam)(int idx, struct otto_l2_entry *e);
 	int rma_bpdu_fld_pmask;
 	int spcl_trap_eapol_ctrl;
 	void (*init_eee)(struct otto_dsa_priv *priv, bool enable);
@@ -508,7 +507,7 @@ struct rtldsa_config {
 	void (*qos_init)(struct otto_dsa_priv *priv);
 	int (*trk_mbr_ctr)(int group);
 	void (*lag_switch_init)(struct otto_dsa_priv *priv);
-	void (*prepare_lag_fdb)(struct rtl838x_l2_entry *e, int lag_group);
+	void (*prepare_lag_fdb)(struct otto_l2_entry *e, int lag_group);
 	int (*lag_set_port_members)(struct otto_dsa_priv *priv, int group, u64 members,
 				    struct netdev_lag_upper_info *info);
 	int (*lag_setup_algomask)(struct otto_dsa_priv *priv, int group,
@@ -608,7 +607,6 @@ int rtl83xx_port_is_under(const struct net_device *dev, struct otto_dsa_priv *pr
 void rtl839x_mask_port_reg_be(u64 clear, u64 set, int reg);
 u64 rtl839x_get_port_reg_be(int reg);
 void rtl839x_set_port_reg_be(u64 set, int reg);
-void rtl839x_mask_port_reg_le(u64 clear, u64 set, int reg);
 void rtl839x_set_port_reg_le(u64 set, int reg);
 u64 rtl839x_get_port_reg_le(int reg);
 
