@@ -1135,7 +1135,8 @@ start_service() {
 
 	[ -f "$STARTUP_MARKER" ] || delay=$(get_startup_delay)
 	if [ "$delay" -ne 0 ]; then
-		advanced_early_setup
+		# "logger -s" also writes to stderr, which procd logs again at boot.
+		advanced_early_setup 2>/dev/null
 		early="early_done"
 	fi
 	logger -t advanced_setup "smp_affinity: setup scheduled after $delay sec (non-blocking)"
