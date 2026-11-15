@@ -7,10 +7,9 @@ radar path, not evidence that CAC already completed. The background radar
 owner check still prevents an abort notification after CAC completion.
 
 ---
-diff --git a/net/wireless/mlme.c b/net/wireless/mlme.c
 --- a/net/wireless/mlme.c
 +++ b/net/wireless/mlme.c
-@@ -1253,7 +1253,6 @@ __cfg80211_background_cac_event(struct cfg80211_registered_device *rdev,
+@@ -1259,8 +1259,7 @@ __cfg80211_background_cac_event(struct c
  		break;
  	case NL80211_RADAR_CAC_ABORTED:
  		cfg80211_set_cac_state(wiphy, chandef, false);
@@ -19,3 +18,4 @@ diff --git a/net/wireless/mlme.c b/net/wireless/mlme.c
 +		cancel_delayed_work(&rdev->background_cac_done_wk);
  		break;
  	case NL80211_RADAR_CAC_STARTED:
+ 		cfg80211_set_cac_state(wiphy, chandef, true);
