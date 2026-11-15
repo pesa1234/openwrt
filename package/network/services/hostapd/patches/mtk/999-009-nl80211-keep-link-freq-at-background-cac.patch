@@ -1,0 +1,36 @@
+From: SmartWRT
+Subject: [PATCH] nl80211: keep the link frequency at a background CAC
+
+nl80211_start_radar_detection() stores the frequency of the CAC as the
+frequency of the link, which send_mlme uses for a frame that comes
+without one. A background CAC leaves the AP on its operating channel, so
+each Probe, Authentication and Association Response then went out with
+the frequency of the CAC, and mac80211 refused it with -EBUSY as an
+off-channel frame. hostapd logged "handle_probe_req: send failed" and
+"send_auth_reply: send failed" until the next beacon update, which sets
+the frequency of the link back.
+
+The generic background radar flow sets the channel of the AP after it
+starts the CAC, which hides this. The staged zero-wait DFS flow starts
+the CAC with the AP already up, also again after radar, the end of the
+NOP and an abort.
+
+Keep the frequency of the link where the CAC runs on the background
+chain.
+---
+--- a/src/drivers/driver_nl80211.c
++++ b/src/drivers/driver_nl80211.c
+@@ -11742,7 +11742,12 @@ static int nl80211_start_radar_detection
+ 
+ 	ret = send_and_recv_cmd(drv, msg);
+ 	if (ret == 0) {
+-		nl80211_link_set_freq(bss, freq->link_id, freq->freq);
++		/* A background CAC leaves the AP on its operating channel,
++		 * which send_mlme takes from the link for a frame without
++		 * a frequency. */
++		if (!freq->radar_background)
++			nl80211_link_set_freq(bss, freq->link_id,
++					      freq->freq);
+ 		return 0;
+ 	}
+ 
