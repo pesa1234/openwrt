@@ -1,0 +1,189 @@
+Subject: [PATCH] wifi: mt76: mt7915: set IEEE80211_HW_DEFERRED_AIRTIME_REPORT
+
+The driver reads the airtime of all stations from firmware counters once
+per device every five runs of the MAC work, about twice a second, and
+passes the difference of each station and AC to
+ieee80211_sta_register_airtime(). Between the TX status of a frame and
+the next read, its airtime is in neither the pending estimate nor the
+deficit of the station.
+
+Set IEEE80211_HW_DEFERRED_AIRTIME_REPORT, so that mac80211 keeps the
+estimate of a completed frame in the deficit until the next report. The
+flag is set only with airtime fairness, as mac80211 does not charge the
+reported airtime without it. The deferred_airtime_report module
+parameter turns the flag off at probe time.
+
+mac80211 drops the estimates of a station at a report only, so each
+station needs one at every read, also with an airtime of 0. The event
+handler already reports all four ACs of each station that the firmware
+lists. Whether the firmware lists every station is not known. Add the
+airtime_report debugfs file to tell: it shows the number of requests,
+events and station entries, and for each station the time since its last
+report, the longest time between two reports and their number.
+
+The effect on the airtime scheduler and the content of the firmware
+event need hardware validation on MT7986 and MT7981.
+---
+--- a/mt7915/debugfs.c
++++ b/mt7915/debugfs.c
+@@ -1442,6 +1442,44 @@ mt7915_twt_stats(struct seq_file *s, voi
+ 	return 0;
+ }
+ 
++/* mac80211 needs a report for every station at each poll, also with an
++ * airtime of 0, to drop the estimate of the frames that completed. A station
++ * that the firmware leaves out shows here with a growing age.
++ */
++static int
++mt7915_airtime_report(struct seq_file *s, void *data)
++{
++	struct mt7915_dev *dev = dev_get_drvdata(s->private);
++	unsigned long now = jiffies;
++	int i;
++
++	seq_printf(s, "deferred report: %d\n",
++		   ieee80211_hw_check(mt76_hw(dev), DEFERRED_AIRTIME_REPORT));
++	seq_printf(s, "polls: %u failed: %u events: %u entries: %u\n",
++		   dev->airtime_stats.polls, dev->airtime_stats.poll_failed,
++		   dev->airtime_stats.events, dev->airtime_stats.entries);
++	seq_puts(s, "station           band wcid   age_ms max_gap_ms    reports\n");
++
++	rcu_read_lock();
++	for (i = 0; i < mt7915_wtbl_size(dev); i++) {
++		struct mt76_wcid *wcid = rcu_dereference(dev->mt76.wcid[i]);
++		struct ieee80211_sta *sta = wcid_to_sta(wcid);
++		struct mt7915_sta *msta;
++
++		if (!sta)
++			continue;
++
++		msta = (struct mt7915_sta *)sta->drv_priv;
++		seq_printf(s, "%pM %4u %4u %8u %10u %10u\n",
++			   sta->addr, wcid->phy_idx, wcid->idx,
++			   jiffies_to_msecs(now - msta->airtime_last_update),
++			   msta->airtime_max_gap, msta->airtime_reports);
++	}
++	rcu_read_unlock();
++
++	return 0;
++}
++
+ /* The index of RF registers use the generic regidx, combined with two parts:
+  * WF selection [31:24] and offset [23:0].
+  */
+@@ -1552,6 +1590,8 @@ int mt7915_init_debugfs(struct mt7915_ph
+ 			    &mt7915_txpower_info_fops);
+ 	debugfs_create_devm_seqfile(dev->mt76.dev, "twt_stats", dir,
+ 				    mt7915_twt_stats);
++	debugfs_create_devm_seqfile(dev->mt76.dev, "airtime_report", dir,
++				    mt7915_airtime_report);
+ 	debugfs_create_file("rf_regval", 0600, dir, dev, &fops_rf_regval);
+ 	if (!is_mt7915(&dev->mt76))
+ 		debugfs_create_file("vow_atf", 0600, dir, dev, &fops_vow_atf);
+--- a/mt7915/init.c
++++ b/mt7915/init.c
+@@ -474,6 +474,14 @@ mt7915_init_wiphy(struct mt7915_phy *phy
+ 	ieee80211_hw_set(hw, HOST_BROADCAST_PS_BUFFERING);
+ 	ieee80211_hw_set(hw, SUPPORTS_TX_FRAG);
+ 
++	/* The airtime of a station comes from firmware counters that are read
++	 * about twice a second. mac80211 charges it only with airtime
++	 * fairness, so keep the estimate of a completed frame only then.
++	 */
++	if (phy->dev->deferred_airtime_report &&
++	    phy->dev->mt76.expose_airtime_fairness)
++		ieee80211_hw_set(hw, DEFERRED_AIRTIME_REPORT);
++
+ 	hw->max_tx_fragments = 4;
+ 
+ 	if (phy->dev->dbdc_support && is_mt7915(&dev->mt76))
+--- a/mt7915/mac.c
++++ b/mt7915/mac.c
+@@ -2086,10 +2086,14 @@ void mt7915_mac_work(struct work_struct
+ 			if (i == mphy->band_idx) {
+ 				ret = mt7915_mcu_get_all_sta_info(&phy->dev->mt76,
+ 						MCU_PHY_PER_STA_TXRX_AIR_TIME);
+-				if (ret)
++				if (ret) {
++					phy->dev->airtime_stats.poll_failed++;
+ 					dev_dbg_ratelimited(mphy->dev->dev,
+ 							    "failed to request airtime: %d\n",
+ 							    ret);
++				} else {
++					phy->dev->airtime_stats.polls++;
++				}
+ 				if (mt7915_mcu_wa_cmd(phy->dev, MCU_WA_PARAM_CMD(QUERY), MCU_WA_PARAM_BSS_ACQ_PKT_CNT,
+ 				                      BSS_ACQ_PKT_CNT_BSS_BITMAP_ALL | BSS_ACQ_PKT_CNT_READ_CLR, 0))
+ 					dev_err(mphy->dev->dev, "Failed to query per-AC-queue packet counts.\n");
+--- a/mt7915/mcu.c
++++ b/mt7915/mcu.c
+@@ -578,6 +578,9 @@ mt7915_mcu_rx_all_sta_info_event(struct
+ 	if (sta_num > (skb->len - sizeof(*res)) / sizeof(res->airtime[0]))
+ 		return;
+ 
++	if (res->tag == MCU_PHY_PER_STA_TXRX_AIR_TIME)
++		dev->airtime_stats.events++;
++
+ 	for (i = 0; i < sta_num; i++) {
+ 		u8 ac;
+ 		u16 wlan_idx;
+@@ -610,7 +613,12 @@ mt7915_mcu_rx_all_sta_info_event(struct
+ 			msta = (struct mt7915_sta *)sta->drv_priv;
+ 			elapsed = jiffies_to_usecs(now - msta->airtime_last_update);
+ 			max_airtime = elapsed + max_t(u64, elapsed / 5, 100000);
++			msta->airtime_max_gap =
++				max(msta->airtime_max_gap,
++				    jiffies_to_msecs(now - msta->airtime_last_update));
+ 			msta->airtime_last_update = now;
++			msta->airtime_reports++;
++			dev->airtime_stats.entries++;
+ 
+ 			for (ac = IEEE80211_AC_VO; ac < IEEE80211_NUM_ACS; ++ac) {
+ 				u8 lmac_ac = mt76_connac_lmac_mapping(ac);
+--- a/mt7915/mmio.c
++++ b/mt7915/mmio.c
+@@ -22,6 +22,11 @@ module_param(expose_airtime_fairness, bo
+ MODULE_PARM_DESC(expose_airtime_fairness,
+ 		 "Advertise NL80211_EXT_FEATURE_AIRTIME_FAIRNESS at probe time");
+ 
++static bool deferred_airtime_report = true;
++module_param(deferred_airtime_report, bool, 0444);
++MODULE_PARM_DESC(deferred_airtime_report,
++		 "Set IEEE80211_HW_DEFERRED_AIRTIME_REPORT at probe time");
++
+ static const u32 mt7915_reg[] = {
+ 	[INT_SOURCE_CSR]		= 0xd7010,
+ 	[INT_MASK_CSR]			= 0xd7014,
+@@ -971,6 +976,7 @@ struct mt7915_dev *mt7915_mmio_probe(str
+ 
+ 	dev = container_of(mdev, struct mt7915_dev, mt76);
+ 	dev->mt76.expose_airtime_fairness = expose_airtime_fairness;
++	dev->deferred_airtime_report = deferred_airtime_report;
+ 
+ 	ret = mt7915_mmio_init(mdev, mem_base, device_id);
+ 	if (ret)
+--- a/mt7915/mt7915.h
++++ b/mt7915/mt7915.h
+@@ -165,6 +165,8 @@ struct mt7915_sta {
+ 	struct list_head rc_list;
+ 	u32 airtime_ac[8];
+ 	unsigned long airtime_last_update;
++	u32 airtime_reports;
++	u32 airtime_max_gap;
+ 
+ 	int ack_signal;
+ 	struct ewma_avg_signal avg_ack_signal;
+@@ -425,6 +427,13 @@ struct mt7915_dev {
+ 	struct work_struct airtime_reset_work;
+ 	wait_queue_head_t reset_wait;
+ 	DECLARE_BITMAP(airtime_reset, MT76_N_WCIDS);
++	struct {
++		u32 polls;
++		u32 poll_failed;
++		u32 events;
++		u32 entries;
++	} airtime_stats;
++	bool deferred_airtime_report;
+ 
+ 	struct {
+ 		u32 state;
