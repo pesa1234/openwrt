@@ -1,0 +1,35 @@
+Subject: [PATCH] wifi: mt76: mt7915: keep the VOW ATF setting across a restart
+
+mt7915_vow_init() sets vow_atf_en and sends the VOW configuration to the
+firmware. mt7915_mac_init() calls it at probe and again in
+mt7915_mac_restart(), after the firmware was loaded again. A restart
+thus turns ATF/WATF on again where user space had turned it off in the
+vow_atf debugfs file, and the file reads 1 again.
+
+Set the default once in mt7915_register_device(), so that the restart
+sends the value that user space wrote. Chips without VOW keep the value
+at false, as before.
+---
+--- a/mt7915/init.c
++++ b/mt7915/init.c
+@@ -668,8 +668,6 @@ mt7915_init_led_mux(struct mt7915_dev *d
+ 
+ void mt7915_vow_init(struct mt7915_dev *dev)
+ {
+-	dev->vow_atf_en = true;
+-
+ 	mt7915_mcu_set_vow_drr_ctrl(dev, NULL, VOW_DRR_CTRL_AIRTIME_DEFICIT_BOUND, 0);
+ 	mt7915_mcu_set_vow_drr_ctrl(dev, NULL, VOW_DRR_CTRL_AIRTIME_QUANTUM_ALL, 0);
+ 	mt7915_mcu_set_vow_feature_ctrl(dev);
+@@ -1358,6 +1356,11 @@ int mt7915_register_device(struct mt7915
+ 
+ 	INIT_WORK(&dev->wmm_pbc_work, mt7915_mcu_wmm_pbc_work);
+ 
++	/* Default of the vow_atf debugfs file. mt7915_vow_init() sends the
++	 * current value to the firmware at each start and restart.
++	 */
++	dev->vow_atf_en = !is_mt7915(&dev->mt76);
++
+ 	dev->dbdc_support = mt7915_band_config(dev);
+ 
+ 	dev->mt76.num_phy = 1 + !!dev->dbdc_support;
