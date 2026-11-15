@@ -1005,6 +1005,10 @@ advanced_runtime_setup()
 	smp_mt76
 	enable_HQoS
 	cake_mq_setup
+
+	# At boot advanced_early_setup has applied these already.
+	[ "$1" = "early_done" ] && return 0
+
 	usb_setup
 	hw_atf_setup
 }
@@ -1100,9 +1104,17 @@ get_startup_delay() {
 
 run_advanced_setup() {
 	sync_mt7915e_module_options >/dev/null
-	advanced_runtime_setup
+	advanced_runtime_setup "$1"
 	echo 1 > "$STARTUP_MARKER"
 	logger -t advanced_setup "advanced_setup finished"
+}
+
+# These settings do not depend on the network interfaces, so they do not have
+# to wait for the deferred setup, which then leaves them out.
+advanced_early_setup() {
+	sync_mt7915e_module_options >/dev/null
+	usb_setup
+	hw_atf_setup
 }
 
 run_deferred() {
@@ -1114,17 +1126,22 @@ run_deferred() {
 
 	[ "$delay" -eq 0 ] || sleep "$delay"
 	logger -t advanced_setup "smp_affinity: deferred setup starting"
-	run_advanced_setup
+	run_advanced_setup "$2"
 }
 
 start_service() {
 	local delay=0
+	local early=""
 
 	[ -f "$STARTUP_MARKER" ] || delay=$(get_startup_delay)
+	if [ "$delay" -ne 0 ]; then
+		advanced_early_setup
+		early="early_done"
+	fi
 	logger -t advanced_setup "smp_affinity: setup scheduled after $delay sec (non-blocking)"
 
 	procd_open_instance deferred_setup
-	procd_set_param command "$initscript" run_deferred "$delay"
+	procd_set_param command "$initscript" run_deferred "$delay" $early
 	procd_close_instance
 }
 
