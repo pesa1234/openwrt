@@ -876,6 +876,58 @@ sync_mt7915e_airtime_module_options()
 	echo "0"
 }
 
+sync_mt7915e_deferred_airtime_module_options()
+{
+	MODULE_FILE="/etc/modules.d/mt7915e"
+	deferred=$(uci -q get advanced.@defaults[0].deferred_airtime_report 2>/dev/null)
+
+	if [ -z "$deferred" ]; then
+		if mt7915e_module_has_token "$MODULE_FILE" "deferred_airtime_report=0"; then
+			deferred=0
+		else
+			deferred=1
+		fi
+
+		uci set advanced.@defaults[0].deferred_airtime_report="$deferred" 2>/dev/null
+		uci commit advanced 2>/dev/null
+	fi
+
+	case "$deferred" in
+		0|off|false|no|disabled)
+			deferred=0
+			;;
+		*)
+			deferred=1
+			;;
+	esac
+
+	if [ -e "$MODULE_FILE" ]; then
+		old_content=$(cat "$MODULE_FILE" 2>/dev/null)
+		new_line="mt7915e"
+
+		set -- $old_content
+		for token in "$@"; do
+			case "$token" in
+				mt7915e)
+					;;
+				deferred_airtime_report=*)
+					;;
+				*)
+					append_mt7915e_module_token "$token"
+					;;
+			esac
+		done
+
+		# The driver enables it by default, so only "off" needs an option.
+		[ "$deferred" = "1" ] || append_mt7915e_module_token "deferred_airtime_report=0"
+
+		if [ "$old_content" != "$new_line" ]; then
+			printf '%s\n' "$new_line" > "$MODULE_FILE"
+			logger -t advanced_setup "updated $MODULE_FILE to '$new_line'; reboot required for the deferred airtime report change"
+		fi
+	fi
+}
+
 sync_mt7915e_module_options()
 {
 	local wed_changed
@@ -883,6 +935,7 @@ sync_mt7915e_module_options()
 
 	wed_changed=$(sync_mt7915e_wed_module_options)
 	atf_changed=$(sync_mt7915e_airtime_module_options)
+	sync_mt7915e_deferred_airtime_module_options
 
 	if [ "$wed_changed" = "1" ] || [ "$atf_changed" = "1" ]; then
 		echo "1"
@@ -1081,6 +1134,7 @@ reload_service() {
 	        atf)
 			logger -t advanced_setup "advanced_setup atf"
 			sync_mt7915e_airtime_module_options >/dev/null
+			sync_mt7915e_deferred_airtime_module_options
 			hw_atf_setup
 	            ;;
         usb)
