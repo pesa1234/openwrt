@@ -1,0 +1,48 @@
+From 9f6ee4d90756973bf65b11ad93e2bf3bbf0bcf71 Mon Sep 17 00:00:00 2001
+From: Brandon Arrendondo <brandon.arrendondo@bissell.com>
+Date: Thu, 10 Sep 2026 15:23:16 -0400
+Subject: [PATCH] AP: Avoid NULL as snprintf %s argument for BSS transition
+ management query
+
+ieee802_11_rx_bss_trans_mgmt_query() only allocates hex when the
+candidate list is non-empty:
+
+    hex_len = 2 * (end - pos) + 1;
+    if (hex_len > 1) {
+            hex = os_malloc(hex_len);
+            if (hex)
+                    wpa_snprintf_hex(hex, hex_len, pos, end - pos);
+    }
+    wpa_msg(hapd->msg_ctx, MSG_INFO,
+            BSS_TM_QUERY MACSTR " reason=%u%s%s",
+            MAC2STR(addr), reason, hex ? " neighbor=" : "", hex);
+
+The ternary only selects the " neighbor=" prefix text; the raw hex
+pointer, which stays NULL for an empty candidate list (or on the
+os_malloc() failure path), is still passed unconditionally as the actual
+%s argument. This is undefined behavior per the C standard; glibc
+tolerates it and prints "(null)", but this is unspecified elsewhere.
+
+This could be reached from a station's BSS Transition Management Query
+Action frame; an empty candidate list is a normal, minimal, valid frame.
+
+Pass an empty string instead of the NULL pointer to avoid this.
+
+Fixes: 930695662 ("Add BSS-TM-QUERY event to indicate reception of BSS TM Query")
+Signed-off-by: Brandon Arrendondo <brandon.arrendondo@bissell.com>
+---
+ src/ap/wnm_ap.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/ap/wnm_ap.c b/src/ap/wnm_ap.c
+--- a/src/ap/wnm_ap.c
++++ b/src/ap/wnm_ap.c
+@@ -476,7 +476,7 @@ static void ieee802_11_rx_bss_trans_mgmt_query(struct hostapd_data *hapd,
+ 	}
+ 	wpa_msg(hapd->msg_ctx, MSG_INFO,
+ 		BSS_TM_QUERY MACSTR " reason=%u%s%s",
+-		MAC2STR(addr), reason, hex ? " neighbor=" : "", hex);
++		MAC2STR(addr), reason, hex ? " neighbor=" : "", hex ? hex : "");
+ 	os_free(hex);
+ 
+ 	if (!hostapd_ubus_notify_bss_transition_query(hapd, addr, dialog_token, reason, pos, end - pos))
