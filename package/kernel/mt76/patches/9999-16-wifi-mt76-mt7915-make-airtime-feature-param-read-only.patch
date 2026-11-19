@@ -11,4 +11,4 @@
 +		 "Advertise NL80211_EXT_FEATURE_AIRTIME_FAIRNESS at probe time");
  
  static const u32 mt7915_reg[] = {
- 	[INT_SOURCE_CSR] = MT_INT_SOURCE_CSR,
+ 	[INT_SOURCE_CSR]		= 0xd7010,
