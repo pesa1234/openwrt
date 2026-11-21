@@ -11,7 +11,7 @@
 #include "qos.h"
 #include "mirror.h"
 #include "mac.h"
-#include "rtl-otto.h"
+#include "otto_dsa.h"
 #include "stats.h"
 #include "vlan.h"
 #include "stp.h"
@@ -44,7 +44,7 @@ static u64 rtl839x_read_debug_matrix(struct otto_dsa_priv *priv, int port)
 	return ((u64)v[0] << 32) | v[1];
 }
 
-void rtldsa_839x_print_matrix(struct otto_dsa_priv *priv)
+static void rtldsa_839x_print_matrix(struct otto_dsa_priv *priv)
 {
 	for (int i = 0; i < 52; i += 4)
 		pr_debug("> %16llx %16llx %16llx %16llx\n",

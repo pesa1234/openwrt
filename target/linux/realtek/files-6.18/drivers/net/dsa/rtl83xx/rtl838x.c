@@ -13,7 +13,7 @@
 #include "qos.h"
 #include "mirror.h"
 #include "mac.h"
-#include "rtl-otto.h"
+#include "otto_dsa.h"
 #include "stats.h"
 #include "vlan.h"
 #include "stp.h"
@@ -46,7 +46,7 @@ static u32 rtl838x_read_debug_reg(struct otto_dsa_priv *priv, u32 reg)
 	return val;
 }
 
-void rtldsa_838x_print_matrix(struct otto_dsa_priv *priv)
+static void rtldsa_838x_print_matrix(struct otto_dsa_priv *priv)
 {
 	for (int i = 0; i < 28; i += 8)
 		pr_debug("> %8x %8x %8x %8x %8x %8x %8x %8x\n",

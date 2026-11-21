@@ -9,10 +9,8 @@
 
 #include <net/inet_dscp.h>
 
-#include "l3_limits.h"
-#include "rtl-otto.h"
+#include "otto_dsa.h"
 
-struct fib6_info;
 struct seq_file;
 
 #define MAX_SMACS 64
@@ -205,7 +203,6 @@ struct otto_l3_ctrl {
 
 int otto_l3_probe(struct device *dev, struct otto_dsa_priv *priv);
 void otto_l3_remove(struct otto_dsa_priv *priv);
-bool otto_l3_fasttrack(struct otto_dsa_priv *priv);
 /* Get requires RTNL. Put needs no RTNL; remove the PIE rule before calling it. */
 int otto_l3_flow_nexthop_get(struct otto_dsa_priv *priv, struct otto_l3_nexthop *nh,
 			     u64 smac, u64 dmac, u16 vlan, int port);
