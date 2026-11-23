@@ -1,0 +1,57 @@
+Subject: [PATCH] mac80211: keep the operation elements of the beacon after CSA
+
+nl80211 points ht_oper, vht_oper, he_oper and eht_oper of the beacon
+data into the tail. cfg80211_beacon_dup() copies the tail but leaves
+these pointers NULL, so the beacon after a channel switch (and the one
+after a color change) is assigned without them, and
+ieee80211_update_ap_bandwidth() computes 20 MHz for the BSS. All
+stations drop to 20 MHz when the switch completes, and get the width of
+the new channel back only when hostapd sets the beacon again after
+CH_SWITCH_NOTIFY.
+
+Point the copied elements into the copied tail.
+---
+--- a/net/mac80211/cfg.c
++++ b/net/mac80211/cfg.c
+@@ -4424,6 +4424,20 @@ static void ieee80211_end_cac(struct wip
+ 	}
+ }
+ 
++static const void *
++ieee80211_beacon_dup_tail_elem(const struct cfg80211_beacon_data *beacon,
++			       const struct cfg80211_beacon_data *new_beacon,
++			       const void *elem)
++{
++	const u8 *pos = elem;
++
++	if (!pos || !beacon->tail || pos < beacon->tail ||
++	    pos >= beacon->tail + beacon->tail_len)
++		return NULL;
++
++	return new_beacon->tail + (pos - beacon->tail);
++}
++
+ static struct cfg80211_beacon_data *
+ cfg80211_beacon_dup(struct cfg80211_beacon_data *beacon)
+ {
+@@ -4528,6 +4542,20 @@ cfg80211_beacon_dup(struct cfg80211_beac
+ 		pos += beacon->civicloc_len;
+ 	}
+ 
++	/*
++	 * nl80211 points the operation elements into the tail; point them
++	 * into the copy, ieee80211_update_ap_bandwidth() reads them when
++	 * the beacon is assigned.
++	 */
++	new_beacon->ht_oper = ieee80211_beacon_dup_tail_elem(beacon, new_beacon,
++							     beacon->ht_oper);
++	new_beacon->vht_oper = ieee80211_beacon_dup_tail_elem(beacon, new_beacon,
++							      beacon->vht_oper);
++	new_beacon->he_oper = ieee80211_beacon_dup_tail_elem(beacon, new_beacon,
++							     beacon->he_oper);
++	new_beacon->eht_oper = ieee80211_beacon_dup_tail_elem(beacon, new_beacon,
++							      beacon->eht_oper);
++
+ 	return new_beacon;
+ }
+ 
