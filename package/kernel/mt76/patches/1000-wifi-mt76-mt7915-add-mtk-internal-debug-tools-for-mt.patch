@@ -68,7 +68,7 @@ Subject: [PATCH 01/70] wifi: mt76: mt7915: add mtk internal debug tools for
  
  /** global debugfs **/
  
-@@ -529,6 +532,9 @@ mt7915_fw_debug_wm_set(void *data, u64 v
+@@ -521,10 +524,18 @@ mt7915_fw_debug_wm_set(void *data, u64 v
  	int ret;
  
  	dev->fw.debug_wm = val ? MCU_FW_LOG_TO_HOST : 0;
@@ -76,32 +76,18 @@ Subject: [PATCH 01/70] wifi: mt76: mt7915: add mtk internal debug tools for
 +	dev->fw.debug_wm = val;
 +#endif
  
- 	if (dev->fw.debug_bin)
- 		val = 16;
-@@ -553,6 +559,9 @@ mt7915_fw_debug_wm_set(void *data, u64 v
- 		if (ret)
- 			goto out;
- 	}
+ 	ret = mt7915_mcu_fw_debug_set(dev, MCU_FW_LOG_WM, false);
+ 	if (ret)
+ 		dev->fw.debug_wm = 0;
 +#ifdef MTK_DEBUG
-+	mt7915_mcu_fw_dbg_ctrl(dev, 68, !!val);
-+#endif
- 
- 	/* WM CPU info record control */
- 	mt76_clear(dev, MT_CPU_UTIL_CTRL, BIT(0));
-@@ -561,6 +570,12 @@ mt7915_fw_debug_wm_set(void *data, u64 v
- 	mt76_wr(dev, MT_MCU_WM_CIRQ_IRQ_MASK_CLR_ADDR, BIT(5));
- 	mt76_wr(dev, MT_MCU_WM_CIRQ_IRQ_SOFT_ADDR, BIT(5));
- 
-+#ifdef MTK_DEBUG
-+	if (dev->fw.debug_bin & BIT(3))
++	else if (dev->fw.debug_bin & BIT(3))
 +		/* use bit 7 to indicate v2 magic number */
 +		dev->fw.debug_wm |= BIT(7);
 +#endif
-+
- out:
- 	if (ret)
- 		dev->fw.debug_wm = 0;
-@@ -573,7 +588,11 @@ mt7915_fw_debug_wm_get(void *data, u64 *
+ 
+ 	return ret;
+ }
+@@ -534,7 +545,11 @@ mt7915_fw_debug_wm_get(void *data, u64 *
  {
  	struct mt7915_dev *dev = data;
  
@@ -114,7 +100,7 @@ Subject: [PATCH 01/70] wifi: mt76: mt7915: add mtk internal debug tools for
  
  	return 0;
  }
-@@ -648,16 +667,30 @@ mt7915_fw_debug_bin_set(void *data, u64
+@@ -603,16 +618,30 @@ mt7915_fw_debug_bin_set(void *data, u64
  	};
  	struct mt7915_dev *dev = data;
  
@@ -148,7 +134,7 @@ Subject: [PATCH 01/70] wifi: mt76: mt7915: add mtk internal debug tools for
  	return mt7915_fw_debug_wm_set(dev, dev->fw.debug_wm);
  }
  
-@@ -1354,6 +1387,11 @@ int mt7915_init_debugfs(struct mt7915_ph
+@@ -1309,6 +1338,11 @@ int mt7915_init_debugfs(struct mt7915_ph
  	if (!ext_phy)
  		dev->debugfs_dir = dir;
  
@@ -160,7 +146,7 @@ Subject: [PATCH 01/70] wifi: mt76: mt7915: add mtk internal debug tools for
  	return 0;
  }
  
-@@ -1366,6 +1404,12 @@ mt7915_debugfs_write_fwlog(struct mt7915
+@@ -1321,6 +1355,12 @@ mt7915_debugfs_write_fwlog(struct mt7915
  	void *dest;
  
  	spin_lock_irqsave(&lock, flags);
@@ -173,7 +159,7 @@ Subject: [PATCH 01/70] wifi: mt76: mt7915: add mtk internal debug tools for
  	dest = relay_reserve(dev->relay_fwlog, hdrlen + len + 4);
  	if (dest) {
  		*(u32 *)dest = hdrlen + len;
-@@ -1394,17 +1438,50 @@ void mt7915_debugfs_rx_fw_monitor(struct
+@@ -1349,17 +1389,50 @@ void mt7915_debugfs_rx_fw_monitor(struct
  		.msg_type = cpu_to_le16(PKT_TYPE_RX_FW_MONITOR),
  	};
  
@@ -287,7 +273,17 @@ Subject: [PATCH 01/70] wifi: mt76: mt7915: add mtk internal debug tools for
  	return mt76_tx_queue_skb_raw(dev, mdev->q_mcu[qid], skb, 0);
  }
  
-@@ -2490,7 +2495,10 @@ static int mt7915_red_set_watermark(stru
+@@ -2366,6 +2371,9 @@ int mt7915_mcu_fw_debug_set(struct mt791
+ 		if (ret)
+ 			return ret;
+ 	}
++#ifdef MTK_DEBUG
++	mt7915_mcu_fw_dbg_ctrl(dev, 68, en && rx);
++#endif
+ 
+ 	mt76_clear(dev, MT_CPU_UTIL_CTRL, BIT(0));
+ 	mt76_wr(dev, MT_DIC_CMD_REG_CMD, BIT(2) | BIT(13) |
+@@ -2549,7 +2557,10 @@ static int mt7915_red_set_watermark(stru
  				 sizeof(req), false);
  }
  
@@ -299,7 +295,7 @@ Subject: [PATCH 01/70] wifi: mt76: mt7915: add mtk internal debug tools for
  {
  #define RED_DISABLE		0
  #define RED_BY_WA_ENABLE	2
-@@ -4463,6 +4471,23 @@ out:
+@@ -4522,6 +4533,23 @@ out:
  	return ret;
  }
  
@@ -323,7 +319,7 @@ Subject: [PATCH 01/70] wifi: mt76: mt7915: add mtk internal debug tools for
  int mt7915_mcu_rf_regval(struct mt7915_dev *dev, u32 regidx, u32 *val, bool set)
  {
  	struct {
-@@ -4495,3 +4520,22 @@ int mt7915_mcu_rf_regval(struct mt7915_d
+@@ -4554,3 +4582,22 @@ int mt7915_mcu_rf_regval(struct mt7915_d
  
  	return 0;
  }
@@ -418,7 +414,7 @@ Subject: [PATCH 01/70] wifi: mt76: mt7915: add mtk internal debug tools for
  	bool wmm_pbc_enable;
  	struct work_struct wmm_pbc_work;
  	u32 adie_type;
-@@ -679,4 +715,24 @@ void mt7915_sta_add_debugfs(struct ieee8
+@@ -681,4 +717,24 @@ void mt7915_sta_add_debugfs(struct ieee8
  int mt7915_mmio_wed_init(struct mt7915_dev *dev, void *pdev_ptr,
  			 bool pci, int *irq);
  

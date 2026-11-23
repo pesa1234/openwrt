@@ -30,7 +30,7 @@ OpenWrt-Drop-When: package/kernel/mt76/Makefile PKG_SOURCE_VERSION contains
 
 --- a/mac80211.c
 +++ b/mac80211.c
-@@ -1658,11 +1658,11 @@ void __mt76_sta_remove(struct mt76_phy *
+@@ -1736,11 +1736,11 @@ mt76_sta_teardown(struct mt76_phy *phy,
  	for (i = 0; i < ARRAY_SIZE(wcid->aggr); i++)
  		mt76_rx_aggr_stop(dev, wcid, i);
  
@@ -42,5 +42,5 @@ OpenWrt-Drop-When: package/kernel/mt76/Makefile PKG_SOURCE_VERSION contains
 -	mt76_wcid_cleanup(dev, wcid);
 -
  	mt76_wcid_mask_clear(dev->wcid_mask, idx);
- 	phy->num_sta--;
  }
+ 
