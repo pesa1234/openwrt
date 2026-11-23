@@ -1,0 +1,207 @@
+Subject: [PATCH] wifi: mt76: mt7915: update the bandwidth after a channel switch
+
+mt7915_start_ap() sends BSS_INFO_RF_CH and the association sends the
+STA_REC_BF entry of each station, both with the width of the channel at
+that time. A channel switch only sends CHANNEL_SWITCH, and the rate
+control update from mac80211 resends STA_REC_HE and STA_REC_RA but not
+STA_REC_BF. After the staged zero-wait DFS switch from 36/80 to 36/160
+the stations transmitted to the AP at 160 MHz, while the AP kept
+transmitting to all of them at 80 MHz until the radio restarted.
+
+In post_channel_switch, send BSS_INFO_RF_CH of the AP interface again,
+then STA_REC_BF and the rate control of each of its stations, as
+mt7996_post_channel_switch() does. mac80211 updates the bandwidth of the
+stations before post_channel_switch only with the mac80211 patch
+9999-03 (operation elements of the beacon after CSA); without it the
+stations are at 20 MHz there.
+
+Log one line per AP interface and switch with the BSS width and the
+number of updated stations at each width, so that a test shows whether
+the stations were at the width of the new channel.
+---
+--- a/mt7915/main.c
++++ b/mt7915/main.c
+@@ -888,6 +888,87 @@ mt7915_sta_vow_set_airtime_weight(struct
+ 	mt7915_mcu_set_vow_drr_ctrl(dev, msta, VOW_DRR_CTRL_STA_ALL, weight);
+ }
+ 
++struct mt7915_bw_update {
++	struct ieee80211_vif *vif;
++	/* updated stations by enum ieee80211_sta_rx_bandwidth */
++	unsigned int sta[IEEE80211_STA_RX_BW_160 + 1];
++	unsigned int failed;
++};
++
++static void mt7915_sta_update_bw(void *data, struct ieee80211_sta *sta)
++{
++	struct mt7915_sta *msta = (struct mt7915_sta *)sta->drv_priv;
++	struct mt7915_bw_update *upd = data;
++	struct ieee80211_vif *vif = upd->vif;
++	struct mt7915_vif *mvif = (struct mt7915_vif *)vif->drv_priv;
++	struct mt7915_dev *dev = mvif->phy->dev;
++	int ret;
++
++	if (msta->vif != mvif || !msta->wcid.sta)
++		return;
++
++	if (!sta->deflink.ht_cap.ht_supported && !sta->deflink.he_cap.has_he)
++		return;
++
++	ret = mt7915_mcu_update_sta_bfer(dev, vif, sta);
++	if (!ret)
++		ret = mt7915_mcu_add_rate_ctrl(dev, vif, sta, &msta->wcid,
++					       true);
++	if (ret) {
++		upd->failed++;
++		dev_warn(dev->mt76.dev,
++			 "failed to update the bandwidth of %pM: %d\n",
++			 sta->addr, ret);
++		return;
++	}
++
++	upd->sta[min_t(int, sta->deflink.bandwidth, IEEE80211_STA_RX_BW_160)]++;
++}
++
++/*
++ * mt7915_start_ap() sends BSS_INFO_RF_CH, which the firmware references
++ * for the bandwidth cap of the peers, and the association sends the
++ * beamforming entry of each station, both with the width of the channel
++ * at that time. The rate control update from mac80211 resends only
++ * STA_REC_HE and STA_REC_RA, so after a channel switch to a wider
++ * channel the AP kept transmitting at the old width. Send them again.
++ */
++static void mt7915_update_bss_bw(struct mt7915_phy *phy,
++				 struct ieee80211_vif *vif)
++{
++	struct mt7915_bw_update upd = { .vif = vif };
++	struct mt7915_dev *dev = phy->dev;
++	int ret;
++
++	if (vif->type != NL80211_IFTYPE_AP)
++		return;
++
++	mutex_lock(&dev->mt76.mutex);
++
++	ret = mt7915_mcu_update_bss_rfch(phy, vif);
++	if (ret)
++		dev_warn(dev->mt76.dev,
++			 "failed to update the BSS bandwidth: %d\n", ret);
++	else
++		ieee80211_iterate_stations_mtx(phy->mt76->hw,
++					       mt7915_sta_update_bw, &upd);
++
++	mutex_unlock(&dev->mt76.mutex);
++
++	if (ret)
++		return;
++
++	/* one line per AP interface and channel switch */
++	dev_info(dev->mt76.dev,
++		 "%pM: BSS width %d MHz after channel switch, stations at 20/40/80/160 MHz: %u/%u/%u/%u, failed %u\n",
++		 vif->addr, cfg80211_chandef_get_width(&phy->mt76->chandef),
++		 upd.sta[IEEE80211_STA_RX_BW_20],
++		 upd.sta[IEEE80211_STA_RX_BW_40],
++		 upd.sta[IEEE80211_STA_RX_BW_80],
++		 upd.sta[IEEE80211_STA_RX_BW_160],
++		 upd.failed);
++}
++
+ static int
+ mt7915_post_channel_switch(struct ieee80211_hw *hw, struct ieee80211_vif *vif, struct ieee80211_bss_conf *link)
+ {
+@@ -896,14 +977,18 @@ mt7915_post_channel_switch(struct ieee80
+ 	int ret;
+ 
+ 	ret = cfg80211_chandef_dfs_required(hw->wiphy, chandef, NL80211_IFTYPE_AP);
+-	if (ret <= 0)
++	if (ret < 0)
+ 		goto out;
+ 
+-	ieee80211_stop_queues(hw);
+-	ret = mt7915_set_channel(phy->mt76);
+-	if (ret)
+-		goto out;
+-	ieee80211_wake_queues(hw);
++	if (ret > 0) {
++		ieee80211_stop_queues(hw);
++		ret = mt7915_set_channel(phy->mt76);
++		if (ret)
++			goto out;
++		ieee80211_wake_queues(hw);
++	}
++
++	mt7915_update_bss_bw(phy, vif);
+ 
+ out:
+ 	return ret;
+--- a/mt7915/mcu.c
++++ b/mt7915/mcu.c
+@@ -1062,6 +1062,24 @@ out:
+ 				     MCU_EXT_CMD(BSS_INFO_UPDATE), true);
+ }
+ 
++int mt7915_mcu_update_bss_rfch(struct mt7915_phy *phy, struct ieee80211_vif *vif)
++{
++	int len = sizeof(struct sta_req_hdr) + sizeof(struct bss_info_rf_ch);
++	struct mt7915_vif *mvif = (struct mt7915_vif *)vif->drv_priv;
++	struct mt7915_dev *dev = phy->dev;
++	struct sk_buff *skb;
++
++	skb = __mt76_connac_mcu_alloc_sta_req(&dev->mt76, &mvif->mt76,
++					      NULL, len);
++	if (IS_ERR(skb))
++		return PTR_ERR(skb);
++
++	mt7915_mcu_bss_rfch_tlv(skb, vif, phy);
++
++	return mt76_mcu_skb_send_msg(&dev->mt76, skb,
++				     MCU_EXT_CMD(BSS_INFO_UPDATE), true);
++}
++
+ /** starec & wtbl **/
+ int mt7915_mcu_add_tx_ba(struct mt7915_dev *dev,
+ 			 struct ieee80211_ampdu_params *params,
+@@ -1985,6 +2003,31 @@ mt7915_mcu_sta_rate_ctrl_tlv(struct sk_b
+ 	ra->sta_cap = cpu_to_le32(cap);
+ }
+ 
++int mt7915_mcu_update_sta_bfer(struct mt7915_dev *dev, struct ieee80211_vif *vif,
++			       struct ieee80211_sta *sta)
++{
++	struct mt7915_vif *mvif = (struct mt7915_vif *)vif->drv_priv;
++	struct mt7915_sta *msta = (struct mt7915_sta *)sta->drv_priv;
++	struct sk_buff *skb;
++	unsigned int len;
++
++	skb = mt76_connac_mcu_alloc_sta_req(&dev->mt76, &mvif->mt76,
++					    &msta->wcid);
++	if (IS_ERR(skb))
++		return PTR_ERR(skb);
++
++	len = skb->len;
++	mt7915_mcu_sta_bfer_tlv(dev, skb, vif, sta);
++	if (skb->len == len) {
++		/* no beamforming with this station */
++		dev_kfree_skb(skb);
++		return 0;
++	}
++
++	return mt76_mcu_skb_send_msg(&dev->mt76, skb,
++				     MCU_EXT_CMD(STA_REC_UPDATE), true);
++}
++
+ int mt7915_mcu_add_rate_ctrl(struct mt7915_dev *dev, struct ieee80211_vif *vif,
+ 			     struct ieee80211_sta *sta, struct mt76_wcid *wcid,
+ 			     bool changed)
+--- a/mt7915/mt7915.h
++++ b/mt7915/mt7915.h
+@@ -711,6 +711,9 @@ int mt7915_mcu_add_rx_ba(struct mt7915_d
+ 			 bool add);
+ int mt7915_mcu_update_bss_color(struct mt7915_dev *dev, struct ieee80211_vif *vif,
+ 				struct cfg80211_he_bss_color *he_bss_color);
++int mt7915_mcu_update_bss_rfch(struct mt7915_phy *phy, struct ieee80211_vif *vif);
++int mt7915_mcu_update_sta_bfer(struct mt7915_dev *dev, struct ieee80211_vif *vif,
++			       struct ieee80211_sta *sta);
+ int mt7915_mcu_add_inband_discov(struct mt7915_dev *dev, struct ieee80211_vif *vif,
+ 				 u32 changed);
+ int mt7915_mcu_add_beacon(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
