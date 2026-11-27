@@ -10,17 +10,17 @@
  	struct ewma_avg_signal avg_ack_signal;
 --- a/mt7915/main.c
 +++ b/mt7915/main.c
-@@ -877,6 +877,7 @@ int mt7915_mac_sta_add(struct mt76_dev *
+@@ -871,6 +871,7 @@ int mt7915_mac_sta_add(struct mt76_dev *
  	msta->wcid.sta_disabled = 1;
  	msta->wcid.idx = idx;
  	msta->wcid.phy_idx = ext_phy;
 +	msta->airtime_last_update = jiffies;
+ 	clear_bit(MT_WCID_FLAG_PS, &msta->wcid.flags);
  
  	if (sta->tdls)
- 		set_bit(MT_WCID_FLAG_TDLS_PEER, &msta->wcid.flags);
 --- a/mt7915/mcu.c
 +++ b/mt7915/mcu.c
-@@ -543,6 +543,7 @@ mt7915_mcu_rx_all_sta_info_event(struct
+@@ -620,6 +620,7 @@ mt7915_mcu_rx_all_sta_info_event(struct
  	struct mt7915_mcu_all_sta_info_event *res;
  	u16 sta_num;
  	u16 i;
@@ -28,7 +28,7 @@
  
  	res = (struct mt7915_mcu_all_sta_info_event *)skb->data;
  	if (skb->len < sizeof(*res))
-@@ -560,6 +561,7 @@ mt7915_mcu_rx_all_sta_info_event(struct
+@@ -636,6 +637,7 @@ mt7915_mcu_rx_all_sta_info_event(struct
  		struct ieee80211_sta *sta;
  		struct mt7915_sta *msta;
  		u32 prev_tx_airtime, prev_rx_airtime, diff_tx_airtime, diff_rx_airtime;
@@ -36,7 +36,7 @@
  
  		switch (res->tag) {
  		case MCU_PHY_PER_STA_TXRX_AIR_TIME:
-@@ -578,6 +580,9 @@ mt7915_mcu_rx_all_sta_info_event(struct
+@@ -657,6 +659,9 @@ mt7915_mcu_rx_all_sta_info_event(struct
  				continue;
  			}
  			msta = (struct mt7915_sta *)sta->drv_priv;
@@ -46,7 +46,7 @@
  
  			for (ac = IEEE80211_AC_VO; ac < IEEE80211_NUM_ACS; ++ac) {
  				u8 lmac_ac = mt76_connac_lmac_mapping(ac);
-@@ -616,7 +621,8 @@ mt7915_mcu_rx_all_sta_info_event(struct
+@@ -694,7 +699,8 @@ mt7915_mcu_rx_all_sta_info_event(struct
  							clear);
  				}
  
@@ -56,7 +56,7 @@
  					dev_dbg(dev->mt76.dev,
  						"sta: %02X:%02X:%02X:%02X:%02X:%02X ac: %u tx_read: %u rx_read: %u tx_time: %u rx_time: %u tx_prev: %u rx_prev: %u tx_diff: %u rx_diff: %u\n",
  						sta->addr[0], sta->addr[1], sta->addr[2], sta->addr[3], sta->addr[4], sta->addr[5],
-@@ -629,9 +635,9 @@ mt7915_mcu_rx_all_sta_info_event(struct
+@@ -706,9 +712,9 @@ mt7915_mcu_rx_all_sta_info_event(struct
  						prev_tx_airtime, prev_rx_airtime,
  						diff_tx_airtime, diff_rx_airtime);
  

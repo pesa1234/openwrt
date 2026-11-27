@@ -13,7 +13,7 @@ Signed-off-by: Bo Jiao <Bo.Jiao@mediatek.com>
 
 --- a/mt7915/debugfs.c
 +++ b/mt7915/debugfs.c
-@@ -82,8 +82,10 @@ mt7915_sys_recovery_set(struct file *fil
+@@ -71,8 +71,10 @@ mt7915_sys_recovery_set(struct file *fil
  	 * 4: trigger & enable system error L3 tx abort
  	 * 5: trigger & enable system error L3 tx disable.
  	 * 6: trigger & enable system error L3 bf recovery.
@@ -26,7 +26,7 @@ Signed-off-by: Bo Jiao <Bo.Jiao@mediatek.com>
  	 */
  	case SER_QUERY:
  		ret = mt7915_mcu_set_ser(dev, 0, 0, band);
-@@ -108,7 +110,7 @@ mt7915_sys_recovery_set(struct file *fil
+@@ -97,7 +99,7 @@ mt7915_sys_recovery_set(struct file *fil
  		if (ret)
  			return ret;
  
@@ -35,7 +35,7 @@ Signed-off-by: Bo Jiao <Bo.Jiao@mediatek.com>
  		mt7915_reset(dev);
  		break;
  
-@@ -117,6 +119,12 @@ mt7915_sys_recovery_set(struct file *fil
+@@ -106,6 +108,12 @@ mt7915_sys_recovery_set(struct file *fil
  		mt76_wr(dev, MT_MCU_WM_CIRQ_EINT_MASK_CLR_ADDR, BIT(18));
  		mt76_wr(dev, MT_MCU_WM_CIRQ_EINT_SOFT_ADDR, BIT(18));
  		break;
@@ -48,7 +48,7 @@ Signed-off-by: Bo Jiao <Bo.Jiao@mediatek.com>
  	default:
  		break;
  	}
-@@ -157,9 +165,13 @@ mt7915_sys_recovery_get(struct file *fil
+@@ -146,9 +154,13 @@ mt7915_sys_recovery_get(struct file *fil
  	desc += scnprintf(buff + desc, bufsz - desc,
  			  "6: trigger system error L3 bf recovery\n");
  	desc += scnprintf(buff + desc, bufsz - desc,
@@ -66,7 +66,7 @@ Signed-off-by: Bo Jiao <Bo.Jiao@mediatek.com>
  	desc += scnprintf(buff + desc, bufsz - desc,
 --- a/mt7915/mac.c
 +++ b/mt7915/mac.c
-@@ -1672,10 +1672,34 @@ void mt7915_mac_dump_work(struct work_st
+@@ -1774,10 +1774,34 @@ void mt7915_mac_dump_work(struct work_st
  
  	dev = container_of(work, struct mt7915_dev, dump_work);
  
@@ -103,18 +103,18 @@ Signed-off-by: Bo Jiao <Bo.Jiao@mediatek.com>
  }
  
  void mt7915_reset(struct mt7915_dev *dev)
-@@ -1694,7 +1718,7 @@ void mt7915_reset(struct mt7915_dev *dev
+@@ -1798,7 +1822,7 @@ void mt7915_reset(struct mt7915_dev *dev
  			 wiphy_name(dev->mt76.hw->wiphy));
  
  		mt7915_irq_disable(dev, MT_INT_MCU_CMD);
 -		queue_work(dev->mt76.wq, &dev->dump_work);
 +		mt7915_coredump(dev, MT7915_COREDUMP_AUTO);
- 		return;
+ 		goto out;
  	}
  
 --- a/mt7915/mcu.h
 +++ b/mt7915/mcu.h
-@@ -726,8 +726,12 @@ enum {
+@@ -746,8 +746,12 @@ enum {
  	SER_SET_RECOVER_L3_TX_ABORT,
  	SER_SET_RECOVER_L3_TX_DISABLE,
  	SER_SET_RECOVER_L3_BF,
@@ -144,7 +144,7 @@ Signed-off-by: Bo Jiao <Bo.Jiao@mediatek.com>
  enum mt7915_txq_id {
  	MT7915_TXQ_FWDL = 16,
  	MT7915_TXQ_MCU_WM,
-@@ -403,6 +410,7 @@ struct mt7915_dev {
+@@ -415,6 +422,7 @@ struct mt7915_dev {
  
  	/* protects coredump data */
  	struct mutex dump_mutex;
@@ -152,11 +152,11 @@ Signed-off-by: Bo Jiao <Bo.Jiao@mediatek.com>
  #ifdef CONFIG_DEV_COREDUMP
  	struct {
  		struct mt7915_crash_data *crash_data[__MT76_RAM_TYPE_MAX];
-@@ -611,6 +619,7 @@ int mt7915_txbf_init(struct mt7915_dev *
+@@ -645,6 +653,7 @@ int mt7915_txbf_init(struct mt7915_dev *
  void mt7915_init_txpower(struct mt7915_phy *phy);
  int mt7915_init_vif(struct mt7915_phy *phy, struct ieee80211_vif *vif, bool bf_en);
  void mt7915_reset(struct mt7915_dev *dev);
 +void mt7915_coredump(struct mt7915_dev *dev, u8 state);
+ void mt7915_mac_full_reset_queue(struct mt7915_dev *dev);
  int mt7915_run(struct ieee80211_hw *hw);
  int mt7915_mcu_init(struct mt7915_dev *dev);
- int mt7915_mcu_init_firmware(struct mt7915_dev *dev);

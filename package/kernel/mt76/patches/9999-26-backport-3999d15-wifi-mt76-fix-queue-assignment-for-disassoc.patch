@@ -25,8 +25,9 @@ OpenWrt-Drop-When: package/kernel/mt76/Makefile PKG_SOURCE_VERSION contains
 
 --- a/tx.c
 +++ b/tx.c
-@@ -804,5 +804,6 @@ mt76_txq_schedule_pending_wcid(struct mt
- 		     !ieee80211_is_bufferable_mmpdu(skb) ||
+@@ -767,6 +767,7 @@ mt76_txq_schedule_pending_wcid(struct mt
+ 		    (!(wcid->tx_info & MT_WCID_TX_INFO_SET) ||
+ 		     !mt76_tx_ps_bufferable(skb) ||
  		     ieee80211_is_deauth(hdr->frame_control) ||
 +		     ieee80211_is_disassoc(hdr->frame_control) ||
  		     head == &wcid->tx_offchannel))

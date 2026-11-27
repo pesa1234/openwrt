@@ -13,7 +13,7 @@ Subject: [PATCH] [mt76] mt7915 MCU event airtime
 
 --- a/mt76_connac_mcu.h
 +++ b/mt76_connac_mcu.h
-@@ -1058,6 +1058,7 @@ enum {
+@@ -1088,6 +1088,7 @@ enum {
  	MCU_EXT_EVENT_BCC_NOTIFY = 0x75,
  	MCU_EXT_EVENT_WF_RF_PIN_CTRL = 0x9a,
  	MCU_EXT_EVENT_MURU_CTRL = 0x9f,
@@ -21,7 +21,7 @@ Subject: [PATCH] [mt76] mt7915 MCU event airtime
  	MCU_EXT_EVENT_CSI_REPORT = 0xc2,
  };
  
-@@ -1291,6 +1292,7 @@ enum {
+@@ -1331,6 +1332,7 @@ enum {
  	MCU_EXT_CMD_PHY_STAT_INFO = 0xad,
  	/* for vendor csi and air monitor */
  	MCU_EXT_CMD_SMESH_CTRL = 0xae,
@@ -29,7 +29,7 @@ Subject: [PATCH] [mt76] mt7915 MCU event airtime
  	MCU_EXT_CMD_RX_STAT_USER_CTRL = 0xb3,
  	MCU_EXT_CMD_SET_QOS_MAP = 0xb4,
  	MCU_EXT_CMD_SET_CFG = 0xb7,
-@@ -1302,6 +1304,16 @@ enum {
+@@ -1342,6 +1344,16 @@ enum {
  	MCU_EXT_CMD_LPI_CTRL = 0xc8,
  };
  
@@ -46,7 +46,7 @@ Subject: [PATCH] [mt76] mt7915 MCU event airtime
  enum {
  	MCU_UNI_CMD_DEV_INFO_UPDATE = 0x01,
  	MCU_UNI_CMD_BSS_INFO_UPDATE = 0x02,
-@@ -1434,11 +1446,23 @@ enum {
+@@ -1485,11 +1497,23 @@ enum {
  	UNI_OFFLOAD_OFFLOAD_BMC_RPY_DETECT,
  };
  
@@ -163,7 +163,7 @@ Subject: [PATCH] [mt76] mt7915 MCU event airtime
  		rate = &msta->wcid.rate;
  		addr = mt7915_mac_wtbl_lmac_addr(dev, idx, 7);
  		val = mt76_rr(dev, addr);
-@@ -2083,11 +2017,14 @@ void mt7915_mac_work(struct work_struct
+@@ -2229,11 +2163,14 @@ void mt7915_mac_work(struct work_struct
  {
  	struct mt7915_phy *phy;
  	struct mt76_phy *mphy;
@@ -178,7 +178,7 @@ Subject: [PATCH] [mt76] mt7915 MCU event airtime
  	mutex_lock(&mphy->dev->mutex);
  
  	mt76_update_survey(mphy);
-@@ -2101,6 +2038,8 @@ void mt7915_mac_work(struct work_struct
+@@ -2247,6 +2184,8 @@ void mt7915_mac_work(struct work_struct
  
  		if (phy->dev->muru_debug)
  			mt7915_mcu_muru_debug_get(phy);
@@ -189,7 +189,7 @@ Subject: [PATCH] [mt76] mt7915 MCU event airtime
  		 * the MAC work of the first band running.
 --- a/mt7915/mcu.c
 +++ b/mt7915/mcu.c
-@@ -514,6 +514,104 @@ mt7915_mcu_rx_bss_acq_pkt_cnt(struct mt7
+@@ -594,6 +594,104 @@ mt7915_mcu_rx_bss_acq_pkt_cnt(struct mt7
  }
  
  static void
@@ -294,7 +294,7 @@ Subject: [PATCH] [mt76] mt7915 MCU event airtime
  mt7915_mcu_rx_ext_event(struct mt7915_dev *dev, struct sk_buff *skb)
  {
  	struct mt76_connac2_mcu_rxd *rxd;
-@@ -556,6 +654,9 @@ mt7915_mcu_rx_ext_event(struct mt7915_de
+@@ -639,6 +737,9 @@ mt7915_mcu_rx_ext_event(struct mt7915_de
  	case MCU_EXT_EVENT_BSS_ACQ_PKT_CNT:
  		mt7915_mcu_rx_bss_acq_pkt_cnt(dev, skb);
  		break;
@@ -304,15 +304,15 @@ Subject: [PATCH] [mt76] mt7915 MCU event airtime
  	default:
  		break;
  	}
-@@ -588,6 +689,7 @@ void mt7915_mcu_rx_event(struct mt7915_d
- 	     rxd->ext_eid == MCU_EXT_EVENT_PS_SYNC ||
- 	     rxd->ext_eid == MCU_EXT_EVENT_BCC_NOTIFY ||
- 	     rxd->ext_eid == MCU_EXT_EVENT_BF_STATUS_READ ||
-+	     rxd->ext_eid == MCU_EXT_EVENT_GET_ALL_STA_STATS ||
- 	     !rxd->seq) &&
- 	     !(rxd->eid == MCU_CMD_EXT_CID &&
- 	       rxd->ext_eid == MCU_EXT_EVENT_WA_TX_STAT))
-@@ -5620,3 +5722,16 @@ int mt7915_mcu_thermal_debug(struct mt79
+@@ -671,6 +772,7 @@ void mt7915_mcu_rx_event(struct mt7915_d
+ 	    rxd->ext_eid == MCU_EXT_EVENT_PS_SYNC ||
+ 	    rxd->ext_eid == MCU_EXT_EVENT_BCC_NOTIFY ||
+ 	    rxd->ext_eid == MCU_EXT_EVENT_BF_STATUS_READ ||
++	    rxd->ext_eid == MCU_EXT_EVENT_GET_ALL_STA_STATS ||
+ 	    !rxd->seq)
+ 		mt7915_mcu_rx_unsolicited_event(dev, skb);
+ 	else
+@@ -5763,3 +5865,16 @@ int mt7915_mcu_thermal_debug(struct mt79
  	return mt76_mcu_send_msg(&dev->mt76, MCU_EXT_CMD(THERMAL_DEBUG), &req,
  				 sizeof(req), true);
  }
@@ -331,7 +331,7 @@ Subject: [PATCH] [mt76] mt7915 MCU event airtime
 +}
 --- a/mt7915/mcu.h
 +++ b/mt7915/mcu.h
-@@ -738,6 +738,22 @@ enum {
+@@ -758,6 +758,22 @@ enum {
  	SER_RECOVER
  };
  
@@ -356,7 +356,7 @@ Subject: [PATCH] [mt76] mt7915 MCU event airtime
  					 sizeof(struct bss_info_bcn) +	\
 --- a/mt7915/mt7915.h
 +++ b/mt7915/mt7915.h
-@@ -777,6 +777,7 @@ int mt7915_mcu_set_thermal_throttling(st
+@@ -750,6 +750,7 @@ int mt7915_mcu_set_thermal_throttling(st
  int mt7915_mcu_set_thermal_protect(struct mt7915_phy *phy);
  int mt7915_mcu_get_rx_rate(struct mt7915_phy *phy, struct ieee80211_vif *vif,
  			   struct ieee80211_sta *sta, struct rate_info *rate);
@@ -366,7 +366,7 @@ Subject: [PATCH] [mt76] mt7915 MCU event airtime
  int mt7915_mcu_wed_wa_tx_stats(struct mt7915_dev *dev, u16 wcid);
 --- a/mt76.h
 +++ b/mt76.h
-@@ -372,12 +372,16 @@ struct mt76_sta_stats {
+@@ -375,12 +375,16 @@ struct mt76_sta_stats {
  	u32 tx_packets;		/* unit: MSDU */
  	u32 tx_retries;
  	u32 tx_failed;
@@ -383,7 +383,7 @@ Subject: [PATCH] [mt76] mt7915 MCU event airtime
  };
  
  enum mt76_wcid_flags {
-@@ -1522,6 +1526,22 @@ static inline int mt76_decr(int val, int
+@@ -1564,6 +1568,22 @@ static inline int mt76_decr(int val, int
  
  u8 mt76_ac_to_hwq(u8 ac);
  

@@ -15,7 +15,7 @@ Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
 
 --- a/mt7915/main.c
 +++ b/mt7915/main.c
-@@ -209,7 +209,7 @@ static int mt7915_add_interface(struct ieee80211_hw *hw,
+@@ -211,7 +211,7 @@ static int mt7915_add_interface(struct i
  	struct mt7915_phy *phy = mt7915_hw_phy(hw);
  	struct mt76_txq *mtxq;
  	bool ext_phy = phy != &dev->phy;
@@ -24,9 +24,9 @@ Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
  
  	mutex_lock(&dev->mt76.mutex);
  
-@@ -257,6 +257,20 @@ static int mt7915_add_interface(struct ieee80211_hw *hw,
- 	mvif->sta.wcid.tx_info |= MT_WCID_TX_INFO_SET;
- 	mt76_wcid_init(&mvif->sta.wcid, phy->mt76->band_idx);
+@@ -261,6 +261,20 @@ static int mt7915_add_interface(struct i
+ 	mt76_wcid_rx_group_pn_set(&mvif->sta.wcid, vif,
+ 				  &mvif->mt76.rx_group_pn);
  
 +	/* Default and recommended QoS map used by cfg80211_classify8021d(). */
 +	for (i = 0; i < IP_DSCP_NUM; ++i)
@@ -45,11 +45,10 @@ Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
  	mt7915_mac_wtbl_update(dev, idx,
  			       MT_WTBL_UPDATE_ADM_COUNT_CLEAR);
  
-@@ -1770,6 +1784,71 @@ mt7915_set_frag_threshold(struct ieee80211_hw *hw, int radio_idx, u32 val)
- 	return 0;
+@@ -1790,6 +1804,71 @@ mt7915_set_frag_threshold(struct ieee802
  }
  
-+static int
+ static int
 +mt7915_set_qos_map(struct ieee80211_vif *vif,
 +			   struct cfg80211_qos_map *usr_qos_map)
 +{
@@ -114,10 +113,11 @@ Signed-off-by: Benjamin Lin <benjamin-jw.lin@mediatek.com>
 +	return 0;
 +}
 +
- static int
++static int
  mt7915_set_radar_background(struct ieee80211_hw *hw,
  			    struct cfg80211_chan_def *chandef)
-@@ -1916,6 +1995,7 @@ const struct ieee80211_ops mt7915_ops = {
+ {
+@@ -1935,6 +2014,7 @@ const struct ieee80211_ops mt7915_ops =
  	.add_twt_setup = mt7915_mac_add_twt_setup,
  	.twt_teardown_request = mt7915_twt_teardown_request,
  	.set_frag_threshold = mt7915_set_frag_threshold,
