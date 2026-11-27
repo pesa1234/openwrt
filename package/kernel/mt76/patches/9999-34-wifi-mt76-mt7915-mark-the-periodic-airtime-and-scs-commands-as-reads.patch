@@ -1,0 +1,39 @@
+Subject: [PATCH] wifi: mt76: mt7915: mark the periodic airtime and SCS commands as reads
+
+The core starts a full reset through mt7915_mcu_cmd_lost() for a command
+without MT76_MCU_CMD_READ that an L1 SER refuses with -ESHUTDOWN or whose
+answer it cuts off. mt76 marks its own periodic queries as reads, so that
+they do not turn an L1 SER into a full reset.
+
+mt7915_mac_work() asks for the per-station airtime with GET_ALL_STA_STATS
+every 500 ms, and scs_work sends the SCS statistics every second while
+WED RX is active. Both run until mt7915_mac_reset_work() cancels them,
+after the interrupt path has set MT76_MCU_RESET. The airtime command only
+reads: the answer comes as an event, and the counters are cleared through
+the WTBL. scs_work sends new statistics a second later. Mark both as reads.
+---
+--- a/mt7915/mcu.c
++++ b/mt7915/mcu.c
+@@ -6027,8 +6027,11 @@ int mt7915_mcu_set_scs_stats(struct mt79
+ 	if (phy->scs_ctrl.tx_bytes_last_sec < phy->scs_ctrl.rx_bytes_last_sec / 9)
+ 		req.rx_only_mode = true;
+ 
+-	return mt76_mcu_send_msg(&dev->mt76, MCU_EXT_CMD(SCS_FEATURE_CTRL),
+-				 &req, sizeof(req), NULL);
++	/* scs_work sends these statistics again each second, so a lost one
++	 * leaves no firmware state to restore
++	 */
++	return mt76_mcu_send_msg(&dev->mt76, MCU_EXT_CMD(SCS_FEATURE_CTRL) |
++				 MT76_MCU_CMD_READ, &req, sizeof(req), NULL);
+ }
+ 
+ void mt7915_mcu_scs_sta_poll(struct work_struct *work)
+@@ -6087,6 +6090,6 @@ int mt7915_mcu_get_all_sta_info(struct m
+ 		.tag = tag,
+ 	};
+ 
+-	return mt76_mcu_send_msg(dev, MCU_EXT_CMD(GET_ALL_STA_STATS),
+-				&req, sizeof(req), false);
++	return mt76_mcu_send_msg(dev, MCU_EXT_CMD(GET_ALL_STA_STATS) |
++				 MT76_MCU_CMD_READ, &req, sizeof(req), false);
+ }
