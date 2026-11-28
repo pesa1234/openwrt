@@ -1,0 +1,69 @@
+From: MilkFlint <milkflint@localhost>
+Date: Tue, 27 Oct 2026 22:00:00 +0000
+Subject: [PATCH] wifi: mac80211: accept a repeated ADDBA request when the
+ driver reorders
+
+A client that didn't hear our ADDBA response sends its request again,
+with the same dialog token. __ieee80211_start_rx_ba_session() takes that
+as an update of the session it already accepted: success if the timeout
+is the same, declined otherwise, since the driver can't be told a new
+one. It compares the timeout with tid_rx's. A driver that reorders
+itself (SUPPORTS_REORDERING_BUFFER, as mt76) has no tid_rx, so every
+repeat is declined, though the session stays up on our side: the client
+gives up aggregating on that TID until it asks again with a new token,
+which some never do before they reassociate.
+
+Keep each valid session's timeout beside its dialog token, and compare a
+repeat with it when there's no tid_rx.
+
+Taken from https://github.com/OddBlueDog/openwrt (branch milkflint-25.12,
+399-wifi-mac80211-accept-a-repeated-ADDBA-request-when-the-driver-reorders.patch).
+---
+--- a/net/mac80211/agg-rx.c
++++ b/net/mac80211/agg-rx.c
+@@ -377,11 +377,16 @@ void __ieee80211_start_rx_ba_session(str
+ 			/* We have no API to update the timeout value in the
+ 			 * driver so reject the timeout update if the timeout
+ 			 * changed. If it did not change, i.e., no real update,
+-			 * just reply with success.
++			 * just reply with success. A driver that reorders
++			 * itself has no tid_rx: its session's timeout is kept
++			 * here.
+ 			 */
+ 			rcu_read_lock();
+ 			tid_rx = rcu_dereference(sta->ampdu_mlme.tid_rx[tid]);
+-			if (tid_rx && tid_rx->timeout == timeout)
++			if (tid_rx ? tid_rx->timeout == timeout :
++			    (ieee80211_hw_check(&local->hw,
++						SUPPORTS_REORDERING_BUFFER) &&
++			     sta->ampdu_mlme.tid_rx_timeout[tid] == timeout))
+ 				status = WLAN_STATUS_SUCCESS;
+ 			else
+ 				status = WLAN_STATUS_REQUEST_DECLINED;
+@@ -461,6 +466,7 @@ end:
+ 		__set_bit(tid, sta->ampdu_mlme.agg_session_valid);
+ 		__clear_bit(tid, sta->ampdu_mlme.unexpected_agg);
+ 		sta->ampdu_mlme.tid_rx_token[tid] = dialog_token;
++		sta->ampdu_mlme.tid_rx_timeout[tid] = timeout;
+ 	}
+ 
+ 	if (tx)
+--- a/net/mac80211/sta_info.h
++++ b/net/mac80211/sta_info.h
+@@ -268,6 +268,8 @@ struct tid_ampdu_rx {
+  *
+  * @tid_rx: aggregation info for Rx per TID -- RCU protected
+  * @tid_rx_token: dialog tokens for valid aggregation sessions
++ * @tid_rx_timeout: the timeouts of valid aggregation sessions, for a
++ *	repeated request when the driver reorders (no @tid_rx)
+  * @tid_rx_timer_expired: bitmap indicating on which TIDs the
+  *	RX timer expired until the work for it runs
+  * @tid_rx_stop_requested:  bitmap indicating which BA sessions per TID the
+@@ -289,6 +291,7 @@ struct sta_ampdu_mlme {
+ 	/* rx */
+ 	struct tid_ampdu_rx __rcu *tid_rx[IEEE80211_NUM_TIDS];
+ 	u8 tid_rx_token[IEEE80211_NUM_TIDS];
++	u16 tid_rx_timeout[IEEE80211_NUM_TIDS];
+ 	unsigned long tid_rx_timer_expired[BITS_TO_LONGS(IEEE80211_NUM_TIDS)];
+ 	unsigned long tid_rx_stop_requested[BITS_TO_LONGS(IEEE80211_NUM_TIDS)];
+ 	unsigned long tid_rx_manage_offl[BITS_TO_LONGS(2 * IEEE80211_NUM_TIDS)];
