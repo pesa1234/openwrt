@@ -1,0 +1,32 @@
+From: MilkFlint <milkflint@localhost>
+Date: Fri, 23 Oct 2026 19:00:00 +0100
+Subject: [PATCH] wifi: mac80211: estimate voice frames as unaggregated again
+
+ieee80211_tx_dequeue() asks for the airtime of a station's frame as
+aggregated on every AC but voice, which drivers send one frame per PPDU.
+360-mac80211-factor-out-part-of-ieee80211_calc_expected_.patch moved the
+estimate into ieee80211_rate_expected_tx_airtime() but passed "aggregated"
+for every frame, so a voice frame is charged a share of an A-MPDU's
+preamble instead of a whole one: at HE80 MCS 9 2SS about 10 us instead of
+about 55 us for 1500 bytes. AQL then lets several times the voice
+airtime it means to into the hardware queue.
+
+Pass the caller's ampdu flag on.
+
+The same code is in mainline since 094dc1619cb0 ("wifi: mac80211: factor
+out part of ieee80211_calc_expected_tx_airtime").
+
+Taken from https://github.com/OddBlueDog/openwrt (branch milkflint-25.12,
+396-wifi-mac80211-estimate-voice-frames-as-unaggregated-again.patch).
+---
+--- a/net/mac80211/airtime.c
++++ b/net/mac80211/airtime.c
+@@ -845,7 +845,7 @@ u32 ieee80211_calc_expected_tx_airtime(s
+ 		u32 duration;
+ 
+ 		duration = ieee80211_rate_expected_tx_airtime(hw, tx_rate, ri,
+-							      band, true, len);
++							      band, ampdu, len);
+ 		duration /= 1024;
+ 
+ 		return max_t(u32, duration, 4);
